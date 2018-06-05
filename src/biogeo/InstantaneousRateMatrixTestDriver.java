@@ -7,7 +7,7 @@ public class InstantaneousRateMatrixTestDriver {
 		InstantaneousRateMatrix Q = new InstantaneousRateMatrix(num_states);
 		Q.setCell(0, 0, 1.0);
 		Q.setCell(3, 3, 0.5);
-		double q44 = Q.getCell(3, 3);
+		double q44 = Q.getCell(3, 3, 1);
 		Q.printMatrix();
 		System.out.println(q44);
 	}

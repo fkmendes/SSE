@@ -2,7 +2,6 @@ package biogeo;
 
 public class InstantaneousRateMatrix {
 
-	double rate;
 	int num_states;
 	double[][] mat;
 	
@@ -10,11 +9,6 @@ public class InstantaneousRateMatrix {
 	public InstantaneousRateMatrix(int num_states) {
 		this.num_states = num_states;
 		mat = new double[num_states][num_states];
-	}
-
-	// setters
-	public void setRate(double rate) {
-		this.rate = rate;
 	}
 	
 	public void setCell(int from, int to, double prob) {
@@ -26,11 +20,11 @@ public class InstantaneousRateMatrix {
 		return num_states; // do I need 'this'?
 	}
 	
-	public double getCell(int from, int to) {
-		return mat[from][to];
+	public double getCell(int from, int to, double rate) {
+		return mat[from][to] * rate;
 	}
 	
-	// other
+	// helper
 	public void printMatrix() {
 		for (int i = 0; i < num_states; ++i) {
 			for (int j = 0; j < num_states; ++j) {
