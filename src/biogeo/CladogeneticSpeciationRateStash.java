@@ -8,7 +8,7 @@ public class CladogeneticSpeciationRateStash {
 	double[] speciation_rates;
 	HashMap<String[], Double> event_map = new HashMap<String[], Double>(); // ctor populates this
 	
-	// ctor
+	// ctor (populates event_map)
 	public CladogeneticSpeciationRateStash(String[][] cladogenetic_events, double[] speciation_rates) {
 		this.cladogenetic_events = cladogenetic_events;
 		this.speciation_rates = speciation_rates;
