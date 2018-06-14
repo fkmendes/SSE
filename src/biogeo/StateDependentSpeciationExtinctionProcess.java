@@ -11,7 +11,7 @@ public class StateDependentSpeciationExtinctionProcess {
 	private double rate;
 	
 	public void NumericallyIntegrateProcess(double[] likelihoods, double begin_age, double end_age) {
-		SSEODE ode = new SSEODE(this.mu, this.Q, this.rate);
+		SSEODE ode = new SSEODE(this.mu, this.Q, this.rate, false);
 		HashMap<String[], Double> event_map = this.cladogenesis_matrix.getEventMap();
 		ode.setEventMap(event_map);
 	}
