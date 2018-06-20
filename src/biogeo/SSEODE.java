@@ -80,7 +80,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			}
 
 			/*
-			 * Step 2: equation A2 
+			 * Step 2: equation A2 (getting E's, first half of dxdt)
 			 */
 
 			// extinction

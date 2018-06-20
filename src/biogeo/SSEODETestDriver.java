@@ -10,13 +10,22 @@ public class SSEODETestDriver {
 		
 		// initializing parameter values
 		int num_states = 2; // BiSSE
-		double[] mu = new double[] {0.0, 0.0}; // pure birth
 		double[] lambda = new double[] {0.222222222, 0.222222222};
+		double[] mu = new double[] {0.0, 0.0}; // pure birth
+		
 		InstantaneousRateMatrix Q = new InstantaneousRateMatrix(num_states);
 		Q.setCell(0, 0, 1.0);
 		Q.setCell(1, 1, 1.0);
 		Q.setCell(0, 1, 0.0);
 		Q.setCell(1, 0, 0.0);
+		
+		/* testing other values */
+		// double[] mu = new double[] {0.1, 0.1}; // testing other values
+		// Q.setCell(0, 0, 0.9); 
+		// Q.setCell(1, 1, 0.9);
+		// Q.setCell(0, 1, 0.1);
+		// Q.setCell(1, 0, 0.1);
+		
 		// Q.printMatrix(); // checking Q
 		double[] y = new double[] { 0.0, 0.0, 0.0, 1.0 }; // e0t, e1t, d0t, d1t
 		
