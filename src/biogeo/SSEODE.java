@@ -27,7 +27,6 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 		this.rate = rate;
 		this.incorporate_cladogenesis = incorporate_cladogenesis;
 		num_states = Q.getNumStates();
-		System.out.println(num_states);
 	}
 
 	// setters and getters
