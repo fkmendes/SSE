@@ -4,9 +4,9 @@ import java.util.HashMap;
 
 public class CladogeneticSpeciationRateStash {
 	
-	String[][] cladogenetic_events;
-	double[] speciation_rates;
-	HashMap<String[], Double> event_map = new HashMap<String[], Double>(); // ctor populates this
+	private String[][] cladogenetic_events;
+	private double[] speciation_rates;
+	private HashMap<String[], Double> event_map = new HashMap<String[], Double>(); // ctor populates this
 	
 	// ctor (populates event_map)
 	public CladogeneticSpeciationRateStash(String[][] cladogenetic_events, double[] speciation_rates) {

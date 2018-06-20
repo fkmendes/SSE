@@ -9,6 +9,7 @@ public class SSEODETestDriver {
 	public static void main(String[] args) {
 		
 		// initializing parameter values
+		String[] sp_names = new String[] { "Human" };
 		int num_states = 2; // BiSSE
 		double[] lambda = new double[] {0.222222222, 0.222222222};
 		double[] mu = new double[] {0.0, 0.0}; // pure birth
@@ -27,7 +28,11 @@ public class SSEODETestDriver {
 		// Q.setCell(1, 0, 0.1);
 		
 		// Q.printMatrix(); // checking Q
-		double[] y = new double[] { 0.0, 0.0, 0.0, 1.0 }; // e0t, e1t, d0t, d1t
+		StateStash state_stash = new StateStash(num_states, sp_names);
+		state_stash.setSpStateValue("Human", "1");
+		state_stash.printLksMap();
+		double[] y = state_stash.getSpLk("Human"); // e0t = 0.0, e1t = 0.0, d0t = 0.0, d1t = 1.0
+		// double[] y = new double[] { 0.0, 0.0, 0.0, 1.0 };
 		
 		// initializing integrator and ODE
 		FirstOrderIntegrator dp853 = new 
