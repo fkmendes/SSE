@@ -12,7 +12,7 @@ public class StateDependentSpeciationExtinctionProcess {
 	private double[] mu;
 	private double[] pi; // root eq freqs
 	private int num_states;
-	private StateStash state_stash;
+	private TraitStash trait_stash;
 	private CladogeneticSpeciationRateStash clado_stash;
 	private InstantaneousRateMatrix Q;
 	private double rate;
@@ -25,14 +25,14 @@ public class StateDependentSpeciationExtinctionProcess {
 	private double[][] node_partial_lks;
 	
 	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, int num_states,
-			StateStash state_stash, CladogeneticSpeciationRateStash clado_stash, InstantaneousRateMatrix q, double rate,
+			TraitStash trait_stash, CladogeneticSpeciationRateStash clado_stash, InstantaneousRateMatrix q, double rate,
 			boolean incorporate_cladogenesis) {
 		this.tree = tree;
 		this.lambda = lambda;
 		this.mu = mu;
 		this.pi = pi;
 		this.num_states = num_states;
-		this.state_stash = state_stash;
+		this.trait_stash = trait_stash;
 		this.clado_stash = clado_stash;
 		Q = q;
 		this.rate = rate;
@@ -48,7 +48,7 @@ public class StateDependentSpeciationExtinctionProcess {
 
 	public void computeNodeLk(Node node, int node_idx) {		
 		if (node.isLeaf() == true) {
-			node_partial_lks[node_idx] = state_stash.getSpLk(node.getID());
+			node_partial_lks[node_idx] = trait_stash.getSpLks(node.getID());
 		}
 		
 		// this block initializes node_partial_lks for internal nodes
