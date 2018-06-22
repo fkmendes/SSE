@@ -1,15 +1,12 @@
 package biogeo;
 
-import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import beast.core.Input;
 import beast.core.util.Log;
-import beast.evolution.alignment.Taxon;
 import beast.evolution.tree.*;
 
 public class TraitStash extends TraitSet {
@@ -116,19 +113,6 @@ public class TraitStash extends TraitSet {
 	}
 	
 	// helper
-    /**
-     * remove start and end spaces
-     */
-	String normalize(String str) {
-		if (str.charAt(0) == ' ') {
-			str = str.substring(1);
-		}
-		if (str.endsWith(" ")) {
-			str = str.substring(0, str.length() - 1);
-		}
-		return str;
-	}
-	
 	public int numOfValues(String[] arr) {
 	    return (int) Arrays.stream(arr).distinct().count();
 	}

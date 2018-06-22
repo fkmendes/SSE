@@ -1,6 +1,11 @@
 package biogeo;
 
+import java.util.Arrays;
 import java.util.HashMap;
+
+import org.apache.commons.math3.ode.FirstOrderIntegrator;
+import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
+
 import beast.evolution.tree.*;
 import beast.util.TreeParser;
 
@@ -23,6 +28,7 @@ public class StateDependentSpeciationExtinctionProcess {
 	
 	// members used for lk computation
 	private double[][] node_partial_lks;
+	double final_prob;
 	
 	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, int num_states,
 			TraitStash trait_stash, CladogeneticSpeciationRateStash clado_stash, InstantaneousRateMatrix q, double rate,
@@ -43,12 +49,16 @@ public class StateDependentSpeciationExtinctionProcess {
 		dt = root_age / num_time_slices * 50;
 		
 		// initializing members for lk computation
-		double[][] node_partial_lks = new double[tree.getNodeCount()][num_states*2];
+//		System.out.println("Number of nodes is " + String.valueOf(tree.getNodeCount()));
+//		System.out.println("Number of states is " + String.valueOf(num_states * 2));
+		node_partial_lks = new double[tree.getNodeCount()][num_states*2];
+		final_prob = 0.0;
 	}
 
 	public void computeNodeLk(Node node, int node_idx) {		
 		if (node.isLeaf() == true) {
 			node_partial_lks[node_idx] = trait_stash.getSpLks(node.getID());
+			System.out.println("Leaf " + node.getID() + " lks are: " + Arrays.toString(node_partial_lks[node_idx]));
 		}
 		
 		// this block initializes node_partial_lks for internal nodes
@@ -60,8 +70,11 @@ public class StateDependentSpeciationExtinctionProcess {
 			int right_idx = right.getNr();
 
 			// recursion over here
+			System.out.println("Got here.");
 			computeNodeLk(left, left_idx);
 			computeNodeLk(right, right_idx);
+			
+			System.out.println("Recurring back to internal node " + Integer.toString(node.getNr()));
 			
 			double[] left_lks = node_partial_lks[left_idx];
 			double[] right_lks = node_partial_lks[right_idx];
@@ -89,11 +102,40 @@ public class StateDependentSpeciationExtinctionProcess {
 			}
 		}
 		
-		// defining starting and ending points for numerical integrator
-		// we are going from present (begin) to past (end)
-		double begin_age = node.getHeight();
-		double end_age = node.getParent().getHeight();
+		// numerical integration is carried out for all branches starting at this node, up to its parent
+		// but if root, then no more numerical integration
+		if (node.isRoot() == false) {
+			// we are going from present (begin) to past (end)
+			double begin_age = node.getHeight();
+			double end_age = node.getParent().getHeight();
+			
+			System.out.println("Initial conditions: " + Arrays.toString(node_partial_lks[node_idx]));
+			int current_dt = 0; // counter used to multiply dt
+			while ((current_dt * dt) + begin_age < end_age) {
+				double current_dt_start = (current_dt * dt) + begin_age;
+				double current_dt_end = ((current_dt + 1) * dt) + begin_age;
+				
+				if (current_dt_end > end_age) {
+					current_dt_end = end_age;
+				}
+				
+				numericallyIntegrateProcess(node_partial_lks[node_idx], current_dt_start, current_dt_end);
+	
+	            current_dt++;
+			}
+		}
 		
+		// if we reach root, no more numerical integration, we just join children, multiply by prior, return log
+		else {
+			if (node.isRoot() == true) {
+				double prob = 0.0; 
+				for (int i = 0; i < num_states; ++i) {
+					prob += pi[num_states + i] * node_partial_lks[node_idx][num_states + i];
+				}
+							
+				final_prob = Math.log(prob);
+			}
+		}
 	}
 	
 //	public double computeRootLk() {
@@ -141,9 +183,14 @@ public class StateDependentSpeciationExtinctionProcess {
 //		return Math.log(prob);
 //	}
 	
-//	public void NumericallyIntegrateProcess(double[] likelihoods, double begin_age, double end_age) {
-//		SSEODE ode = new SSEODE(this.mu, this.Q, this.rate, false);
-//		HashMap<String[], Double> event_map = this.cladogenesis_matrix.getEventMap();
-//		ode.setEventMap(event_map);
-//	}
+	public void numericallyIntegrateProcess(double[] likelihoods, double begin_age, double end_age) {
+		FirstOrderIntegrator dp853 = new 
+				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
+		SSEODE ode = new SSEODE(mu, Q, rate, incorporate_cladogenesis);
+		ode.setSpeciationRates(lambda);
+		dp853.integrate(ode, begin_age, likelihoods, end_age, likelihoods);
+		System.out.println("Conditions at time " + end_age + ": " + Arrays.toString(likelihoods));
+		// HashMap<String[], Double> event_map = this.cladogenesis_matrix.getEventMap();
+		// ode.setEventMap(event_map);
+	}
 }

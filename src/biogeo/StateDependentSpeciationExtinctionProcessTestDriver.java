@@ -57,6 +57,8 @@ public class StateDependentSpeciationExtinctionProcessTestDriver {
         
         StateDependentSpeciationExtinctionProcess sdsep = 
         		new StateDependentSpeciationExtinctionProcess(my_tree, lambda, mu, num_states,
-        				trait_stash, clado_stash, Q, rate, incorporate_cladogenesis); 
+        				trait_stash, clado_stash, Q, rate, incorporate_cladogenesis);
+        
+        sdsep.computeNodeLk(root, root.getNr());
 	}
 }

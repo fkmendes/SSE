@@ -1,8 +1,13 @@
 package biogeo;
 
 import java.util.Arrays;
+import java.util.List;
+
 import org.apache.commons.math3.ode.*;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
+
+import beast.evolution.alignment.Taxon;
+import beast.evolution.alignment.TaxonSet;
 
 public class SSEODETestDriver {
 
@@ -28,10 +33,17 @@ public class SSEODETestDriver {
 		// Q.setCell(1, 0, 0.1);
 		
 		// Q.printMatrix(); // checking Q
-		StateStash state_stash = new StateStash(num_states, sp_names);
-		state_stash.setSpStateValue("Human", "1");
-		state_stash.printLksMap();
-		double[] y = state_stash.getSpLk("Human"); // e0t = 0.0, e1t = 0.0, d0t = 0.0, d1t = 1.0
+		
+		// StateStash state_stash = new StateStash(num_states, sp_names);
+		// state_stash.setSpStateValue("Human", "1");
+		// state_stash.printLksMap();
+		// double[] y = state_stash.getSpLk("Human"); // e0t = 0.0, e1t = 0.0, d0t = 0.0, d1t = 1.0
+		
+		List<Taxon> taxa_list = Taxon.createTaxonList(Arrays.asList(sp_names));
+		TaxonSet taxon_set = new TaxonSet(taxa_list);
+		TraitStash trait_stash = new TraitStash();
+		trait_stash.initByName("taxa", taxon_set, "value", "Human=2");
+		double[] y = trait_stash.getSpLks("Human");
 		// double[] y = new double[] { 0.0, 0.0, 0.0, 1.0 };
 		
 		// initializing integrator and ODE
