@@ -22,15 +22,16 @@ public class StateDependentSpeciationExtinctionProcess {
 	private InstantaneousRateMatrix Q;
 	private double rate;
 	private double dt; // time slice size (ctor populates)
-	private double num_time_slices;
+	private int num_time_slices;
 	
 	private boolean incorporate_cladogenesis;
 	
 	// members used for lk computation
-	private double[][] node_partial_lks;
+	private double[][] node_partial_normalized_lks_pre_ode;
+	private double[][] node_partial_normalized_lks_post_ode;
 	double final_prob;
 	
-	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, int num_states,
+	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, double[] pi, int num_states,
 			TraitStash trait_stash, CladogeneticSpeciationRateStash clado_stash, InstantaneousRateMatrix q, double rate,
 			boolean incorporate_cladogenesis) {
 		this.tree = tree;
@@ -44,21 +45,24 @@ public class StateDependentSpeciationExtinctionProcess {
 		this.rate = rate;
 		this.incorporate_cladogenesis = incorporate_cladogenesis;
 		
-		num_time_slices = 500.0;
+		num_time_slices = 1;
 		double root_age = tree.getRoot().getHeight();
-		dt = root_age / num_time_slices * 50;
+		System.out.println("Root age (height): " + Double.toString(root_age));
+		dt = root_age / ((double) (num_time_slices * 50));
+		System.out.println("dt: " + Double.toString(dt));
 		
 		// initializing members for lk computation
-//		System.out.println("Number of nodes is " + String.valueOf(tree.getNodeCount()));
-//		System.out.println("Number of states is " + String.valueOf(num_states * 2));
-		node_partial_lks = new double[tree.getNodeCount()][num_states*2];
+		node_partial_normalized_lks_pre_ode = new double[tree.getNodeCount()][num_states*2]; // tips have initialization lks, internal nodes (and root) just after merge
+		node_partial_normalized_lks_post_ode = new double[tree.getNodeCount()][num_states*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
 		final_prob = 0.0;
 	}
 
 	public void computeNodeLk(Node node, int node_idx) {		
 		if (node.isLeaf() == true) {
-			node_partial_lks[node_idx] = trait_stash.getSpLks(node.getID());
-			System.out.println("Leaf " + node.getID() + " lks are: " + Arrays.toString(node_partial_lks[node_idx]));
+			node_partial_normalized_lks_pre_ode[node_idx] = trait_stash.getSpLks(node.getID());
+			node_partial_normalized_lks_post_ode[node_idx] = trait_stash.getSpLks(node.getID()).clone();
+			System.out.println("Leaf " + node.getID() + " lks are: " + Arrays.toString(node_partial_normalized_lks_pre_ode[node_idx]));
+			System.out.println("Leaf " + node.getID() + " normalized lks are: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
 		}
 		
 		// this block initializes node_partial_lks for internal nodes
@@ -70,16 +74,20 @@ public class StateDependentSpeciationExtinctionProcess {
 			int right_idx = right.getNr();
 
 			// recursion over here
-			System.out.println("Got here.");
 			computeNodeLk(left, left_idx);
 			computeNodeLk(right, right_idx);
 			
 			System.out.println("Recurring back to internal node " + Integer.toString(node.getNr()));
 			
-			double[] left_lks = node_partial_lks[left_idx];
-			double[] right_lks = node_partial_lks[right_idx];
-
-			double[] speciation_rates;
+			// double[] left_lks = node_partial_lks[left_idx];
+			double[] left_lks = node_partial_normalized_lks_post_ode[left_idx]; // at this point (pre-merging), left_lks has not been updated to its normalized value
+			double D_left_normalizing_constant = sum(left_lks, num_states, left_lks.length);
+			
+			// double[] right_lks = node_partial_lks[right_idx];
+			double[] right_lks = node_partial_normalized_lks_post_ode[right_idx]; // at this point (pre-merging), right_lks has not been updated to its normalized value
+			double D_right_normalizing_constant = sum(right_lks, num_states, right_lks.length);
+			
+			double[] speciation_rates = new double[num_states];
 			if (incorporate_cladogenesis == true) {
 				
 			}
@@ -90,16 +98,31 @@ public class StateDependentSpeciationExtinctionProcess {
 			
 			// merge descendant lks
 			for (int i = 0; i < num_states; ++i) {
-				node_partial_lks[node_idx][i] = left_lks[i]; // filling out Es from one of children
+				node_partial_normalized_lks_post_ode[node_idx][i] = (left_lks[i] + right_lks[i])/2; // filling out Es using avg of children
+				node_partial_normalized_lks_pre_ode[node_idx][i] = node_partial_normalized_lks_post_ode[node_idx][i];
 				
 				if (incorporate_cladogenesis == true) {
 					
 				}
 				
 				else {
-					node_partial_lks[node_idx][num_states + i] = left_lks[num_states + i] * right_lks[num_states + i];
+					node_partial_normalized_lks_post_ode[left_idx][num_states + i] = left_lks[num_states + i] /
+							D_left_normalizing_constant; // now we update left child lk with normalized value
+					node_partial_normalized_lks_post_ode[right_idx][num_states + i] = right_lks[num_states + i] / 
+							D_right_normalizing_constant; // now we update right child lk with normalized value
+					
+					node_partial_normalized_lks_post_ode[node_idx][num_states + i] = node_partial_normalized_lks_post_ode[left_idx][num_states + i] *
+							node_partial_normalized_lks_post_ode[right_idx][num_states + i];
+					node_partial_normalized_lks_post_ode[node_idx][num_states + i] *= speciation_rates[i];
+					node_partial_normalized_lks_pre_ode[node_idx][num_states + i] = node_partial_normalized_lks_post_ode[node_idx][num_states + i];
+//					node_partial_normalized_lks[node_idx][num_states + i] = left_lks[num_states + i] * right_lks[num_states + i];
+//					node_partial_normalized_lks[node_idx][num_states + i] *= speciation_rates[i];
 				}
 			}
+			
+			System.out.println("Normalized lks left: " + Arrays.toString(node_partial_normalized_lks_post_ode[left_idx]));
+			System.out.println("Normalized lks right: " + Arrays.toString(node_partial_normalized_lks_post_ode[right_idx]));
+			System.out.println("(Merged) Normalized lks from internal node: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
 		}
 		
 		// numerical integration is carried out for all branches starting at this node, up to its parent
@@ -109,7 +132,7 @@ public class StateDependentSpeciationExtinctionProcess {
 			double begin_age = node.getHeight();
 			double end_age = node.getParent().getHeight();
 			
-			System.out.println("Initial conditions: " + Arrays.toString(node_partial_lks[node_idx]));
+			// System.out.println("Initial conditions: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
 			int current_dt = 0; // counter used to multiply dt
 			while ((current_dt * dt) + begin_age < end_age) {
 				double current_dt_start = (current_dt * dt) + begin_age;
@@ -119,7 +142,7 @@ public class StateDependentSpeciationExtinctionProcess {
 					current_dt_end = end_age;
 				}
 				
-				numericallyIntegrateProcess(node_partial_lks[node_idx], current_dt_start, current_dt_end);
+				numericallyIntegrateProcess(node_partial_normalized_lks_post_ode[node_idx], current_dt_start, current_dt_end);
 	
 	            current_dt++;
 			}
@@ -127,16 +150,25 @@ public class StateDependentSpeciationExtinctionProcess {
 		
 		// if we reach root, no more numerical integration, we just join children, multiply by prior, return log
 		else {
-			if (node.isRoot() == true) {
-				double prob = 0.0; 
-				for (int i = 0; i < num_states; ++i) {
-					prob += pi[num_states + i] * node_partial_lks[node_idx][num_states + i];
-				}
-							
-				final_prob = Math.log(prob);
+//			System.out.println("Final lks at root: "+ Arrays.toString(node_partial_lks[node_idx]));
+			for (int i = 0; i < node_partial_normalized_lks_pre_ode.length; ++i) {
+					System.out.println("Pre-ODE lks for state i = " + Integer.toString(i) + ": " + Arrays.toString(node_partial_normalized_lks_pre_ode[i]));
 			}
+			for (int i = 0; i < node_partial_normalized_lks_post_ode.length; ++i) {
+				System.out.println("Post-ODE lks for state i = " + Integer.toString(i) + ": " + Arrays.toString(node_partial_normalized_lks_post_ode[i]));
+			}
+			
+			double prob = 0.0; 
+			for (int i = 0; i < num_states; ++i) {
+				// System.out.println("Pi for state " + i + ": " + Double.toString(pi[num_states + i]));
+				prob += pi[num_states + i] * node_partial_normalized_lks_post_ode[node_idx][num_states + i];
+			}
+							
+			final_prob = Math.log(prob);
 		}
 	}
+
+	
 	
 //	public double computeRootLk() {
 //		Node[] nodes = tree.getNodesAsArray();
@@ -189,8 +221,15 @@ public class StateDependentSpeciationExtinctionProcess {
 		SSEODE ode = new SSEODE(mu, Q, rate, incorporate_cladogenesis);
 		ode.setSpeciationRates(lambda);
 		dp853.integrate(ode, begin_age, likelihoods, end_age, likelihoods);
-		System.out.println("Conditions at time " + end_age + ": " + Arrays.toString(likelihoods));
-		// HashMap<String[], Double> event_map = this.cladogenesis_matrix.getEventMap();
-		// ode.setEventMap(event_map);
+		// System.out.println("Conditions at time " + end_age + ": " + Arrays.toString(likelihoods));
+	}
+	
+	// helper
+	public static double sum(double[] arr, int from_idx, int to_idx) {
+		double result = 0;
+		for (int i = from_idx; i < to_idx; ++i) {
+			result += arr[i];
+		}
+		return result;
 	}
 }
