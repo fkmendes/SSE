@@ -19,9 +19,10 @@ public class TraitStash extends TraitSet {
 	private HashMap<String, double[]> spname_lks_map = new HashMap<String, double[]>(); // initialized by ctor
 	int num_states;
 	
-	public TraitStash() {
+	public TraitStash(int num_states) {
 		traitNameInput.setRule(Input.Validate.FORBIDDEN);
 		dateTimeFormatInput.setRule(Input.Validate.FORBIDDEN);
+		this.num_states = num_states;
 	}
 	
 	public void initAndValidate() {
@@ -59,7 +60,7 @@ public class TraitStash extends TraitSet {
             map.put(taxonID, taxonNr);
         }
         
-        num_states = numOfValues(taxonValues);
+        // num_states = numOfValues(taxonValues);
         
         // find extremes
         minValue = values[0];

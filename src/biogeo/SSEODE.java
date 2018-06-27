@@ -12,7 +12,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	private double[] lambda; // ctor arg
 	private InstantaneousRateMatrix Q; // ctor arg
 	private boolean incorporate_cladogenesis; // ctor arg
-	private HashMap<String[], Double> event_map; // setter 
+	private HashMap<int[], Double> event_map; // setter 
 	
 	/*
 	 * Constructor
@@ -24,6 +24,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 		this.rate = rate;
 		this.incorporate_cladogenesis = incorporate_cladogenesis;
 		num_states = Q.getNumStates();
+		// System.out.println("SSEODE: Self-initialized " + Integer.toString(num_states) + " states.");
 	}
 
 	// setters and getters
@@ -31,7 +32,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 		lambda = speciation_rates;
 	}
 	
-	public void setEventMap(HashMap<String[], Double> event_map) {
+	public void setEventMap(HashMap<int[], Double> event_map) {
 		this.event_map = event_map;
 	}
 	
@@ -66,11 +67,12 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			if (incorporate_cladogenesis == true) {
 				
 				// for each event, grab respective sp rate (lambda) and keep adding	
-				for (HashMap.Entry<String[], Double> entry : event_map.entrySet()) {
+				for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {
 					double ith_lambda = entry.getValue();
 					lambda_sum += ith_lambda;
 				}
 			}
+			
 			else {
 				lambda_sum = lambda[i];
 			}
@@ -93,18 +95,19 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 
 	        // speciation
 	        if (incorporate_cladogenesis == true) {
-		        for (HashMap.Entry<String[], Double> entry : event_map.entrySet()) {	
-					String[] states = entry.getKey();
-					int j = Integer.parseInt(states[1]);
-					int k = Integer.parseInt(states[2]);
+		        for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {	
+					int[] states = entry.getKey();
+					int j = states[1];
+					int k = states[2];
 		        	double this_lambda = entry.getValue();
 		        	
 		        	// if parent state (range) is the same as current (ith) state
-		        	if (i == Integer.parseInt(states[0])) {
+		        	if (i == states[0]) {
 	            		dxdt[i] += this_lambda * safe_x[j] * safe_x[k];
 	            	}
 		        }
 	        }
+	        
 	        else {
 	        	dxdt[i] += lambda[i] * safe_x[i] * safe_x[i];
 	        }
@@ -127,20 +130,21 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 
             // speciation
             if (incorporate_cladogenesis == true) {
-	            for (HashMap.Entry<String[], Double> entry : event_map.entrySet()) {
-	            	String[] states = entry.getKey();
-					int j = Integer.parseInt(states[1]);
-					int k = Integer.parseInt(states[2]);
+	            for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {
+	            	int[] states = entry.getKey();
+					int j = states[1];
+					int k = states[2];
 	            	double this_lambda = entry.getValue();
 	            	
 	            	// if parent state (range) is the same as current (ith) state
-	            	if (i == Integer.parseInt(states[0])) {
+	            	if (i == states[0]) {
 	            		double dnj_times_ek = safe_x[j + num_states] * safe_x[k]; // D_Nj * E_k
 	            		double dnk_times_ej = safe_x[k + num_states] * safe_x[j]; // D_Nj * E_k
 	            		dxdt[i + num_states] += this_lambda * (dnj_times_ek + dnk_times_ej);
 	            	}
 	            }
             }
+            
             else {
             	dxdt[i + num_states] += 2.0 * lambda[i] * safe_x[i] * safe_x[i + num_states];
 //            	System.out.println("speciation: " + Double.toString(2.0 * lambda[i] * safe_x[i] + safe_x[i + num_states]));

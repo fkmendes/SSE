@@ -19,7 +19,7 @@ public class PrettyPrintHashMap<K, V> {
 		
 		while (iter.hasNext()) {
 			Entry<K, V> entry = iter.next();
-			String[] key = (String[]) entry.getKey();
+			int[] key = (int[]) entry.getKey();
 			sb.append(Arrays.toString(key));
 			sb.append(" = ");
 			sb.append(entry.getValue());

@@ -4,12 +4,12 @@ import java.util.HashMap;
 
 public class CladogeneticSpeciationRateStash {
 	
-	private String[][] cladogenetic_events;
+	private int[][] cladogenetic_events;
 	private double[] speciation_rates;
-	private HashMap<String[], Double> event_map = new HashMap<String[], Double>(); // ctor populates this
+	private HashMap<int[], Double> event_map = new HashMap<int[], Double>(); // ctor populates this
 	
 	// ctor (populates event_map)
-	public CladogeneticSpeciationRateStash(String[][] cladogenetic_events, double[] speciation_rates) {
+	public CladogeneticSpeciationRateStash(int[][] cladogenetic_events, double[] speciation_rates) {
 		this.cladogenetic_events = cladogenetic_events;
 		this.speciation_rates = speciation_rates;
 		int num_events = cladogenetic_events.length;
@@ -24,7 +24,7 @@ public class CladogeneticSpeciationRateStash {
 				System.out.println("We need cladogenetic events as parent-daughter1-daughter2. Found something different. Exiting...");
 			}
 			
-			String[] key = new String[3];
+			int[] key = new int[3];
 			key[0] = this.cladogenetic_events[i][0];
 			key[1] = this.cladogenetic_events[i][1];
 			key[2] = this.cladogenetic_events[i][2];
@@ -33,12 +33,12 @@ public class CladogeneticSpeciationRateStash {
 	}
 	
 	// setters and getters
-	HashMap<String[], Double> getEventMap() {
+	HashMap<int[], Double> getEventMap() {
 		return event_map;
 	}
 	
 	// helper
 	public void printEventMap() {
-		System.out.println(new PrettyPrintHashMap<String[], Double>(event_map));
+		System.out.println(new PrettyPrintHashMap<int[], Double>(event_map));
 	}
 }

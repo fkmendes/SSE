@@ -14,8 +14,8 @@ public class SSEODETestDriver {
 	public static void main(String[] args) {
 		
 		// initializing parameter values
-		String[] sp_names = new String[] { "Human" };
 		int num_states = 2; // BiSSE
+		String[] sp_names = new String[] { "Human" };
 		double[] lambda = new double[] {0.222222222, 0.222222222};
 		double[] mu = new double[] {0.0, 0.0}; // pure birth
 		
@@ -41,7 +41,7 @@ public class SSEODETestDriver {
 		
 		List<Taxon> taxa_list = Taxon.createTaxonList(Arrays.asList(sp_names));
 		TaxonSet taxon_set = new TaxonSet(taxa_list);
-		TraitStash trait_stash = new TraitStash();
+		TraitStash trait_stash = new TraitStash(num_states);
 		trait_stash.initByName("taxa", taxon_set, "value", "Human=2");
 		double[] y = trait_stash.getSpLks("Human");
 		// double[] y = new double[] { 0.0, 0.0, 0.0, 1.0 };
