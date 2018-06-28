@@ -25,7 +25,7 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		
 		double rate = 1.0;
 		double birth_rate = 0.2222222;
-		double death_rate = 0.0; // DEC-like
+		double death_rate = 0.1; // DEC-like
 		
 		double symp_prob = 1.0; // DEC-like
 		double j_prob = 0.0; // no jump dispersal
@@ -33,14 +33,14 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		double[] mu = new double[] {death_rate, death_rate, death_rate, death_rate};
 
 		// 1/6 so it's DEC-like
-//		double[] lambdas_clado_stash = new double[] {birth_rate, symp_prob*birth_rate, symp_prob*birth_rate,
-//				j_prob*birth_rate, j_prob*birth_rate,
-//				(double)1/6*birth_rate, (double)1/6*birth_rate, (double)1/6*birth_rate,
-//				(double)1/6*birth_rate, (double)1/6*birth_rate, (double)1/6*birth_rate};
-		double[] lambdas_clado_stash = new double[] {0.22222224, 0.22222224, 0.22222224,
-				0.0, 0.0,
-				0.03703704, 0.03703704, 0.03703704,
-				0.03703704, 0.03703704, 0.03703704};
+		double[] lambdas_clado_stash = new double[] {birth_rate, symp_prob*birth_rate, symp_prob*birth_rate,
+				j_prob*birth_rate, j_prob*birth_rate,
+				(double)1/6*birth_rate, (double)1/6*birth_rate, (double)1/6*birth_rate,
+				(double)1/6*birth_rate, (double)1/6*birth_rate, (double)1/6*birth_rate};
+//		double[] lambdas_clado_stash = new double[] {0.22222224, 0.22222224, 0.22222224,
+//				0.0, 0.0,
+//				0.03703704, 0.03703704, 0.03703704,
+//				0.03703704, 0.03703704, 0.03703704};
 		int[][] cladogenetic_events = {{1,1,1}, {2,2,2}, {3,3,3},
 				{2,2,3}, {3,2,3},
 				{4,2,4}, {4,3,4}, {4,2,3},
@@ -52,22 +52,22 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		Arrays.fill(lambda, birth_rate);
 		
 		InstantaneousRateMatrix Q = new InstantaneousRateMatrix(num_states);
-		Q.setCell(0, 0, 1.00); // q11 (from null to null)
+//		Q.setCell(0, 0, 1.00); // q11 (from null to null)
 		Q.setCell(0, 1, 0.00); // q12 (from null)
 		Q.setCell(0, 2, 0.00); // q13 (from null)
 		Q.setCell(0, 3, 0.00); // q14 (from null)
 		Q.setCell(1, 0, 0.01); // q21 (to null = extinction)
-		Q.setCell(1, 1, 0.98); // q22 (check later w/ Nick)
+//		Q.setCell(1, 1, 0.98); // q22 (check later w/ Nick)
 		Q.setCell(1, 2, 0.00); // q23
 		Q.setCell(1, 3, 0.01); // q24
 		Q.setCell(2, 0, 0.01); // q31
 		Q.setCell(2, 1, 0.00); // q32
-		Q.setCell(2, 2, 0.98); // q33 (check later w/ Nick)
+//		Q.setCell(2, 2, 0.98); // q33 (check later w/ Nick)
 		Q.setCell(2, 3, 0.01); // q34
 		Q.setCell(3, 0, 0.00); // q41
 		Q.setCell(3, 1, 0.01); // q42
 		Q.setCell(3, 2, 0.01); // q43
-		Q.setCell(3, 3, 0.98); // q44 (check later w/ Nick)
+//		Q.setCell(3, 3, 0.00); // q44 (check later w/ Nick)
 		Q.printMatrix();
 		
 //		double[] pi_es = new double[num_states+1];
@@ -82,7 +82,7 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		
 		System.out.println("Pi is: " + Arrays.toString(pi));
 		
-		String tree_str = "(((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0):1.0,Orang:3.0);";
+		String tree_str = "(((Human:0.5,Chimp:0.5):0.5,Gorilla:1.0):0.5,Orang:1.5);";
         TreeParser my_tree = new TreeParser(tree_str, false, false, true, 0); // true b/c species are labelled, offset=0
         Node root = my_tree.getRoot();
         

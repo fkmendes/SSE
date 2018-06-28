@@ -1,5 +1,6 @@
 package biogeo;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
@@ -68,8 +69,14 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 				
 				// for each event, grab respective sp rate (lambda) and keep adding	
 				for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {
-					double ith_lambda = entry.getValue();
-					lambda_sum += ith_lambda;
+					int[] states = entry.getKey();
+					double this_lambda = entry.getValue();
+					
+					if (i == (states[0]-1)) {
+						// System.out.println("Matched " + Double.toString(this_lambda));
+						lambda_sum += this_lambda;
+					}
+					// else { System.out.println("Did not match " + Double.toString(this_lambda)); }
 				}
 			}
 			
@@ -97,12 +104,12 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	        if (incorporate_cladogenesis == true) {
 		        for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {	
 					int[] states = entry.getKey();
-					int j = states[1];
-					int k = states[2];
+					int j = states[1]-1;
+					int k = states[2]-1;
 		        	double this_lambda = entry.getValue();
 		        	
 		        	// if parent state (range) is the same as current (ith) state
-		        	if (i == states[0]) {
+		        	if (i == (states[0]-1)) {
 	            		dxdt[i] += this_lambda * safe_x[j] * safe_x[k];
 	            	}
 		        }
@@ -132,12 +139,12 @@ public class SSEODE implements FirstOrderDifferentialEquations {
             if (incorporate_cladogenesis == true) {
 	            for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {
 	            	int[] states = entry.getKey();
-					int j = states[1];
-					int k = states[2];
+					int j = states[1]-1;
+					int k = states[2]-1;
 	            	double this_lambda = entry.getValue();
 	            	
 	            	// if parent state (range) is the same as current (ith) state
-	            	if (i == states[0]) {
+	            	if (i == (states[0]-1)) {
 	            		double dnj_times_ek = safe_x[j + num_states] * safe_x[k]; // D_Nj * E_k
 	            		double dnk_times_ej = safe_x[k + num_states] * safe_x[j]; // D_Nj * E_k
 	            		dxdt[i + num_states] += this_lambda * (dnj_times_ek + dnk_times_ej);
