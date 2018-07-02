@@ -24,7 +24,7 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		trait_stash.printLksMap();
 		
 		double rate = 1.0;
-		double birth_rate = 0.2222222;
+		double birth_rate = 0.322222222222222;
 		double death_rate = 0.1; // DEC-like
 		
 		double symp_prob = 1.0; // DEC-like
@@ -33,18 +33,18 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		double[] mu = new double[] {death_rate, death_rate, death_rate, death_rate};
 
 		// 1/6 so it's DEC-like
-		double[] lambdas_clado_stash = new double[] {birth_rate, symp_prob*birth_rate, symp_prob*birth_rate,
-				j_prob*birth_rate, j_prob*birth_rate,
-				(double)1/6*birth_rate, (double)1/6*birth_rate, (double)1/6*birth_rate,
-				(double)1/6*birth_rate, (double)1/6*birth_rate, (double)1/6*birth_rate};
-//		double[] lambdas_clado_stash = new double[] {0.22222224, 0.22222224, 0.22222224,
+//		double[] lambdas_clado_stash = new double[] {birth_rate, symp_prob*birth_rate, symp_prob*birth_rate,
+//				j_prob*birth_rate, j_prob*birth_rate,
+//				(double)1/6*birth_rate, (double)1/6*birth_rate, (double)1/6*birth_rate,
+//				(double)1/6*birth_rate, (double)1/6*birth_rate, (double)1/6*birth_rate};
+		double[] lambdas_clado_stash = new double[] {0.32222224, 0.32222224, 0.32222224,
 //				0.0, 0.0,
-//				0.03703704, 0.03703704, 0.03703704,
-//				0.03703704, 0.03703704, 0.03703704};
+//				0.05370371, 0.05370371, 0.05370371,
+				0.05370371, 0.05370371, 0.05370371};
 		int[][] cladogenetic_events = {{1,1,1}, {2,2,2}, {3,3,3},
-				{2,2,3}, {3,2,3},
-				{4,2,4}, {4,3,4}, {4,2,3},
-				{4,4,2}, {4,4,3}, {4,3,2}};
+//				{2,2,3}, {3,2,3},
+//				{4,3,2}, {4,4,2}, {4,4,3},
+				{4,2,3}, {4,2,4}, {4,3,4}};
 		CladogeneticSpeciationRateStash clado_stash = new CladogeneticSpeciationRateStash(cladogenetic_events, lambdas_clado_stash);
 		clado_stash.printEventMap();
 		double[] lambda = new double[num_states];
@@ -77,12 +77,12 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		double[] pi_es = new double[num_states];
 		double[] pi_ds = new double[num_states];
 		Arrays.fill(pi_ds, 1.0/((double)(num_states)));
-		
+
 		double[] pi = ArrayUtils.addAll(pi_es, pi_ds); // 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25
 		
 		System.out.println("Pi is: " + Arrays.toString(pi));
 		
-		String tree_str = "(((Human:0.5,Chimp:0.5):0.5,Gorilla:1.0):0.5,Orang:1.5);";
+		String tree_str = "(((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0):1.0,Orang:3.0);";
         TreeParser my_tree = new TreeParser(tree_str, false, false, true, 0); // true b/c species are labelled, offset=0
         Node root = my_tree.getRoot();
         
