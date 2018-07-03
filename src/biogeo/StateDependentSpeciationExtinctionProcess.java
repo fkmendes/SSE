@@ -65,6 +65,7 @@ public class StateDependentSpeciationExtinctionProcess {
 		
 		normalizing_test = new double[tree.getNodeCount()];
 		normalizing_constants = new double[tree.getNodeCount()];
+		Arrays.fill(normalizing_constants, 1.0);
 		node_is_normalized = new boolean[tree.getNodeCount()][num_states*2]; // tips and internal nodes have true/false for normalization (when incorporating cladogenesis)
 		
 		final_prob = 0.0;
@@ -105,7 +106,8 @@ public class StateDependentSpeciationExtinctionProcess {
 			double[] right_lks = node_partial_normalized_lks_post_ode[right_idx].clone(); // at this point (pre-merging), right_lks has not yet been scaled
 			
 			double D_left_normalizing_constant = sum(left_lks, num_states, left_lks.length);
-			normalizing_constants[left_idx] = D_left_normalizing_constant; // does not match that of internal nodes when ClaSSE
+			normalizing_constants[left_idx] = D_left_normalizing_constant;
+			// (((H,C),G),O): does not match that of internal nodes when ClaSSE
 			// hc-gorilla in diversitree is 0.2225018, but here my sum is larger = 0.22279
 			// System.out.println("Left normalizing constant:" + Double.toString(D_left_normalizing_constant));
 			
@@ -143,7 +145,7 @@ public class StateDependentSpeciationExtinctionProcess {
 			// merge descendant lks
 			for (int i = 0; i < num_states; ++i) {
 				// E's
-//				node_partial_unnormalized_lks[node_idx][i] = (left_lks[i] + right_lks[i])/2; // filling out Es using avg of children
+				// node_partial_unnormalized_lks[node_idx][i] = (left_lks[i] + right_lks[i])/2; // filling out Es using avg of children
 				node_partial_normalized_lks_post_ode[node_idx][i] = (left_lks[i] + right_lks[i])/2; // filling out Es using avg of children
 				node_partial_normalized_lks_pre_ode[node_idx][i] = node_partial_normalized_lks_post_ode[node_idx][i]; // same for pre-ODE
 						
@@ -163,45 +165,35 @@ public class StateDependentSpeciationExtinctionProcess {
 							 System.out.println("Lambda_ijk is: " + Double.toString(speciation_rate));
 							
 							// D's pre-merging steps
-							 		
-							
-							// normalizing left child j
-//							checkAndNormalize(left_lks, D_left_normalizing_constant,
-//									left_idx, j, num_states);
-//							
-//							// normalizing left child k
-//							checkAndNormalize(left_lks, D_left_normalizing_constant,
-//									left_idx, k, num_states);
-//														
-//							// normalizing right child k
-//							checkAndNormalize(right_lks, D_right_normalizing_constant,
-//									right_idx, k, num_states);
-//							
-//							// normalizing right child j
-//							checkAndNormalize(right_lks, D_right_normalizing_constant,
-//									right_idx, j, num_states);
 							
 							/*
 							 * RevBayes version of Equation A3
 							 */
-							double likelihoods = left_lks[num_states + j] / normalizing_constants[left_idx] * 
-									right_lks[num_states + k] / normalizing_constants[right_idx];
-//							double likelihoods = left_lks[num_states + j] * right_lks[num_states + k];
-							like_sum += likelihoods * speciation_rate;
+//							double likelihoods = left_lks[num_states + j] / normalizing_constants[left_idx] * 
+//									right_lks[num_states + k] / normalizing_constants[right_idx];
+							// double likelihoods = left_lks[num_states + j] * right_lks[num_states + k];
+//							like_sum += likelihoods * speciation_rate;
 							
-//							System.out.println("Left lk array pre-scaling: " + Arrays.toString(left_lks));
-//							System.out.println("Left j: " + Double.toString(left_lks[num_states + j]) + " Right k: " + Double.toString(right_lks[num_states + k])
-//							+ " sp rate: " + Double.toString(speciation_rate));
+							System.out.println("Left lk array pre-scaling: " + Arrays.toString(left_lks));
+							System.out.println("Right lk array pre-scaling: " + Arrays.toString(right_lks));
+							System.out.println("Left j: " + Double.toString(left_lks[num_states + j]) + "\nRight k: " + Double.toString(right_lks[num_states + k]));
+							System.out.println("Left k: " + Double.toString(left_lks[num_states + k]) + "\nRight j: " + Double.toString(right_lks[num_states + j]));
+							System.out.println("Left scale factor: " + Double.toString(normalizing_constants[left_idx]) + "\nRight scale factor: " + Double.toString(normalizing_constants[right_idx]));
+							System.out.println("Normalized left j: " + Double.toString(left_lks[num_states + j]/normalizing_constants[left_idx]) + "\nNormalized right k: " + Double.toString(right_lks[num_states + k]/normalizing_constants[right_idx]));
+							System.out.println("Normalized left k: " + Double.toString(left_lks[num_states + k]/normalizing_constants[left_idx]) + "\nNormalized right j: " + Double.toString(right_lks[num_states + j]/normalizing_constants[right_idx]));
 
 							/*
 							 * Equation A3
 							 */
-//							double dnj_dmk = node_partial_normalized_lks_post_ode[left_idx][num_states + j] *
-//									node_partial_normalized_lks_post_ode[right_idx][num_states + k];
-//							double dnk_dmj = node_partial_normalized_lks_post_ode[left_idx][num_states + k] *
-//									node_partial_normalized_lks_post_ode[right_idx][num_states + j];
-//							double dnj_dmk_plus_dnk_dmj = dnj_dmk + dnk_dmj;
-//							like_sum += 0.5 * dnj_dmk_plus_dnk_dmj * speciation_rate;
+							double dnj_dmk = (left_lks[num_states + j] / normalizing_constants[left_idx]) *
+									(right_lks[num_states + k] / normalizing_constants[right_idx]);
+							System.out.println("Dnj * Dmk " + Double.toString(dnj_dmk));
+							double dnk_dmj = (left_lks[num_states + k] / normalizing_constants[left_idx]) *
+									(right_lks[num_states + j] / normalizing_constants[right_idx]);
+							System.out.println("Dnk * Dmj " + Double.toString(dnk_dmj));
+							double dnj_dmk_plus_dnk_dmj = dnj_dmk + dnk_dmj;
+							like_sum += 0.5 * dnj_dmk_plus_dnk_dmj * speciation_rate;
+							System.out.println("Current normalized likelihood sum: " + Double.toString(like_sum));
 						}
 					}
 
@@ -211,6 +203,7 @@ public class StateDependentSpeciationExtinctionProcess {
 					// finalizing merging for state Di
 					node_partial_normalized_lks_post_ode[node_idx][num_states + i] = like_sum;
 					node_partial_normalized_lks_pre_ode[node_idx][num_states + i] = node_partial_normalized_lks_post_ode[node_idx][num_states + i]; // this is a double, so no deep copy necessary
+					// so pre_ode for internal nodes contains post-merging, but before ODE of 
 				}
 				
 				// merging w/o cladogenetic component
