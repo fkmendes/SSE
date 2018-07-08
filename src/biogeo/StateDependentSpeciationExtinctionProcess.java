@@ -6,9 +6,14 @@ import java.util.HashMap;
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
 
+import beast.core.Citation;
+import beast.core.Description;
 import beast.evolution.tree.*;
 import beast.util.TreeParser;
 
+@Description("Cladogenetic State change Speciation and Extinction (ClaSSE) model")
+@Citation(value="Goldberg EE, Igic B (2012) Tempo and mode in plant breeding system evolution. Evolution 16(12):3701-3709",
+year=2012, firstAuthorSurname="Goldberg", DOI="10.1111/j.1558-5646.2012.01730.x")
 public class StateDependentSpeciationExtinctionProcess {
 
 	// input
