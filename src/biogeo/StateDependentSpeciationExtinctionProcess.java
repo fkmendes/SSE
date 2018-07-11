@@ -2,22 +2,33 @@ package biogeo;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
 
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
 
+import beast.core.BEASTObject;
 import beast.core.Citation;
 import beast.core.Description;
+import beast.core.Distribution;
+import beast.core.Input;
+import beast.core.Input.Validate;
+import beast.core.State;
+import beast.core.parameter.RealParameter;
 import beast.evolution.tree.*;
 import beast.util.TreeParser;
 
 @Description("Cladogenetic State change Speciation and Extinction (ClaSSE) model")
 @Citation(value="Goldberg EE, Igic B (2012) Tempo and mode in plant breeding system evolution. Evolution 16(12):3701-3709",
 year=2012, firstAuthorSurname="Goldberg", DOI="10.1111/j.1558-5646.2012.01730.x")
-public class StateDependentSpeciationExtinctionProcess {
+public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
+	public Input<RealParameter> mymu = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
+	
 	// input
 	private double[] lambda;
+//	private RealParameter mu;
 	private double[] mu;
 	private double[] pi; // root eq freqs
 	private int numStates;
@@ -67,7 +78,18 @@ public class StateDependentSpeciationExtinctionProcess {
 		finalLk = 0.0;
 		finalLogLk = 0.0;
 	}
-
+	
+//	@Override
+//	public void initAndValidate() {
+//		// TODO Auto-generated method stub
+//		// Everything inside the constructor goes here
+//		// And any validation code (check that sizes of parameter arrays match the number of states)
+//		
+//		super.initAndValidate();
+//		
+//		this.mu = mymu.get();
+//	}
+	
 	public double getLogLk() {
 		return finalLogLk;
 	}
@@ -289,5 +311,23 @@ public class StateDependentSpeciationExtinctionProcess {
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public List<String> getArguments() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<String> getConditions() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void sample(State state, Random random) {
+		// TODO Auto-generated method stub
+		
 	}
 }
