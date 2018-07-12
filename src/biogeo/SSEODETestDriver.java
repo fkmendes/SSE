@@ -19,12 +19,9 @@ public class SSEODETestDriver {
 		double[] lambda = new double[] {0.222222222, 0.222222222};
 		double[] mu = new double[] {0.0, 0.0}; // pure birth
 		
-		InstantaneousRateMatrix Q = new InstantaneousRateMatrix(num_states);
-		Q.setCell(0, 0, 1.0);
-		Q.setCell(1, 1, 1.0);
-		Q.setCell(0, 1, 0.0);
-		Q.setCell(1, 0, 0.0);
-		
+		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
+		irm.initByName("Number of states", num_states, "Flat Q matrix", "1.0 0.0 1.0 0.0");
+
 		/* testing other values */
 		// double[] mu = new double[] {0.1, 0.1}; // testing other values
 		// Q.setCell(0, 0, 0.9); 
@@ -50,7 +47,7 @@ public class SSEODETestDriver {
 		FirstOrderIntegrator dp853 = new 
 				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
 		
-		SSEODE ode = new SSEODE(mu, Q, 1.0, false); // incorporate_cladogenesis = false (BiSSE, or MuSSE)
+		SSEODE ode = new SSEODE(mu, irm, 1.0, false); // incorporate_cladogenesis = false (BiSSE, or MuSSE)
 		ode.setSpeciationRates(lambda);
 		
 		// running

@@ -1,34 +1,49 @@
 package biogeo;
 
-public class InstantaneousRateMatrix {
+import beast.core.CalculationNode;
+import beast.core.Input;
+import beast.core.parameter.RealParameter;
 
-	int num_states;
-	double[][] mat;
+public class InstantaneousRateMatrix extends CalculationNode {
+
+	final public Input<Integer> NstatesInput = new Input<>("NumberOfStates", "How many states or geographical ranges can affect speciation and extinction.");
+	final public Input<RealParameter> FlatQmatrixInput = new Input<>("FlatQMatrix", "Array (matrix whose rows were pasted) containing the instantaneous transition rate between character states.");
 	
-	// ctor
-	public InstantaneousRateMatrix(int num_states) {
-		this.num_states = num_states;
-		mat = new double[num_states][num_states];
+	private int numberOfStates;
+	private RealParameter Q;
+	
+	@Override
+	public void initAndValidate() {
+		numberOfStates = NstatesInput.get();
+		Q = FlatQmatrixInput.get();
 	}
 	
+//	// ctor
+//	public InstantaneousRateMatrix(int num_states) {
+//		this.num_states = num_states;
+//		mat = new double[num_states][num_states];
+//	}
+	
 	public void setCell(int from, int to, double prob) {
-		mat[from][to] = prob;
+		Q.setMatrixValue(from, to, prob);
+//		q[from][to] = prob;
 	}
 
 	// getters
 	public int getNumStates() {
-		return num_states; // do I need 'this'?
+		return numberOfStates; // do I need 'this'?
 	}
 	
 	public double getCell(int from, int to, double rate) {
-		return mat[from][to] * rate;
+		return Q.getMatrixValue(from, to) * rate;
+//		return q[from][to] * rate;
 	}
 	
 	// helper
 	public void printMatrix() {
-		for (int i = 0; i < num_states; ++i) {
-			for (int j = 0; j < num_states; ++j) {
-				System.out.print(mat[i][j] + " ");
+		for (int i = 0; i < numberOfStates; ++i) {
+			for (int j = 0; j < numberOfStates; ++j) {
+				System.out.print(Double.toString(Q.getMatrixValue(i, j)) + " ");
 			}
 			System.out.println();
 		}
