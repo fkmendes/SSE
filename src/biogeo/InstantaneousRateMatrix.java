@@ -16,27 +16,28 @@ public class InstantaneousRateMatrix extends CalculationNode {
 	public void initAndValidate() {
 		numberOfStates = NstatesInput.get();
 		Q = FlatQmatrixInput.get();
+		Q.initByName("minordimension", numberOfStates);
 	}
 	
-//	// ctor
-//	public InstantaneousRateMatrix(int num_states) {
-//		this.num_states = num_states;
-//		mat = new double[num_states][num_states];
-//	}
+    //	// ctor
+    //	public InstantaneousRateMatrix(int num_states) {
+    //		this.num_states = num_states;
+    //		mat = new double[num_states][num_states];
+    //	}
 	
 	public void setCell(int from, int to, double prob) {
 		Q.setMatrixValue(from, to, prob);
-//		q[from][to] = prob;
+        // q[from][to] = prob;
 	}
 
 	// getters
 	public int getNumStates() {
-		return numberOfStates; // do I need 'this'?
+		return numberOfStates;
 	}
 	
 	public double getCell(int from, int to, double rate) {
 		return Q.getMatrixValue(from, to) * rate;
-//		return q[from][to] * rate;
+        // return q[from][to] * rate;
 	}
 	
 	// helper

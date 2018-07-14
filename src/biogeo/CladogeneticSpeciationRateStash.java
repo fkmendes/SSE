@@ -16,11 +16,13 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 	final public Input<RealParameter> sympatricRateInput = new Input<>("SympatricRate", "Speciation rate for sympatric event.");
 	final public Input<RealParameter> subSympatricRateInput = new Input<>("SubsympatricRate", "Speciation rate for subsympatric event.");
 	final public Input<RealParameter> vicariantRateInput = new Input<>("VicariantRate", "Speciation rate for vicariant event.");
+	final public Input<RealParameter> jumpRateInput = new Input<>("JumpRate", "Speciation rate for jump dispersal event.");
 	
 //	private int[][] cladogeneticEvents;
 	private double sympatricRate;
 	private double subSympatricRate;
 	private double vicariantRate;
+	private double jumpRate;
 	private HashMap<int[], Double> eventMap = new HashMap<int[], Double>(); // ctor populates this
 	
 	@Override
@@ -28,6 +30,7 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 		sympatricRate = sympatricRateInput.get().getValue();
 		subSympatricRate = subSympatricRateInput.get().getValue();
 		vicariantRate = vicariantRateInput.get().getValue();
+		jumpRate = jumpRateInput.get().getValue();
 		
 		List<CladoTriplet> cladoTripletList = new ArrayList<>();
 		cladoTripletList = cladogeneticEventsInput.get();
@@ -46,6 +49,9 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 			case VICARIANCE:
 				eventMap.put(cladogeneticEvent, vicariantRate);
 				break;
+			case JUMPDISPERSAL:
+				eventMap.put(cladogeneticEvent, jumpRate);
+				break;			
 			}
 		}
 	}

@@ -9,8 +9,8 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 
 	private int num_states; // ctor populates
 	private double rate; // ctor populates
-	private double[] mu; // ctor arg
-	private double[] lambda; // ctor arg
+	private Double[] mu; // ctor arg
+	private Double[] lambda; // ctor arg
 	private InstantaneousRateMatrix Q; // ctor arg
 	private boolean incorporate_cladogenesis; // ctor arg
 	private HashMap<int[], Double> event_map; // setter 
@@ -19,7 +19,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	 * Constructor
 	 * Speciation rates and event map are set independently so more or less general models can use this class
 	 */
-	public SSEODE(double[] mu, InstantaneousRateMatrix Q, double rate, boolean incorporate_cladogenesis) {
+	public SSEODE(Double[] mu, InstantaneousRateMatrix Q, double rate, boolean incorporate_cladogenesis) {
 		this.mu = mu;
 		this.Q = Q;
 		this.rate = rate;
@@ -29,7 +29,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	}
 
 	// setters and getters
-	public void setSpeciationRates(double[] speciation_rates) {
+	public void setSpeciationRates(Double[] speciation_rates) {
 		lambda = speciation_rates;
 	}
 	

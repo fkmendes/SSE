@@ -14,33 +14,19 @@ public class SSEODETestDriver {
 	public static void main(String[] args) {
 		
 		// initializing parameter values
-		int num_states = 2; // BiSSE
-		String[] sp_names = new String[] { "Human" };
-		double[] lambda = new double[] {0.222222222, 0.222222222};
-		double[] mu = new double[] {0.0, 0.0}; // pure birth
+		int numStates = 2; // BiSSE
+		String[] spNames = new String[] { "Human" };
+		Double[] lambda = new Double[] {0.222222222, 0.222222222};
+		Double[] mu = new Double[] {0.0, 0.0}; // pure birth
 		
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("Number of states", num_states, "Flat Q matrix", "1.0 0.0 1.0 0.0");
-
-		/* testing other values */
-		// double[] mu = new double[] {0.1, 0.1}; // testing other values
-		// Q.setCell(0, 0, 0.9); 
-		// Q.setCell(1, 1, 0.9);
-		// Q.setCell(0, 1, 0.1);
-		// Q.setCell(1, 0, 0.1);
+		irm.initByName("NumberOfStates", numStates, "FlatQMatrix", "0.0 0.9 0.0 0.9");
 		
-		// Q.printMatrix(); // checking Q
-		
-		// StateStash state_stash = new StateStash(num_states, sp_names);
-		// state_stash.setSpStateValue("Human", "1");
-		// state_stash.printLksMap();
-		// double[] y = state_stash.getSpLk("Human"); // e0t = 0.0, e1t = 0.0, d0t = 0.0, d1t = 1.0
-		
-		List<Taxon> taxa_list = Taxon.createTaxonList(Arrays.asList(sp_names));
-		TaxonSet taxon_set = new TaxonSet(taxa_list);
-		TraitStash trait_stash = new TraitStash(num_states);
-		trait_stash.initByName("taxa", taxon_set, "value", "Human=2");
-		double[] y = trait_stash.getSpLks("Human");
+		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
+		TaxonSet taxonSet = new TaxonSet(taxaList);
+		TraitStash traitStash = new TraitStash(numStates);
+		traitStash.initByName("taxa", taxonSet, "value", "Human=2");
+		double[] y = traitStash.getSpLks("Human");
 		// double[] y = new double[] { 0.0, 0.0, 0.0, 1.0 };
 		
 		// initializing integrator and ODE
@@ -58,5 +44,4 @@ public class SSEODETestDriver {
 			System.out.println("Conditions at time " + end + ": " + Arrays.toString(y));
 		}
 	}
-
 }

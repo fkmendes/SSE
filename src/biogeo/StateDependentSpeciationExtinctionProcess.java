@@ -24,21 +24,27 @@ import beast.util.TreeParser;
 year=2012, firstAuthorSurname="Goldberg", DOI="10.1111/j.1558-5646.2012.01730.x")
 public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
-	public Input<RealParameter> mymu = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
+	final public Input<TreeParser> treeParserInput = new Input<>("TreeParser", "TreeParser object containing tree.", Validate.REQUIRED);
+	final public Input<TraitStash> traitStashInput = new Input<>("TraitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
+	final public Input<InstantaneousRateMatrix> irmInput = new Input<>("InstantaneousRateMatrix", "InstantaneousRateMatrix object containing anagenenetic rates.", Validate.REQUIRED);
+	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("CladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.", Validate.OPTIONAL);
+	final public Input<RealParameter> lambdaInput = new Input<>("Lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.OPTIONAL);
+	final public Input<RealParameter> muInput = new Input<>("Mu", "Death rates for each state.", Validate.REQUIRED);
+	final public Input<RealParameter> piInput = new Input<>("Pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
+	final public Input<Boolean> cladoFlagInput = new Input<>("IncorporateCladogenesis", "Whether or not to incorporate cladogenetic events.", Validate.REQUIRED);
 	
 	// input
-	private double[] lambda;
-//	private RealParameter mu;
-	private double[] mu;
-	private double[] pi; // root eq freqs
-	private int numStates;
+	private TreeParser tree;
 	private TraitStash traitStash;
-	private CladogeneticSpeciationRateStash cladoStash;
 	private InstantaneousRateMatrix Q;
+	private CladogeneticSpeciationRateStash cladoStash;
+	private Double[] lambda;
+	private Double[] mu;
+	private Double[] pi; // root eq freqs
+	private int numStates;
 	private double rate;
 	private double dt; // time slice size (ctor populates)
 	private int numTimeSlices;
-	
 	private boolean incorporateCladogenesis;
 	
 	// members used for lk computation
@@ -49,49 +55,69 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	double finalLk;
 	int rootIdx;
 	
-	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, double[] pi, int numStates,
-			TraitStash traitStash, CladogeneticSpeciationRateStash clado_stash, InstantaneousRateMatrix q, double rate,
-			boolean incorporateCladogenesis) {
-		this.lambda = lambda;
-		this.mu = mu;
-		this.pi = pi;
-		this.numStates = numStates;
-		this.traitStash = traitStash;
-		this.cladoStash = clado_stash;
-		Q = q;
-		this.rate = rate;
-		this.incorporateCladogenesis = incorporateCladogenesis;
+	@Override
+	public void initAndValidate() {		
+		super.initAndValidate();
+		tree = treeParserInput.get();
+		traitStash = traitStashInput.get();
+		Q = irmInput.get();
+		cladoStash = cladoStashInput.get();
+		mu = muInput.get().getValues();
+		pi = piInput.get().getValues();
+		numStates = Q.getNumStates();
+		rate = 1.0;
+		incorporateCladogenesis = cladoFlagInput.get();
 		
+		// ode-related
 		numTimeSlices = 1;
 		double rootAge = tree.getRoot().getHeight();
 		dt = rootAge / ((double) (numTimeSlices * 50));
-		// System.out.println("Root age (height): " + Double.toString(rootAge));
-		// System.out.println("dt: " + Double.toString(dt));
 		
-		// initializing members for lk computation
+		// likelihood-related
 		nodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; // tips have initialization lks, internal nodes (and root) just after merge
 		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
-		
-		scalingConstants = new double[tree.getNodeCount()];
-		Arrays.fill(scalingConstants, 1.0);
-		
+		scalingConstants = new double[tree.getNodeCount()]; // equivalent to diversitree's lq (but not in log-scale), these are used as denominators during the likelihood computation
+		Arrays.fill(scalingConstants, 1.0);		
 		finalLk = 0.0;
 		finalLogLk = 0.0;
 	}
 	
-//	@Override
-//	public void initAndValidate() {
-//		// TODO Auto-generated method stub
-//		// Everything inside the constructor goes here
-//		// And any validation code (check that sizes of parameter arrays match the number of states)
+//	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, double[] pi, int numStates,
+//			TraitStash traitStash, CladogeneticSpeciationRateStash clado_stash, InstantaneousRateMatrix q, double rate,
+//			boolean incorporateCladogenesis) {
+//		this.lambda = lambda;
+//		this.mu = mu;
+//		this.pi = pi;
+//		this.numStates = numStates;
+//		this.traitStash = traitStash;
+//		this.cladoStash = clado_stash;
+//		Q = q;
+//		this.rate = rate;
+//		this.incorporateCladogenesis = incorporateCladogenesis;
 //		
-//		super.initAndValidate();
+//		numTimeSlices = 1;
+//		double rootAge = tree.getRoot().getHeight();
+//		dt = rootAge / ((double) (numTimeSlices * 50));
+//		// System.out.println("Root age (height): " + Double.toString(rootAge));
+//		// System.out.println("dt: " + Double.toString(dt));
 //		
-//		this.mu = mymu.get();
+//		// initializing members for lk computation
+//		nodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; // tips have initialization lks, internal nodes (and root) just after merge
+//		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
+//		
+//		scalingConstants = new double[tree.getNodeCount()];
+//		Arrays.fill(scalingConstants, 1.0);
+//		
+//		finalLk = 0.0;
+//		finalLogLk = 0.0;
 //	}
 	
 	public double getLogLk() {
 		return finalLogLk;
+	}
+	
+	public void computeLk() {
+		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
 	}
 	
 	public void computeNodeLk(Node node, int nodeIdx) {		
@@ -127,7 +153,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			scalingConstants[rightIdx] = dRightScalingConstant;
 			
 			HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
-			double[] speciationRates = new double[numStates];
+			Double[] speciationRates = new Double[numStates];
 			if (incorporateCladogenesis == true) {
 				eventMap = cladoStash.getEventMap();
 			}

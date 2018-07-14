@@ -4,8 +4,8 @@ public class InstantaneousRateMatrixTestDriver {
 
 	public static void main(String[] args) {
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("NumberOfStates", 2, "FlatQMatrix", "0.0 0.9 0.0 0.9");
-	    irm.setCell(1, 1, 0.8);
+		String flatQMatrixString = "1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0";
+		irm.initByName("NumberOfStates", 3, "FlatQMatrix", flatQMatrixString);
 		irm.printMatrix();
 		
 //		int num_states = 4;

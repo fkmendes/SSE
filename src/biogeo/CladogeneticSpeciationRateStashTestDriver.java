@@ -1,6 +1,7 @@
 package biogeo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import beast.core.parameter.RealParameter;
@@ -22,21 +23,23 @@ public class CladogeneticSpeciationRateStashTestDriver {
 				"SpeciationType", speciationType.SUBSYMPATRY);
 		
 		List<CladoTriplet> cladoTripletList = new ArrayList<CladoTriplet>();
-		cladoTripletList.add(sTriplet);
-		cladoTripletList.add(ssTriplet);
+		Collections.addAll(cladoTripletList, sTriplet, ssTriplet);
 		
 		Double[] sSpeciationRate = {0.1};
 		Double[] ssSpeciationRate = {0.2};
 		Double[] vSpeciationRate = {0.0};
+		Double[] jSpeciationRate = {0.0};
 		RealParameter sympatricSpeciationRate = new RealParameter(sSpeciationRate);
 		RealParameter subSympatricSpeciationRate = new RealParameter(ssSpeciationRate);
 		RealParameter vicariantSpeciationRate = new RealParameter(vSpeciationRate);
+		RealParameter jumpSpeciationRate = new RealParameter(jSpeciationRate);
 
 		CladogeneticSpeciationRateStash csrt = new CladogeneticSpeciationRateStash();
 		csrt.initByName("CladoTriplets", cladoTripletList,
 				"SympatricRate", sympatricSpeciationRate,
 				"SubsympatricRate", subSympatricSpeciationRate,
-				"VicariantRate", vicariantSpeciationRate);
+				"VicariantRate", vicariantSpeciationRate,
+				"JumpRate", jumpSpeciationRate);
 		csrt.printEventMap();
 		
 //		int[][] cladogenetic_events = {{2, 2, 1},{1, 1, 1}};
