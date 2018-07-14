@@ -6,7 +6,9 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="/home/binho/Documents/software/commons-math3-3.6.1/commons-math3-3.6.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/beast2"/>
+	<classpathentry kind="lib" path="/home/fkur465/Documents/programs/commons-math3-3.6.1/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="/home/fkur465/Documents/programs/commons-lang3-3.7/commons-lang3-3.7.jar"/>
+	<classpathentry kind="lib" path="/beast2/lib/antlr-runtime-4.7.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
