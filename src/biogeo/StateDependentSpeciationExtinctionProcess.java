@@ -8,7 +8,6 @@ import java.util.Random;
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
 
-import beast.core.BEASTObject;
 import beast.core.Citation;
 import beast.core.Description;
 import beast.core.Distribution;
@@ -61,12 +60,16 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		tree = treeParserInput.get();
 		traitStash = traitStashInput.get();
 		Q = irmInput.get();
-		cladoStash = cladoStashInput.get();
 		mu = muInput.get().getValues();
 		pi = piInput.get().getValues();
 		numStates = Q.getNumStates();
 		rate = 1.0;
 		incorporateCladogenesis = cladoFlagInput.get();
+		
+		if (incorporateCladogenesis == true) {
+			cladoStash = cladoStashInput.get();
+		}
+		else { lambda = lambdaInput.get().getValues(); }
 		
 		// ode-related
 		numTimeSlices = 1;
@@ -111,6 +114,14 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 //		finalLk = 0.0;
 //		finalLogLk = 0.0;
 //	}
+	
+	@Override
+	public double calculateLogP() {
+		// TODO Auto-generated method stub
+		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
+		logP = finalLogLk;
+		return logP;
+	}
 	
 	public double getLogLk() {
 		return finalLogLk;

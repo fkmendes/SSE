@@ -14,6 +14,7 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.util.TreeParser;
+import beast.util.XMLProducer;
 import biogeo.CladoTriplet.speciationType;
 
 public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
@@ -34,7 +35,6 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		double vicProb = 1.0 / 6.0;
 		double jProb = 0.0; // no jump dispersal
 		
-		double rate = 1.0;
 		double birthRate = 0.32222224;
 		double deathRate = 0.1; // DEC-like
 		
@@ -119,9 +119,6 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 //				{4,2,3}, {4,2,4}, {4,3,4}};
 //		CladogeneticSpeciationRateStash clado_stash = new CladogeneticSpeciationRateStash(cladogeneticEvents, lambdasCladoStash);
 //		clado_stash.printEventMap();
-		double[] lambda = new double[numStates];
-		Arrays.fill(lambda, birthRate);
-//		System.out.println("Lambdas: " + Arrays.toString(lambda));
 		
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
 		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
@@ -157,6 +154,9 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 //        		new StateDependentSpeciationExtinctionProcess(myTree, lambda, mu, pi, numStates,
 //        				traitStash, csrt, irm, rate, incorporateCladogenesis);
         sdsep.computeLk();
-//        sdsep.computeNodeLk(root, root.getNr());
+        
+        XMLProducer xmlp = new XMLProducer();
+        String xml = xmlp.toRawXML(sdsep);
+        System.out.println(xml);
 	}
 }
