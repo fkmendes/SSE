@@ -121,7 +121,7 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 //		clado_stash.printEventMap();
 		
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
+		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.1 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
 		irm.initByName("NumberOfStates", numStates, "FlatQMatrix", FlatQMatrixString);
 		irm.printMatrix();
 		
@@ -154,9 +154,5 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 //        		new StateDependentSpeciationExtinctionProcess(myTree, lambda, mu, pi, numStates,
 //        				traitStash, csrt, irm, rate, incorporateCladogenesis);
         sdsep.computeLk();
-        
-        XMLProducer xmlp = new XMLProducer();
-        String xml = xmlp.toRawXML(sdsep);
-        System.out.println(xml);
 	}
 }
