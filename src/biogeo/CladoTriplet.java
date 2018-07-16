@@ -8,7 +8,7 @@ public class CladoTriplet extends BEASTObject {
 	final public Input<Integer> parentStateInput = new Input<>("ParentState", "Character state of parent.");
 	final public Input<Integer> leftChildInput = new Input<>("LeftChildState", "Character state of left child.");
 	final public Input<Integer> rightChildInput = new Input<>("RightChildState", "Character state of right child.");	
-	final public Input<speciationType> speciationTypeInput = new Input<>("SpeciationType", "Speciation type (sympatric, subsympatric, vicariance).");
+	final public Input<speciationType> speciationTypeInput = new Input<>("SpeciationType", "Speciation type (sympatric, subsympatric, vicariance).", speciationType.SYMPATRY, speciationType.values());
 	
 	public enum speciationType { SYMPATRY, SUBSYMPATRY, VICARIANCE, JUMPDISPERSAL };
 	private int[] cladogeneticEvent;

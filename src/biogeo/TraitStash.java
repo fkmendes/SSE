@@ -19,6 +19,13 @@ public class TraitStash extends TraitSet {
 	private HashMap<String, double[]> spname_lks_map = new HashMap<String, double[]>(); // initialized by ctor
 	int num_states;
 	
+	public TraitStash() {
+		traitNameInput.setRule(Input.Validate.FORBIDDEN);
+		dateTimeFormatInput.setRule(Input.Validate.FORBIDDEN);
+		// TODO: this needs fixing!
+		num_states = 4;
+	}
+	
 	public TraitStash(int num_states) {
 		traitNameInput.setRule(Input.Validate.FORBIDDEN);
 		dateTimeFormatInput.setRule(Input.Validate.FORBIDDEN);
