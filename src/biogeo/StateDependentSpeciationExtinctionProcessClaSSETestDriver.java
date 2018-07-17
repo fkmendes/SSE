@@ -5,17 +5,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.ArrayUtils;
-
-import beast.core.Input;
-import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Node;
 import beast.util.TreeParser;
-import beast.util.XMLProducer;
 import biogeo.CladoTriplet.speciationType;
+import org.apache.commons.lang3.ArrayUtils;
 
 public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 	

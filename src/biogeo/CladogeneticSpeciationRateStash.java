@@ -7,6 +7,7 @@ import java.util.List;
 
 import beast.core.CalculationNode;
 import beast.core.Input;
+import beast.core.parameter.Parameter;
 import beast.core.parameter.RealParameter;
 import biogeo.CladoTriplet.speciationType;
 
@@ -23,39 +24,54 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 	private double subSympatricRate;
 	private double vicariantRate;
 	private double jumpRate;
-	private HashMap<int[], Double> eventMap = new HashMap<int[], Double>(); // ctor populates this
+	private HashMap<int[], Double> eventMap = new HashMap<>(); // ctor populates this
+	private boolean stashClean = false;
 	
 	@Override
-	public void initAndValidate() {	
+	public void initAndValidate() {
+		populateStash();
+	}
+
+	public void populateStash() {
+
+		//Parameter sympatricRateParam = sympatricRateInput.get();
+
 		sympatricRate = sympatricRateInput.get().getValue();
 		subSympatricRate = subSympatricRateInput.get().getValue();
 		vicariantRate = vicariantRateInput.get().getValue();
 		jumpRate = jumpRateInput.get().getValue();
-		
-		List<CladoTriplet> cladoTripletList = new ArrayList<>();
-		cladoTripletList = cladogeneticEventsInput.get();
-		
+
+		List<CladoTriplet> cladoTripletList = cladogeneticEventsInput.get();
+
 		for (CladoTriplet cladoTriplet : cladoTripletList) {
 			int[] cladogeneticEvent = cladoTriplet.getCladogeneticEvent();
 			speciationType speciationEvent = cladoTriplet.getSpeciationEvent();
-			
+
 			switch (speciationEvent) {
-			case SYMPATRY:
-				eventMap.put(cladogeneticEvent, sympatricRate);
-				break;
-			case SUBSYMPATRY:
-				eventMap.put(cladogeneticEvent, subSympatricRate);
-				break;
-			case VICARIANCE:
-				eventMap.put(cladogeneticEvent, vicariantRate);
-				break;
-			case JUMPDISPERSAL:
-				eventMap.put(cladogeneticEvent, jumpRate);
-				break;			
+				case SYMPATRY:
+					eventMap.put(cladogeneticEvent, sympatricRate);
+					break;
+				case SUBSYMPATRY:
+					eventMap.put(cladogeneticEvent, subSympatricRate);
+					break;
+				case VICARIANCE:
+					eventMap.put(cladogeneticEvent, vicariantRate);
+					break;
+				case JUMPDISPERSAL:
+					eventMap.put(cladogeneticEvent, jumpRate);
+					break;
 			}
 		}
+		stashClean = true;
 	}
-	
+
+	protected boolean requiresRecalculation() {
+		stashClean = !(sympatricRateInput.get().somethingIsDirty() || subSympatricRateInput.get().somethingIsDirty() ||
+				vicariantRateInput.get().somethingIsDirty() || jumpRateInput.get().somethingIsDirty());
+		return stashClean;
+	}
+
+
 //	// ctor (populates event_map)
 //	public CladogeneticSpeciationRateStash(int[][] cladogenetic_events, double[] speciation_rates) {
 //		this.cladogeneticEvents = cladogenetic_events;
@@ -82,6 +98,9 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 	
 	// setters and getters
 	HashMap<int[], Double> getEventMap() {
+		if (!stashClean) {
+			populateStash();
+		}
 		return eventMap;
 	}
 	

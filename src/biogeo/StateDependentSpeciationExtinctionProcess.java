@@ -66,7 +66,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		rate = 1.0;
 		incorporateCladogenesis = cladoFlagInput.get();
 		
-		if (incorporateCladogenesis == true) {
+		if (incorporateCladogenesis) {
 			cladoStash = cladoStashInput.get();
 		}
 		else { lambda = lambdaInput.get().getValues(); }
@@ -117,6 +117,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	
 	@Override
 	public double calculateLogP() {
+
 		// TODO Auto-generated method stub
 		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
 		logP = finalLogLk;
@@ -128,11 +129,13 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 	
 	public void computeLk() {
+
+		HashMap<int[], Double> event_map = cladoStash.getEventMap();
 		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
 	}
 	
-	public void computeNodeLk(Node node, int nodeIdx) {		
-		if (node.isLeaf() == true) {
+	public void computeNodeLk(Node node, int nodeIdx) {
+		if (node.isLeaf()) {
 			nodePartialScaledLksPreOde[nodeIdx] = traitStash.getSpLks(node.getID());
 			nodePartialScaledLksPostOde[nodeIdx] = traitStash.getSpLks(node.getID()).clone();
 			// System.out.println("Leaf " + node.getID() + " has node idx: " + node.getNr());
@@ -165,7 +168,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			
 			HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
 			Double[] speciationRates = new Double[numStates];
-			if (incorporateCladogenesis == true) {
+			if (incorporateCladogenesis) {
 				eventMap = cladoStash.getEventMap();
 			}
 			
@@ -181,7 +184,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				nodePartialScaledLksPreOde[nodeIdx][i] = nodePartialScaledLksPostOde[nodeIdx][i]; // same for pre-ODE
 						
 				// merging with cladogenetic component
-				if (incorporateCladogenesis == true) {
+				if (incorporateCladogenesis) {
 					double likeSum = 0.0;
 					
 					for (HashMap.Entry<int[], Double> entry: eventMap.entrySet()) {
@@ -261,7 +264,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		
 		// numerical integration is carried out for all branches starting at this node, up to its parent
 		// but if root, then no more numerical integration
-		if (node.isRoot() == false) {
+		if (!node.isRoot()) {
 			// we are going from present (begin) to past (end)
 			double beginAge = node.getHeight();
 			double endAge = node.getParent().getHeight();
@@ -287,12 +290,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		else {
 			int rootIdx = nodeIdx;
 			
-			for (int i = 0; i < nodePartialScaledLksPreOde.length; ++i) {
-				System.out.println("Pre-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPreOde[i]));
-			}
-			for (int i = 0; i < nodePartialScaledLksPostOde.length; ++i) {
-				System.out.println("Post-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPostOde[i]));
-			}
+//			for (int i = 0; i < nodePartialScaledLksPreOde.length; ++i) {
+//				System.out.println("Pre-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPreOde[i]));
+//			}
+//			for (int i = 0; i < nodePartialScaledLksPostOde.length; ++i) {
+//				System.out.println("Post-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPostOde[i]));
+//			}
 			
 			double prob = 0.0;
 			for (int i = 0; i < numStates; ++i) {
@@ -306,7 +309,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			// System.out.println("(Sum over states) Pi * lk of state = " + Double.toString(prob));
 			// System.out.println("Normalizing constants = " + Arrays.toString(scalingConstants));
 			// System.out.println("Lk: " + Double.toString(finalLk));
-			System.out.println("LnLk: " + Double.toString(finalLogLk));
+			//System.out.println("LnLk: " + Double.toString(finalLogLk));
 		}
 	}
 	
@@ -315,8 +318,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
 		SSEODE ode = new SSEODE(mu, Q, rate, incorporateCladogenesis);
 		
-		if (incorporateCladogenesis == true) {
-			HashMap<int[], Double> event_map = cladoStash.getEventMap();			
+		if (incorporateCladogenesis) {
+			HashMap<int[], Double> event_map = cladoStash.getEventMap();
+
 			ode.setEventMap(event_map);
 			dp853.integrate(ode, beginAge, likelihoods, endAge, likelihoods);
 			// System.out.println("Conditions at time " + end_age + ": " + Arrays.toString(likelihoods));

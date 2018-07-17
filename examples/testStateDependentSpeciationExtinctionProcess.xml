@@ -5,8 +5,8 @@
 
 
 
-<run id="mcmc" spec="MCMC" chainLength="10000000">
-    <state id="state" storeEvery="5000">
+<run id="mcmc" spec="MCMC" chainLength="1000">
+    <state id="state" storeEvery="500">
         <stateNode idref="SympatricRate"/>
         <stateNode idref="SubsympatricRate"/>
         <stateNode idref="VicariantRate"/>
@@ -84,7 +84,7 @@
 
     <!-- TODO: add operators for Mu and Q -->
 
-    <logger id="tracelog" fileName="StateDependentSpeciationExtinctionProcess.log" logEvery="1000" model="@posterior" sanitiseHeaders="true" sort="smart">
+    <logger id="tracelog" fileName="StateDependentSpeciationExtinctionProcess.log" logEvery="100" model="@posterior" sanitiseHeaders="true" sort="smart">
         <log idref="posterior"/>
         <log idref="likelihood"/>
         <log idref="prior"/>
@@ -95,14 +95,14 @@
 	    <!-- TODO: add loggers for Mu and Q -->
     </logger>
 
-    <logger id="screenlog" logEvery="1000">
+    <logger id="screenlog" logEvery="100">
         <log idref="posterior"/>
         <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
         <log idref="likelihood"/>
         <log idref="prior"/>
     </logger>
 
-    <logger id="treelog.t:firsthalf" fileName="StateDependentSpeciationExtinctionProcess.trees" logEvery="1000" mode="tree">
+    <logger id="treelog.t:firsthalf" fileName="StateDependentSpeciationExtinctionProcess.trees" logEvery="100" mode="tree">
         <log id="TreeWithMetaDataLogger" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@TreeParser"/>
 	    <!-- TODO: add logging for internal states on the tree-->
     </logger>
