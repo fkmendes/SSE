@@ -118,6 +118,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	@Override
 	public double calculateLogP() {
 
+		muInput.get().getValues(mu);
+		piInput.get().getValues(pi);
+		if (!incorporateCladogenesis) { lambdaInput.get().getValues(lambda); }
+
 		// TODO Auto-generated method stub
 		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
 		logP = finalLogLk;
@@ -130,7 +134,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	
 	public void computeLk() {
 
-		HashMap<int[], Double> event_map = cladoStash.getEventMap();
 		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
 	}
 	
