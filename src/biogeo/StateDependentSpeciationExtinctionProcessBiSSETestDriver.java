@@ -63,6 +63,6 @@ public class StateDependentSpeciationExtinctionProcessBiSSETestDriver {
         		"IncorporateCladogenesis", incorporateCladogenesis
         		);
     	
-    	sdsep.computeLk();
+    	sdsep.calculateLogP();
 	}
 }

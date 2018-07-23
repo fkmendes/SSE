@@ -120,19 +120,15 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public double calculateLogP() {
 		muInput.get().getValues(mu); // every time this method is called, we need to update mu; instead of creating a new vector and assigning that to mu, we can just copy the contents of muInput into it (note that getValues is called with an argument here)
 		piInput.get().getValues(pi); // same as above
-		
+
 		if (!incorporateCladogenesis) { lambdaInput.get().getValues(lambda); }
 
-		computeLk();
+		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
 		logP = finalLogLk;
 		return logP;
 	}
-	
-	public void computeLk() {
-		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
-	}
-	
-	public void computeNodeLk(Node node, int nodeIdx) {
+
+	private void computeNodeLk(Node node, int nodeIdx) {
 		if (node.isLeaf()) {
 			nodePartialScaledLksPreOde[nodeIdx] = traitStash.getSpLks(node.getID());
 			nodePartialScaledLksPostOde[nodeIdx] = traitStash.getSpLks(node.getID()).clone();
@@ -313,7 +309,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 	}
 	
-	public void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge) {
+	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge) {
 		FirstOrderIntegrator dp853 = new 
 				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
 		SSEODE ode = new SSEODE(mu, Q, rate, incorporateCladogenesis);
@@ -334,12 +330,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			// System.out.println("Conditions at time " + end_age + ": " + Arrays.toString(likelihoods));
 		}
 	}
-	
-	// getter
-	public double getLogLk() {
-		return finalLogLk;
-	}
-	
+
 	// helper
 	public static double sum(double[] arr, int fromIdx, int toIdx) {
 		double result = 0;

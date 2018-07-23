@@ -24,7 +24,7 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 	private double vicariantRate;
 	private double jumpRate;
 	private HashMap<int[], Double> eventMap = new HashMap<>(); // ctor populates this
-	private boolean stashClean = false;
+	private boolean stashDirty = true;
 	
 	@Override
 	public void initAndValidate() {
@@ -59,18 +59,22 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 			}
 		}
 		
-		stashClean = true; // after re-population of stash, things are clean
+		stashDirty = false; // after re-population of stash, things are clean
 	}
 
 	protected boolean requiresRecalculation() {
-		stashClean = !(sympatricRateInput.get().somethingIsDirty() || subSympatricRateInput.get().somethingIsDirty() ||
-				vicariantRateInput.get().somethingIsDirty() || jumpRateInput.get().somethingIsDirty());
-		return stashClean;
+		stashDirty = true;
+		return super.requiresRecalculation();
 	}
-	
+
+	protected void restore() {
+		populateStash();
+		super.restore();
+	}
+
 	// setters and getters
 	HashMap<int[], Double> getEventMap() {
-		if (!stashClean) {
+		if (stashDirty) {
 			populateStash(); // only re-populate stash if some speciation rate was operated on
 		}
 		return eventMap;
