@@ -18,6 +18,7 @@
     <distribution id="posterior" spec="util.CompoundDistribution">   
 
         <distribution id="prior" spec="util.CompoundDistribution">        
+
             <distribution id="SympatricRatePrior" spec="beast.math.distributions.Prior" x="@SympatricRate"> 
             	<distr id="LogNormal.SympatricRate" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
             		<parameter name="M" value="-1.465125" estimate="false"/>
@@ -54,10 +55,7 @@
             </distribution>
             
             <distribution id="FlatQMatrixPrior" spec="beast.math.distributions.Prior" x="@FlatQMatrix"> 
-            	<distr id="LogNormal.FlatQMatrix" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
-            		<parameter name="M" value="-1.465125" estimate="false"/>
-            		<parameter name="S" value="1.0" estimate="false"/>
-            	</distr>
+            	<distr id="LogNormal.FlatQMatrix" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.01"/>
             </distribution>
         </distribution> <!-- END prior -->
         
@@ -77,7 +75,7 @@
 			    </TraitStash>
 
 			    <InstantaneousRateMatrix id="InstantaneousRateMatrix" spec="biogeo.InstantaneousRateMatrix" NumberOfStates="4">
-			        <parameter id="FlatQMatrix" dimension="16" lower="0.0" minordimension="4" name="FlatQMatrix" upper="0.0">0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.0</parameter>
+			        <parameter id="FlatQMatrix" dimension="16" lower="0.0" minordimension="4" name="FlatQMatrix" upper="1.0">0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.0</parameter>
 			    </InstantaneousRateMatrix>
 			
 			    <CladogeneticStash id="CladogeneticSpeciationRateStash" spec="biogeo.CladogeneticSpeciationRateStash">
@@ -92,7 +90,7 @@
 			        <SympatricRate id="SympatricRate" spec="parameter.RealParameter">0.32222224</SympatricRate>
 			        <SubsympatricRate id="SubsympatricRate" spec="parameter.RealParameter">0.05370370666666666</SubsympatricRate>
 			        <VicariantRate id="VicariantRate" spec="parameter.RealParameter">0.05370370666666666</VicariantRate>
-			        <JumpRate id="JumpRate" spec="parameter.RealParameter">0.0</JumpRate>
+			        <JumpRate id="JumpRate" spec="parameter.RealParameter">0.01</JumpRate>
 			    </CladogeneticStash>
 			
 			    <Mu id="Mu" dimension="4" spec="parameter.RealParameter">0.1 0.1 0.1 0.1</Mu>
