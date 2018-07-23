@@ -104,19 +104,11 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 				"SubsympatricRate", subSympatricSpeciationRate,
 				"VicariantRate", vicariantSpeciationRate,
 				"JumpRate", jumpSpeciationRate);
-		
-//		// 1/6 so it's DEC-like
-//		double[] lambdasCladoStash = new double[] {birthRate, sympProb*birthRate, sympProb*birthRate,
-//				jProb*birthRate, jProb*birthRate,
-//				(double)1/6*birthRate, (double)1/6*birthRate, (double)1/6*birthRate}; // the "rotated" version of these ones are unidentifiable and set to 0 (see Goldberg and Igic 2012)
-//		int[][] cladogeneticEvents = {{1,1,1}, {2,2,2}, {3,3,3},
-//				{2,2,3}, {3,2,3},
-//				{4,2,3}, {4,2,4}, {4,3,4}};
-//		CladogeneticSpeciationRateStash clado_stash = new CladogeneticSpeciationRateStash(cladogeneticEvents, lambdasCladoStash);
-//		clado_stash.printEventMap();
+		csrt.printEventMap();
 		
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.1 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
+		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
+		                           
 		irm.initByName("NumberOfStates", numStates, "FlatQMatrix", FlatQMatrixString);
 		irm.printMatrix();
 		
@@ -148,6 +140,7 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 //        StateDependentSpeciationExtinctionProcess sdsep = 
 //        		new StateDependentSpeciationExtinctionProcess(myTree, lambda, mu, pi, numStates,
 //        				traitStash, csrt, irm, rate, incorporateCladogenesis);
-        sdsep.computeLk();
+
+        System.out.println("Log-likelihood = " + Double.toString(sdsep.calculateLogP()));
 	}
 }

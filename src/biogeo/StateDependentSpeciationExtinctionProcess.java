@@ -43,6 +43,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	private int numStates;
 	private double rate;
 	private double dt; // time slice size (ctor populates)
+	private double rootAge;
 	private int numTimeSlices;
 	private boolean incorporateCladogenesis;
 	
@@ -73,7 +74,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		
 		// ode-related
 		numTimeSlices = 1;
-		double rootAge = tree.getRoot().getHeight();
+		rootAge = tree.getRoot().getHeight();
 		dt = rootAge / ((double) (numTimeSlices * 50));
 		
 		// likelihood-related
@@ -117,23 +118,17 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	
 	@Override
 	public double calculateLogP() {
-
-		muInput.get().getValues(mu);
-		piInput.get().getValues(pi);
+		muInput.get().getValues(mu); // every time this method is called, we need to update mu; instead of creating a new vector and assigning that to mu, we can just copy the contents of muInput into it (note that getValues is called with an argument here)
+		piInput.get().getValues(pi); // same as above
+		
 		if (!incorporateCladogenesis) { lambdaInput.get().getValues(lambda); }
 
-		// TODO Auto-generated method stub
-		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
+		computeLk();
 		logP = finalLogLk;
 		return logP;
 	}
 	
-	public double getLogLk() {
-		return finalLogLk;
-	}
-	
 	public void computeLk() {
-
 		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
 	}
 	
@@ -173,6 +168,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			Double[] speciationRates = new Double[numStates];
 			if (incorporateCladogenesis) {
 				eventMap = cladoStash.getEventMap();
+//				System.out.println("Event map inside computeNodeLk");
+//				System.out.println(new PrettyPrintHashMap<int[], Double>(eventMap));
 			}
 			
 			else {
@@ -293,12 +290,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		else {
 			int rootIdx = nodeIdx;
 			
-//			for (int i = 0; i < nodePartialScaledLksPreOde.length; ++i) {
-//				System.out.println("Pre-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPreOde[i]));
-//			}
-//			for (int i = 0; i < nodePartialScaledLksPostOde.length; ++i) {
-//				System.out.println("Post-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPostOde[i]));
-//			}
+			// for (int i = 0; i < nodePartialScaledLksPreOde.length; ++i) {
+			//     System.out.println("Pre-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPreOde[i]));
+			// }
+			// for (int i = 0; i < nodePartialScaledLksPostOde.length; ++i) {
+			//     System.out.println("Post-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPostOde[i]));
+			// }
 			
 			double prob = 0.0;
 			for (int i = 0; i < numStates; ++i) {
@@ -312,7 +309,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			// System.out.println("(Sum over states) Pi * lk of state = " + Double.toString(prob));
 			// System.out.println("Normalizing constants = " + Arrays.toString(scalingConstants));
 			// System.out.println("Lk: " + Double.toString(finalLk));
-			//System.out.println("LnLk: " + Double.toString(finalLogLk));
+			// System.out.println("LnLk: " + Double.toString(finalLogLk));
 		}
 	}
 	
@@ -322,9 +319,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		SSEODE ode = new SSEODE(mu, Q, rate, incorporateCladogenesis);
 		
 		if (incorporateCladogenesis) {
-			HashMap<int[], Double> event_map = cladoStash.getEventMap();
-
-			ode.setEventMap(event_map);
+			HashMap<int[], Double> eventMap = cladoStash.getEventMap();
+//			System.out.println("Event map inside ODE");
+//			System.out.println(new PrettyPrintHashMap<int[], Double>(eventMap));
+			
+			ode.setEventMap(eventMap);
 			dp853.integrate(ode, beginAge, likelihoods, endAge, likelihoods);
 			// System.out.println("Conditions at time " + end_age + ": " + Arrays.toString(likelihoods));
 		}
@@ -334,6 +333,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			dp853.integrate(ode, beginAge, likelihoods, endAge, likelihoods);
 			// System.out.println("Conditions at time " + end_age + ": " + Arrays.toString(likelihoods));
 		}
+	}
+	
+	// getter
+	public double getLogLk() {
+		return finalLogLk;
 	}
 	
 	// helper

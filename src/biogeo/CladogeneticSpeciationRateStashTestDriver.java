@@ -40,12 +40,7 @@ public class CladogeneticSpeciationRateStashTestDriver {
 				"SubsympatricRate", subSympatricSpeciationRate,
 				"VicariantRate", vicariantSpeciationRate,
 				"JumpRate", jumpSpeciationRate);
-		csrt.printEventMap();
-		
-//		int[][] cladogenetic_events = {{2, 2, 1},{1, 1, 1}};
-//		double[] lambda = {0.1, 0.2};
-//		CladogeneticSpeciationRateStash clado_stash = new CladogeneticSpeciationRateStash(cladogenetic_events, lambda);
-//		clado_stash.printEventMap();		
+		csrt.printEventMap();	
 	}
 }
 

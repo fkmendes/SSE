@@ -19,7 +19,6 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 	final public Input<RealParameter> vicariantRateInput = new Input<>("VicariantRate", "Speciation rate for vicariant event.");
 	final public Input<RealParameter> jumpRateInput = new Input<>("JumpRate", "Speciation rate for jump dispersal event.");
 	
-//	private int[][] cladogeneticEvents;
 	private double sympatricRate;
 	private double subSympatricRate;
 	private double vicariantRate;
@@ -33,9 +32,6 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 	}
 
 	public void populateStash() {
-
-		//Parameter sympatricRateParam = sympatricRateInput.get();
-
 		sympatricRate = sympatricRateInput.get().getValue();
 		subSympatricRate = subSympatricRateInput.get().getValue();
 		vicariantRate = vicariantRateInput.get().getValue();
@@ -62,7 +58,8 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 					break;
 			}
 		}
-		stashClean = true;
+		
+		stashClean = true; // after re-population of stash, things are clean
 	}
 
 	protected boolean requiresRecalculation() {
@@ -70,36 +67,11 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 				vicariantRateInput.get().somethingIsDirty() || jumpRateInput.get().somethingIsDirty());
 		return stashClean;
 	}
-
-
-//	// ctor (populates event_map)
-//	public CladogeneticSpeciationRateStash(int[][] cladogenetic_events, double[] speciation_rates) {
-//		this.cladogeneticEvents = cladogenetic_events;
-//		this.speciationRates = speciation_rates;
-//		int num_events = cladogenetic_events.length;
-//		
-//		if (num_events != this.speciationRates.length) {
-//			System.out.println("The number of cladogenetic events did not match the number of speciation rates. Exiting...");
-//			throw new RuntimeException();
-//		}
-//		
-//		for (int i = 0; i < num_events; ++i) {
-//			if (this.cladogeneticEvents[i].length != 3) {
-//				System.out.println("We need cladogenetic events as parent-daughter1-daughter2. Found something different. Exiting...");
-//			}
-//			
-//			int[] key = new int[3];
-//			key[0] = this.cladogeneticEvents[i][0];
-//			key[1] = this.cladogeneticEvents[i][1];
-//			key[2] = this.cladogeneticEvents[i][2];
-//			this.eventMap.put(key, this.speciationRates[i]);
-//		}
-//	}
 	
 	// setters and getters
 	HashMap<int[], Double> getEventMap() {
 		if (!stashClean) {
-			populateStash();
+			populateStash(); // only re-populate stash if some speciation rate was operated on
 		}
 		return eventMap;
 	}
@@ -109,3 +81,27 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 		System.out.println(new PrettyPrintHashMap<int[], Double>(eventMap));
 	}
 }
+
+//// DEPRECATED ctor (populates event_map)
+//public CladogeneticSpeciationRateStash(int[][] cladogenetic_events, double[] speciation_rates) {
+//	this.cladogeneticEvents = cladogenetic_events;
+//	this.speciationRates = speciation_rates;
+//	int num_events = cladogenetic_events.length;
+//	
+//	if (num_events != this.speciationRates.length) {
+//		System.out.println("The number of cladogenetic events did not match the number of speciation rates. Exiting...");
+//		throw new RuntimeException();
+//	}
+//	
+//	for (int i = 0; i < num_events; ++i) {
+//		if (this.cladogeneticEvents[i].length != 3) {
+//			System.out.println("We need cladogenetic events as parent-daughter1-daughter2. Found something different. Exiting...");
+//		}
+//		
+//		int[] key = new int[3];
+//		key[0] = this.cladogeneticEvents[i][0];
+//		key[1] = this.cladogeneticEvents[i][1];
+//		key[2] = this.cladogeneticEvents[i][2];
+//		this.eventMap.put(key, this.speciationRates[i]);
+//	}
+//}
