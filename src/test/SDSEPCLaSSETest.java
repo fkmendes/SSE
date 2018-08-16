@@ -21,19 +21,19 @@ import biogeo.StateDependentSpeciationExtinctionProcess;
 import biogeo.TraitStash;
 import biogeo.CladoTriplet.speciationType;
 
-public class SDSEPTest {
+public class SDSEPCLaSSETest {
 	final static double EPSILON = 1e-10;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
 	@Before
 	public void setUp() throws Exception {
 		// initializing states
-		int numStates = 4; // state = 1 (index 0) is 'null state'
+		int numberOfStates = 4; // state = 1 (index 0) is 'null state'
 		String[] spNames = new String[] { "Human", "Chimp", "Gorilla", "Orang" };
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
-		TraitStash traitStash = new TraitStash(numStates);
-		traitStash.initByName("taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2,Orang=3");
+		TraitStash traitStash = new TraitStash();
+		traitStash.initByName("NumberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2,Orang=3");
 		traitStash.printLksMap();
 				
 		// initializing birth-death parameters
@@ -121,13 +121,13 @@ public class SDSEPTest {
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
 		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
 		                           
-		irm.initByName("NumberOfStates", numStates, "FlatQMatrix", FlatQMatrixString);
+		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", FlatQMatrixString);
 		irm.printMatrix();
 		
-		Double[] piEs = new Double[numStates];
+		Double[] piEs = new Double[numberOfStates];
 		Arrays.fill(piEs, 0.0);
-		Double[] piDs = new Double[numStates];
-		Arrays.fill(piDs, 1.0/(numStates));
+		Double[] piDs = new Double[numberOfStates];
+		Arrays.fill(piDs, 1.0/(numberOfStates));
 		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25
 		System.out.println("Pi is: " + Arrays.toString(pis));
 		RealParameter pi = new RealParameter(pis);

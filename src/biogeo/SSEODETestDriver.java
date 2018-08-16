@@ -14,18 +14,18 @@ public class SSEODETestDriver {
 	public static void main(String[] args) {
 		
 		// initializing parameter values
-		int numStates = 2; // BiSSE
+		int numberOfStates = 2; // BiSSE
 		String[] spNames = new String[] { "Human" };
 		Double[] lambda = new Double[] {0.222222222, 0.222222222};
 		Double[] mu = new Double[] {0.0, 0.0}; // pure birth
 		
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("NumberOfStates", numStates, "FlatQMatrix", "0.0 0.9 0.0 0.9");
+		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", "0.0 0.9 0.0 0.9");
 		
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
-		TraitStash traitStash = new TraitStash(numStates);
-		traitStash.initByName("taxa", taxonSet, "value", "Human=2");
+		TraitStash traitStash = new TraitStash();
+		traitStash.initByName("NumberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2");
 		double[] y = traitStash.getSpLks("Human");
 		// double[] y = new double[] { 0.0, 0.0, 0.0, 1.0 };
 		

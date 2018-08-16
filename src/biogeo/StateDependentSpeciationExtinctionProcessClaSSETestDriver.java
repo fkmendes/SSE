@@ -21,8 +21,8 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		String[] spNames = new String[] { "Human", "Chimp", "Gorilla", "Orang" };
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
-		TraitStash traitStash = new TraitStash(numStates);
-		traitStash.initByName("taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2,Orang=3");
+		TraitStash traitStash = new TraitStash();
+		traitStash.initByName("NumberOfStates", numStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2,Orang=3");
 		traitStash.printLksMap();
 		
 		double sympProb = 1.0; // DEC-like

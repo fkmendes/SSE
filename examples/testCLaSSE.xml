@@ -5,8 +5,8 @@
 
 
 
-<run id="mcmc" spec="MCMC" chainLength="1000">
-    <state id="state" storeEvery="500">
+<run id="mcmc" spec="MCMC" chainLength="5000000">
+    <state id="state" storeEvery="50000">
         <stateNode idref="SympatricRate"/>
         <stateNode idref="SubsympatricRate"/>
         <stateNode idref="VicariantRate"/>
@@ -70,7 +70,7 @@
 			        </taxonset>
 			    </TreeParser>
 			
-			    <TraitStash id="TraitStash" spec="biogeo.TraitStash" value="Human=2,Chimp=2,Gorilla=2,Orang=3">
+			    <TraitStash id="TraitStash" spec="biogeo.TraitStash" value="Human=2,Chimp=2,Gorilla=2,Orang=3" NumberOfStates="4">
 			        <taxa idref="TaxonSet"/>
 			    </TraitStash>
 
@@ -109,7 +109,7 @@
 
     <!-- TODO: add operators for Mu and Q -->
 
-    <logger id="tracelog" fileName="StateDependentSpeciationExtinctionProcess.log" logEvery="100" model="@posterior" sanitiseHeaders="true" sort="smart">
+    <logger id="tracelog" fileName="StateDependentSpeciationExtinctionProcess.log" logEvery="5000" model="@posterior" sanitiseHeaders="true" sort="smart">
         <log idref="posterior"/>
         <log idref="likelihood"/>
         <log idref="prior"/>
@@ -119,17 +119,16 @@
         <log idref="JumpRate"/>
         <log idref="Mu"/>
         <log idref="FlatQMatrix"/>
-	    <!-- TODO: add loggers for Mu and Q -->
     </logger>
 
-    <logger id="screenlog" logEvery="100">
+    <logger id="screenlog" logEvery="10000">
         <log idref="posterior"/>
         <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
         <log idref="likelihood"/>
         <log idref="prior"/>
     </logger>
 
-    <logger id="treelog.t:firsthalf" fileName="StateDependentSpeciationExtinctionProcess.trees" logEvery="100" mode="tree">
+    <logger id="treelog.t:firsthalf" fileName="StateDependentSpeciationExtinctionProcess.trees" logEvery="10000" mode="tree">
         <log id="TreeWithMetaDataLogger" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@TreeParser"/>
 	    <!-- TODO: add logging for internal states on the tree-->
     </logger>

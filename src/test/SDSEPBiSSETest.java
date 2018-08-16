@@ -1,20 +1,28 @@
-package biogeo;
+package test;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.commons.lang3.ArrayUtils;
 
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
+import biogeo.InstantaneousRateMatrix;
+import biogeo.StateDependentSpeciationExtinctionProcess;
+import biogeo.TraitStash;
 
-public class StateDependentSpeciationExtinctionProcessBiSSETestDriver {
+public class SDSEPBiSSETest {
+	final static double EPSILON = 1e-10;
+	private StateDependentSpeciationExtinctionProcess sdsep;
 
-	public static void main(String[] args) {
-		
-		// initializing parameter values
+	@Before
+	public void setUp() throws Exception {
+		// initializing states
 		int numberOfStates = 2; // BiSSE
 		String[] spNames = new String[] { "Human", "Chimp", "Gorilla" };
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
@@ -22,7 +30,8 @@ public class StateDependentSpeciationExtinctionProcessBiSSETestDriver {
 		TraitStash traitStash = new TraitStash();
 		traitStash.initByName("NumberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2");
 		traitStash.printLksMap();
-		
+				
+		// initializing birth-death parameters
 		Double birthRate = 0.222222222;
 		Double deathRate = 0.1;
 		Double[] mus = { deathRate, deathRate };
@@ -33,7 +42,7 @@ public class StateDependentSpeciationExtinctionProcessBiSSETestDriver {
 		Double[] lambdas = new Double[numberOfStates];
 		Arrays.fill(lambdas, birthRate);
 		RealParameter lambda = new RealParameter(lambdas);
-		
+	
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
 		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", "0.9 0.1 0.1 0.9");
 		irm.printMatrix();
@@ -51,7 +60,7 @@ public class StateDependentSpeciationExtinctionProcessBiSSETestDriver {
         TreeParser myTree = new TreeParser(treeStr, false, false, true, 0); // true b/c species are labelled, offset=0
         
         boolean incorporateCladogenesis = false;
-                
+        
         StateDependentSpeciationExtinctionProcess sdsep = new StateDependentSpeciationExtinctionProcess();
         sdsep.initByName(
         		"TreeParser", myTree,
@@ -65,4 +74,10 @@ public class StateDependentSpeciationExtinctionProcessBiSSETestDriver {
     	
     	System.out.println(sdsep.calculateLogP());
 	}
+
+	@Test
+	public void test() {
+		Assert.assertEquals(-5.588460032653, sdsep.calculateLogP(), EPSILON);
+	}
+
 }

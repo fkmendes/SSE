@@ -11,29 +11,32 @@ import beast.evolution.tree.*;
 
 public class TraitStash extends TraitSet {
 
+	final public Input<Integer> NstatesInput = new Input<>("NumberOfStates", "How many states or geographical ranges can affect speciation and extinction.");
+	
 	// if Human=1,Chimp=1,Gorilla=1
 	// inheriting taxonValues, map, and values variables
 	// protected String[] taxonValues; // state values as str, e.g., ["1", "1", "1"]
 	// Map<String, Integer> map; // "spname":sp index, e.g. {"Human":0, "Chimp":1, "Gorilla":2}
 	// double[] values; // state values as doubles, e.g., [1.0, 1.0, 1.0]
 	private HashMap<String, double[]> spname_lks_map = new HashMap<String, double[]>(); // initialized by ctor
-	int num_states;
+	private int numberOfStates;
 	
 	public TraitStash() {
 		traitNameInput.setRule(Input.Validate.FORBIDDEN);
 		dateTimeFormatInput.setRule(Input.Validate.FORBIDDEN);
 		// TODO: this needs fixing!
-		num_states = 4;
+		// numStates = 4;
 	}
-	
-	public TraitStash(int num_states) {
-		traitNameInput.setRule(Input.Validate.FORBIDDEN);
-		dateTimeFormatInput.setRule(Input.Validate.FORBIDDEN);
-		this.num_states = num_states;
-	}
+//	
+//	public TraitStash(int num_states) {
+//		traitNameInput.setRule(Input.Validate.FORBIDDEN);
+//		dateTimeFormatInput.setRule(Input.Validate.FORBIDDEN);
+//		this.numStates = num_states;
+//	}
 	
 	public void initAndValidate() {
 		map = new HashMap<>();
+		numberOfStates = NstatesInput.get();
         List<String> labels = taxaInput.get().asStringList();
         String[] traits = traitsInput.get().split(","); // ["Human=1", "Chimp=1", "Gorilla=1"]
         taxonValues = new String[labels.size()];
@@ -85,14 +88,14 @@ public class TraitStash extends TraitSet {
         
         // if all species share the same state, we assume binary state
         // developers: this is useful for testing likelihood computations
-        if (num_states == 1) {
+        if (numberOfStates == 1) {
         	Log.warning.println("WARNING: All species had same trait state. Assuming binary trait.");
-        	num_states = 2;
+        	numberOfStates = 2;
         }
         
         // checking all distinct states are consecutive order (1,2,4 is not allowed)
-        if ((double) num_states < maxValue) {
-        	System.out.println(num_states);
+        if ((double) numberOfStates < maxValue) {
+        	System.out.println(numberOfStates);
         	Log.warning.println("WARNING: Trait states were coded in non-consecutive order. Exiting...");
         	System.exit(1);
         }
@@ -107,11 +110,11 @@ public class TraitStash extends TraitSet {
         
         // populating spname_lks_map
         for (Entry<String, Integer> entry : map.entrySet()) {
-        	double[] lks = new double[num_states*2];
+        	double[] lks = new double[numberOfStates*2];
 			String sp_name = entry.getKey();
 			int sp_idx = entry.getValue();
 			spname_lks_map.put(sp_name, lks);
-			spname_lks_map.get(sp_name)[num_states + Integer.parseInt(taxonValues[sp_idx]) - 1] = 1.0;
+			spname_lks_map.get(sp_name)[numberOfStates + Integer.parseInt(taxonValues[sp_idx]) - 1] = 1.0;
         }
 	}
 	
