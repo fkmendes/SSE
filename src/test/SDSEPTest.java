@@ -4,17 +4,22 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
+
+import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Node;
 import beast.util.TreeParser;
+import biogeo.CladoTriplet;
 import biogeo.CladogeneticSpeciationRateStash;
 import biogeo.InstantaneousRateMatrix;
 import biogeo.StateDependentSpeciationExtinctionProcess;
 import biogeo.TraitStash;
+import biogeo.CladoTriplet.speciationType;
 
 public class SDSEPTest {
 	final static double EPSILON = 1e-10;
@@ -23,82 +28,133 @@ public class SDSEPTest {
 	@Before
 	public void setUp() throws Exception {
 		// initializing states
-				int num_states = 4; // state = 1 (index 0) is 'null state'
-				String[] sp_names = new String[] { "Human", "Chimp", "Gorilla", "Orang" };
-				List<Taxon> taxa_list = Taxon.createTaxonList(Arrays.asList(sp_names));
-				TaxonSet taxon_set = new TaxonSet(taxa_list);
-				TraitStash trait_stash = new TraitStash(num_states);
-				trait_stash.initByName("taxa", taxon_set, "value", "Human=2,Chimp=2,Gorilla=2,Orang=3");
-				trait_stash.printLksMap();
-						
-				// initializing birth-death parameters
-				double rate = 1.0;
-				double birth_rate = 0.32222224;
-				double death_rate = 0.1; // DEC-like	
-				double symp_prob = 1.0; // DEC-like
-				double j_prob = 0.0; // no jump dispersal	
-				double[] mu = new double[] {death_rate, death_rate, death_rate, death_rate};
-				double[] lambdas_clado_stash = new double[] {
-						birth_rate, 
-						symp_prob*birth_rate, 
-						symp_prob*birth_rate,
-						j_prob*birth_rate, 
-						j_prob*birth_rate,
-						(double)1/6*birth_rate, 
-						(double)1/6*birth_rate, 
-						(double)1/6*birth_rate}; // the "rotated" version of these ones are unidentifiable and set to 0 (see Goldberg and Igic 2012)
-				int[][] cladogenetic_events = {
-						{1,1,1},
-						{2,2,2},
-						{3,3,3},
-						{2,2,3}, 
-						{3,2,3},
-						{4,2,3},
-						{4,2,4},
-						{4,3,4}};
-				CladogeneticSpeciationRateStash clado_stash = new CladogeneticSpeciationRateStash(cladogenetic_events, lambdas_clado_stash);
-				clado_stash.printEventMap();
-				double[] lambda = new double[num_states];
-				Arrays.fill(lambda, birth_rate);
-
-				// initializing trait parameters
-				InstantaneousRateMatrix Q = new InstantaneousRateMatrix(num_states);
-				Q.setCell(0, 1, 0.00); // q12 
-				Q.setCell(0, 2, 0.00); // q13 
-				Q.setCell(0, 3, 0.00); // q14 
-				Q.setCell(1, 0, 0.01); // q21
-				Q.setCell(1, 2, 0.00); // q23
-				Q.setCell(1, 3, 0.01); // q24
-				Q.setCell(2, 0, 0.01); // q31
-				Q.setCell(2, 1, 0.00); // q32
-				Q.setCell(2, 3, 0.01); // q34
-				Q.setCell(3, 0, 0.00); // q41
-				Q.setCell(3, 1, 0.01); // q42
-				Q.setCell(3, 2, 0.01); // q43
-						
-				// initializing prior
-				double[] pi_es = new double[num_states];
-				double[] pi_ds = new double[num_states];
-				Arrays.fill(pi_ds, 1.0/((double)(num_states)));
-				double[] pi = ArrayUtils.addAll(pi_es, pi_ds); // 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25
-						
-				// initializing tree
-				String tree_str = "(((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0):1.0,Orang:3.0);";
-				TreeParser my_tree = new TreeParser(tree_str, false, false, true, 0); // true b/c species are labelled, offset=0
-				Node root = my_tree.getRoot();
-				        
-				// we do want cladogenesis
-				boolean incorporate_cladogenesis = true;
-				        
-				// finally initialize process and compute lk
-				sdsep = new StateDependentSpeciationExtinctionProcess(my_tree, lambda, mu, pi, num_states,
-						trait_stash, clado_stash, Q, rate, incorporate_cladogenesis);
-				sdsep.computeNodeLk(root, root.getNr());
+		int numStates = 4; // state = 1 (index 0) is 'null state'
+		String[] spNames = new String[] { "Human", "Chimp", "Gorilla", "Orang" };
+		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
+		TaxonSet taxonSet = new TaxonSet(taxaList);
+		TraitStash traitStash = new TraitStash(numStates);
+		traitStash.initByName("taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2,Orang=3");
+		traitStash.printLksMap();
+				
+		// initializing birth-death parameters
+		double sympProb = 1.0; // DEC-like
+		double subsympProb = 1.0 / 6.0;
+		double vicProb = 1.0 / 6.0;
+		double jProb = 0.0; // no jump dispersal
+		
+		double birthRate = 0.32222224;
+		double deathRate = 0.1; // DEC-like
+				
+		Double[] mus = { deathRate, deathRate, deathRate, deathRate };
+		System.out.println("Mus: " + Arrays.toString(mus));
+		RealParameter mu = new RealParameter(mus);
+		mu.initByName("minordimension", 1);
+		
+		Double[] sSpeciationRate = {sympProb * birthRate};
+		Double[] ssSpeciationRate = {subsympProb * birthRate};
+		Double[] vSpeciationRate = {vicProb * birthRate};
+		Double[] jSpeciationRate = {jProb * birthRate}; // 0.0
+		RealParameter sympatricSpeciationRate = new RealParameter(sSpeciationRate);
+		RealParameter subSympatricSpeciationRate = new RealParameter(ssSpeciationRate);
+		RealParameter vicariantSpeciationRate = new RealParameter(vSpeciationRate);
+		RealParameter jumpSpeciationRate = new RealParameter(jSpeciationRate);
+		
+		CladoTriplet nullTriplet = new CladoTriplet();
+		nullTriplet.initByName("ParentState", 1,
+				"LeftChildState", 1,
+				"RightChildState", 1,
+				"SpeciationType", speciationType.SYMPATRY);
+		
+		CladoTriplet sTriplet1 = new CladoTriplet();
+		sTriplet1.initByName("ParentState", 2,
+				"LeftChildState", 2,
+				"RightChildState", 2,
+				"SpeciationType", speciationType.SYMPATRY);
+		
+		CladoTriplet sTriplet2 = new CladoTriplet();
+		sTriplet2.initByName("ParentState", 3,
+				"LeftChildState", 3,
+				"RightChildState", 3,
+				"SpeciationType", speciationType.SYMPATRY);
+		
+		CladoTriplet jTriplet1 = new CladoTriplet();
+		jTriplet1.initByName("ParentState", 2,
+				"LeftChildState", 2,
+				"RightChildState", 3,
+				"SpeciationType", speciationType.JUMPDISPERSAL);
+		
+		CladoTriplet jTriplet2 = new CladoTriplet();
+		jTriplet2.initByName("ParentState", 3,
+				"LeftChildState", 2,
+				"RightChildState", 3,
+				"SpeciationType", speciationType.JUMPDISPERSAL);
+		
+		CladoTriplet vTriplet1 = new CladoTriplet();
+		vTriplet1.initByName("ParentState", 4,
+				"LeftChildState", 2,
+				"RightChildState", 3,
+				"SpeciationType", speciationType.VICARIANCE);
+		
+		CladoTriplet ssTriplet1 = new CladoTriplet();
+		ssTriplet1.initByName("ParentState", 4,
+				"LeftChildState", 2,
+				"RightChildState", 4,
+				"SpeciationType", speciationType.SUBSYMPATRY);
+		
+		CladoTriplet ssTriplet2 = new CladoTriplet();
+		ssTriplet2.initByName("ParentState", 4,
+				"LeftChildState", 3,
+				"RightChildState", 4,
+				"SpeciationType", speciationType.SUBSYMPATRY);
+				
+		List<CladoTriplet> cladoTripletList = new ArrayList<CladoTriplet>();
+		Collections.addAll(cladoTripletList, nullTriplet, sTriplet1, sTriplet2, jTriplet1, jTriplet2, vTriplet1, ssTriplet1, ssTriplet2);
+		
+		CladogeneticSpeciationRateStash csrt = new CladogeneticSpeciationRateStash();
+		csrt.initByName("CladoTriplets", cladoTripletList,
+				"SympatricRate", sympatricSpeciationRate,
+				"SubsympatricRate", subSympatricSpeciationRate,
+				"VicariantRate", vicariantSpeciationRate,
+				"JumpRate", jumpSpeciationRate);
+		csrt.printEventMap();
+		
+		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
+		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
+		                           
+		irm.initByName("NumberOfStates", numStates, "FlatQMatrix", FlatQMatrixString);
+		irm.printMatrix();
+		
+		Double[] piEs = new Double[numStates];
+		Arrays.fill(piEs, 0.0);
+		Double[] piDs = new Double[numStates];
+		Arrays.fill(piDs, 1.0/(numStates));
+		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25
+		System.out.println("Pi is: " + Arrays.toString(pis));
+		RealParameter pi = new RealParameter(pis);
+		pi.initByName("minordimension", 1);
+		
+		String treeStr = "(((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0):1.0,Orang:3.0);";
+        TreeParser myTree = new TreeParser(treeStr, false, false, true, 0); // true b/c species are labelled, offset=0
+		
+        boolean incorporateCladogenesis = true;
+        
+        StateDependentSpeciationExtinctionProcess sdsep = new StateDependentSpeciationExtinctionProcess();
+        sdsep.initByName(
+        		"TreeParser", myTree,
+        		"TraitStash", traitStash,
+        		"InstantaneousRateMatrix", irm,
+        		"CladogeneticStash", csrt,
+        		"Mu", mu,
+        		"Pi", pi,
+        		"IncorporateCladogenesis", incorporateCladogenesis
+        		);
+        
+        System.out.println(sdsep.calculateLogP());
 	}
 
 	@Test
 	public void test() {
-		Assert.assertEquals(-10.59346884351, sdsep.getLogLk(), EPSILON);
+		Assert.assertEquals(-10.59346884351, sdsep.calculateLogP(), EPSILON);
 	}
 
 }
