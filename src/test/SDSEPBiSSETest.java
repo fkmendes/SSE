@@ -61,7 +61,7 @@ public class SDSEPBiSSETest {
         
         boolean incorporateCladogenesis = false;
         
-        StateDependentSpeciationExtinctionProcess sdsep = new StateDependentSpeciationExtinctionProcess();
+        sdsep = new StateDependentSpeciationExtinctionProcess();
         sdsep.initByName(
         		"TreeParser", myTree,
         		"TraitStash", traitStash,
