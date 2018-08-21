@@ -65,7 +65,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			 */
 			double lambda_sum = 0.0;
 			
-			if (incorporate_cladogenesis == true) {
+			if (incorporate_cladogenesis) {
 				
 				// for each event, grab respective sp rate (lambda) and keep adding	
 				for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {
@@ -101,7 +101,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	        dxdt[i] -= no_event_rate * safe_x[i];
 
 	        // speciation
-	        if (incorporate_cladogenesis == true) {
+	        if (incorporate_cladogenesis) {
 		        for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {	
 					int[] states = entry.getKey();
 					int j = states[1]-1;
@@ -136,7 +136,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 //          System.out.println("DNi after: " + Double.toString(dxdt[i + num_states]));
 
             // speciation
-            if (incorporate_cladogenesis == true) {
+            if (incorporate_cladogenesis) {
 	            for (HashMap.Entry<int[], Double> entry : event_map.entrySet()) {
 	            	int[] states = entry.getKey();
 					int j = states[1]-1;

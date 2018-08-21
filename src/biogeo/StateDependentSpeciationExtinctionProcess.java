@@ -26,8 +26,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	final public Input<TreeParser> treeParserInput = new Input<>("TreeParser", "TreeParser object containing tree.", Validate.REQUIRED);
 	final public Input<TraitStash> traitStashInput = new Input<>("TraitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
 	final public Input<InstantaneousRateMatrix> irmInput = new Input<>("InstantaneousRateMatrix", "InstantaneousRateMatrix object containing anagenenetic rates.", Validate.REQUIRED);
-	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("CladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.", Validate.OPTIONAL);
-	final public Input<RealParameter> lambdaInput = new Input<>("Lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.OPTIONAL);
+	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("CladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
+	final public Input<RealParameter> lambdaInput = new Input<>("Lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
 	final public Input<RealParameter> muInput = new Input<>("Mu", "Death rates for each state.", Validate.REQUIRED);
 	final public Input<RealParameter> piInput = new Input<>("Pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
 	final public Input<Boolean> cladoFlagInput = new Input<>("IncorporateCladogenesis", "Whether or not to incorporate cladogenetic events.", Validate.REQUIRED);
@@ -127,6 +127,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		logP = finalLogLk;
 		return logP;
 	}
+
+	// The smallest time slice that we will attempt to numerically integrate.
+	// if the lattice of dt's falls closer than this to a node, that sliver of time is ignored in the integration.
+	private static final double VERY_SMALL_TIME_SLIVER = 1e-15;
 
 	private void computeNodeLk(Node node, int nodeIdx) {
 		if (node.isLeaf()) {
@@ -274,9 +278,14 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				if (currentDtEnd > endAge) {
 					currentDtEnd = endAge;
 				}
+
+				double timeslice = currentDtEnd - currentDtStart;
+				if (timeslice >= VERY_SMALL_TIME_SLIVER) {
+					numericallyIntegrateProcess(nodePartialScaledLksPostOde[nodeIdx], currentDtStart, currentDtEnd);
+				} else {
+					// DO NOTHING BECAUSE TOO LITTLE TIME HAS PAST AND nodePartialScaledLksPostOde[nodeIdx] will be unaffected
+				}
 				
-				numericallyIntegrateProcess(nodePartialScaledLksPostOde[nodeIdx], currentDtStart, currentDtEnd);
-	
 	            currentDt++;
 			}
 		}
