@@ -158,10 +158,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			double[] leftLks = nodePartialScaledLksPostOde[leftIdx].clone(); // at this point, left_lks has not yet been updated (scaled) for its parent merging
 			double[] rightLks = nodePartialScaledLksPostOde[rightIdx].clone();
 			
-			double dLeftScalingConstant = sum(leftLks, numStates, leftLks.length);
+			double dLeftScalingConstant = sum(leftLks, numStates, leftLks.length, -1, false); // -1 means don't ignore any item
 			scalingConstants[leftIdx] = dLeftScalingConstant;
 			
-			double dRightScalingConstant = sum(rightLks, numStates, rightLks.length);
+			double dRightScalingConstant = sum(rightLks, numStates, rightLks.length, -1, false);
 			scalingConstants[rightIdx] = dRightScalingConstant;
 			
 			HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
@@ -307,8 +307,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				prob += pi[numStates + i] * nodePartialScaledLksPostOde[nodeIdx][numStates + i];
 			}
 			
-			finalLk = prob * prod(scalingConstants, 0, scalingConstants.length, rootIdx); // de-scaling if scaled
-			finalLogLk = Math.log(finalLk);
+			boolean takeLog = true;
+			finalLogLk = Math.log(prob) + sum(scalingConstants, 0, scalingConstants.length, rootIdx, takeLog);
 			
 			// System.out.println("Root node state = " + Double.toString(nodeIdx));
 			// System.out.println("(Sum over states) Pi * lk of state = " + Double.toString(prob));
@@ -341,10 +341,15 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	// helper
-	public static double sum(double[] arr, int fromIdx, int toIdx) {
-		double result = 0;
+	public static double sum(double[] arr, int fromIdx, int toIdx, int idxToIgnore, boolean takeLog) {
+		double result = 0.0;
 		for (int i = fromIdx; i < toIdx; ++i) {
-			result += arr[i];
+			if (i != idxToIgnore) {
+				if (takeLog) {
+					result += Math.log(arr[i]);
+				}
+				else { result += arr[i]; }
+			}
 		}
 		// System.out.println("Lk array being summed to get normalizing constant: " + Arrays.toString(arr));
 		// System.out.println("Sum is: " + Double.toString(result));

@@ -8,27 +8,27 @@
       <stateNode idref="FlatQMatrix"/>
     </state>
 
-    <distribution id="posterior" spec="util.CompoundDistribution">   
+    <distribution id="posterior" spec="util.CompoundDistribution">
 
       <!-- START prior -->
       <distribution id="prior" spec="util.CompoundDistribution">
         <distribution id="LambdaPrior" spec="beast.math.distributions.Prior" x="@Lambda">
           <distr id="LogNormal.Lambda" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
-            <parameter name="M" value="0.00" estimate="false"/> <!-- e.g., 0.1 -->
+            <parameter name="M" value="0.0" estimate="false"/> <!-- e.g., 0.1 -->
             <parameter name="S" value="0.05" estimate="false"/> <!-- e.g., 0.05 -->
           </distr>
         </distribution>
 
         <distribution id="MuPrior" spec="beast.math.distributions.Prior" x="@Mu">
           <distr id="LogNormal.Mu" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
-            <parameter name="M" value="0.00" estimate="false"/> <!-- e.g., 0.1 -->
+            <parameter name="M" value="0.0" estimate="false"/> <!-- e.g., 0.1 -->
             <parameter name="S" value="0.05" estimate="false"/> <!-- e.g., 0.05 -->
           </distr>
         </distribution>
 
         <distribution id="FlatQMatrixPrior" spec="beast.math.distributions.Prior" x="@FlatQMatrix">
           <distr id="LogNormal.FlatQMatrix" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
-	        <parameter name="M" value="0.01" estimate="false"/> <!-- e.g., 0.1 -->
+	        <parameter name="M" value="0.0" estimate="false"/> <!-- e.g., 0.1 -->
 	        <parameter name="S" value="0.05" estimate="false"/> <!-- e.g., 0.05 -->
           </distr>
         </distribution>
@@ -36,7 +36,7 @@
       <!-- END prior -->
 
       <distribution id="likelihood" spec="util.CompoundDistribution" useThreads="true">
-	<distribution id="StateDependentSpeciationExtinctionProcess" spec="biogeo.StateDependentSpeciationExtinctionProcess" IncorporateCladogenesis="true">
+	<distribution id="StateDependentSpeciationExtinctionProcess" spec="biogeo.StateDependentSpeciationExtinctionProcess" IncorporateCladogenesis="false">
 	  <TreeParser id="TreeParser" spec="beast.util.TreeParser" IsLabelledNewick="true" adjustTipHeights="false" newick="((((sp527:0.2311981845,sp528:0.2311981845)nd534:3.058140113,((sp516:0.9197924799,sp452:0.9197924799)nd502:0.445016197,sp409:1.364808677)nd486:1.924529621)nd291:2.278415575,(((sp514:0.3157296589,sp515:0.3157296589)nd464:1.400567069,(sp556:0.09164852343,sp557:0.09164852343)nd530:1.624648205)nd430:2.628486117,((sp512:0.6437014481,(sp558:0.08899548715,sp559:0.08899548715)nd565:0.5547059609)nd495:2.533085403,(sp566:0.04258546944,sp567:0.04258546944)nd437:3.134201382)nd318:1.167995994)nd246:1.222971027)nd203:8.592051265,(((((((sp508:0.3958714697,sp509:0.3958714697)nd546:1.340264756,(sp522:0.260814542,sp523:0.260814542)nd463:1.475321684)nd460:0.03673663093,(sp570:0.02275369549,sp571:0.02275369549)nd503:1.750119161)nd438:0.1779476723,((sp543:0.1366966205,(sp546:0.1224337158,sp547:0.1224337158)nd570:0.01426290477)nd479:1.434575271,(sp462:0.7891547617,sp489:0.7891547617)nd480:0.7821171294)nd439:0.3795486377)nd436:3.102110955,(((((sp554:0.09809247345,sp555:0.09809247345)nd442:1.829496674,sp448:1.927589148)nd434:1.240556814,sp492:3.168145962)nd289:0.7404504268,(sp453:1.407364808,sp431:1.407364808)nd368:2.50123158)nd283:1.044766272,(sp568:4.84697501,sp420:4.84697501)nd257:0.1063876509)nd251:0.09956882294)nd247:0.1313438524,(((sp438:2.362624164,(sp535:0.1914788875,sp536:0.1914788875)nd459:2.171145276)nd393:0.2779541876,sp480:2.640578351)nd365:1.272074311,((sp362:1.997112299,((sp564:0.0488584816,sp565:0.0488584816)nd562:0.3055015952,sp519:0.3543600768)nd517:1.642752222)nd412:1.635396175,(sp382:3.308223284,(((sp481:1.440823699,(sp539:0.172296808,sp540:0.172296808)nd523:1.268526891)nd445:1.199415728,((sp358:2.032838272,((sp475:0.6790804608,(sp532:0.2194593787,(sp560:0.06628615608,sp561:0.06628615608)nd567:0.1531732226)nd544:0.4596210821)nd525:0.2598240357,(sp499:0.4702080174,sp500:0.4702080174)nd526:0.4686964791)nd433:1.093933775)nd397:0.5140027217,sp507:2.546840993)nd388:0.09339843381)nd373:0.3998777129,sp524:3.04011714)nd333:0.2681061441)nd309:0.3242851898)nd288:0.2801441886)nd282:1.271622673)nd216:5.577946652,(((sp383:3.293477615,sp332:3.293477615)nd306:0.3479148598,((sp463:0.9787024446,sp447:0.9787024446)nd515:1.858372322,((sp552:0.1042374637,sp553:0.1042374637)nd566:1.675204808,sp424:1.779442272)nd376:1.057632494)nd372:0.8043177084)nd273:2.509764439,(((((sp494:0.5773636318,(sp548:0.1213430062,sp549:0.1213430062)nd569:0.4560206257)nd541:0.1072943486,(sp537:0.1861145526,sp538:0.1861145526)nd542:0.4985434278)nd482:0.8774025438,(sp544:0.1296939167,sp545:0.1296939167)nd533:1.432366607)nd475:0.03706895964,((sp530:0.7072542592,sp469:0.7072542592)nd528:0.1879290116,(sp502:0.4499011257,(sp504:0.4130024539,sp505:0.4130024539)nd559:0.0368986718)nd529:0.4452821452)nd485:0.703946213)nd423:2.818731712,(((((sp550:0.1101668342,sp551:0.1101668342)nd560:0.3296848688,sp503:0.439851703)nd558:0.03002136229,sp501:0.4698730653)nd553:0.7832685017,((sp510:0.3748770724,sp521:0.3748770724)nd547:0.268928846,(sp541:0.1664963321,sp542:0.1664963321)nd548:0.4773095864)nd519:0.6093356486)nd477:0.3204407023,((((sp562:0.06242672924,sp563:0.06242672924)nd568:0.1392152198,sp533:0.2016419491)nd531:0.6629398754,sp456:0.8645818244)nd500:0.5046628552,sp433:1.36924468)nd478:0.2043375897)nd426:2.844278926)nd258:1.733295718)nd196:4.611065075)nd28:3.397583149)nd3;" offset="0" singlechild="false"> <!-- e.g., ((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0); -->
 	    <taxonset id="TaxonSet" spec="TaxonSet">
 	        <!-- e.g., <taxon id="Sp1" spec="Taxon"/> -->
@@ -126,7 +126,7 @@
  	 	<taxon id="sp568" spec="Taxon"/>
  	 	<taxon id="sp570" spec="Taxon"/>
  	 	<taxon id="sp571" spec="Taxon"/>
-
+ 	 	
 	    </taxonset>
 	  </TreeParser>
 
@@ -137,7 +137,7 @@
 
 	  <!-- e.g., 0.0 0.8 0.8 0.0 -->
 	  <InstantaneousRateMatrix id="InstantaneousRateMatrix" spec="biogeo.InstantaneousRateMatrix" NumberOfStates="2">
-	    <parameter id="FlatQMatrix" dimension="4" lower="0.0" minordimension="2" name="FlatQMatrix" upper="1.0">-0.975707305984 0.97570730598397 1.12055903681282 -1.12055903681</parameter>
+	    <parameter id="FlatQMatrix" dimension="4" lower="0.0" minordimension="2" name="FlatQMatrix">1e-10 0.97570730598397 1.12055903681282 1e-10 </parameter>
 	  </InstantaneousRateMatrix>
 
 	  <!-- 0.222222 0.222222 -->
@@ -156,7 +156,7 @@
     <operator id="MuScaler" spec="ScaleOperator" parameter="@Mu" scaleFactor="0.75" weight="3.0"/>
     <operator id="FlatQMatrixScaler" spec="ScaleOperator" parameter="@FlatQMatrix" scaleFactor="0.75" weight="3.0"/>
 
-    <logger id="tracelog" fileName="StateDependentSpeciationExtinctionProcess.log" logEvery="5000" model="@posterior" sanitiseHeaders="true" sort="smart">
+    <logger id="tracelog" fileName="./test_sim_log.log" logEvery="5000" model="@posterior" sanitiseHeaders="true" sort="smart">
         <log idref="posterior"/>
         <log idref="likelihood"/>
         <log idref="prior"/>
@@ -172,7 +172,7 @@
         <log idref="prior"/>
     </logger>
 
-    <logger id="treelog.t:firsthalf" fileName="StateDependentSpeciationExtinctionProcess.trees" logEvery="10000" mode="tree">
+    <logger id="treelog.t:firsthalf" fileName="./test_sim_trees.trees" logEvery="10000" mode="tree">
         <log id="TreeWithMetaDataLogger" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@TreeParser"/>
     </logger>
   </run>
