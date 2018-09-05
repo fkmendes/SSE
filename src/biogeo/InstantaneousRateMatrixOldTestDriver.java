@@ -1,9 +1,9 @@
 package biogeo;
 
-public class InstantaneousRateMatrixTestDriver {
+public class InstantaneousRateMatrixOldTestDriver {
 
 	public static void main(String[] args) {
-		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
+		InstantaneousRateMatrixOld irm = new InstantaneousRateMatrixOld();
 		String flatQMatrixString = "1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0";
 		irm.initByName("NumberOfStates", 3, "FlatQMatrix", flatQMatrixString);
 		irm.printMatrix();

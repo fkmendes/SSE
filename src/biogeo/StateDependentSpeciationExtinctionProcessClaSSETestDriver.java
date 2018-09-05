@@ -106,7 +106,7 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 				"JumpRate", jumpSpeciationRate);
 		csrt.printEventMap();
 		
-		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
+		InstantaneousRateMatrixOld irm = new InstantaneousRateMatrixOld();
 		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
 		                           
 		irm.initByName("NumberOfStates", numStates, "FlatQMatrix", FlatQMatrixString);

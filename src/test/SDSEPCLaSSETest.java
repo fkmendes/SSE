@@ -119,8 +119,8 @@ public class SDSEPCLaSSETest {
 		csrt.printEventMap();
 		
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
-		                           
+//		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
+		String FlatQMatrixString = "0.0 0.0 0.0 0.01 0.0 0.01 0.01 0.0 0.01 0.0 0.01 0.01";                           
 		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", FlatQMatrixString);
 		irm.printMatrix();
 		

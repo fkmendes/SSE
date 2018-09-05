@@ -4,7 +4,7 @@ import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 
-public class InstantaneousRateMatrix extends CalculationNode {
+public class InstantaneousRateMatrixOld extends CalculationNode {
 
 	final public Input<Integer> NstatesInput = new Input<>("NumberOfStates", "How many states or geographical ranges can affect speciation and extinction.");
 	final public Input<RealParameter> FlatQmatrixInput = new Input<>("FlatQMatrix", "Array (matrix whose rows were pasted) containing the instantaneous transition rate between character states.");

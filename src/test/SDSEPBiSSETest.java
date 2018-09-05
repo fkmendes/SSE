@@ -44,7 +44,7 @@ public class SDSEPBiSSETest {
 		RealParameter lambda = new RealParameter(lambdas);
 	
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", "0.9 0.1 0.1 0.9");
+		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", "0.1 0.1");
 		irm.printMatrix();
 		
 		Double[] piEs = new Double[numberOfStates];
