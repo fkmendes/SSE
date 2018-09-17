@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" required="BEAST v2.5.0" version="2.5">
+
+<run id="mcmc" spec="MCMC" chainLength="1000000">
+    <state id="state" storeEvery="10000">
+        <stateNode idref="SympatricRate"/>
+        <stateNode idref="SubsympatricRate"/>
+        <stateNode idref="VicariantRate"/>
+        <stateNode idref="JumpRate"/>
+        <stateNode idref="Mu"/>
+        <stateNode idref="FlatQMatrix"/>
+    </state>
+
+    <distribution id="posterior" spec="util.CompoundDistribution">   
+
+        <distribution id="prior" spec="util.CompoundDistribution">        
+
+            <distribution id="SympatricRatePrior" spec="beast.math.distributions.Prior" x="@SympatricRate"> 
+            	<distr id="LogNormal.SympatricRate" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
+            		<parameter name="M" value="-1.465125" estimate="false"/>
+            		<parameter name="S" value="1.0" estimate="false"/>
+            	</distr>
+            </distribution>
+                       
+            <distribution id="SubsympatricRatePrior" spec="beast.math.distributions.Prior" x="@SubsympatricRate"> 
+            	<distr id="LogNormal.SubSympatricRate" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
+            		<parameter name="M" value="-1.465125" estimate="false"/>
+            		<parameter name="S" value="1.0" estimate="false"/>
+            	</distr>
+            </distribution>
+                       
+            <distribution id="VicariantRatePrior" spec="beast.math.distributions.Prior" x="@VicariantRate"> 
+            	<distr id="LogNormal.VicariantRate" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
+            		<parameter name="M" value="-1.465125" estimate="false"/>
+            		<parameter name="S" value="1.0" estimate="false"/>
+            	</distr>
+            </distribution>
+            
+            <distribution id="JumpRatePrior" spec="beast.math.distributions.Prior" x="@JumpRate"> 
+            	<distr id="LogNormal.JumpRate" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
+            		<parameter name="M" value="-1.465125" estimate="false"/>
+            		<parameter name="S" value="1.0" estimate="false"/>
+            	</distr>
+            </distribution>
+            
+            <distribution id="MuPrior" spec="beast.math.distributions.Prior" x="@Mu"> 
+            	<distr id="LogNormal.Mu" spec="beast.math.distributions.LogNormalDistributionModel" offset="0.0" meanInRealSpace="false">
+            		<parameter name="M" value="-1.465125" estimate="false"/>
+            		<parameter name="S" value="1.0" estimate="false"/>
+            	</distr>
+            </distribution>
+            
+            <distribution id="FlatQMatrixPrior" spec="beast.math.distributions.Prior" x="@FlatQMatrix"> 
+            	<distr id="LogNormal.FlatQMatrix" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.01"/>
+            </distribution>
+        </distribution> <!-- END prior -->
+        
+        <distribution id="likelihood" spec="util.CompoundDistribution" useThreads="true">
+			<distribution id="StateDependentSpeciationExtinctionProcess" spec="biogeo.StateDependentSpeciationExtinctionProcess" incorporateCladogenesis="true">
+			    <tree id="FixedTree" spec="beast.util.TreeParser" IsLabelledNewick="true" adjustTipHeights="false" newick="(((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0):1.0,Orang:3.0);" offset="0" singlechild="false">
+			        <taxonset id="TaxonSet" spec="TaxonSet">
+			            <taxon id="Human" spec="Taxon"/>
+			            <taxon id="Chimp" spec="Taxon"/>
+			            <taxon id="Gorilla" spec="Taxon"/>
+			            <taxon id="Orang" spec="Taxon"/>
+			        </taxonset>
+			    </tree>
+			
+			    <traitStash id="TraitStash" spec="biogeo.TraitStash" value="Human=2,Chimp=2,Gorilla=2,Orang=3" numberOfStates="4">
+			        <taxa idref="TaxonSet"/>
+			    </traitStash>
+
+			    <instantaneousRateMatrix id="InstantaneousRateMatrix" spec="biogeo.InstantaneousRateMatrix" numberOfStates="4">
+			        <parameter id="FlatQMatrix" dimension="12" lower="0.0" name="flatQMatrix">0.0 0.0 0.0 0.01 0.0 0.01 0.01 0.0 0.01 0.0 0.01 0.01</parameter>
+			    </instantaneousRateMatrix>
+			
+			    <cladogeneticStash id="CladogeneticSpeciationRateStash" spec="biogeo.CladogeneticSpeciationRateStash">
+			        <cladoTriplets id="CladoTriplet" spec="biogeo.CladoTriplet" leftChildState="1" parentState="1" rightChildState="1" speciationType="SYMPATRY"/>
+			        <cladoTriplets id="CladoTriplet1" spec="biogeo.CladoTriplet" leftChildState="2" parentState="2" rightChildState="2" speciationType="SYMPATRY"/>
+			        <cladoTriplets id="CladoTriplet2" spec="biogeo.CladoTriplet" leftChildState="3" parentState="3" rightChildState="3" speciationType="SYMPATRY"/>
+			        <cladoTriplets id="CladoTriplet3" spec="biogeo.CladoTriplet" leftChildState="2" parentState="2" rightChildState="3" speciationType="JUMPDISPERSAL"/>
+			        <cladoTriplets id="CladoTriplet4" spec="biogeo.CladoTriplet" leftChildState="2" parentState="3" rightChildState="3" speciationType="JUMPDISPERSAL"/>
+			        <cladoTriplets id="CladoTriplet5" spec="biogeo.CladoTriplet" leftChildState="2" parentState="4" rightChildState="3" speciationType="VICARIANCE"/>
+			        <cladoTriplets id="CladoTriplet6" spec="biogeo.CladoTriplet" leftChildState="2" parentState="4" rightChildState="4" speciationType="SUBSYMPATRY"/>
+			        <cladoTriplets id="CladoTriplet7" spec="biogeo.CladoTriplet" leftChildState="3" parentState="4" rightChildState="4" speciationType="SUBSYMPATRY"/>
+			        <sympatricRate id="SympatricRate" spec="parameter.RealParameter">0.32222224</sympatricRate>
+			        <subsympatricRate id="SubsympatricRate" spec="parameter.RealParameter">0.05370370666666666</subsympatricRate>
+			        <vicariantRate id="VicariantRate" spec="parameter.RealParameter">0.05370370666666666</vicariantRate>
+			        <jumpRate id="JumpRate" spec="parameter.RealParameter">0.01</jumpRate>
+			    </cladogeneticStash>
+			
+			    <mu id="Mu" dimension="4" spec="parameter.RealParameter">0.1 0.1 0.1 0.1</mu>
+			
+			    <pi id="Pi" dimension="8" spec="parameter.RealParameter">0.0 0.0 0.0 0.0 0.25 0.25 0.25 0.25</pi>
+			</distribution> <!-- END SSE -->
+        </distribution> <!-- END Likelihood -->
+    </distribution> <!-- END Posterior -->
+
+    <operator id="SympatricRateScaler" spec="ScaleOperator" parameter="@SympatricRate" scaleFactor="0.75" weight="3.0"/>
+    <operator id="SubsympatricRateScaler" spec="ScaleOperator" parameter="@SubsympatricRate" scaleFactor="0.75" weight="3.0"/>
+    <operator id="VicariantRateScaler" spec="ScaleOperator" parameter="@VicariantRate" scaleFactor="0.75" weight="3.0"/>
+    <operator id="JumpRateScaler" spec="ScaleOperator" parameter="@JumpRate" scaleFactor="0.75" weight="3.0"/>
+    <operator id="MuScaler" spec="ScaleOperator" parameter="@Mu" scaleFactor="0.75" weight="3.0"/>
+    <operator id="FlatQMatrixScaler" spec="ScaleOperator" parameter="@FlatQMatrix" scaleFactor="0.75" weight="3.0"/>
+
+    <logger id="tracelog" fileName="CLaSSE_fixed_tree.log" logEvery="10000" model="@posterior" sanitiseHeaders="true" sort="smart">
+        <log idref="posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+        <log idref="SympatricRate"/>
+        <log idref="SubsympatricRate"/>
+        <log idref="VicariantRate"/>
+        <log idref="JumpRate"/>
+        <log idref="Mu"/>
+        <log idref="FlatQMatrix"/>
+    </logger>
+
+    <logger id="screenlog" logEvery="10000">
+        <log idref="posterior"/>
+        <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+    </logger>
+
+    <logger id="treelog.t:firsthalf" fileName="CLaSSE_fixed_tree.trees" logEvery="1000000" mode="tree">
+        <log id="TreeWithMetaDataLogger" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@FixedTree"/>
+    </logger>
+
+</run>
+</beast>
