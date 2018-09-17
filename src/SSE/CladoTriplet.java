@@ -1,4 +1,4 @@
-package biogeo;
+package SSE;
 
 import beast.core.BEASTObject;
 import beast.core.Input;

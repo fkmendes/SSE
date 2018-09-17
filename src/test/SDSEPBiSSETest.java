@@ -4,6 +4,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import SSE.InstantaneousRateMatrix;
+import SSE.StateDependentSpeciationExtinctionProcess;
+import SSE.TraitStash;
+
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
@@ -12,9 +16,6 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import biogeo.InstantaneousRateMatrix;
-import biogeo.StateDependentSpeciationExtinctionProcess;
-import biogeo.TraitStash;
 
 public class SDSEPBiSSETest {
 	final static double EPSILON = 1e-10;

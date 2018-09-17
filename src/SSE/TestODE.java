@@ -1,4 +1,4 @@
-package biogeo;
+package SSE;
 
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 

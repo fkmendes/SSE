@@ -1,4 +1,4 @@
-package biogeo;
+package SSE;
 
 import java.util.Arrays;
 import java.util.List;

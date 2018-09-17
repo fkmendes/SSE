@@ -1,4 +1,4 @@
-package biogeo;
+package SSE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,8 +9,10 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import biogeo.CladoTriplet.speciationType;
+
 import org.apache.commons.lang3.ArrayUtils;
+
+import SSE.CladoTriplet.speciationType;
 
 public class StateDependentSpeciationExtinctionProcessCLaSSETestDriver {
 	

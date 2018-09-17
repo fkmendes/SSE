@@ -4,6 +4,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import SSE.CladoTriplet;
+import SSE.CladogeneticSpeciationRateStash;
+import SSE.InstantaneousRateMatrix;
+import SSE.StateDependentSpeciationExtinctionProcess;
+import SSE.TraitStash;
+import SSE.CladoTriplet.speciationType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,12 +21,6 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
-import biogeo.CladoTriplet;
-import biogeo.CladogeneticSpeciationRateStash;
-import biogeo.InstantaneousRateMatrix;
-import biogeo.StateDependentSpeciationExtinctionProcess;
-import biogeo.TraitStash;
-import biogeo.CladoTriplet.speciationType;
 
 public class SDSEPCLaSSETest {
 	final static double EPSILON = 1e-10;

@@ -1,4 +1,4 @@
-package biogeo;
+package SSE;
 
 public class InstantaneousRateMatrixTestDriver {
 

@@ -1,11 +1,11 @@
-package biogeo;
+package SSE;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import SSE.CladoTriplet.speciationType;
 import beast.core.parameter.RealParameter;
-import biogeo.CladoTriplet.speciationType;
 
 public class CladogeneticSpeciationRateStashTestDriver {
 

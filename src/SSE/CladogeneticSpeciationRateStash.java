@@ -1,13 +1,13 @@
-package biogeo;
+package SSE;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import SSE.CladoTriplet.speciationType;
 import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
-import biogeo.CladoTriplet.speciationType;
 
 public class CladogeneticSpeciationRateStash extends CalculationNode {
 	
