@@ -11,32 +11,24 @@ import beast.evolution.tree.*;
 
 public class TraitStash extends TraitSet {
 
-	final public Input<Integer> NstatesInput = new Input<>("NumberOfStates", "How many states or geographical ranges can affect speciation and extinction.");
+	final public Input<Integer> nStatesInput = new Input<>("numberOfStates", "How many states or geographical ranges can affect speciation and extinction.");
 	
 	// if Human=1,Chimp=1,Gorilla=1
 	// inheriting taxonValues, map, and values variables
 	// protected String[] taxonValues; // state values as str, e.g., ["1", "1", "1"]
 	// Map<String, Integer> map; // "spname":sp index, e.g. {"Human":0, "Chimp":1, "Gorilla":2}
 	// double[] values; // state values as doubles, e.g., [1.0, 1.0, 1.0]
-	private HashMap<String, double[]> spname_lks_map = new HashMap<String, double[]>(); // initialized by ctor
+	private HashMap<String, double[]> spnameLksMap = new HashMap<String, double[]>(); // initialized by ctor
 	private int numberOfStates;
 	
 	public TraitStash() {
 		traitNameInput.setRule(Input.Validate.FORBIDDEN);
 		dateTimeFormatInput.setRule(Input.Validate.FORBIDDEN);
-		// TODO: this needs fixing!
-		// numStates = 4;
 	}
-//	
-//	public TraitStash(int num_states) {
-//		traitNameInput.setRule(Input.Validate.FORBIDDEN);
-//		dateTimeFormatInput.setRule(Input.Validate.FORBIDDEN);
-//		this.numStates = num_states;
-//	}
 	
 	public void initAndValidate() {
 		map = new HashMap<>();
-		numberOfStates = NstatesInput.get();
+		numberOfStates = nStatesInput.get();
         List<String> labels = taxaInput.get().asStringList();
         String[] traits = traitsInput.get().split(","); // ["Human=1", "Chimp=1", "Gorilla=1"]
         taxonValues = new String[labels.size()];
@@ -88,17 +80,16 @@ public class TraitStash extends TraitSet {
         
         // if all species share the same state, we assume binary state
         // developers: this is useful for testing likelihood computations
-        if (numberOfStates == 1) {
-        	Log.warning.println("WARNING: All species had same trait state. Assuming binary trait.");
-        	numberOfStates = 2;
-        }
+        // if (numberOfStates == 1) {
+        //    Log.warning.println("WARNING: All species had same trait state. Assuming binary trait.");
+        //    numberOfStates = 2;
+        // }
         
         // checking all distinct states are consecutive order (1,2,4 is not allowed)
-        if ((double) numberOfStates < maxValue) {
-        	System.out.println(numberOfStates);
-        	Log.warning.println("WARNING: Trait states were coded in non-consecutive order. Exiting...");
-        	System.exit(1);
-        }
+         if ((double) numberOfStates < maxValue) {
+             Log.warning.println("WARNING: The larger state is greater than number of states (i.e., you specified 3 states, but then one species is =4). Exiting...");
+             System.exit(1);
+         }
         
         // checking all species were specified some trait value
         for (int i = 0; i < labels.size(); i++) {
@@ -113,14 +104,15 @@ public class TraitStash extends TraitSet {
         	double[] lks = new double[numberOfStates*2];
 			String sp_name = entry.getKey();
 			int sp_idx = entry.getValue();
-			spname_lks_map.put(sp_name, lks);
-			spname_lks_map.get(sp_name)[numberOfStates + Integer.parseInt(taxonValues[sp_idx]) - 1] = 1.0;
+			spnameLksMap.put(sp_name, lks);
+			System.out.println(taxonValues[sp_idx]);
+			spnameLksMap.get(sp_name)[numberOfStates - 1 + Integer.parseInt(taxonValues[sp_idx])] = 1.0;
         }
 	}
 	
 	// getters and setters
 	public double[] getSpLks(String spname) {
-		return spname_lks_map.get(spname);
+		return spnameLksMap.get(spname);
 	}
 	
 	// helper
@@ -129,10 +121,10 @@ public class TraitStash extends TraitSet {
 	}
 	
 	public void printLksMap() {
-		for (HashMap.Entry<String, double[]> entry : spname_lks_map.entrySet()) {	
+		for (HashMap.Entry<String, double[]> entry : spnameLksMap.entrySet()) {	
 			String spname = entry.getKey();
 			double[] lks = entry.getValue();
-			// System.out.println(spname + " initial lks = " + Arrays.toString(lks));
+			System.out.println(spname + " initial lks = " + Arrays.toString(lks));
 		}
 	}
 }

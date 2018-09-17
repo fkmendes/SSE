@@ -12,7 +12,7 @@ import beast.util.TreeParser;
 import biogeo.CladoTriplet.speciationType;
 import org.apache.commons.lang3.ArrayUtils;
 
-public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
+public class StateDependentSpeciationExtinctionProcessCLaSSETestDriver {
 	
 	public static void main(String[] args) {
 		
@@ -22,7 +22,7 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		TraitStash traitStash = new TraitStash();
-		traitStash.initByName("NumberOfStates", numStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2,Orang=3");
+		traitStash.initByName("numberOfStates", numStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2,Orang=3");
 		traitStash.printLksMap();
 		
 		double sympProb = 1.0; // DEC-like
@@ -48,68 +48,68 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
 		RealParameter jumpSpeciationRate = new RealParameter(jSpeciationRate);
 		
 		CladoTriplet nullTriplet = new CladoTriplet();
-		nullTriplet.initByName("ParentState", 1,
-				"LeftChildState", 1,
-				"RightChildState", 1,
-				"SpeciationType", speciationType.SYMPATRY);
+		nullTriplet.initByName("parentState", 1,
+				"leftChildState", 1,
+				"rightChildState", 1,
+				"speciationType", speciationType.SYMPATRY);
 		
 		CladoTriplet sTriplet1 = new CladoTriplet();
-		sTriplet1.initByName("ParentState", 2,
-				"LeftChildState", 2,
-				"RightChildState", 2,
-				"SpeciationType", speciationType.SYMPATRY);
+		sTriplet1.initByName("parentState", 2,
+				"leftChildState", 2,
+				"rightChildState", 2,
+				"speciationType", speciationType.SYMPATRY);
 		
 		CladoTriplet sTriplet2 = new CladoTriplet();
-		sTriplet2.initByName("ParentState", 3,
-				"LeftChildState", 3,
-				"RightChildState", 3,
-				"SpeciationType", speciationType.SYMPATRY);
+		sTriplet2.initByName("parentState", 3,
+				"leftChildState", 3,
+				"rightChildState", 3,
+				"speciationType", speciationType.SYMPATRY);
 		
 		CladoTriplet jTriplet1 = new CladoTriplet();
-		jTriplet1.initByName("ParentState", 2,
-				"LeftChildState", 2,
-				"RightChildState", 3,
-				"SpeciationType", speciationType.JUMPDISPERSAL);
+		jTriplet1.initByName("parentState", 2,
+				"leftChildState", 2,
+				"rightChildState", 3,
+				"speciationType", speciationType.JUMPDISPERSAL);
 		
 		CladoTriplet jTriplet2 = new CladoTriplet();
-		jTriplet2.initByName("ParentState", 3,
-				"LeftChildState", 2,
-				"RightChildState", 3,
-				"SpeciationType", speciationType.JUMPDISPERSAL);
+		jTriplet2.initByName("parentState", 3,
+				"leftChildState", 2,
+				"rightChildState", 3,
+				"speciationType", speciationType.JUMPDISPERSAL);
 		
 		CladoTriplet vTriplet1 = new CladoTriplet();
-		vTriplet1.initByName("ParentState", 4,
-				"LeftChildState", 2,
-				"RightChildState", 3,
-				"SpeciationType", speciationType.VICARIANCE);
+		vTriplet1.initByName("parentState", 4,
+				"leftChildState", 2,
+				"rightChildState", 3,
+				"speciationType", speciationType.VICARIANCE);
 		
 		CladoTriplet ssTriplet1 = new CladoTriplet();
-		ssTriplet1.initByName("ParentState", 4,
-				"LeftChildState", 2,
-				"RightChildState", 4,
-				"SpeciationType", speciationType.SUBSYMPATRY);
+		ssTriplet1.initByName("parentState", 4,
+				"leftChildState", 2,
+				"rightChildState", 4,
+				"speciationType", speciationType.SUBSYMPATRY);
 		
 		CladoTriplet ssTriplet2 = new CladoTriplet();
-		ssTriplet2.initByName("ParentState", 4,
-				"LeftChildState", 3,
-				"RightChildState", 4,
-				"SpeciationType", speciationType.SUBSYMPATRY);
+		ssTriplet2.initByName("parentState", 4,
+				"leftChildState", 3,
+				"rightChildState", 4,
+				"speciationType", speciationType.SUBSYMPATRY);
 		
 		List<CladoTriplet> cladoTripletList = new ArrayList<CladoTriplet>();
 		Collections.addAll(cladoTripletList, nullTriplet, sTriplet1, sTriplet2, jTriplet1, jTriplet2, vTriplet1, ssTriplet1, ssTriplet2);
 		
 		CladogeneticSpeciationRateStash csrt = new CladogeneticSpeciationRateStash();
-		csrt.initByName("CladoTriplets", cladoTripletList,
-				"SympatricRate", sympatricSpeciationRate,
-				"SubsympatricRate", subSympatricSpeciationRate,
-				"VicariantRate", vicariantSpeciationRate,
-				"JumpRate", jumpSpeciationRate);
+		csrt.initByName("cladoTriplets", cladoTripletList,
+				"sympatricRate", sympatricSpeciationRate,
+				"subsympatricRate", subSympatricSpeciationRate,
+				"vicariantRate", vicariantSpeciationRate,
+				"jumpRate", jumpSpeciationRate);
 		csrt.printEventMap();
 		
-		InstantaneousRateMatrixOld irm = new InstantaneousRateMatrixOld();
-		String FlatQMatrixString = "0.0 0.0 0.0 0.0 0.01 0.0 0.0 0.01 0.01 0.0 0.0 0.01 0.0 0.01 0.01 0.00";
+		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
+		String FlatQMatrixString = "0.0 0.0 0.0 0.01 0.0 0.01 0.01 0.0 0.01 0.0 0.01 0.01"; 
 		                           
-		irm.initByName("NumberOfStates", numStates, "FlatQMatrix", FlatQMatrixString);
+		irm.initByName("numberOfStates", numStates, "flatQMatrix", FlatQMatrixString);
 		irm.printMatrix();
 		
 		Double[] piEs = new Double[numStates];
@@ -129,17 +129,14 @@ public class StateDependentSpeciationExtinctionProcessClaSSETestDriver {
         
         StateDependentSpeciationExtinctionProcess sdsep = new StateDependentSpeciationExtinctionProcess();
         sdsep.initByName(
-        		"TreeParser", myTree,
-        		"TraitStash", traitStash,
-        		"InstantaneousRateMatrix", irm,
-        		"CladogeneticStash", csrt,
-        		"Mu", mu,
-        		"Pi", pi,
-        		"IncorporateCladogenesis", incorporateCladogenesis
+        		"tree", myTree,
+        		"traitStash", traitStash,
+        		"instantaneousRateMatrix", irm,
+        		"cladogeneticStash", csrt,
+        		"mu", mu,
+        		"pi", pi,
+        		"incorporateCladogenesis", incorporateCladogenesis
         		);
-//        StateDependentSpeciationExtinctionProcess sdsep = 
-//        		new StateDependentSpeciationExtinctionProcess(myTree, lambda, mu, pi, numStates,
-//        				traitStash, csrt, irm, rate, incorporateCladogenesis);
 
         System.out.println("Log-likelihood = " + Double.toString(sdsep.calculateLogP()));
 	}

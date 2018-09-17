@@ -20,12 +20,12 @@ public class SSEODETestDriver {
 		Double[] mu = new Double[] {0.0, 0.0}; // pure birth
 		
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", "0.0 0.9 0.0 0.9");
+		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", "0.9 0.9");
 		
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		TraitStash traitStash = new TraitStash();
-		traitStash.initByName("NumberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2");
+		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2");
 		double[] y = traitStash.getSpLks("Human");
 		// double[] y = new double[] { 0.0, 0.0, 0.0, 1.0 };
 		
@@ -33,7 +33,7 @@ public class SSEODETestDriver {
 		FirstOrderIntegrator dp853 = new 
 				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
 		
-		SSEODE ode = new SSEODE(mu, irm, 1.0, false); // incorporate_cladogenesis = false (BiSSE, or MuSSE)
+		SSEODE ode = new SSEODE(mu, irm, 1.0, false); // incorporateCladogenesis = false (BiSSE, or MuSSE)
 		ode.setSpeciationRates(lambda);
 		
 		// running

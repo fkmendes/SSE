@@ -1,23 +1,21 @@
 package biogeo;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import beast.core.CalculationNode;
 import beast.core.Input;
-import beast.core.parameter.Parameter;
 import beast.core.parameter.RealParameter;
 import biogeo.CladoTriplet.speciationType;
 
 public class CladogeneticSpeciationRateStash extends CalculationNode {
 	
-	final public Input<List<CladoTriplet>> cladogeneticEventsInput = new Input<>("CladoTriplets", "List of CladoTriplet objects that contain states of a parent and its children.", new ArrayList<>());
-	final public Input<RealParameter> sympatricRateInput = new Input<>("SympatricRate", "Speciation rate for sympatric event.");
-	final public Input<RealParameter> subSympatricRateInput = new Input<>("SubsympatricRate", "Speciation rate for subsympatric event.");
-	final public Input<RealParameter> vicariantRateInput = new Input<>("VicariantRate", "Speciation rate for vicariant event.");
-	final public Input<RealParameter> jumpRateInput = new Input<>("JumpRate", "Speciation rate for jump dispersal event.");
+	final public Input<List<CladoTriplet>> cladogeneticEventsInput = new Input<>("cladoTriplets", "List of CladoTriplet objects that contain states of a parent and its children.", new ArrayList<>());
+	final public Input<RealParameter> sympatricRateInput = new Input<>("sympatricRate", "Speciation rate for sympatric event.");
+	final public Input<RealParameter> subSympatricRateInput = new Input<>("subsympatricRate", "Speciation rate for subsympatric event.");
+	final public Input<RealParameter> vicariantRateInput = new Input<>("vicariantRate", "Speciation rate for vicariant event.");
+	final public Input<RealParameter> jumpRateInput = new Input<>("jumpRate", "Speciation rate for jump dispersal event.");
 	
 	private double sympatricRate;
 	private double subSympatricRate;
@@ -35,7 +33,10 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 		sympatricRate = sympatricRateInput.get().getValue();
 		subSympatricRate = subSympatricRateInput.get().getValue();
 		vicariantRate = vicariantRateInput.get().getValue();
-		jumpRate = jumpRateInput.get().getValue();
+		
+		if (jumpRateInput.get() != null) {
+			jumpRate = jumpRateInput.get().getValue();
+		}
 
 		List<CladoTriplet> cladoTripletList = cladogeneticEventsInput.get();
 
@@ -85,27 +86,3 @@ public class CladogeneticSpeciationRateStash extends CalculationNode {
 		System.out.println(new PrettyPrintHashMap<int[], Double>(eventMap));
 	}
 }
-
-//// DEPRECATED ctor (populates event_map)
-//public CladogeneticSpeciationRateStash(int[][] cladogenetic_events, double[] speciation_rates) {
-//	this.cladogeneticEvents = cladogenetic_events;
-//	this.speciationRates = speciation_rates;
-//	int num_events = cladogenetic_events.length;
-//	
-//	if (num_events != this.speciationRates.length) {
-//		System.out.println("The number of cladogenetic events did not match the number of speciation rates. Exiting...");
-//		throw new RuntimeException();
-//	}
-//	
-//	for (int i = 0; i < num_events; ++i) {
-//		if (this.cladogeneticEvents[i].length != 3) {
-//			System.out.println("We need cladogenetic events as parent-daughter1-daughter2. Found something different. Exiting...");
-//		}
-//		
-//		int[] key = new int[3];
-//		key[0] = this.cladogeneticEvents[i][0];
-//		key[1] = this.cladogeneticEvents[i][1];
-//		key[2] = this.cladogeneticEvents[i][2];
-//		this.eventMap.put(key, this.speciationRates[i]);
-//	}
-//}

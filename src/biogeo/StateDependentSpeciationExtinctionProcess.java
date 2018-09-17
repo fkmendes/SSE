@@ -16,26 +16,25 @@ import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.*;
-import beast.util.TreeParser;
 
 @Description("Cladogenetic State change Speciation and Extinction (ClaSSE) model")
 @Citation(value="Goldberg EE, Igic B (2012) Tempo and mode in plant breeding system evolution. Evolution 16(12):3701-3709",
 year=2012, firstAuthorSurname="Goldberg", DOI="10.1111/j.1558-5646.2012.01730.x")
 public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
-	final public Input<TreeParser> treeParserInput = new Input<>("TreeParser", "TreeParser object containing tree.", Validate.REQUIRED);
-	final public Input<TraitStash> traitStashInput = new Input<>("TraitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
-	final public Input<InstantaneousRateMatrix> irmInput = new Input<>("InstantaneousRateMatrix", "InstantaneousRateMatrix object containing anagenenetic rates.", Validate.REQUIRED);
-	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("CladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
-	final public Input<RealParameter> lambdaInput = new Input<>("Lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
-	final public Input<RealParameter> muInput = new Input<>("Mu", "Death rates for each state.", Validate.REQUIRED);
-	final public Input<RealParameter> piInput = new Input<>("Pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
-	final public Input<Boolean> cladoFlagInput = new Input<>("IncorporateCladogenesis", "Whether or not to incorporate cladogenetic events.", Validate.REQUIRED);
+	final public Input<Tree> treeInput = new Input<>("tree", "Tree object containing tree.", Validate.REQUIRED);
+	final public Input<TraitStash> traitStashInput = new Input<>("traitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
+	final public Input<InstantaneousRateMatrix> irmInput = new Input<>("instantaneousRateMatrix", "InstantaneousRateMatrix object containing anagenenetic rates.", Validate.REQUIRED);
+	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
+	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
+	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
+	final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
+	final public Input<Boolean> cladoFlagInput = new Input<>("incorporateCladogenesis", "Whether or not to incorporate cladogenetic events.", Validate.REQUIRED);
 	
 	// input
-	private TreeParser tree;
+	private Tree tree;
 	private TraitStash traitStash;
-	private InstantaneousRateMatrix Q;
+	private InstantaneousRateMatrix q;
 	private CladogeneticSpeciationRateStash cladoStash;
 	private Double[] lambda;
 	private Double[] mu;
@@ -58,12 +57,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	@Override
 	public void initAndValidate() {		
 		super.initAndValidate();
-		tree = treeParserInput.get();
+		tree = treeInput.get();
 		traitStash = traitStashInput.get();
-		Q = irmInput.get();
+		q = irmInput.get();
 		mu = muInput.get().getValues();
 		pi = piInput.get().getValues();
-		numStates = Q.getNumStates();
+		numStates = q.getNumStates();
 		rate = 1.0;
 		incorporateCladogenesis = cladoFlagInput.get();
 		
@@ -321,7 +320,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge) {
 		FirstOrderIntegrator dp853 = new 
 				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
-		SSEODE ode = new SSEODE(mu, Q, rate, incorporateCladogenesis);
+		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis);
 		
 		if (incorporateCladogenesis) {
 			HashMap<int[], Double> eventMap = cladoStash.getEventMap();

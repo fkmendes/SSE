@@ -28,7 +28,7 @@ public class SDSEPBiSSETest {
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		TraitStash traitStash = new TraitStash();
-		traitStash.initByName("NumberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2");
+		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2");
 		traitStash.printLksMap();
 				
 		// initializing birth-death parameters
@@ -44,7 +44,7 @@ public class SDSEPBiSSETest {
 		RealParameter lambda = new RealParameter(lambdas);
 	
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", "0.1 0.1");
+		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", "0.1 0.1");
 		irm.printMatrix();
 		
 		Double[] piEs = new Double[numberOfStates];
@@ -63,13 +63,13 @@ public class SDSEPBiSSETest {
         
         sdsep = new StateDependentSpeciationExtinctionProcess();
         sdsep.initByName(
-        		"TreeParser", myTree,
-        		"TraitStash", traitStash,
-        		"InstantaneousRateMatrix", irm,
-        		"Lambda", lambda,
-        		"Mu", mu,
-        		"Pi", pi,
-        		"IncorporateCladogenesis", incorporateCladogenesis
+        		"tree", myTree,
+        		"traitStash", traitStash,
+        		"instantaneousRateMatrix", irm,
+        		"lambda", lambda,
+        		"mu", mu,
+        		"pi", pi,
+        		"incorporateCladogenesis", incorporateCladogenesis
         		);
     	
     	System.out.println(sdsep.calculateLogP());
