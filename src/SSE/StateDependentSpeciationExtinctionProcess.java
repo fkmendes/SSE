@@ -339,6 +339,14 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 	}
 
+	public static double drawStochasticCharacterMap() {
+
+	}
+
+	public static double drawJointConditionalAncestralStates() {
+
+	}
+
 	// helper
 	public static double sum(double[] arr, int fromIdx, int toIdx, int idxToIgnore, boolean takeLog) {
 		double result = 0.0;

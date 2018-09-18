@@ -2,4 +2,8 @@
 .project
 .classpath
 *.class
+.idea/*
+*.iml
+out/*
+*.state
 
