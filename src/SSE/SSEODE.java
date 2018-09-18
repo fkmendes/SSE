@@ -13,19 +13,21 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	private Double[] lambda; // ctor arg
 	private InstantaneousRateMatrix q; // ctor arg
 	private boolean incorporateCladogenesis; // ctor arg
-	private HashMap<int[], Double> eventMap; // setter 
+	private HashMap<int[], Double> eventMap; // setter
+    private boolean backwardTime;
 	
 	/*
 	 * Constructor
 	 * Speciation rates and event map are set independently so more or less general models can use this class
 	 */
-	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis) {
+	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis, boolean backwardTime) {
 		this.mu = mu;
 		this.q = q;
 		this.rate = rate;
 		this.incorporateCladogenesis = incorporateCladogenesis;
+		this.backwardTime = backwardTime;
 		numStates = q.getNumStates();
-		// System.out.println("SSEODE: Self-initialized " + Integer.toString(num_states) + " states.");
+		// System.out.println("SSEODE: Self-initialized " + Integer.toString(numStates) + " states.");
 	}
 
 	// setters and getters
@@ -39,7 +41,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	
 	// for integrator
 	public int getDimension() {
-		return numStates * 2; // num_states for E and for D
+		return numStates * 2; // numStates for E and for D
 	}
 
 	// for integrator (this is where we specify the diff eqn) 
@@ -55,7 +57,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			safeX[i] = (x[i] > 1.0 ? 1.0 : x[i]);
 		}
 		
-		// System.out.println(Arrays.toString(safe_x));
+		// System.out.println(Arrays.toString(safeX));
 		
 		// iterating over states (ranges)
 		for (int i = 0; i < numStates; ++i) {
@@ -125,44 +127,65 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 					dxdt[i] += q.getCell(i, j, rate) * safeX[j];
 				}
 			}
-			
+
+            if (!backwardTime) {
+                dxdt[i] *= -1;
+            }
+
 			/*
 			 * Step 3: equation A1 (getting D's, second half of dxdt)
 			 */
 
 			// no event
-//			System.out.println("DNi before: " + Double.toString(dxdt[i + num_states]));
+//			System.out.println("DNi before: " + Double.toString(dxdt[i + numStates]));
             dxdt[i + numStates] = (-no_event_rate) * safeX[i + numStates];
-//          System.out.println("DNi after: " + Double.toString(dxdt[i + num_states]));
+//          System.out.println("DNi after: " + Double.toString(dxdt[i + numStates]));
 
             // speciation
             if (incorporateCladogenesis) {
 	            for (HashMap.Entry<int[], Double> entry : eventMap.entrySet()) {
 	            	int[] states = entry.getKey();
-					int j = states[1]-1;
-					int k = states[2]-1;
-	            	double thisLambda = entry.getValue();
-	            	
-	            	// if parent state (range) is the same as current (ith) state
-	            	if (i == (states[0]-1)) {
-	            		double dnjTimesEk = safeX[j + numStates] * safeX[k]; // D_Nj * E_k
-	            		double dnkTimesEj = safeX[k + numStates] * safeX[j]; // D_Nj * E_k
-	            		dxdt[i + numStates] += thisLambda * (dnjTimesEk + dnkTimesEj);
-	            	}
-	            }
+                    // Ancestor, Left, Right
+                    int a = states[0]-1;
+					int l = states[1]-1;
+					int r = states[2]-1;
+	            	double this_lambda = entry.getValue();
+
+                    if (backwardTime) {
+	            	    // if parent state (range) is the same as current (ith) state
+	            	    if (i == a) {
+	            		    double dnj_times_ek = safeX[l + numStates] * safeX[r]; // D_Nj * E_k
+	            		    double dnk_times_ej = safeX[r + numStates] * safeX[l]; // D_Nj * E_k
+	            		    dxdt[i + numStates] += this_lambda * (dnj_times_ek + dnk_times_ej);
+	            	    }
+                    }
+                    else {
+                        if (i == l) {
+	            		    dxdt[i + numStates] += this_lambda * safeX[a + numStates] * safeX[r];
+                        }
+                        if (i == r) {
+	            		    dxdt[i + numStates] += this_lambda * safeX[a + numStates] * safeX[l];
+                        }
+                    }
+
+                }
             }
             
             else {
             	dxdt[i + numStates] += 2.0 * lambda[i] * safeX[i] * safeX[i + numStates];
-//            	System.out.println("speciation: " + Double.toString(2.0 * lambda[i] * safe_x[i] + safe_x[i + num_states]));
-//            	System.out.println("speciation (Ei): " + Double.toString(safe_x[i]));
+//            	System.out.println("speciation: " + Double.toString(2.0 * lambda[i] * safeX[i] + safeX[i + numStates]));
+//            	System.out.println("speciation (Ei): " + Double.toString(safeX[i]));
             }
             
             // anagenetic change
             for (int j = 0; j < numStates; ++j) {
             	if (i != j) {
-            		dxdt[i + numStates] += q.getCell(i, j, rate) * safeX[j + numStates];
-//            		System.out.println("anagen: " + Double.toString(Q.getCell(i, j, rate) * safe_x[j + num_states]));
+                    if (backwardTime) {
+            		    dxdt[i + numStates] += q.getCell(i, j, rate) * safeX[j + numStates];
+//            		    System.out.println("anagen: " + Double.toString(q.getCell(i, j, rate) * safeX[j + numStates]));
+                    } else {
+            		    dxdt[i + numStates] += q.getCell(j, i, rate) * safeX[j + numStates];
+                    }
             	}
             }
 		}
