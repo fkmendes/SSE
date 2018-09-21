@@ -1,13 +1,20 @@
 package SSE;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
 
+import beast.app.BeastMCMC;
 import beast.core.Citation;
 import beast.core.Description;
 import beast.core.Distribution;
@@ -15,6 +22,7 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
 import beast.core.parameter.RealParameter;
+import beast.core.util.Log;
 import beast.evolution.tree.*;
 
 @Description("Cladogenetic State change Speciation and Extinction (ClaSSE) model")
@@ -30,7 +38,10 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
 	final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
 	final public Input<Boolean> cladoFlagInput = new Input<>("incorporateCladogenesis", "Whether or not to incorporate cladogenetic events.", Validate.REQUIRED);
-	
+
+	final public Input<Boolean> useThreadsInput = new Input<>("useThreads", "calculated the distributions in parallel using threads (default false)", false);
+    final public Input<Integer> maxNrOfThreadsInput = new Input<>("threads","maximum number of threads to use, if less than 1 the number of threads in BeastMCMC is used (default -1)", -1);
+
 	// input
 	private Tree tree;
 	private TraitStash traitStash;
@@ -41,9 +52,9 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 	private Double[] pi; // root eq freqs
 	private int numStates;
 	private double rate;
-	private double dt; // time slice size (ctor populates)
-	private double rootAge;
-	private int numTimeSlices;
+	//private double dt; // time slice size (ctor populates)
+	//private double rootAge;
+	//private int numTimeSlices;
 	private boolean incorporateCladogenesis;
 	
 	// members used for lk computation
@@ -59,6 +70,10 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 	double finalLogLk;
 	double finalLk;
 	int rootIdx;
+	
+    boolean useThreads;
+	int nrOfThreads;
+	
 	
 	@Override
 	public void initAndValidate() {		
@@ -78,9 +93,9 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 		else { lambda = lambdaInput.get().getValues(); }
 		
 		// ode-related
-		numTimeSlices = 1;
-		rootAge = tree.getRoot().getHeight();
-		dt = rootAge / ((double) (numTimeSlices * 50));
+		//numTimeSlices = 1;
+		//rootAge = tree.getRoot().getHeight();
+		//dt = rootAge / ((double) (numTimeSlices * 50));
 		
 		// likelihood-related
 		//nodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; // tips have initialization lks, internal nodes (and root) just after merge
@@ -98,6 +113,15 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 		branchLengths = new double[tree.getNodeCount()];
 		storedBranchLengths = new double[tree.getNodeCount()];
 		hasDirt = Tree.IS_FILTHY;
+
+        useThreads = useThreadsInput.get() && (BeastMCMC.m_nThreads > 1);
+		nrOfThreads = useThreads ? BeastMCMC.m_nThreads : 1;
+		if (useThreads && maxNrOfThreadsInput.get() > 0) {
+			nrOfThreads = Math.min(maxNrOfThreadsInput.get(), BeastMCMC.m_nThreads);
+		}
+		if (useThreads) {
+		     exec = Executors.newFixedThreadPool(nrOfThreads);
+		}
 	}
 	
 //	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, double[] pi, int numStates,
@@ -137,16 +161,129 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 
 		if (!incorporateCladogenesis) { lambdaInput.get().getValues(lambda); }
 
-		computeNodeLk(tree.getRoot(), tree.getRoot().getNr());
+		if (hasDirt == Tree.IS_FILTHY && useThreads) {
+			computeNodeLkUsingThreads();
+		} else {
+			computeNodeLk(tree.getRoot(), true);
+		}
 		logP = finalLogLk;
 		return logP;
 	}
 
 	// The smallest time slice that we will attempt to numerically integrate.
 	// if the lattice of dt's falls closer than this to a node, that sliver of time is ignored in the integration.
-	private static final double VERY_SMALL_TIME_SLIVER = 1e-15;
+	//private static final double VERY_SMALL_TIME_SLIVER = 1e-15;
 
-	private int computeNodeLk(Node node, int nodeIdx) {
+
+    class ThreadRunner implements Runnable {
+
+        ThreadRunner() {
+        }
+
+        @Override
+		public void run() {
+        	Integer nodeIdx = null;
+            try {            
+            	//int k = 0;
+            	while (true) {
+            		nodeIdx = next();
+            		//k++;
+            		if (nodeIdx == null) {
+                        countDown.countDown();
+                        //System.err.println("Done " + k);
+            			return;
+            		}
+            		Node node = tree.getNode(nodeIdx);
+            		computeNodeLk(node, false);
+            		done[nodeIdx] = true;            		
+            	}
+            } catch (Exception e) {
+                Log.err.println("Something went wrong in a calculation of " +
+                		nodeIdx == null ? "something resulting in a null" : 
+                			tree.getNode(nodeIdx).getID());
+                e.printStackTrace();
+                System.exit(1);
+            }
+        }
+
+    } // CoreRunnable
+
+    CountDownLatch countDown;
+    ExecutorService exec;
+    PriorityQueue<Integer> queue;
+    boolean [] done;
+
+    /**
+     * comparator used by priority queue*
+     */
+    class TupleComparator implements Comparator<Integer> {
+        @Override
+		public int compare(final Integer o1, final Integer o2) {
+        	Node node1 = tree.getNode(o1);
+        	Node node2 = tree.getNode(o2);
+        	
+        	// leafs go first
+        	if (node1.isLeaf() && !node2.isLeaf()) {
+        		return -1;
+        	}
+        	if (!node1.isLeaf() && node2.isLeaf()) {
+        		return 1;
+        	}
+        	
+        	// both nodes are leafs OR both nodes are internal
+            if (node1.getHeight() < node2.getHeight()) {
+                return -1;
+            }
+            if (node1.getHeight() == node2.getHeight()) {
+                return 0;
+            }
+            return 1;
+        }
+    }
+    
+    Integer next() {
+    	synchronized(this) {
+    		Integer i = queue.peek();
+    		if (i == null) {
+    			return null;
+    		}
+    		Node node = tree.getNode(i);
+    		if (node.isLeaf()) {
+        		return queue.poll();    			
+    		}
+    		if (!done[node.getChild(0).getNr()] || !done[node.getChild(1).getNr()]) {
+    			return null;
+    		}
+    		return queue.poll();
+    	}
+    }
+
+    private void computeNodeLkUsingThreads() {
+        try {
+        	// set up queue
+        	done = new boolean[tree.getNodeCount()];
+        	queue = new PriorityQueue<>(tree.getNodeCount(), new TupleComparator());
+        	for (int i = 0; i < tree.getNodeCount(); i++) {
+        		queue.add(i);
+        	}
+        	
+            countDown = new CountDownLatch(nrOfThreads);
+            // kick off the threads
+            for (int i = 0; i < nrOfThreads; i++) {
+            	ThreadRunner coreRunnable = new ThreadRunner();
+            	exec.execute(coreRunnable);
+            }
+            countDown.await();
+        } catch (RejectedExecutionException | InterruptedException e) {
+            useThreads = false;
+            Log.err.println("Stop using threads: " + e.getMessage());
+            computeNodeLk(tree.getRoot(), true);
+        }
+    }
+	
+	
+	private int computeNodeLk(Node node, boolean recurse) {
+		int nodeIdx = node.getNr();
         int update = (node.isDirty() | hasDirt);
         if (branchLengths[node.getNr()] != node.getLength()) {
         	update |= Tree.IS_DIRTY;
@@ -176,8 +313,10 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 			int rightIdx = right.getNr();
 
 			// recursion over here
-			update |= computeNodeLk(left, leftIdx);
-			update |= computeNodeLk(right, rightIdx);
+			if (recurse) {
+				update |= computeNodeLk(left, recurse);
+				update |= computeNodeLk(right, recurse);
+			}
 			
             if (update != Tree.IS_CLEAN) {
 
@@ -298,25 +437,27 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 				double beginAge = node.getHeight();
 				double endAge = node.getParent().getHeight();
 				
-				// System.out.println("Initial conditions: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
-				int currentDt = 0; // counter used to multiply dt
-				while ((currentDt * dt) + beginAge < endAge) {
-					double currentDtStart = (currentDt * dt) + beginAge;
-					double currentDtEnd = ((currentDt + 1) * dt) + beginAge;
-					
-					if (currentDtEnd > endAge) {
-						currentDtEnd = endAge;
-					}
-	
-					double timeslice = currentDtEnd - currentDtStart;
-					if (timeslice >= VERY_SMALL_TIME_SLIVER) {
-						numericallyIntegrateProcess(nodePartial, currentDtStart, currentDtEnd);
-					} else {
-						// DO NOTHING BECAUSE TOO LITTLE TIME HAS PAST AND nodePartialScaledLksPostOde[nodeIdx] will be unaffected
-					}
-					
-		            currentDt++;
-				}
+				numericallyIntegrateProcess(nodePartial, beginAge, endAge);
+
+//				// System.out.println("Initial conditions: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
+//				int currentDt = 0; // counter used to multiply dt
+//				while ((currentDt * dt) + beginAge < endAge) {
+//					double currentDtStart = (currentDt * dt) + beginAge;
+//					double currentDtEnd = ((currentDt + 1) * dt) + beginAge;
+//					
+//					if (currentDtEnd > endAge) {
+//						currentDtEnd = endAge;
+//					}
+//	
+//					double timeslice = currentDtEnd - currentDtStart;
+//					if (timeslice >= VERY_SMALL_TIME_SLIVER) {
+//						numericallyIntegrateProcess(nodePartial, currentDtStart, currentDtEnd);
+//					} else {
+//						// DO NOTHING BECAUSE TOO LITTLE TIME HAS PAST AND nodePartialScaledLksPostOde[nodeIdx] will be unaffected
+//					}
+//					
+//		            currentDt++;
+//				}
 				double dScalingConstant = sum(nodePartial, numStates, nodePartial.length, -1, false); // -1 means don't ignore any item
 				scalingConstants[nodeIdx] = dScalingConstant;
 				for (int i = 0; i < numStates; i++) {
@@ -357,7 +498,7 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 	
 	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge) {
 		FirstOrderIntegrator dp853 = new 
-				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
+				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-6, 1.0e-6);
 		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis);
 		
 		if (incorporateCladogenesis) {
