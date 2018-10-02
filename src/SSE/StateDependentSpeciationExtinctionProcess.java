@@ -95,6 +95,13 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
      * // (often not necessary while node partial recalculation is required)
      */
     protected int hasDirt;
+
+    // sampled ancestral states
+	int[] startStates;
+	int[] endStates;
+
+	private double[][] nodeConditionalScaledLks;
+
     
 	@Override
 	public void initAndValidate() {		
@@ -143,6 +150,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		if (useThreads) {
 		     exec = Executors.newFixedThreadPool(nrOfThreads);
 		}
+
+		startStates = new int[tree.getNodeCount()];
+		endStates = new int[tree.getNodeCount()];
+		nodeConditionalScaledLks = new double[tree.getNodeCount()][numStates*2];
 	}
 	
 /* Original constructor before interfacing with BEAST 2 */
@@ -468,8 +479,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				// we are going from present (begin) to past (end)
 				double beginAge = node.getHeight();
 				double endAge = node.getParent().getHeight();
-				
-				numericallyIntegrateProcess(nodePartial, beginAge, endAge);
+
+				boolean backwardTime = true;
+				numericallyIntegrateProcess(nodePartial, beginAge, endAge, backwardTime);
 
 //				// System.out.println("Initial conditions: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
 //				int currentDt = 0; // counter used to multiply dt
@@ -532,8 +544,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 	
 	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge, boolean backwardTime) {
-		FirstOrderIntegrator dp853 = new 
-		DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-6, 1.0e-6);
+		FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-6, 1.0e-6);
 		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis, backwardTime);
 
 		if (incorporateCladogenesis) {
@@ -553,12 +564,40 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 	}
 
-	public static double drawStochasticCharacterMap() {
-		return 0;
+	public void drawStochasticCharacterMap() {
+		return;
 	}
 
-	public static double drawJointConditionalAncestralStates() {
-		return 0;
+	public void drawJointConditionalAncestralStates() {
+    	this.calculateLogP();
+		for (int i = 0; i < tree.getNodeCount(); i++) {
+			System.arraycopy(nodePartialScaledLksPostOde[i], 0, nodeConditionalScaledLks[i], 0, 2 * numStates);
+		}
+
+		Node node = tree.getRoot();
+		Node left = node.getChild(0);
+		Node right = node.getChild(1);
+		int leftIdx = left.getNr();
+		int rightIdx = right.getNr();  // Not sure if this is the best way to get these node idx
+
+		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], pi);
+		endStates[rootIdx] = sampledStates[0];
+		startStates[leftIdx] = sampledStates[1];
+		startStates[rightIdx] = sampledStates[2];
+
+		recursivelyDrawJointConditionalAncestralStates(left);
+		recursivelyDrawJointConditionalAncestralStates(right);
+	}
+
+	public void recursivelyDrawJointConditionalAncestralStates(Node node) {
+		// TODO
+//    	if (node.isLeaf()) {
+//
+//		} else {
+
+//			branchConditionalLikelyhoods
+//		}
+        return;
 
 	}
 
@@ -663,4 +702,69 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
     	
     	super.restore();
     }
+
+    // helper
+    private int[] sampleAncestralState(double[] leftLikelyhoods, double[] rightLightlyhoods, Double[] D) {
+        // TODO Test this
+        // Pick cladogenetic or anagentic events
+		HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
+		Double[] speciationRates = new Double[numStates];
+		if (incorporateCladogenesis) {
+			eventMap = cladoStash.getEventMap();
+		} else {
+			speciationRates = lambda;
+		}
+
+		// Set up the event probabilities
+		HashMap<int[], Double> eventProb = new HashMap<>();
+		double totalProb = 0;
+        if (incorporateCladogenesis) {
+			for (HashMap.Entry<int[], Double> entry: eventMap.entrySet()) {
+				int[] states = entry.getKey();
+				int i = states[0] - 1;
+				int j = states[1] - 1;
+				int k = states[2] - 1;
+				double speciationRate = entry.getValue();
+				double likelyhood = leftLikelyhoods[numStates + j] * rightLightlyhoods[numStates + k] * D[i];
+				double prob = likelyhood * speciationRate;
+				// TODO Do I need to handle left[k] and right[j]
+
+				eventProb.put(states, prob);
+				totalProb += prob;
+			}
+		} else {
+            for (int i = 0; i < numStates; i++) {
+            	double likelyhood = leftLikelyhoods[numStates + i] * rightLightlyhoods[numStates + i] * D[i];
+            	double prob = likelyhood * speciationRates[i];
+            	int[] states = new int[]{i, i, i};
+
+				eventProb.put(states, prob);
+				totalProb += prob;
+			}
+		}
+
+		// Sample from the events
+		int[] triplet = new int[]{1, 1, 1};
+        // TODO Double check that this subtraction scheme works
+        if (totalProb <= 1e-6) { // if totalProb is 0 basically
+			int numEvents = eventProb.size();
+			double randNum = Math.random();
+			while (randNum > 0) {
+				for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
+					triplet = entry.getKey();
+					randNum -= 1.0 / numEvents;
+				}
+			}
+		} else {
+			double randNum = Math.random() * totalProb;
+			while (randNum > 0) {
+				for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
+					triplet = entry.getKey();
+					double prob = entry.getValue();
+					randNum -= prob;
+				}
+			}
+		}
+		return triplet;
+	}
 }
