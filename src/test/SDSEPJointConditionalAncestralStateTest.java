@@ -78,6 +78,8 @@ public class SDSEPJointConditionalAncestralStateTest {
 		// TODO add tests for sample
         sdsep.calculateLogP();
 		sdsep.drawJointConditionalAncestralStates();
+		int[] drawnAncestralStart = sdsep.startStates;
+		int[] drawnAncestralEnd = sdsep.endStates;
 	}
 
 	@Test

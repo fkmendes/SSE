@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.ode.FirstOrderIntegrator;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
@@ -97,8 +98,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
     protected int hasDirt;
 
     // sampled ancestral states
-	int[] startStates;
-	int[] endStates;
+	public int[] startStates;
+	public int[] endStates;
 
 	private double[][] nodeConditionalScaledLks;
 
@@ -578,9 +579,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		Node left = node.getChild(0);
 		Node right = node.getChild(1);
 		int leftIdx = left.getNr();
-		int rightIdx = right.getNr();  // Not sure if this is the best way to get these node idx
+		int rightIdx = right.getNr();
 
-		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], pi);
+        double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray(); // Should my argument be double[] or Double[]?
+		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piUnboxed);
 		endStates[rootIdx] = sampledStates[0];
 		startStates[leftIdx] = sampledStates[1];
 		startStates[rightIdx] = sampledStates[2];
@@ -589,16 +591,58 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		recursivelyDrawJointConditionalAncestralStates(right);
 	}
 
-	public void recursivelyDrawJointConditionalAncestralStates(Node node) {
-		// TODO
-//    	if (node.isLeaf()) {
-//
-//		} else {
+	private void recursivelyDrawJointConditionalAncestralStates(Node node) {
+    	if (node.isLeaf()) {
+    	    int state = traitStash.getNodeState(node);
+            if (state - 1 != -1) {  // known tip states
+                endStates[node.getNr()] = state;
+			} else {
+            	updateD(node);
 
-//			branchConditionalLikelyhoods
-//		}
-        return;
+				// TODO Add code to Only integrate E backwards? Do we need this? Think about it from fundamentals
+				int nodeIdx = node.getNr();
+				double parentAge = node.getParent().getHeight();
+				double nodeAge = node.getHeight();
+				boolean backwardTime = false;
+				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime);
 
+				state = sampleLksArray(nodeConditionalScaledLks[nodeIdx]);
+				endStates[nodeIdx] = state;
+			}
+		} else {
+    		updateD(node);
+    		// TODO Add code to Only integrate E backwards? Do we need this? Think about it from fundamentals
+			int nodeIdx = node.getNr();
+			Node left = node.getChild(0);
+			Node right = node.getChild(1);
+			int leftIdx = left.getNr();
+			int rightIdx = right.getNr();
+			double parentAge = node.getParent().getHeight();
+			double nodeAge = node.getHeight();
+			boolean backwardTime = false;
+
+			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime);
+			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalScaledLks[nodeIdx]);
+			endStates[nodeIdx] = sampledStates[0];
+			startStates[leftIdx] = sampledStates[1];
+			startStates[rightIdx] = sampledStates[2];
+			recursivelyDrawJointConditionalAncestralStates(left);
+			recursivelyDrawJointConditionalAncestralStates(right);
+		}
+	}
+
+	private void updateD(Node node) {
+    	// For a given node, update its nodeConditionalScaledLks to binary (1 and rest 0's) based off the startState
+        // Used in forward pass
+		int nodeIdx = node.getNr();
+		// TODO is the index by 0 correct?
+		for (int i = 0; i < numStates; i++) {
+			if (i == startStates[nodeIdx]) {
+				nodeConditionalScaledLks[nodeIdx][numStates + i] = 1.0;
+			} else {
+				nodeConditionalScaledLks[nodeIdx][numStates + i] = 0.0;
+			}
+		}
 	}
 
 	// helper
@@ -704,7 +748,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
     }
 
     // helper
-    private int[] sampleAncestralState(double[] leftLikelyhoods, double[] rightLightlyhoods, Double[] D) {
+    private int[] sampleAncestralState(double[] leftLikelyhoods, double[] rightLightlyhoods, double[] D) {
         // TODO Test this
         // Pick cladogenetic or anagentic events
 		HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
@@ -766,5 +810,33 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 		}
 		return triplet;
+	}
+
+	private int sampleLksArray(double[] lks) {
+    	double totalProb = 0;
+    	for (int i = 0 ; i < numStates; i++) {
+			totalProb += lks[numStates + i];
+		}
+
+		// TODO Double check that this subtraction scheme works
+        int ret = 0;
+		if (totalProb <= 1e-6) { // if totalProb is 0 basically
+			double randNum = Math.random();
+			while (randNum > 0) {
+				for (int i = 0; i < numStates; i++) {
+					ret = i;
+					randNum -= 1.0 / numStates;
+				}
+			}
+		} else {
+			double randNum = Math.random() * totalProb;
+			while (randNum > 0) {
+				for (int i = 0; i < numStates; i++) {
+					ret = i;
+					randNum -= lks[numStates + i];
+				}
+			}
+		}
+    	return ret;
 	}
 }
