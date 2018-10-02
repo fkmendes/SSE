@@ -499,7 +499,7 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge) {
 		FirstOrderIntegrator dp853 = new 
 				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-6, 1.0e-6);
-		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis);
+		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis, true);
 		
 		if (incorporateCladogenesis) {
 			HashMap<int[], Double> eventMap = cladoStash.getEventMap();
@@ -591,9 +591,11 @@ public class StateDependentSpeciationExtinctionProcess2 extends Distribution {
 //    	}
         hasDirt = Tree.IS_CLEAN;
 		if ((irmInput.get().isDirtyCalculation()) ||
+				// irm instanteous rate matrix Q
 			(lambdaInput.get() != null && lambdaInput.get().somethingIsDirty()) || 
 			(muInput.get().somethingIsDirty()) || 
 			(piInput.get().somethingIsDirty()) ||
+				// for us its the same, but we could set a prior on it
 			(cladoStash != null && cladoStash.isDirtyCalculation())) {
 			hasDirt = Tree.IS_FILTHY;
 			return true;

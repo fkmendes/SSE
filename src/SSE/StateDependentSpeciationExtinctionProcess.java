@@ -340,10 +340,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	public static double drawStochasticCharacterMap() {
-
+		return 0;
 	}
 
 	public static double drawJointConditionalAncestralStates() {
+		return 0;
 
 	}
 

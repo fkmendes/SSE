@@ -38,7 +38,7 @@ public class SDSEPBiSSETest {
 		Double[] mus = { deathRate, deathRate };
 		System.out.println("Mus: " + Arrays.toString(mus));
 		RealParameter mu = new RealParameter(mus);
-		mu.initByName("minordimension", 1);
+		mu.initByName("minordimension", 1);  // if matrix gets flattened, minor dimension is the # of rows/cols
 		
 		Double[] lambdas = new Double[numberOfStates];
 		Arrays.fill(lambdas, birthRate);
@@ -53,12 +53,14 @@ public class SDSEPBiSSETest {
 		Double[] piDs = new Double[numberOfStates];
 		Arrays.fill(piDs, (1.0/numberOfStates));
 		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.5, 0.5
+		// fixed equilibrium frequency
 		System.out.println("Pi is: " + Arrays.toString(pis));
 		RealParameter pi = new RealParameter(pis);
 		pi.initByName("minordimension", 1);
 		
 		String treeStr = "((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0)0.0;";
         TreeParser myTree = new TreeParser(treeStr, false, false, true, 0); // true b/c species are labelled, offset=0
+		// tree is given
         
         boolean incorporateCladogenesis = false;
         
