@@ -517,7 +517,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		// if we reach root, no more numerical integration, children have already been joined above,
 		// now multiply by prior, populate final_prob
 		else {
-			int rootIdx = nodeIdx;
+			rootIdx = nodeIdx;
 			
 			// for (int i = 0; i < nodePartialScaledLksPreOde.length; ++i) {
 			//     System.out.println("Pre-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPreOde[i]));
@@ -606,7 +606,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				boolean backwardTime = false;
 				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime);
 
-				state = sampleLksArray(nodeConditionalScaledLks[nodeIdx]);
+				state = sampleLksArray(nodeConditionalScaledLks[nodeIdx]) + 1;
 				endStates[nodeIdx] = state;
 			}
 		} else {
@@ -780,7 +780,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
             for (int i = 0; i < numStates; i++) {
             	double likelyhood = leftLikelyhoods[numStates + i] * rightLightlyhoods[numStates + i] * D[i];
             	double prob = likelyhood * speciationRates[i];
-            	int[] states = new int[]{i, i, i};
+            	int[] states = new int[]{i + 1, i + 1, i + 1};
 
 				eventProb.put(states, prob);
 				totalProb += prob;

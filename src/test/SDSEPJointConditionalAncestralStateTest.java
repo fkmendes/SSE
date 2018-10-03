@@ -77,11 +77,13 @@ public class SDSEPJointConditionalAncestralStateTest {
 
 		// TODO add tests for sample
         sdsep.calculateLogP();
-		sdsep.drawJointConditionalAncestralStates();
-		int[] drawnAncestralStart = sdsep.startStates;
-		int[] drawnAncestralEnd = sdsep.endStates;
-		System.out.println("Drawn start states are: " + Arrays.toString(drawnAncestralStart));
-		System.out.println("Drawn end states are: " + Arrays.toString(drawnAncestralEnd));
+		for (int i = 0; i < 500; i++) {
+			sdsep.drawJointConditionalAncestralStates();
+			int[] drawnAncestralStart = sdsep.startStates;
+			int[] drawnAncestralEnd = sdsep.endStates;
+//			System.out.println("Drawn start states are: " + Arrays.toString(drawnAncestralStart));
+			System.out.println("Drawn end states are: " + Arrays.toString(drawnAncestralEnd));
+		}
 	}
 
 	@Test
