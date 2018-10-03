@@ -8,6 +8,8 @@ import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;
 import SSE.TraitStash;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
@@ -26,10 +28,11 @@ public class SDSEPJointConditionalAncestralStateTest {
 		// initializing states
 		int numberOfStates = 2; // BiSSE
 		String[] spNames = new String[] { "Human", "Chimp", "Gorilla" };
+		int numSpecies = spNames.length;
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		TraitStash traitStash = new TraitStash();
-		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2");
+		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=1,Chimp=1,Gorilla=1");
 		traitStash.printLksMap();
 
 		// initializing birth-death parameters
@@ -75,15 +78,44 @@ public class SDSEPJointConditionalAncestralStateTest {
 				"incorporateCladogenesis", incorporateCladogenesis
 		);
 
-		// TODO add tests for sample
-        sdsep.calculateLogP();
-		for (int i = 0; i < 500; i++) {
+		// Run the sampling many times
+        int numTrials = 10000;
+		int[][] samples = new int[numTrials][2 * numSpecies - 1];
+		for (int i = 0; i < numTrials; i++) {
 			sdsep.drawJointConditionalAncestralStates();
-			int[] drawnAncestralStart = sdsep.startStates;
 			int[] drawnAncestralEnd = sdsep.endStates;
-//			System.out.println("Drawn start states are: " + Arrays.toString(drawnAncestralStart));
-			System.out.println("Drawn end states are: " + Arrays.toString(drawnAncestralEnd));
+			System.arraycopy(drawnAncestralEnd, 0, samples[i], 0, 2 * numSpecies - 1);
 		}
+		System.out.println(Arrays.toString(samples[0]));
+		System.out.println(Arrays.toString(samples[8]));
+
+		// Calculate the posterior probabilities by counting the frequency the node is in state one
+		double[] posterior = new double[2 * numSpecies - 1];
+		int numStateOne;
+		for (int nIdx = 0; nIdx < 2 * numSpecies - 1; nIdx++) {
+			numStateOne = 0;
+			for (int nTrial = 0; nTrial < numTrials; nTrial++) {
+				if (samples[nTrial][nIdx] == 1) {
+					numStateOne++;
+				}
+			}
+			System.out.println(numStateOne);
+			posterior[nIdx] = 1.0 * numStateOne / numTrials;
+        }
+        System.out.println("Summary of sampled states: " + Arrays.toString(posterior));
+
+		// Write only the ancestral states to csv
+		BufferedWriter br = new BufferedWriter(new FileWriter("beast.csv"));
+		StringBuilder sb = new StringBuilder();
+
+		for (int i = numSpecies; i < 2 * numSpecies - 1; i++) {
+			double element = posterior[i];
+			sb.append(Double.toString(element));
+			sb.append(",");
+		}
+
+		br.write(sb.toString());
+		br.close();
 	}
 
 	@Test
