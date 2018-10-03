@@ -27,28 +27,25 @@ public class SDSEPJointConditionalAncestralStateTest {
 	public void setUp() throws Exception {
 		// initializing states
 		int numberOfStates = 2; // BiSSE
-		String[] spNames = new String[] { "Human", "Chimp", "Gorilla" };
+		String[] spNames = new String[] { "sp1", "sp2", "sp3" };
 		int numSpecies = spNames.length;
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		TraitStash traitStash = new TraitStash();
-		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=1,Chimp=1,Gorilla=1");
+		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "sp1=1,sp2=1,sp3=1");
 		traitStash.printLksMap();
 
 		// initializing birth-death parameters
-		Double birthRate = 0.222222222;
-		Double deathRate = 0.1;
-		Double[] mus = { deathRate, deathRate };
+		Double[] mus = { 0.001, 0.1 };
 		System.out.println("Mus: " + Arrays.toString(mus));
 		RealParameter mu = new RealParameter(mus);
 		mu.initByName("minordimension", 1);  // if matrix gets flattened, minor dimension is the # of rows/cols
 
-		Double[] lambdas = new Double[numberOfStates];
-		Arrays.fill(lambdas, birthRate);
+		Double[] lambdas = {0.2, 0.4};
 		RealParameter lambda = new RealParameter(lambdas);
 
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", "0.1 0.1");
+		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", "0.1 0.4");
 		irm.printMatrix();
 
 		Double[] piEs = new Double[numberOfStates];
