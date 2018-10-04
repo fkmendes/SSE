@@ -482,7 +482,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				double endAge = node.getParent().getHeight();
 
 				boolean backwardTime = true;
-				numericallyIntegrateProcess(nodePartial, beginAge, endAge, backwardTime);
+				boolean extinctionOnly = false;
+				numericallyIntegrateProcess(nodePartial, beginAge, endAge, backwardTime, extinctionOnly);
 
 //				// System.out.println("Initial conditions: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
 //				int currentDt = 0; // counter used to multiply dt
@@ -544,9 +545,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		return update; // this is the reason why computeNodeLk isn't void() as in the original V0 version (we need update to carry out caching)
 	}
 	
-	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge, boolean backwardTime) {
+	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge, boolean backwardTime, boolean extinctionOnly) {
 		FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-6, 1.0e-6);
-		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis, backwardTime);
+		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis, backwardTime, extinctionOnly);
 
 		if (incorporateCladogenesis) {
 			HashMap<int[], Double> eventMap = cladoStash.getEventMap();
@@ -599,19 +600,21 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			} else {
             	updateD(node);
 
-				// TODO Add code to Only integrate E backwards? Do we need this? Think about it from fundamentals
 				int nodeIdx = node.getNr();
 				double parentAge = node.getParent().getHeight();
 				double nodeAge = node.getHeight();
+
+				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, 0, true, true);
+
 				boolean backwardTime = false;
-				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime);
+				boolean extinctionOnly = false;
+				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime, extinctionOnly);
 
 				state = sampleLksArray(nodeConditionalScaledLks[nodeIdx]) + 1;
 				endStates[nodeIdx] = state;
 			}
 		} else {
     		updateD(node);
-    		// TODO Add code to Only integrate E backwards? Do we need this? Think about it from fundamentals
 			int nodeIdx = node.getNr();
 			Node left = node.getChild(0);
 			Node right = node.getChild(1);
@@ -619,9 +622,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			int rightIdx = right.getNr();
 			double parentAge = node.getParent().getHeight();
 			double nodeAge = node.getHeight();
-			boolean backwardTime = false;
 
-			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime);
+			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, 0, true, true);
+
+			boolean backwardTime = false;
+			boolean extinctionOnly = false;
+			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime, extinctionOnly);
 			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalScaledLks[nodeIdx]);
 			endStates[nodeIdx] = sampledStates[0];
 			startStates[leftIdx] = sampledStates[1];
@@ -632,6 +638,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	private void updateD(Node node) {
+		// TODO Test this
     	// For a given node, update its nodeConditionalScaledLks to binary (1 and rest 0's) based off the startState
         // Used in forward pass
 		int nodeIdx = node.getNr();
@@ -813,12 +820,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	private int sampleLksArray(double[] lks) {
+        // TODO Test this
     	double totalProb = 0;
     	for (int i = 0 ; i < numStates; i++) {
 			totalProb += lks[numStates + i];
 		}
 
-		// TODO Double check that this subtraction scheme works
         int ret = 0;
 		if (totalProb <= 1e-6) { // if totalProb is 0 basically
 			double randNum = Math.random();

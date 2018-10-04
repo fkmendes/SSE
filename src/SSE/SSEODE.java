@@ -15,17 +15,19 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	private boolean incorporateCladogenesis; // ctor arg
 	private HashMap<int[], Double> eventMap; // setter
     private boolean backwardTime;
+    private boolean extinctionOnly;
 	
 	/*
 	 * Constructor
 	 * Speciation rates and event map are set independently so more or less general models can use this class
 	 */
-	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis, boolean backwardTime) {
+	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis, boolean backwardTime, boolean extinctionOnly) {
 		this.mu = mu;
 		this.q = q;
 		this.rate = rate;
 		this.incorporateCladogenesis = incorporateCladogenesis;
 		this.backwardTime = backwardTime;
+		this.extinctionOnly = extinctionOnly;
 		numStates = q.getNumStates();
 		// System.out.println("SSEODE: Self-initialized " + Integer.toString(numStates) + " states.");
 	}
@@ -135,6 +137,9 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			/*
 			 * Step 3: equation A1 (getting D's, second half of dxdt)
 			 */
+			if (extinctionOnly) {
+				continue;
+			}
 
 			// no event
 //			System.out.println("DNi before: " + Double.toString(dxdt[i + numStates]));
