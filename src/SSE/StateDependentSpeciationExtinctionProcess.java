@@ -546,6 +546,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 	
 	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge, boolean backwardTime, boolean extinctionOnly) {
+		if (beginAge > endAge) {
+		    throw new IllegalArgumentException("Improper integration. beginAge is greater than endAge");
+		}
 		FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-6, 1.0e-6);
 		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis, backwardTime, extinctionOnly);
 
@@ -604,11 +607,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				double parentAge = node.getParent().getHeight();
 				double nodeAge = node.getHeight();
 
-				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, 0, true, true);
+				// TODO Verify we need the following line
+				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 				boolean backwardTime = false;
 				boolean extinctionOnly = false;
-				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime, extinctionOnly);
+				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], nodeAge, parentAge, backwardTime, extinctionOnly);
 
 				state = sampleLksArray(nodeConditionalScaledLks[nodeIdx]) + 1;
 				endStates[nodeIdx] = state;
@@ -623,11 +627,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			double parentAge = node.getParent().getHeight();
 			double nodeAge = node.getHeight();
 
-			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, 0, true, true);
+			// TODO Verify we need the following line
+			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 			boolean backwardTime = false;
 			boolean extinctionOnly = false;
-			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], parentAge, nodeAge, backwardTime, extinctionOnly);
+			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], nodeAge, parentAge, backwardTime, extinctionOnly);
 			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalScaledLks[nodeIdx]);
 			endStates[nodeIdx] = sampledStates[0];
 			startStates[leftIdx] = sampledStates[1];
@@ -644,7 +649,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		int nodeIdx = node.getNr();
 		// TODO is the index by 0 correct?
 		for (int i = 0; i < numStates; i++) {
-			if (i == startStates[nodeIdx]) {
+			if (i + 1 == startStates[nodeIdx]) {
 				nodeConditionalScaledLks[nodeIdx][numStates + i] = 1.0;
 			} else {
 				nodeConditionalScaledLks[nodeIdx][numStates + i] = 0.0;
@@ -776,7 +781,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				int j = states[1] - 1;
 				int k = states[2] - 1;
 				double speciationRate = entry.getValue();
-				double likelyhood = leftLikelyhoods[numStates + j] * rightLightlyhoods[numStates + k] * D[i];
+				double likelyhood = leftLikelyhoods[numStates + j] * rightLightlyhoods[numStates + k] * D[numStates + i];
 				double prob = likelyhood * speciationRate;
 				// TODO Do I need to handle left[k] and right[j]
 
@@ -785,7 +790,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 		} else {
             for (int i = 0; i < numStates; i++) {
-            	double likelyhood = leftLikelyhoods[numStates + i] * rightLightlyhoods[numStates + i] * D[i];
+            	double likelyhood = leftLikelyhoods[numStates + i] * rightLightlyhoods[numStates + i] * D[numStates + i];
             	double prob = likelyhood * speciationRates[i];
             	int[] states = new int[]{i + 1, i + 1, i + 1};
 
@@ -800,19 +805,21 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
         if (totalProb <= 1e-6) { // if totalProb is 0 basically
 			int numEvents = eventProb.size();
 			double randNum = Math.random();
-			while (randNum > 0) {
-				for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
-					triplet = entry.getKey();
-					randNum -= 1.0 / numEvents;
+			for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
+				triplet = entry.getKey();
+				randNum -= 1.0 / numEvents;
+				if (randNum < 0) {
+					break;
 				}
 			}
 		} else {
 			double randNum = Math.random() * totalProb;
-			while (randNum > 0) {
-				for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
-					triplet = entry.getKey();
-					double prob = entry.getValue();
-					randNum -= prob;
+			for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
+				triplet = entry.getKey();
+				double prob = entry.getValue();
+				randNum -= prob;
+				if (randNum < 0) {
+					break;
 				}
 			}
 		}
@@ -829,18 +836,20 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
         int ret = 0;
 		if (totalProb <= 1e-6) { // if totalProb is 0 basically
 			double randNum = Math.random();
-			while (randNum > 0) {
-				for (int i = 0; i < numStates; i++) {
-					ret = i;
-					randNum -= 1.0 / numStates;
+			for (int i = 0; i < numStates; i++) {
+				ret = i;
+				randNum -= 1.0 / numStates;
+				if (randNum < 0) {
+					break;
 				}
 			}
 		} else {
 			double randNum = Math.random() * totalProb;
-			while (randNum > 0) {
-				for (int i = 0; i < numStates; i++) {
-					ret = i;
-					randNum -= lks[numStates + i];
+			for (int i = 0; i < numStates; i++) {
+				ret = i;
+				randNum -= lks[numStates + i];
+				if (randNum < 0) {
+					break;
 				}
 			}
 		}
