@@ -574,6 +574,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	public void drawJointConditionalAncestralStates() {
+	    /*
+	    When sampling the tree, we do not scale our likelihoods because we do not have any issues with underflow.
+	    Also, since we are sampling, we are only interested in the ratio of the probailities.
+	     */
     	this.calculateLogP();
 		for (int i = 0; i < tree.getNodeCount(); i++) {
 			System.arraycopy(nodePartialScaledLksPostOde[i], 0, nodeConditionalScaledLks[i], 0, 2 * numStates);
@@ -607,7 +611,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				double parentAge = node.getParent().getHeight();
 				double nodeAge = node.getHeight();
 
-				// TODO Verify we need the following line
+                for (int i = 0; i < numStates; i++) {
+                	nodeConditionalScaledLks[nodeIdx][i] = 0;
+				}
 				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 				boolean backwardTime = false;
@@ -627,7 +633,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			double parentAge = node.getParent().getHeight();
 			double nodeAge = node.getHeight();
 
-			// TODO Verify we need the following line
+			for (int i = 0; i < numStates; i++) {
+				nodeConditionalScaledLks[nodeIdx][i] = 0;
+			}
 			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 			boolean backwardTime = false;
@@ -643,11 +651,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	private void updateD(Node node) {
-		// TODO Test this
     	// For a given node, update its nodeConditionalScaledLks to binary (1 and rest 0's) based off the startState
         // Used in forward pass
 		int nodeIdx = node.getNr();
-		// TODO is the index by 0 correct?
 		for (int i = 0; i < numStates; i++) {
 			if (i + 1 == startStates[nodeIdx]) {
 				nodeConditionalScaledLks[nodeIdx][numStates + i] = 1.0;
@@ -760,8 +766,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
     }
 
     // helper
-    private int[] sampleAncestralState(double[] leftLikelyhoods, double[] rightLightlyhoods, double[] D) {
-        // TODO Test this
+    private int[] sampleAncestralState(double[] leftLks, double[] rightLks, double[] D) {
         // Pick cladogenetic or anagentic events
 		HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
 		Double[] speciationRates = new Double[numStates];
@@ -781,8 +786,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				int j = states[1] - 1;
 				int k = states[2] - 1;
 				double speciationRate = entry.getValue();
-				double likelyhood = leftLikelyhoods[numStates + j] * rightLightlyhoods[numStates + k] * D[numStates + i];
-				double prob = likelyhood * speciationRate;
+				double lks = leftLks[numStates + j] * rightLks[numStates + k] * D[numStates + i];
+				double prob = lks * speciationRate;
 				// TODO Do I need to handle left[k] and right[j]
 
 				eventProb.put(states, prob);
@@ -790,8 +795,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 		} else {
             for (int i = 0; i < numStates; i++) {
-            	double likelyhood = leftLikelyhoods[numStates + i] * rightLightlyhoods[numStates + i] * D[numStates + i];
-            	double prob = likelyhood * speciationRates[i];
+            	double lks = leftLks[numStates + i] * rightLks[numStates + i] * D[numStates + i];
+            	double prob = 2 * lks * speciationRates[i];
             	int[] states = new int[]{i + 1, i + 1, i + 1};
 
 				eventProb.put(states, prob);
@@ -801,7 +806,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		// Sample from the events
 		int[] triplet = new int[]{1, 1, 1};
-        // TODO Double check that this subtraction scheme works
         if (totalProb <= 1e-6) { // if totalProb is 0 basically
 			int numEvents = eventProb.size();
 			double randNum = Math.random();
@@ -827,7 +831,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	private int sampleLksArray(double[] lks) {
-        // TODO Test this
     	double totalProb = 0;
     	for (int i = 0 ; i < numStates; i++) {
 			totalProb += lks[numStates + i];
@@ -854,5 +857,27 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 		}
     	return ret;
+	}
+
+	// a mapping from the node number to the node's ID
+	// Useful for matching internal nodes with different programs
+	public String[] getNodeIndexNameMapper() {
+    	String[] indexNameMap = new String[tree.getInternalNodeCount()];
+    	Node root = tree.getRoot();
+    	indexNameMap[rootIdx - tree.getLeafNodeCount()] = root.getID();
+
+    	recursvelyGetNodeIndexNameMapper(root.getChild(0), indexNameMap);
+		recursvelyGetNodeIndexNameMapper(root.getChild(1), indexNameMap);
+    	return indexNameMap;
+	}
+
+	private void recursvelyGetNodeIndexNameMapper(Node node, String[] indexNameMap) {
+        if (node.isLeaf()) {
+        	return;
+		}
+		indexNameMap[node.getNr() - tree.getLeafNodeCount()] = node.getID();
+
+		recursvelyGetNodeIndexNameMapper(node.getChild(0), indexNameMap);
+		recursvelyGetNodeIndexNameMapper(node.getChild(1), indexNameMap);
 	}
 }

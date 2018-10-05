@@ -105,6 +105,14 @@ public class SDSEPJointConditionalAncestralStateTest {
 		BufferedWriter br = new BufferedWriter(new FileWriter("beast.csv"));
 		StringBuilder sb = new StringBuilder();
 
+		String[] indexNameMapper = sdsep.getNodeIndexNameMapper();
+		for (String id: indexNameMapper) {
+			sb.append(id);
+			sb.append(",");
+		}
+
+		sb.append("\n");
+
 		for (int i = numSpecies; i < 2 * numSpecies - 1; i++) {
 			double element = posterior[i];
 			sb.append(Double.toString(element));
