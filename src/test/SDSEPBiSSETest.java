@@ -81,7 +81,9 @@ public class SDSEPBiSSETest {
 	@Test
 	public void test() {
 		// Assert.assertEquals(-5.588460032653, sdsep.calculateLogP(), EPSILON); // Used in original version with fixed-step size ODE solver
-		Assert.assertEquals(-5.5884600307, sdsep.calculateLogP(), EPSILON); 
+		Assert.assertEquals(-5.5884600307, sdsep.calculateLogP(), EPSILON);
+		sdsep.setSampleCharacterHistory(true);
+		Assert.assertEquals(-5.5884600307, sdsep.calculateLogP(), 1e-6);
 	}
 
 }

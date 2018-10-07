@@ -1,11 +1,6 @@
 package SSE;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Random;
+import java.util.*; // TODO Change this to all of them listed, * can add random things that confuse
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -103,7 +98,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 	private double[][] nodeConditionalScaledLks;
 	private boolean sampleCharacterHistory;  // using RevBayes name convention. I would prefer to use sampleBranch or something
-	private double[][] branchPartialLks;
+	private ArrayList<double[]>[] branchPartialLks;
+	private int numTimeSlices = 500;
 	private double dt = 1e-6;
 
     
@@ -159,7 +155,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		endStates = new int[tree.getNodeCount()];
 		nodeConditionalScaledLks = new double[tree.getNodeCount()][numStates*2];
 		sampleCharacterHistory = false;
-		branchPartialLks = new double[tree.getNodeCount()][numStates*2]; // TODO How long to make this?
+        branchPartialLks = new ArrayList[tree.getNodeCount()];
+        dt = tree.getRoot().getHeight() / numTimeSlices * 50.0;
 	}
 	
 /* Original constructor before interfacing with BEAST 2 */
@@ -363,13 +360,13 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				update |= computeNodeLk(right, recurse); // or right child dirty, I (parent) am dirty
 			}
 			
-            if (update != Tree.IS_CLEAN) {
+            if (update != Tree.IS_CLEAN || sampleCharacterHistory) {
 				// System.out.println("Recurring back to internal node " + Integer.toString(node.getNr()));
 				
             	// note that children's partial lks are returned already scaled by computeNodeLk (differently from original version V0)
 				final double[] leftLks = nodePartialScaledLksPostOde[leftIdx]; // at this point, left_lks has not yet been updated (scaled) for its parent merging
 				final double[] rightLks = nodePartialScaledLksPostOde[rightIdx];
-				
+
 				HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
 				Double[] speciationRates = new Double[numStates];
 				if (incorporateCladogenesis) {
@@ -466,7 +463,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 						nodePartial[numStates + i] = leftLks[numStates + i] *
 								rightLks[numStates + i];
 						nodePartial[numStates + i] *= speciationRates[i];
-						
 						// preOde vector was not being used at all (even in original version, it was just to match diversitree's)
 						// keeping track of likelihoods right before ODE, at all nodes (so at internal nodes, it's post scaling and merging)
 						// nodePartialScaledLksPreOde[nodeIdx][numStates + i] = nodePartialScaledLksPostOde[nodeIdx][numStates + i]; // this is a double, so no deep copy necessary
@@ -481,14 +477,35 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		
 		// numerical integration is carried out for all branches starting at this node (if this node is not the root), up to its parent
 		if (!node.isRoot()) {
-            if (update != Tree.IS_CLEAN) {
+            if (update != Tree.IS_CLEAN || sampleCharacterHistory) {
 				// we are going from present (begin) to past (end)
 				double beginAge = node.getHeight();
 				double endAge = node.getParent().getHeight();
 
 				boolean backwardTime = true;
 				boolean extinctionOnly = false;
-				numericallyIntegrateProcess(nodePartial, beginAge, endAge, backwardTime, extinctionOnly);
+				if (!sampleCharacterHistory) {
+					numericallyIntegrateProcess(nodePartial, beginAge, endAge, backwardTime, extinctionOnly);
+				} else {
+					ArrayList<double[]> branchLks = new ArrayList<>();
+					int numSteps = 0;
+					double curDtStart, curDtEnd;
+					while (numSteps * dt + beginAge < endAge) {
+						curDtStart = numSteps * dt + beginAge;
+						curDtEnd = (numSteps + 1) * dt + beginAge; // double check
+						if (curDtEnd > endAge) {
+							curDtEnd = endAge;
+						}
+						numericallyIntegrateProcess(nodePartial, curDtStart, curDtEnd, backwardTime, extinctionOnly);
+						// What did revbayes do with nodePartial? with begin() and such? ln 377
+						double[] nodePartialCopy = new double[nodePartial.length];
+						System.arraycopy(nodePartial, 0, nodePartialCopy, 0, nodePartial.length);
+						branchLks.add(nodePartialCopy);
+						numSteps += 1;
+					}
+					branchPartialLks[nodeIdx] = branchLks;
+					// TODO Do I need to scale these guys?
+				}
 
 //				// System.out.println("Initial conditions: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
 //				int currentDt = 0; // counter used to multiply dt
@@ -584,7 +601,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		sampleCharacterHistory = true;
 
 		// backward pass
-        this.calculateLogP(); // TODO change backward pass to do all branch segments
+        this.calculateLogP();
 
 		// sample root
 		Node node = tree.getRoot();
@@ -595,7 +612,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray(); // Should my argument be double[] or Double[]?
 		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piUnboxed);
 
-		// TODO store information - state and branch length ?? why is this different
+		// TODO store information - state and branch length ?? why does revbayes use different variables
 		endStates[rootIdx] = sampledStates[0];
 		startStates[leftIdx] = sampledStates[1];
 		startStates[rightIdx] = sampledStates[2];
@@ -610,30 +627,53 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 	private void recursivelyDrawStochasticCharacterMap(Node node) {
         int nodeIdx = node.getNr();
-		initializeED(nodeConditionalScaledLks[nodeIdx], node);
+
+        // set up the extinction likelihoods
+        int startState = startStates[node.getNr()];
+		initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
 
 		double parentAge = node.getParent().getHeight();
         numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
-		// repeat NIP many times. Sample new state and store it
+		// repeat NIP many times
 		int numSteps = 0;
-		double dt = 0.0;
-		double branchLength = node.getLength();
 		double curDtStart, curDtEnd;
 		int newState;
 		int curState = -1;
-		while ((numSteps + 1) * dt < branchLength) {
-			curDtStart = numSteps * dt;
-			curDtEnd = (numSteps + 1) * dt; // double check
-			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], curDtStart, curDtEnd, false, false);
-			// sample newState along the branch
-			// set curState if we should
-			// update D
+		double beginAge = node.getHeight();
+		double endAge = node.getParent().getHeight();
+
+		// TODO Track some things: transitionStates, transitionTimes, totalSpeciationRate, totalExtinctionRate, averageSpeciationRate, averageExtinctionRate, timeInStates
+
+		// Run all but the last chunk.
+		while ((numSteps + 1) * dt + beginAge < endAge) {
+		    // Run a small forward pass
+			curDtStart = numSteps * dt + beginAge;
+			curDtEnd = (numSteps + 1) * dt + beginAge; // double check
+            if (curDtEnd < endAge) {
+            	curDtEnd = endAge;
+			}
+			double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx];
+			numericallyIntegrateProcess(nodeConditionalLk, curDtStart, curDtEnd, false, false);
+
+			// Sample with conditional and partial
+            double[] branchPosterior = mergeArrays(branchPartialLks[nodeIdx].get(numSteps), nodeConditionalLk);
+            newState = sampleLksArray(branchPosterior) + 1;
+
+            if (newState != curState) {
+				System.out.println("State change!");
+				// Record transition states and times
+			}
+			curState = newState;
+
+            // Condition on the sampled state (but don't touch E)
+            initializeED(nodeConditionalLk, curState, true);
             numSteps += 1;
 		}
 
 		// if tip, use observed or above cur_state
 		if (node.isLeaf()) {
+			// Last chunk will be observation
 			int state = traitStash.getNodeState(node);
 			if (state - 1 != -1) {  // known tip states
 				endStates[nodeIdx] = state;
@@ -641,11 +681,13 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				endStates[nodeIdx] = curState;
 			}
 		} else {
+		    // Last chunk will be sample
 			Node left = node.getChild(0);
 			Node right = node.getChild(1);
 			int leftIdx = left.getNr();
 			int rightIdx = right.getNr();
 
+			// sample and recurse
 			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalScaledLks[nodeIdx]);
 			endStates[nodeIdx] = sampledStates[0];
 			startStates[leftIdx] = sampledStates[1];
@@ -653,8 +695,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			recursivelyDrawStochasticCharacterMap(left);
 			recursivelyDrawStochasticCharacterMap(right);
 		}
-
-		// RevBayes uses a different interface, I want to use the same interface as drawJoint. I don't see why it should be done differently
 	}
 
 	public int[] drawJointConditionalAncestralStates() {
@@ -692,7 +732,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				double parentAge = node.getParent().getHeight();
 				double nodeAge = node.getHeight();
 
-				initializeED(nodeConditionalScaledLks[nodeIdx], node);
+				int startState = startStates[node.getNr()];
+				initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
 				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 				boolean backwardTime = false;
@@ -711,7 +752,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			double parentAge = node.getParent().getHeight();
 			double nodeAge = node.getHeight();
 
-			initializeED(nodeConditionalScaledLks[nodeIdx], node);
+			int startState = startStates[node.getNr()];
+			initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
 			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 			boolean backwardTime = false;
@@ -894,6 +936,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	private int sampleLksArray(double[] lks) {
+    	// NOTE: THIS SAMPLING IS INDEX BY 0 SINCE ITS SAMPLING AN ARRAY INDEX
+		// IF SAMPLING STATE, PROBABLY NEED TO ADD 1 TO INDEX BY 1
     	double totalProb = 0;
     	for (int i = 0 ; i < numStates; i++) {
 			totalProb += lks[numStates + i];
@@ -944,11 +988,14 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		recursvelyGetNodeIndexNameMapper(node.getChild(1), indexNameMap);
 	}
 
-	private double[] initializeED(double[] lks, Node node) {
+	private double[] initializeED(double[] lks, int state, boolean ignoreE) {
     	// Initializes extinction and likelihoods for a node to be conditioned when sampled and integrated over
+		// If ignoreE is true, then we do not 0 it out
 		for (int i = 0; i < numStates; i++) {
-			lks[i] = 0.0;
-			if (i + 1 == startStates[node.getNr()]) {
+			if (!ignoreE)  {
+				lks[i] = 0.0;
+			}
+			if (i + 1 == state) {
 				lks[numStates + i] = 1.0;
 			} else {
 				lks[numStates + i] = 0.0;
@@ -956,5 +1003,17 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 		}
 		return lks;
+	}
+
+	public void setSampleCharacterHistory(boolean sch) {
+    	sampleCharacterHistory = sch;
+	}
+
+	private double[] mergeArrays(double[] arr1, double[] arr2) {
+        double[] ret = new double[arr1.length];
+    	for (int i = 0; i < arr1.length; i++) {
+    		ret[i] = arr2[i] * arr1[i];
+		}
+		return ret;
 	}
 }
