@@ -574,7 +574,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 	}
 
-	public void drawStochasticCharacterMap() {
+	public int [] drawStochasticCharacterMap() {
 	    /*
 	    When sampling the tree, we do not scale our likelihoods because we do not have any issues with underflow.
 	    Also, since we are sampling, we are only interested in the ratio of the probailities.
@@ -605,26 +605,27 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		// reset flag back to default for backwards pass to store likelihoods for all branch segments
 		sampleCharacterHistory = false;
+		return endStates;
 	}
 
-	// TODO what should the return style be, for both methods?
-
 	private void recursivelyDrawStochasticCharacterMap(Node node) {
-    	double[] nodeConditionalScaledLk = initializeED(node);
+        int nodeIdx = node.getNr();
+		initializeED(nodeConditionalScaledLks[nodeIdx], node);
 
 		double parentAge = node.getParent().getHeight();
-        numericallyIntegrateProcess(nodeConditionalScaledLk, 0, parentAge, true, true);
+        numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 		// repeat NIP many times. Sample new state and store it
 		int numSteps = 0;
 		double dt = 0.0;
 		double branchLength = node.getLength();
 		double curDtStart, curDtEnd;
-		int newState, curState;
+		int newState;
+		int curState = -1;
 		while ((numSteps + 1) * dt < branchLength) {
 			curDtStart = numSteps * dt;
 			curDtEnd = (numSteps + 1) * dt; // double check
-			numericallyIntegrateProcess(nodeConditionalScaledLk, curDtStart, curDtEnd, false, false);
+			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], curDtStart, curDtEnd, false, false);
 			// sample newState along the branch
 			// set curState if we should
 			// update D
@@ -632,7 +633,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 
 		// if tip, use observed or above cur_state
-		int nodeIdx = node.getNr();
 		if (node.isLeaf()) {
 			int state = traitStash.getNodeState(node);
 			if (state - 1 != -1) {  // known tip states
@@ -663,9 +663,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	    Also, since we are sampling, we are only interested in the ratio of the probailities.
 	     */
     	this.calculateLogP();
-		for (int i = 0; i < tree.getNodeCount(); i++) {
-			System.arraycopy(nodePartialScaledLksPostOde[i], 0, nodeConditionalScaledLks[i], 0, 2 * numStates);
-		}
 
 		Node node = tree.getRoot();
 		Node left = node.getChild(0);
@@ -691,15 +688,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
             if (state - 1 != -1) {  // known tip states
                 endStates[node.getNr()] = state;
 			} else {
-            	updateD(node);
-
 				int nodeIdx = node.getNr();
 				double parentAge = node.getParent().getHeight();
 				double nodeAge = node.getHeight();
 
-                for (int i = 0; i < numStates; i++) {
-                	nodeConditionalScaledLks[nodeIdx][i] = 0;
-				}
+				initializeED(nodeConditionalScaledLks[nodeIdx], node);
 				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 				boolean backwardTime = false;
@@ -710,7 +703,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				endStates[nodeIdx] = state;
 			}
 		} else {
-    		updateD(node);
 			int nodeIdx = node.getNr();
 			Node left = node.getChild(0);
 			Node right = node.getChild(1);
@@ -719,9 +711,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			double parentAge = node.getParent().getHeight();
 			double nodeAge = node.getHeight();
 
-			for (int i = 0; i < numStates; i++) {
-				nodeConditionalScaledLks[nodeIdx][i] = 0;
-			}
+			initializeED(nodeConditionalScaledLks[nodeIdx], node);
 			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 			boolean backwardTime = false;
@@ -733,19 +723,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			startStates[rightIdx] = sampledStates[2];
 			recursivelyDrawJointConditionalAncestralStates(left);
 			recursivelyDrawJointConditionalAncestralStates(right);
-		}
-	}
-
-	private void updateD(Node node) {
-    	// For a given node, update its nodeConditionalScaledLks to binary (1 and rest 0's) based off the startState
-        // Used in forward pass
-		int nodeIdx = node.getNr();
-		for (int i = 0; i < numStates; i++) {
-			if (i + 1 == startStates[nodeIdx]) {
-				nodeConditionalScaledLks[nodeIdx][numStates + i] = 1.0;
-			} else {
-				nodeConditionalScaledLks[nodeIdx][numStates + i] = 0.0;
-			}
 		}
 	}
 
@@ -967,12 +944,15 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		recursvelyGetNodeIndexNameMapper(node.getChild(1), indexNameMap);
 	}
 
-	private double[] initializeED(Node node) {
+	private double[] initializeED(double[] lks, Node node) {
     	// Initializes extinction and likelihoods for a node to be conditioned when sampled and integrated over
-		double[] lks = new double[2 * numStates];
 		for (int i = 0; i < numStates; i++) {
+			lks[i] = 0.0;
 			if (i + 1 == startStates[node.getNr()]) {
 				lks[numStates + i] = 1.0;
+			} else {
+				lks[numStates + i] = 0.0;
+
 			}
 		}
 		return lks;
