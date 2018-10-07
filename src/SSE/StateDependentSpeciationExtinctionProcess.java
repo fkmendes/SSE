@@ -102,6 +102,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public int[] endStates;
 
 	private double[][] nodeConditionalScaledLks;
+	private boolean sampleCharacterHistory;  // using RevBayes name convention. I would prefer to use sampleBranch or something
+	private double[][] branchPartialLks;
+	private double dt = 1e-6;
 
     
 	@Override
@@ -155,6 +158,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		startStates = new int[tree.getNodeCount()];
 		endStates = new int[tree.getNodeCount()];
 		nodeConditionalScaledLks = new double[tree.getNodeCount()][numStates*2];
+		sampleCharacterHistory = false;
+		branchPartialLks = new double[tree.getNodeCount()][numStates*2]; // TODO How long to make this?
 	}
 	
 /* Original constructor before interfacing with BEAST 2 */
@@ -570,10 +575,89 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	public void drawStochasticCharacterMap() {
-		return;
+	    /*
+	    When sampling the tree, we do not scale our likelihoods because we do not have any issues with underflow.
+	    Also, since we are sampling, we are only interested in the ratio of the probailities.
+	     */
+
+	    // set flag for backwards pass to store likelihoods for all branch segments
+		sampleCharacterHistory = true;
+
+		// backward pass
+        this.calculateLogP(); // TODO change backward pass to do all branch segments
+
+		// sample root
+		Node node = tree.getRoot();
+		Node left = node.getChild(0);
+		Node right = node.getChild(1);
+		int leftIdx = left.getNr();
+		int rightIdx = right.getNr();
+		double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray(); // Should my argument be double[] or Double[]?
+		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piUnboxed);
+
+		// TODO store information - state and branch length ?? why is this different
+		endStates[rootIdx] = sampledStates[0];
+		startStates[leftIdx] = sampledStates[1];
+		startStates[rightIdx] = sampledStates[2];
+
+        recursivelyDrawStochasticCharacterMap(left);
+        recursivelyDrawStochasticCharacterMap(right);
+
+		// reset flag back to default for backwards pass to store likelihoods for all branch segments
+		sampleCharacterHistory = false;
 	}
 
-	public void drawJointConditionalAncestralStates() {
+	// TODO what should the return style be, for both methods?
+
+	private void recursivelyDrawStochasticCharacterMap(Node node) {
+    	double[] nodeConditionalScaledLk = initializeED(node);
+
+		double parentAge = node.getParent().getHeight();
+        numericallyIntegrateProcess(nodeConditionalScaledLk, 0, parentAge, true, true);
+
+		// repeat NIP many times. Sample new state and store it
+		int numSteps = 0;
+		double dt = 0.0;
+		double branchLength = node.getLength();
+		double curDtStart, curDtEnd;
+		int newState, curState;
+		while ((numSteps + 1) * dt < branchLength) {
+			curDtStart = numSteps * dt;
+			curDtEnd = (numSteps + 1) * dt; // double check
+			numericallyIntegrateProcess(nodeConditionalScaledLk, curDtStart, curDtEnd, false, false);
+			// sample newState along the branch
+			// set curState if we should
+			// update D
+            numSteps += 1;
+		}
+
+		// if tip, use observed or above cur_state
+		int nodeIdx = node.getNr();
+		if (node.isLeaf()) {
+			int state = traitStash.getNodeState(node);
+			if (state - 1 != -1) {  // known tip states
+				endStates[nodeIdx] = state;
+			} else {
+				endStates[nodeIdx] = curState;
+			}
+		} else {
+			Node left = node.getChild(0);
+			Node right = node.getChild(1);
+			int leftIdx = left.getNr();
+			int rightIdx = right.getNr();
+
+			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalScaledLks[nodeIdx]);
+			endStates[nodeIdx] = sampledStates[0];
+			startStates[leftIdx] = sampledStates[1];
+			startStates[rightIdx] = sampledStates[2];
+			recursivelyDrawStochasticCharacterMap(left);
+			recursivelyDrawStochasticCharacterMap(right);
+		}
+
+		// RevBayes uses a different interface, I want to use the same interface as drawJoint. I don't see why it should be done differently
+	}
+
+	public int[] drawJointConditionalAncestralStates() {
 	    /*
 	    When sampling the tree, we do not scale our likelihoods because we do not have any issues with underflow.
 	    Also, since we are sampling, we are only interested in the ratio of the probailities.
@@ -597,6 +681,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		recursivelyDrawJointConditionalAncestralStates(left);
 		recursivelyDrawJointConditionalAncestralStates(right);
+
+		return endStates;
 	}
 
 	private void recursivelyDrawJointConditionalAncestralStates(Node node) {
@@ -879,5 +965,16 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		recursvelyGetNodeIndexNameMapper(node.getChild(0), indexNameMap);
 		recursvelyGetNodeIndexNameMapper(node.getChild(1), indexNameMap);
+	}
+
+	private double[] initializeED(Node node) {
+    	// Initializes extinction and likelihoods for a node to be conditioned when sampled and integrated over
+		double[] lks = new double[2 * numStates];
+		for (int i = 0; i < numStates; i++) {
+			if (i + 1 == startStates[node.getNr()]) {
+				lks[numStates + i] = 1.0;
+			}
+		}
+		return lks;
 	}
 }

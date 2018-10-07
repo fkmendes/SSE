@@ -11,6 +11,7 @@ import SSE.TraitStash;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -29,13 +30,11 @@ public class SDSEPJointConditionalAncestralStateTest {
 		int numberOfStates = 2; // BiSSE
 
 		String[] spNames = new String[] {"sp1","sp2","sp3","sp4","sp5","sp6","sp7","sp8","sp9","sp10","sp11","sp12","sp14","sp15","sp16","sp17","sp18","sp19","sp20","sp21","sp22","sp23" };
-//		String[] spNames = new String[] { "Human", "Chimp", "Gorilla" };
 		int numSpecies = spNames.length;
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		TraitStash traitStash = new TraitStash();
 		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "sp1=1,sp2=1,sp3=1,sp4=2,sp5=1,sp6=1,sp7=2,sp8=1,sp9=1,sp10=1,sp11=1,sp12=1,sp14=1,sp15=2,sp16=2,sp17=1,sp18=1,sp19=1,sp20=2,sp21=2,sp22=1,sp23=1");
-//		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2");
 		traitStash.printLksMap();
 
 		// initializing birth-death parameters
@@ -78,12 +77,24 @@ public class SDSEPJointConditionalAncestralStateTest {
 				"incorporateCladogenesis", incorporateCladogenesis
 		);
 
+		// Sample many times with drawJointConditional and calculate the posterior
+		double[] posterior = sampleAndSummarize(10000, numSpecies);
+		posterior = trimTips(posterior, numSpecies);
+
+		// Write only the ancestral states to csv
+		writeToCSV("beast.csv", posterior);
+
+		String[] divLbls = {"nd1","nd2","nd6","nd22","nd7","nd9","nd11","nd3","nd4","nd8","nd10","nd12","nd15","nd16","nd17","nd13","nd21","nd5","nd14","nd18","nd20"};
+		String[] divLks = {"0.504778971188059","0.761371584451414","0.546427028721335","0.990929751746494","0.700705453757888","0.520712315675997","0.400707333658542","0.798875159009061","0.773218277930007","0.693681343224611","0.651616182147769","0.641510203760138","0.801524137771315","0.639132464851372","0.00104369318998754","0.939501019441591","0.99509883391553","0.725987011544158","0.706256765576992","0.654024903986533","0.693527170575002"};
+		String[] indexNameMapper = sdsep.getNodeIndexNameMapper();
+		compareDiv(divLbls, divLks, indexNameMapper, posterior);
+	}
+
+	private double[] sampleAndSummarize(int numTrials, int numSpecies) {
 		// Run the sampling many times
-        int numTrials = 10000;
 		int[][] samples = new int[numTrials][2 * numSpecies - 1];
 		for (int i = 0; i < numTrials; i++) {
-			sdsep.drawJointConditionalAncestralStates();
-			int[] drawnAncestralEnd = sdsep.endStates;
+			int[] drawnAncestralEnd = sdsep.drawJointConditionalAncestralStates();
 			System.arraycopy(drawnAncestralEnd, 0, samples[i], 0, 2 * numSpecies - 1);
 		}
 
@@ -98,11 +109,22 @@ public class SDSEPJointConditionalAncestralStateTest {
 				}
 			}
 			posterior[nIdx] = 1.0 * numStateOne / numTrials;
-        }
-        System.out.println("Posterior probability of state 0: " + Arrays.toString(posterior));
+		}
+		System.out.println("Posterior probability of state 0: " + Arrays.toString(posterior));
 
-		// Write only the ancestral states to csv
-		BufferedWriter br = new BufferedWriter(new FileWriter("beast.csv"));
+		return posterior;
+	}
+
+	private double[] trimTips(double[] posterior, int numSpecies) {
+		// Remove entries of the tips
+        double[] newPosterior = new double[posterior.length - numSpecies];
+        System.arraycopy(posterior, numSpecies, newPosterior, 0, newPosterior.length);
+
+        return newPosterior;
+	}
+
+	private void writeToCSV(String name, double[] arr) throws Exception {
+		BufferedWriter br = new BufferedWriter(new FileWriter(name));
 		StringBuilder sb = new StringBuilder();
 
 		String[] indexNameMapper = sdsep.getNodeIndexNameMapper();
@@ -113,8 +135,8 @@ public class SDSEPJointConditionalAncestralStateTest {
 
 		sb.append("\n");
 
-		for (int i = numSpecies; i < 2 * numSpecies - 1; i++) {
-			double element = posterior[i];
+		for (int i = 0; i < arr.length; i++) {
+			double element = arr[i];
 			sb.append(Double.toString(element));
 			sb.append(",");
 		}
@@ -123,9 +145,26 @@ public class SDSEPJointConditionalAncestralStateTest {
 		br.close();
 	}
 
+	private void compareDiv(String[] divLbls, String[] divLks, String[] idxLabelMapper, double[] post) {
+		HashMap<String, Double> divData = new HashMap<String, Double>();
+		for (int i = 0; i < divLbls.length; i++) {
+			divData.put(divLbls[i], Double.valueOf(divLks[i]));
+		}
+
+		String lbl;
+		double postBeast, postDiv;
+		for (int i = 0; i < idxLabelMapper.length; i++) {
+			lbl = idxLabelMapper[i];
+			postBeast = post[i];
+			postDiv = divData.get(lbl);
+//			System.out.println("" + postBeast + ", " + postDiv);
+			Assert.assertEquals(postDiv, postBeast, 1e-1);
+		}
+	}
+
 	@Test
 	public void test() {
-		 Assert.assertEquals(-63.26608, sdsep.calculateLogP(), EPSILON); // Used in original version with fixed-step size ODE solver
+		Assert.assertEquals(-63.26608, sdsep.calculateLogP(), EPSILON); // Used in original version with fixed-step size ODE solver
 	}
 
 }
