@@ -27,6 +27,9 @@ public class SDSEPStochasticCharacterMapTest {
 		// initializing states
 		int numberOfStates = 2; // BiSSE
 
+		String[] nodeLabels = {"nd1", "nd2", "nd6", "nd22", "nd7", "nd9", "nd11", "nd3", "nd4", "nd8", "nd10", "nd12", "nd15", "nd16", "nd17", "nd13", "nd21", "nd5", "nd14", "nd18", "nd20"};
+		int[] nodeStates = {1, 2, 2, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1};
+
 		String[] spNames = new String[] {"sp1","sp2","sp3","sp4","sp5","sp6","sp7","sp8","sp9","sp10","sp11","sp12","sp14","sp15","sp16","sp17","sp18","sp19","sp20","sp21","sp22","sp23" };
 		int numSpecies = spNames.length;
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
@@ -81,7 +84,7 @@ public class SDSEPStochasticCharacterMapTest {
 		posterior = trimTips(posterior, numSpecies);
 
 //		 Write only the ancestral states to csv
-		writeToCSV("beast.csv", posterior);
+		writeToCSV("beast_stoc.csv", posterior);
 //
 		String[] divLbls = {"nd1","nd2","nd6","nd22","nd7","nd9","nd11","nd3","nd4","nd8","nd10","nd12","nd15","nd16","nd17","nd13","nd21","nd5","nd14","nd18","nd20"};
 		String[] divLks = {"0.504778971188059","0.761371584451414","0.546427028721335","0.990929751746494","0.700705453757888","0.520712315675997","0.400707333658542","0.798875159009061","0.773218277930007","0.693681343224611","0.651616182147769","0.641510203760138","0.801524137771315","0.639132464851372","0.00104369318998754","0.939501019441591","0.99509883391553","0.725987011544158","0.706256765576992","0.654024903986533","0.693527170575002"};

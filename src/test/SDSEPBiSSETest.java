@@ -78,12 +78,36 @@ public class SDSEPBiSSETest {
     	System.out.println(sdsep.calculateLogP());
 	}
 
+	private void assert2DArrayEquals(double[][] arr1, double[][] arr2) {
+		Assert.assertEquals(arr1.length, arr2.length);
+
+		for (int i = 0; i < arr1.length; i++) {
+			for (int j = 0; j < arr1[i].length; j++) {
+				Assert.assertEquals(arr1[i][j], arr2[i][j], 1e-7);
+			}
+		}
+	}
+
+	private double[][] deep2DArrayCopy(double[][] arr) {
+	    double[][] ret = new double[arr.length][arr[0].length];
+
+	    for (int i = 0; i < arr.length; i++) {
+	        System.arraycopy(arr[i], 0, ret[i], 0, arr[i].length);
+        }
+        return ret;
+	}
+
 	@Test
 	public void test() {
 		// Assert.assertEquals(-5.588460032653, sdsep.calculateLogP(), EPSILON); // Used in original version with fixed-step size ODE solver
 		Assert.assertEquals(-5.5884600307, sdsep.calculateLogP(), EPSILON);
+		double[][] nodePartialsNoCharHist = deep2DArrayCopy(sdsep.getNodePartialScaledLksPostOde());
+
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-5.5884600307, sdsep.calculateLogP(), 1e-6);
+		double[][] nodePartialsWCharHist = sdsep.getNodePartialScaledLksPostOde();
+
+		assert2DArrayEquals(nodePartialsNoCharHist, nodePartialsWCharHist);
 	}
 
 }

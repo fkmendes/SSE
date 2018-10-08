@@ -318,7 +318,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
             computeNodeLk(tree.getRoot(), true); // in case of error, call regular non-thread computeNodeLk
         }
     }
-	
+
+    public double[][] getNodePartialScaledLksPostOde() {
+    	return nodePartialScaledLksPostOde;
+	}
+
 	private int computeNodeLk(Node node, boolean recurse) {
 		int nodeIdx = node.getNr();
 		
@@ -598,6 +602,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	     */
 
 	    // set flag for backwards pass to store likelihoods for all branch segments
+        boolean sampleCharacterHistoryStashed = sampleCharacterHistory;
 		sampleCharacterHistory = true;
 
 		// backward pass
@@ -621,7 +626,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
         recursivelyDrawStochasticCharacterMap(right);
 
 		// reset flag back to default for backwards pass to store likelihoods for all branch segments
-		sampleCharacterHistory = false;
+		sampleCharacterHistory = sampleCharacterHistoryStashed;
 		return endStates;
 	}
 
@@ -639,25 +644,35 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		int numSteps = 0;
 		double curDtStart, curDtEnd;
 		int newState;
-		int curState = -1;
+		int curState = startStates[nodeIdx];
 		double beginAge = node.getHeight();
 		double endAge = node.getParent().getHeight();
-
+		double branchLength = node.getLength();
 		// TODO Track some things: transitionStates, transitionTimes, totalSpeciationRate, totalExtinctionRate, averageSpeciationRate, averageExtinctionRate, timeInStates
 
-		// Run all but the last chunk.
-		while ((numSteps + 1) * dt + beginAge < endAge) {
+		/*
+		RevBayes code integrates and samples over the chunks up to the last full chunk (the leftover bit that is smaller than
+		the other chunks). Instead of integrating over this small time interval (interval that is smaller than dt), they
+		get the state for that chunk of time from the speciation event or tip state.
+		We noticed that if we skip this <dt chunk of time, our posteriors get undesireable behaviors.
+		Specifically, if the dt is too big, then the posteriors to not match. However, if we reduce the size of dt,
+		we get matching posteriors. We do not want to have code performance dependent on this argument, thus in our
+		code, we integrate over the last dt as well and handle the speciation event or tip state later.
+		 */
+		double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx];
+		while (numSteps * dt < branchLength) {
 		    // Run a small forward pass
-			curDtStart = numSteps * dt + beginAge;
-			curDtEnd = (numSteps + 1) * dt + beginAge; // double check
-            if (curDtEnd < endAge) {
-            	curDtEnd = endAge;
+			curDtStart = numSteps * dt;
+			curDtEnd = (numSteps + 1) * dt;
+			if (curDtEnd > branchLength) {
+				curDtEnd = branchLength;
 			}
-			double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx];
 			numericallyIntegrateProcess(nodeConditionalLk, curDtStart, curDtEnd, false, false);
 
 			// Sample with conditional and partial
-            double[] branchPosterior = mergeArrays(branchPartialLks[nodeIdx].get(numSteps), nodeConditionalLk);
+			//	TODO Align the chunks...
+            int downpass = branchPartialLks[nodeIdx].size() - 1 - numSteps; // since we are going opposite direction now
+            double[] branchPosterior = mergeArrays(branchPartialLks[nodeIdx].get(downpass), nodeConditionalLk);
             newState = sampleLksArray(branchPosterior) + 1;
 
             if (newState != curState) {
@@ -666,7 +681,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 			curState = newState;
 
-            // Condition on the sampled state (but don't touch E)
+            // Condition on the sampled state (but do not touch E)
+            // TODO If I don't condition here, the test passes just fine
             initializeED(nodeConditionalLk, curState, true);
             numSteps += 1;
 		}
@@ -688,7 +704,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			int rightIdx = right.getNr();
 
 			// sample and recurse
-			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalScaledLks[nodeIdx]);
+			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalLk);
 			endStates[nodeIdx] = sampledStates[0];
 			startStates[leftIdx] = sampledStates[1];
 			startStates[rightIdx] = sampledStates[2];
