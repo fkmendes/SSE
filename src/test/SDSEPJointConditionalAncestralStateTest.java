@@ -165,6 +165,18 @@ public class SDSEPJointConditionalAncestralStateTest {
 	@Test
 	public void test() {
 		Assert.assertEquals(-63.26608, sdsep.calculateLogP(), EPSILON); // Used in original version with fixed-step size ODE solver
+
+//		double[] lks = {0, 0, 0.4, 0.6};
+//		int numTrials = 10000;
+//		int count = 0;
+//		for (int i = 0; i < numTrials; i++) {
+//			int foo = sdsep.sampleLksArray(lks);
+//			if (foo == 0) {
+//				count++;
+//			}
+//		}
+//		Assert.assertEquals(0.4, 1.0 * count / numTrials, 0.001);
+
 	}
 
 }

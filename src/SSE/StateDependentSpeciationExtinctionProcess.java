@@ -670,19 +670,20 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			numericallyIntegrateProcess(nodeConditionalLk, curDtStart, curDtEnd, false, false);
 
 			// Sample with conditional and partial
-			//	TODO Align the chunks...
+			// TODO If I don't sample and condition here, the test passes just fine
+			// TODO Align the chunks...
             int downpass = branchPartialLks[nodeIdx].size() - 1 - numSteps; // since we are going opposite direction now
-            double[] branchPosterior = mergeArrays(branchPartialLks[nodeIdx].get(downpass), nodeConditionalLk);
+			double[] branchPartialLk = branchPartialLks[nodeIdx].get(downpass);
+            double[] branchPosterior = mergeArrays(branchPartialLk, nodeConditionalLk);
             newState = sampleLksArray(branchPosterior) + 1;
 
             if (newState != curState) {
-				System.out.println("State change!");
+                ;
 				// Record transition states and times
 			}
 			curState = newState;
 
             // Condition on the sampled state (but do not touch E)
-            // TODO If I don't condition here, the test passes just fine
             initializeED(nodeConditionalLk, curState, true);
             numSteps += 1;
 		}
@@ -704,7 +705,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			int rightIdx = right.getNr();
 
 			// sample and recurse
-			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalLk);
+            double[] leftPartialLks = nodePartialScaledLksPostOde[leftIdx];
+            double[] rightPartialLks = nodePartialScaledLksPostOde[rightIdx];
+			int[] sampledStates = sampleAncestralState(leftPartialLks, rightPartialLks, nodeConditionalLk);
 			endStates[nodeIdx] = sampledStates[0];
 			startStates[leftIdx] = sampledStates[1];
 			startStates[rightIdx] = sampledStates[2];
