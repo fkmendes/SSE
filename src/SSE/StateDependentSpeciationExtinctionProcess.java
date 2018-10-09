@@ -100,8 +100,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 	private boolean sampleCharacterHistory;  // using RevBayes name convention. I would prefer to use sampleBranch or something
 	private ArrayList<double[]>[] branchPartialLks;
-	private int numTimeSlices = 5000;
-	private double dt = 1e-6;
+	private int numTimeSlices = 500;
+	private double dt;
 	public ArrayList[] nodeTransitionStates;
 	public ArrayList[] nodeTransitionTimes;
 	public double[][] nodeTimeInState;
