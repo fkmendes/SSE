@@ -97,10 +97,16 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public int[] endStates;
 
 	private double[][] nodeConditionalScaledLks;
+
 	private boolean sampleCharacterHistory;  // using RevBayes name convention. I would prefer to use sampleBranch or something
 	private ArrayList<double[]>[] branchPartialLks;
-	private int numTimeSlices = 500;
+	private int numTimeSlices = 5000;
 	private double dt = 1e-6;
+	public ArrayList[] nodeTransitionStates;
+	public ArrayList[] nodeTransitionTimes;
+	public double[][] nodeTimeInState;
+	public int numBranchStateChanges;
+	public int numNodeStateChanges;
 
     
 	@Override
@@ -154,9 +160,14 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		startStates = new int[tree.getNodeCount()];
 		endStates = new int[tree.getNodeCount()];
 		nodeConditionalScaledLks = new double[tree.getNodeCount()][numStates*2];
+
 		sampleCharacterHistory = false;
         branchPartialLks = new ArrayList[tree.getNodeCount()];
         dt = tree.getRoot().getHeight() / numTimeSlices * 50.0;
+		nodeTransitionStates = new ArrayList[tree.getNodeCount()];
+		nodeTransitionTimes = new ArrayList[tree.getNodeCount()];
+		nodeTimeInState = new double[tree.getNodeCount()][numStates];
+		numBranchStateChanges = 0;
 	}
 	
 /* Original constructor before interfacing with BEAST 2 */
@@ -496,7 +507,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 					double curDtStart, curDtEnd;
 					while (numSteps * dt + beginAge < endAge) {
 						curDtStart = numSteps * dt + beginAge;
-						curDtEnd = (numSteps + 1) * dt + beginAge; // double check
+						curDtEnd = (numSteps + 1) * dt + beginAge;
 						if (curDtEnd > endAge) {
 							curDtEnd = endAge;
 						}
@@ -602,6 +613,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	     */
 
 	    // set flag for backwards pass to store likelihoods for all branch segments
+		numNodeStateChanges = 0;
+		numBranchStateChanges = 0;
         boolean sampleCharacterHistoryStashed = sampleCharacterHistory;
 		sampleCharacterHistory = true;
 
@@ -650,6 +663,13 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		double branchLength = node.getLength();
 		// TODO Track some things: transitionStates, transitionTimes, totalSpeciationRate, totalExtinctionRate, averageSpeciationRate, averageExtinctionRate, timeInStates
 
+		ArrayList<Integer> transitionStates = new ArrayList<>();
+		ArrayList<Double> transitionTimes = new ArrayList<>();
+		nodeTransitionStates[nodeIdx] = transitionStates;
+		nodeTransitionTimes[nodeIdx] = transitionTimes;
+		double[] timeInState = nodeTimeInState[nodeIdx];
+		transitionStates.add(curState);
+
 		/*
 		RevBayes code integrates and samples over the chunks up to the last full chunk (the leftover bit that is smaller than
 		the other chunks). Instead of integrating over this small time interval (interval that is smaller than dt), they
@@ -660,6 +680,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		code, we integrate over the last dt as well and handle the speciation event or tip state later.
 		 */
 		double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx];
+		int numChunksInBranch = branchPartialLks[nodeIdx].size();
 		while (numSteps * dt < branchLength) {
 		    // Run a small forward pass
 			curDtStart = numSteps * dt;
@@ -672,16 +693,18 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			// Sample with conditional and partial
 			// TODO If I don't sample and condition here, the test passes just fine
 			// TODO Align the chunks...
-            int downpass = branchPartialLks[nodeIdx].size() - 1 - numSteps; // since we are going opposite direction now
+            int downpass = numChunksInBranch - 1 - numSteps; // since we are going opposite direction now
 			double[] branchPartialLk = branchPartialLks[nodeIdx].get(downpass);
             double[] branchPosterior = mergeArrays(branchPartialLk, nodeConditionalLk);
             newState = sampleLksArray(branchPosterior) + 1;
 
+			timeInState[newState - 1] += curDtEnd - curDtStart;
             if (newState != curState) {
-                ;
-				// Record transition states and times
+                transitionStates.add(newState);
+                transitionTimes.add(curDtStart);
+				curState = newState;
+				numBranchStateChanges++;
 			}
-			curState = newState;
 
             // Condition on the sampled state (but do not touch E)
             initializeED(nodeConditionalLk, curState, true);
@@ -721,6 +744,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	    When sampling the tree, we do not scale our likelihoods because we do not have any issues with underflow.
 	    Also, since we are sampling, we are only interested in the ratio of the probailities.
 	     */
+		numNodeStateChanges = 0;
+		numBranchStateChanges = 0;
     	this.calculateLogP();
 
 		Node node = tree.getRoot();
@@ -782,6 +807,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			endStates[nodeIdx] = sampledStates[0];
 			startStates[leftIdx] = sampledStates[1];
 			startStates[rightIdx] = sampledStates[2];
+			if (startState != endStates[nodeIdx]) {
+			    numNodeStateChanges++;
+			}
 			recursivelyDrawJointConditionalAncestralStates(left);
 			recursivelyDrawJointConditionalAncestralStates(right);
 		}
@@ -963,7 +991,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 
         int ret = 0;
-		if (totalProb <= 1e-6) { // if totalProb is 0 basically
+		if (totalProb <= 1e-15) { // if totalProb is 0 basically
+			System.out.println("sample uniformly");
 			double randNum = Math.random();
 			for (int i = 0; i < numStates; i++) {
 				ret = i;

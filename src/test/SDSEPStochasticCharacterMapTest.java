@@ -98,7 +98,8 @@ public class SDSEPStochasticCharacterMapTest {
 		for (int i = 0; i < numTrials; i++) {
 			int[] drawnAncestralEnd = sdsep.drawStochasticCharacterMap();
 			System.arraycopy(drawnAncestralEnd, 0, samples[i], 0, 2 * numSpecies - 1);
-//			System.out.println(Arrays.toString(drawnAncestralEnd));
+			int[] drawnInternalEnd = trimTipsInt(drawnAncestralEnd, numSpecies);
+			System.out.println(Arrays.toString(drawnInternalEnd));
 		}
 
 		// Calculate the posterior probabilities by counting the frequency the node is in state one
@@ -116,6 +117,14 @@ public class SDSEPStochasticCharacterMapTest {
 		System.out.println("Posterior probability of state 0: " + Arrays.toString(posterior));
 
 		return posterior;
+	}
+
+	private int[] trimTipsInt(int[] posterior, int numSpecies) {
+		// Remove entries of the tips
+		int[] newPosterior = new int[posterior.length - numSpecies];
+		System.arraycopy(posterior, numSpecies, newPosterior, 0, newPosterior.length);
+
+		return newPosterior;
 	}
 
 	private double[] trimTips(double[] posterior, int numSpecies) {
