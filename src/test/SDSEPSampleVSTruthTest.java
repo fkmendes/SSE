@@ -94,10 +94,10 @@ public class SDSEPSampleVSTruthTest {
         double accJoint = TestHelper.compareDivTruth(divMap, idxLabelMapper, posteriorJointMostCommon);
         System.out.println(accStoc);
 		System.out.println(accJoint);
-		Assert.assertEquals(0.2380952, accJoint, EPSILON);
-		System.out.println("Draw joint gets accuracy close to diversitree asr");
         Assert.assertEquals(0.2380952, accStoc, EPSILON);
         System.out.println("Draw stochastic mapping gets accuracy close to diversitree asr");
+		Assert.assertEquals(0.2380952, accJoint, EPSILON);
+		System.out.println("Draw joint gets accuracy close to diversitree asr");
 	}
 
 	@Before
