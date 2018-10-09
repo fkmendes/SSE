@@ -176,11 +176,14 @@ public class SDSEPCLaSSETest {
 		// Assert.assertEquals(-10.59346884351, sdsep.calculateLogP(), EPSILON); // Used in original version with fixed-step size ODE solver
 		Assert.assertEquals(-10.59346882658, sdsep.calculateLogP(), EPSILON);
 		double[][] nodePartialsNoCharHist = deep2DArrayCopy(sdsep.getNodePartialScaledLksPostOde());
+		System.out.println("Passed likelihood test!");
 
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-10.59346882658, sdsep.calculateLogP(), 1e-6);
 		double[][] nodePartialsWCharHist = sdsep.getNodePartialScaledLksPostOde();
+		System.out.println("Passed likelihood with sample character history test!");
 
 		assert2DArrayEquals(nodePartialsNoCharHist, nodePartialsWCharHist);
+		System.out.println("Passed matching likelihood test!");
 	}
 }

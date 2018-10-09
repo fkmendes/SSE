@@ -1,5 +1,6 @@
 package src.test;
 
+import src.test.TestHelper;
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;
 import SSE.TraitStash;
@@ -17,6 +18,7 @@ import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
 
 public class SDSEPStochasticCharacterMapTest {
 	final static double EPSILON = 1e-5;
@@ -80,98 +82,16 @@ public class SDSEPStochasticCharacterMapTest {
 
 		// Sample many times with drawStochasticChar and calculate the posterior
         // TODO This test is failing
-		double[] posterior = sampleAndSummarize(10000, numSpecies);
-		posterior = trimTips(posterior, numSpecies);
+		double[] posterior = sdsep.sampleAndSummarize(10000, false);
+		posterior = TestHelper.trimTips(posterior, numSpecies);
 
 //		 Write only the ancestral states to csv
-		writeToCSV("beast_stoc.csv", posterior);
+		TestHelper.writeToCSV("beast_stoc.csv", posterior, sdsep);
 //
 		String[] divLbls = {"nd1","nd2","nd6","nd22","nd7","nd9","nd11","nd3","nd4","nd8","nd10","nd12","nd15","nd16","nd17","nd13","nd21","nd5","nd14","nd18","nd20"};
 		String[] divLks = {"0.504778971188059","0.761371584451414","0.546427028721335","0.990929751746494","0.700705453757888","0.520712315675997","0.400707333658542","0.798875159009061","0.773218277930007","0.693681343224611","0.651616182147769","0.641510203760138","0.801524137771315","0.639132464851372","0.00104369318998754","0.939501019441591","0.99509883391553","0.725987011544158","0.706256765576992","0.654024903986533","0.693527170575002"};
 		String[] indexNameMapper = sdsep.getNodeIndexNameMapper();
-		compareDiv(divLbls, divLks, indexNameMapper, posterior);
-	}
-
-	private double[] sampleAndSummarize(int numTrials, int numSpecies) {
-		// Run the sampling many times
-		int[][] samples = new int[numTrials][2 * numSpecies - 1];
-		for (int i = 0; i < numTrials; i++) {
-			int[] drawnAncestralEnd = sdsep.drawStochasticCharacterMap();
-			System.arraycopy(drawnAncestralEnd, 0, samples[i], 0, 2 * numSpecies - 1);
-			int[] drawnInternalEnd = trimTipsInt(drawnAncestralEnd, numSpecies);
-			System.out.println(Arrays.toString(drawnInternalEnd));
-		}
-
-		// Calculate the posterior probabilities by counting the frequency the node is in state one
-		double[] posterior = new double[2 * numSpecies - 1];
-		int numStateOne;
-		for (int nIdx = 0; nIdx < 2 * numSpecies - 1; nIdx++) {
-			numStateOne = 0;
-			for (int nTrial = 0; nTrial < numTrials; nTrial++) {
-				if (samples[nTrial][nIdx] == 1) {
-					numStateOne++;
-				}
-			}
-			posterior[nIdx] = 1.0 * numStateOne / numTrials;
-		}
-		System.out.println("Posterior probability of state 0: " + Arrays.toString(posterior));
-
-		return posterior;
-	}
-
-	private int[] trimTipsInt(int[] posterior, int numSpecies) {
-		// Remove entries of the tips
-		int[] newPosterior = new int[posterior.length - numSpecies];
-		System.arraycopy(posterior, numSpecies, newPosterior, 0, newPosterior.length);
-
-		return newPosterior;
-	}
-
-	private double[] trimTips(double[] posterior, int numSpecies) {
-		// Remove entries of the tips
-        double[] newPosterior = new double[posterior.length - numSpecies];
-        System.arraycopy(posterior, numSpecies, newPosterior, 0, newPosterior.length);
-
-        return newPosterior;
-	}
-
-	private void writeToCSV(String name, double[] arr) throws Exception {
-		BufferedWriter br = new BufferedWriter(new FileWriter(name));
-		StringBuilder sb = new StringBuilder();
-
-		String[] indexNameMapper = sdsep.getNodeIndexNameMapper();
-		for (String id: indexNameMapper) {
-			sb.append(id);
-			sb.append(",");
-		}
-
-		sb.append("\n");
-
-		for (int i = 0; i < arr.length; i++) {
-			double element = arr[i];
-			sb.append(Double.toString(element));
-			sb.append(",");
-		}
-
-		br.write(sb.toString());
-		br.close();
-	}
-
-	private void compareDiv(String[] divLbls, String[] divLks, String[] idxLabelMapper, double[] post) {
-		HashMap<String, Double> divData = new HashMap<String, Double>();
-		for (int i = 0; i < divLbls.length; i++) {
-			divData.put(divLbls[i], Double.valueOf(divLks[i]));
-		}
-
-		String lbl;
-		double postBeast, postDiv;
-		for (int i = 0; i < idxLabelMapper.length; i++) {
-			lbl = idxLabelMapper[i];
-			postBeast = post[i];
-			postDiv = divData.get(lbl);
-//			System.out.println("" + postBeast + ", " + postDiv);
-			Assert.assertEquals(postDiv, postBeast, 1e-1);
-		}
+		TestHelper.compareDiv(divLbls, divLks, indexNameMapper, posterior);
 	}
 
 	@Test

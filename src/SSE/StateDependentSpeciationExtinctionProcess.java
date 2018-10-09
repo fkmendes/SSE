@@ -1064,4 +1064,36 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 		return ret;
 	}
+
+	public double[] sampleAndSummarize(int numTrials, boolean joint) {
+		// Run the sampling many times (either drawJoint or drawStoc)
+		// Returns a summary of the sampling for all tips and internal nodes
+		int numNodes = tree.getNodeCount();
+		int[][] samples = new int[numTrials][numNodes];
+		for (int i = 0; i < numTrials; i++) {
+			int[] drawnAncestralEnd;
+			if (joint) {
+				drawnAncestralEnd = drawJointConditionalAncestralStates();
+			} else {
+				drawnAncestralEnd = drawStochasticCharacterMap();
+			}
+			System.arraycopy(drawnAncestralEnd, 0, samples[i], 0, numNodes);
+		}
+
+		// Calculate the posterior probabilities by counting the frequency the node is in state one
+		double[] posterior = new double[numNodes];
+		int numStateOne;
+		for (int nIdx = 0; nIdx < numNodes; nIdx++) {
+			numStateOne = 0;
+			for (int nTrial = 0; nTrial < numTrials; nTrial++) {
+				if (samples[nTrial][nIdx] == 1) {
+					numStateOne++;
+				}
+			}
+			posterior[nIdx] = 1.0 * numStateOne / numTrials;
+		}
+		System.out.println("Posterior probability of state 0: " + Arrays.toString(posterior));
+
+		return posterior;
+	}
 }
