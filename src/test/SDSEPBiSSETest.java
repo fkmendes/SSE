@@ -18,20 +18,20 @@ import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 
 public class SDSEPBiSSETest {
-	final static double EPSILON = 1e-10;
+	final static double EPSILON = 1e-7;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
 	@Before
 	public void setUp() throws Exception {
 		// initializing states
 		int numberOfStates = 2; // BiSSE
-		String[] spNames = new String[] { "Human", "Chimp", "Gorilla" };
+		String[] spNames = new String[] { "Human", "Chimp", "Gorilla", "Pizza" };
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		TraitStash traitStash = new TraitStash();
-		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=2");
+		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "Human=2,Chimp=2,Gorilla=1,Pizza=1");
 		traitStash.printLksMap();
-				
+
 		// initializing birth-death parameters
 		Double birthRate = 0.222222222;
 		Double deathRate = 0.1;
@@ -58,7 +58,7 @@ public class SDSEPBiSSETest {
 		RealParameter pi = new RealParameter(pis);
 		pi.initByName("minordimension", 1);
 		
-		String treeStr = "((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0)0.0;";
+		String treeStr = "((Human:2.0,Chimp:2.0)nd1:2.0,(Gorilla:2.0,Pizza:2.0)nd2:2.0)nd3:0.0;";
         TreeParser myTree = new TreeParser(treeStr, false, false, true, 0); // true b/c species are labelled, offset=0
 		// tree is given
         
@@ -100,12 +100,12 @@ public class SDSEPBiSSETest {
 	@Test
 	public void test() {
 		// Assert.assertEquals(-5.588460032653, sdsep.calculateLogP(), EPSILON); // Used in original version with fixed-step size ODE solver
-		Assert.assertEquals(-5.5884600307, sdsep.calculateLogP(), EPSILON);
+		Assert.assertEquals(-10.24744, sdsep.calculateLogP(), 1e-5);
 		System.out.println("Passed likelihood test!");
 		double[][] nodePartialsNoCharHist = deep2DArrayCopy(sdsep.getNodePartialScaledLksPostOde());
 
 		sdsep.setSampleCharacterHistory(true);
-		Assert.assertEquals(-5.5884600307, sdsep.calculateLogP(), 1e-6);
+		Assert.assertEquals(-10.24744, sdsep.calculateLogP(), 1e-5);
 		System.out.println("Passed likelihood with sample character history test!");
 		double[][] nodePartialsWCharHist = sdsep.getNodePartialScaledLksPostOde();
 

@@ -681,7 +681,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		 */
 		double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx];
 		int numChunksInBranch = branchPartialLks[nodeIdx].size();
-		while (numSteps * dt < branchLength) {
+		while ((numSteps+1) * dt < branchLength) {
 		    // Run a small forward pass
 			curDtStart = numSteps * dt;
 			curDtEnd = (numSteps + 1) * dt;
@@ -707,9 +707,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 
             // Condition on the sampled state (but do not touch E)
-            initializeED(nodeConditionalLk, curState, true);
+			initializeED(nodeConditionalLk, curState, true);
             numSteps += 1;
 		}
+		numericallyIntegrateProcess(nodeConditionalLk, numSteps * dt, branchLength, false, false);
 
 		// if tip, use observed or above cur_state
 		if (node.isLeaf()) {
@@ -1092,8 +1093,18 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 			posterior[nIdx] = 1.0 * numStateOne / numTrials;
 		}
-		System.out.println("Posterior probability of state 0: " + Arrays.toString(posterior));
+
+		if (joint) {
+			System.out.println("Joint: Posterior probability of state 0: " + Arrays.toString(posterior));
+		} else {
+			System.out.println("Stoc: Posterior probability of state 0: " + Arrays.toString(posterior));
+		}
 
 		return posterior;
+	}
+
+	public void setNumTimeSlices(int numSlices) {
+        numTimeSlices = numSlices;
+		dt = tree.getRoot().getHeight() / numTimeSlices * 50.0;
 	}
 }

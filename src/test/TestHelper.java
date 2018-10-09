@@ -3,6 +3,7 @@ package src.test;
 import org.junit.Assert;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.util.HashMap;
 
@@ -25,14 +26,17 @@ public class TestHelper {
         return newPosterior;
     }
 
-    public static void writeToCSV(String name, double[] arr, SSE.StateDependentSpeciationExtinctionProcess sdsep) throws Exception {
-        BufferedWriter br = new BufferedWriter(new FileWriter(name));
+    public static void writeToCSV(String dir, String name, double[] arr, SSE.StateDependentSpeciationExtinctionProcess sdsep) throws Exception {
+        BufferedWriter br = new BufferedWriter(new FileWriter(new File(dir, name)));
         StringBuilder sb = new StringBuilder();
 
         String[] indexNameMapper = sdsep.getNodeIndexNameMapper();
-        for (String id: indexNameMapper) {
+        for (int i = 0; i < indexNameMapper.length; i++) {
+            String id = indexNameMapper[i];
             sb.append(id);
-            sb.append(",");
+            if (i != indexNameMapper.length - 1) {
+                sb.append(",");
+            }
         }
 
         sb.append("\n");
@@ -40,7 +44,9 @@ public class TestHelper {
         for (int i = 0; i < arr.length; i++) {
             double element = arr[i];
             sb.append(Double.toString(element));
-            sb.append(",");
+            if (i != arr.length - 1) {
+                sb.append(",");
+            }
         }
 
         br.write(sb.toString());
