@@ -661,6 +661,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		double beginAge = node.getHeight();
 		double endAge = node.getParent().getHeight();
 		double branchLength = node.getLength();
+
+		// TODO Below
 		// TODO Track some things: transitionStates, transitionTimes, totalSpeciationRate, totalExtinctionRate, averageSpeciationRate, averageExtinctionRate, timeInStates
 
 		ArrayList<Integer> transitionStates = new ArrayList<>();
@@ -691,8 +693,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			numericallyIntegrateProcess(nodeConditionalLk, curDtStart, curDtEnd, false, false);
 
 			// Sample with conditional and partial
-			// TODO If I don't sample and condition here, the test passes just fine
-			// TODO Align the chunks...
             int downpass = numChunksInBranch - 1 - numSteps; // since we are going opposite direction now
 			double[] branchPartialLk = branchPartialLks[nodeIdx].get(downpass);
             double[] branchPosterior = mergeArrays(branchPartialLk, nodeConditionalLk);
@@ -710,6 +710,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			initializeED(nodeConditionalLk, curState, true);
             numSteps += 1;
 		}
+		// This line is not used in other libraries. We integrate over the last chunk.
 		numericallyIntegrateProcess(nodeConditionalLk, numSteps * dt, branchLength, false, false);
 
 		// if tip, use observed or above cur_state
