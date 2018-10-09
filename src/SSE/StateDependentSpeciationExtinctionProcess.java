@@ -107,6 +107,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public double[][] nodeTimeInState;
 	public int numBranchStateChanges;
 	public int numNodeStateChanges;
+	private double[] averageSpeciationRates;
+	private double[] averageExtinctionRates;
 
     
 	@Override
@@ -168,6 +170,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		nodeTransitionTimes = new ArrayList[tree.getNodeCount()];
 		nodeTimeInState = new double[tree.getNodeCount()][numStates];
 		numBranchStateChanges = 0;
+		averageSpeciationRates = new double[tree.getNodeCount()];
+		averageExtinctionRates = new double[tree.getNodeCount()];
 	}
 	
 /* Original constructor before interfacing with BEAST 2 */
@@ -662,15 +666,17 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		double endAge = node.getParent().getHeight();
 		double branchLength = node.getLength();
 
-		// TODO Below
-		// TODO Track some things: transitionStates, transitionTimes, totalSpeciationRate, totalExtinctionRate, averageSpeciationRate, averageExtinctionRate, timeInStates
-
+		// TODO check this variables are done correctly
 		ArrayList<Integer> transitionStates = new ArrayList<>();
-		ArrayList<Double> transitionTimes = new ArrayList<>();
+		ArrayList<Double> transitionTimes = new ArrayList<>(); // times in state before transition
 		nodeTransitionStates[nodeIdx] = transitionStates;
 		nodeTransitionTimes[nodeIdx] = transitionTimes;
 		double[] timeInState = nodeTimeInState[nodeIdx];
 		transitionStates.add(curState);
+
+		double totalSpeciationRate = 0;
+		double totalExtinctionRate = 0;
+		double averageSpeciationRate, averageExtinctionRate;
 
 		/*
 		RevBayes code integrates and samples over the chunks up to the last full chunk (the leftover bit that is smaller than
@@ -687,9 +693,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		    // Run a small forward pass
 			curDtStart = numSteps * dt;
 			curDtEnd = (numSteps + 1) * dt;
-			if (curDtEnd > branchLength) {
-				curDtEnd = branchLength;
-			}
 			numericallyIntegrateProcess(nodeConditionalLk, curDtStart, curDtEnd, false, false);
 
 			// Sample with conditional and partial
@@ -698,13 +701,19 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
             double[] branchPosterior = mergeArrays(branchPartialLk, nodeConditionalLk);
             newState = sampleLksArray(branchPosterior) + 1;
 
-			timeInState[newState - 1] += curDtEnd - curDtStart;
-            if (newState != curState) {
+
+            if (newState != curState) { //report transition
                 transitionStates.add(newState);
-                transitionTimes.add(curDtStart);
+                double pastTransitionTimesSum = sum(transitionTimes);
+				double transitionTime = curDtEnd - pastTransitionTimesSum;
+                transitionTimes.add(transitionTime);
 				curState = newState;
 				numBranchStateChanges++;
 			}
+
+			timeInState[curState - 1] += dt;
+            totalSpeciationRate += lambda[curState - 1];
+            totalExtinctionRate += mu[curState - 1];
 
             // Condition on the sampled state (but do not touch E)
 			initializeED(nodeConditionalLk, curState, true);
@@ -716,12 +725,25 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		// if tip, use observed or above cur_state
 		if (node.isLeaf()) {
 			// Last chunk will be observation
-			int state = traitStash.getNodeState(node);
-			if (state - 1 != -1) {  // known tip states
-				endStates[nodeIdx] = state;
-			} else {
-				endStates[nodeIdx] = curState;
+			newState = traitStash.getNodeState(node);
+			if (newState - 1 != -1 && newState != curState) {  // known tip states, report transition
+				transitionStates.add(newState);
+				double pastTransitionTimesSum = sum(transitionTimes);
+				double transitionTime = branchLength - pastTransitionTimesSum;
+				transitionTimes.add(transitionTime);
+				curState = newState;
 			}
+
+			timeInState[curState - 1] = branchLength % dt;  // the last chunk's length
+
+			totalSpeciationRate += lambda[curState - 1];
+			totalExtinctionRate += mu[curState - 1];
+			averageSpeciationRate = totalSpeciationRate / numSteps;
+			averageExtinctionRate = totalExtinctionRate / numSteps;
+			averageSpeciationRates[nodeIdx] = averageSpeciationRate;
+			averageExtinctionRates[nodeIdx] = averageExtinctionRate;
+
+			endStates[nodeIdx] = curState;
 		} else {
 		    // Last chunk will be sample
 			Node left = node.getChild(0);
@@ -733,7 +755,25 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
             double[] leftPartialLks = nodePartialScaledLksPostOde[leftIdx];
             double[] rightPartialLks = nodePartialScaledLksPostOde[rightIdx];
 			int[] sampledStates = sampleAncestralState(leftPartialLks, rightPartialLks, nodeConditionalLk);
-			endStates[nodeIdx] = sampledStates[0];
+
+			newState = sampledStates[0];
+			if (curState != newState) {  //report transition
+				transitionStates.add(newState);
+				double pastTransitionTimesSum = sum(transitionTimes);
+				double transitionTime = branchLength - pastTransitionTimesSum;
+				transitionTimes.add(transitionTime);
+				curState = newState;
+			}
+			timeInState[curState - 1] = branchLength % dt;  // the last chunk's length
+
+			totalSpeciationRate += lambda[curState - 1];
+			totalExtinctionRate += mu[curState - 1];
+			averageSpeciationRate = totalSpeciationRate / numSteps;
+			averageExtinctionRate = totalExtinctionRate / numSteps;
+			averageSpeciationRates[nodeIdx] = averageSpeciationRate;
+			averageExtinctionRates[nodeIdx] = averageExtinctionRate;
+
+			endStates[nodeIdx] = curState;
 			startStates[leftIdx] = sampledStates[1];
 			startStates[rightIdx] = sampledStates[2];
 			recursivelyDrawStochasticCharacterMap(left);
@@ -841,6 +881,14 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 		}
 		return result;
+	}
+
+	public static double sum(ArrayList<Double> arrayList) {
+    	double ret = 0;
+    	for (Double o: arrayList) {
+    		ret += o;
+		}
+		return ret;
 	}
 
 	@Override
