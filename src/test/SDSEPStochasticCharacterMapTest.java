@@ -83,7 +83,7 @@ public class SDSEPStochasticCharacterMapTest {
 		// Sample many times with drawStochasticChar and calculate the posterior
         // TODO This test is failing
 		double[] posterior = sdsep.sampleAndSummarize(10000, false);
-		posterior = TestHelper.trimTips(posterior, numSpecies);
+		posterior = TestHelper.trimTips(posterior);
 
 //		 Write only the ancestral states to csv
 		String dir = "/Users/jeff/Documents/Research/Phylogenetics/calibrated_validation/scm";
@@ -91,8 +91,9 @@ public class SDSEPStochasticCharacterMapTest {
 //
 		String[] divLbls = {"nd1","nd2","nd6","nd22","nd7","nd9","nd11","nd3","nd4","nd8","nd10","nd12","nd15","nd16","nd17","nd13","nd21","nd5","nd14","nd18","nd20"};
 		String[] divLks = {"0.504778971188059","0.761371584451414","0.546427028721335","0.990929751746494","0.700705453757888","0.520712315675997","0.400707333658542","0.798875159009061","0.773218277930007","0.693681343224611","0.651616182147769","0.641510203760138","0.801524137771315","0.639132464851372","0.00104369318998754","0.939501019441591","0.99509883391553","0.725987011544158","0.706256765576992","0.654024903986533","0.693527170575002"};
+		HashMap<String, Double> divMap = TestHelper.getDivMap(divLbls, divLks);
 		String[] indexNameMapper = sdsep.getNodeIndexNameMapper();
-		TestHelper.compareDiv(divLbls, divLks, indexNameMapper, posterior);
+		TestHelper.compareDivPosterior(divMap, indexNameMapper, posterior);
 	}
 
 	@Test

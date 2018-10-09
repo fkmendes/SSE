@@ -1066,6 +1066,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 	// a mapping from the node number to the node's ID
 	// Useful for matching internal nodes with different programs
+	// This maps internal nodes STARTING AT INDEX 0
 	public String[] getNodeIndexNameMapper() {
     	String[] indexNameMap = new String[tree.getInternalNodeCount()];
     	Node root = tree.getRoot();

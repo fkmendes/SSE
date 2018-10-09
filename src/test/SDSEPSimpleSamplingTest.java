@@ -76,16 +76,10 @@ public class SDSEPSimpleSamplingTest {
 		sdsep.setNumTimeSlices(numTimeSlices);
 		double[] posteriorStoc = sdsep.sampleAndSummarize(numTrials, false);
 		double[] posteriorJoint = sdsep.sampleAndSummarize(numTrials, true);
-//		TestHelper.compareArr(posteriorStoc, posteriorJoint);
-
-		double[] posterior = posteriorStoc;
-//		double[] posterior = posteriorJoint;
 
 		// Write only the ancestral states to csv
-		posterior = TestHelper.trimTips(posterior, numSpecies);
-		String dir = "/Users/jeff/Documents/Research/Phylogenetics/calibrated_validation/scm";
-		String fileName = expName + ".csv";
-		TestHelper.writeToCSV(dir, fileName, posterior, sdsep);
+		TestHelper.prepareAndWriteToCSV(posteriorJoint, expName + "-joint", sdsep);
+		TestHelper.prepareAndWriteToCSV(posteriorStoc, expName + "-stoc", sdsep);
 
 //		String[] divLbls = {"nd2","nd3","nd5","nd4"};
 //		String[] divLks = {"0.87785842562904", "0.829891574906887", "0.00242853993720819", "0.995986779987027"};
