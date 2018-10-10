@@ -101,9 +101,9 @@ public class SDSEPSampleBiSSEVSTruthTest {
         System.out.println("Stoc accuracy: " + accStoc);
 		System.out.println("Joint accuracy: " + accJoint);
 		System.out.println("Div accuracy: " + divAcc);
-		Assert.assertEquals(accStoc, divAcc, EPSILON);
+		Assert.assertTrue(accStoc + EPSILON > divAcc);
         System.out.println("Draw stochastic mapping gets accuracy close to diversitree asr");
-        Assert.assertEquals(accJoint, divAcc, EPSILON);
+		Assert.assertTrue(accJoint + EPSILON > divAcc);
 		System.out.println("Draw joint gets accuracy close to diversitree asr");
 	}
 	@Before
