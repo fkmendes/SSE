@@ -735,7 +735,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			newState = traitStash.getNodeState(node);
 
 			// No observation, use curState for last chunk
-			if (newState - 1 != -1) {
+			if (newState - 1 == -1) {
 				newState = curState;
 			}
 

@@ -89,11 +89,12 @@ public class TestHelper {
     }
 
     /**
-     * @param divMap: diversitree mapping from labels to true states
+     * @param divMap: diversitree mapping from labels to true states to {0, 1}
      * @param idxLabelMapper: our mapping from node number to node label/ID/name
      *                      array where idxLabelMapper[i] is the label of node i (internal nodes indexed from 0)
      *                      e.g. ["sp4", "sp7"] means node 0 is sp4, node 1 is sp7
      * @param parsimony: most likely states for all nodes separately. parsimony[i] is the most likely state for node i
+     *                 index by 1
      * @return accuracy measure. How good parsimony does compared to diversitree truth
      */
     public static double compareDivTruth(HashMap<String, Double> divMap, String[] idxLabelMapper, int[] parsimony) {
@@ -163,10 +164,10 @@ public class TestHelper {
     public static int[] parsimony(double[] arr) {
         int[] ret = new int[arr.length];
         for (int i = 0; i < arr.length; i++) {
-            if (arr[i] > 0.5) {
-                ret[i] = 2;
-            } else {
+            if (arr[i] > 0.5) {  // since the value is likelihood of state 0
                 ret[i] = 1;
+            } else {
+                ret[i] = 2;
             }
         }
         return ret;
