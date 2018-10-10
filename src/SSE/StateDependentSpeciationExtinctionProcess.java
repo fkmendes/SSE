@@ -98,17 +98,19 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 	private double[][] nodeConditionalScaledLks;
 
-	private boolean sampleCharacterHistory;  // using RevBayes name convention. I would prefer to use sampleBranch or something
-	private ArrayList<double[]>[] branchPartialLks;
+	// The below parameters are used for drawStochasticCharacterMapping and mostly have to do with the activity on branches
+	private boolean sampleCharacterHistory;
+	// above is using RevBayes name convention. I prefer sampleBranch. This is used using drawStochastic where we want to sample the state along a branch, not just at a node
+	private ArrayList<double[]>[] branchPartialLks;  // likelihoods along the branch above a node. use Arraylist since no fixed num samples along variable length branches
 	private int numTimeSlices = 500;
-	private double dt;
-	public ArrayList[] nodeTransitionStates;
-	public ArrayList[] nodeTransitionTimes;
-	public double[][] nodeTimeInState;
-	public int numBranchStateChanges;
-	public int numNodeStateChanges;
-	private double[] averageSpeciationRates;
-	private double[] averageExtinctionRates;
+	private double dt; // dt is calculated as a function of the number of time slices
+	public ArrayList[] nodeTransitionStates; // Tracks transitions along the branch above the node
+	public ArrayList[] nodeTransitionTimes; // Tracks how long the state was occupied before transitioning
+	public double[][] nodeTimeInState; // Total time of the node in the state
+	public int numBranchStateChanges; // TODO remove
+	public int numNodeStateChanges; // TODO remove
+	private double[] averageSpeciationRates; // Over all states in the branch, the speciation rate
+	private double[] averageExtinctionRates; // Over all states in the branch, the extinction rate
 
     
 	@Override
@@ -165,10 +167,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		sampleCharacterHistory = false;
         branchPartialLks = new ArrayList[tree.getNodeCount()];
-        dt = tree.getRoot().getHeight() / numTimeSlices * 50.0;
+        dt = tree.getRoot().getHeight() / numTimeSlices * 50.0; // why we multiply by 50? following RevBayes code
 		nodeTransitionStates = new ArrayList[tree.getNodeCount()];
 		nodeTransitionTimes = new ArrayList[tree.getNodeCount()];
 		nodeTimeInState = new double[tree.getNodeCount()][numStates];
+		numNodeStateChanges = 0;
 		numBranchStateChanges = 0;
 		averageSpeciationRates = new double[tree.getNodeCount()];
 		averageExtinctionRates = new double[tree.getNodeCount()];
@@ -509,6 +512,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 					ArrayList<double[]> branchLks = new ArrayList<>();
 					int numSteps = 0;
 					double curDtStart, curDtEnd;
+					// Split the branch into small chunks to store likelihood at those chunks for forward pass
 					while (numSteps * dt + beginAge < endAge) {
 						curDtStart = numSteps * dt + beginAge;
 						curDtEnd = (numSteps + 1) * dt + beginAge;
@@ -516,14 +520,13 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 							curDtEnd = endAge;
 						}
 						numericallyIntegrateProcess(nodePartial, curDtStart, curDtEnd, backwardTime, extinctionOnly);
-						// What did revbayes do with nodePartial? with begin() and such? ln 377
 						double[] nodePartialCopy = new double[nodePartial.length];
 						System.arraycopy(nodePartial, 0, nodePartialCopy, 0, nodePartial.length);
 						branchLks.add(nodePartialCopy);
 						numSteps += 1;
 					}
+					// TODO Unlike node likelihoods, we do not need to scale branch likelihoods since the ratios are what matter
 					branchPartialLks[nodeIdx] = branchLks;
-					// TODO Do I need to scale these guys?
 				}
 
 //				// System.out.println("Initial conditions: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
@@ -613,12 +616,13 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public int [] drawStochasticCharacterMap() {
 	    /*
 	    When sampling the tree, we do not scale our likelihoods because we do not have any issues with underflow.
-	    Also, since we are sampling, we are only interested in the ratio of the probailities.
+	    Also, since we are sampling, we are only interested in the ratio of the probabilities.
 	     */
 
-	    // set flag for backwards pass to store likelihoods for all branch segments
 		numNodeStateChanges = 0;
 		numBranchStateChanges = 0;
+
+		// set flag for backwards pass to store likelihoods for all branch segments
         boolean sampleCharacterHistoryStashed = sampleCharacterHistory;
 		sampleCharacterHistory = true;
 
@@ -631,10 +635,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		Node right = node.getChild(1);
 		int leftIdx = left.getNr();
 		int rightIdx = right.getNr();
-		double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray(); // Should my argument be double[] or Double[]?
+		double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray();
 		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piUnboxed);
 
-		// TODO store information - state and branch length ?? why does revbayes use different variables
+		// RevBayes only tracks endStates (and call it character_histories) but I do not see why we shouldn't
+		// use the paradigm in drawJointConditionalAncestralState
 		endStates[rootIdx] = sampledStates[0];
 		startStates[leftIdx] = sampledStates[1];
 		startStates[rightIdx] = sampledStates[2];
@@ -642,7 +647,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
         recursivelyDrawStochasticCharacterMap(left);
         recursivelyDrawStochasticCharacterMap(right);
 
-		// reset flag back to default for backwards pass to store likelihoods for all branch segments
+		// reset backward pass storing flag back to original
 		sampleCharacterHistory = sampleCharacterHistoryStashed;
 		return endStates;
 	}
@@ -650,30 +655,31 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	private void recursivelyDrawStochasticCharacterMap(Node node) {
         int nodeIdx = node.getNr();
 
-        // set up the extinction likelihoods
+        // Zero out E and condition D
         int startState = startStates[node.getNr()];
 		initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
 
+		// set up the extinction likelihoods (blind looking forward, so integrate time but not the resulting clade)
 		double parentAge = node.getParent().getHeight();
         numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
-		// repeat NIP many times
+		// set up sampling variables
 		int numSteps = 0;
 		double curDtStart, curDtEnd;
 		int newState;
 		int curState = startStates[nodeIdx];
-		double beginAge = node.getHeight();
-		double endAge = node.getParent().getHeight();
 		double branchLength = node.getLength();
+		double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx];
+		int numChunksInBranch = branchPartialLks[nodeIdx].size();
 
 		// TODO check this variables are done correctly
+        // set up logging/transition variables
 		ArrayList<Integer> transitionStates = new ArrayList<>();
 		ArrayList<Double> transitionTimes = new ArrayList<>(); // times in state before transition
 		nodeTransitionStates[nodeIdx] = transitionStates;
 		nodeTransitionTimes[nodeIdx] = transitionTimes;
 		double[] timeInState = nodeTimeInState[nodeIdx];
 		transitionStates.add(curState);
-
 		double totalSpeciationRate = 0;
 		double totalExtinctionRate = 0;
 		double averageSpeciationRate, averageExtinctionRate;
@@ -681,28 +687,28 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		/*
 		RevBayes code integrates and samples over the chunks up to the last full chunk (the leftover bit that is smaller than
 		the other chunks). Instead of integrating over this small time interval (interval that is smaller than dt), they
-		get the state for that chunk of time from the speciation event or tip state.
-		We noticed that if we skip this <dt chunk of time, our posteriors get undesireable behaviors.
+		get the state for that chunk of time from the speciation event or tip state. They do not integrate over it either.
+		We noticed that if we skip this <dt chunk of time, our posteriors get undesirable behaviors.
 		Specifically, if the dt is too big, then the posteriors to not match. However, if we reduce the size of dt,
 		we get matching posteriors. We do not want to have code performance dependent on this argument, thus in our
-		code, we integrate over the last dt as well and handle the speciation event or tip state later.
+		code, we integrate over the last dt as well and handle the speciation event or tip state without sampling and
+		conditioning the last chunk.
 		 */
-		double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx];
-		int numChunksInBranch = branchPartialLks[nodeIdx].size();
+		// Integrate/ODE, Sample, and Condition up to the last chunk
 		while ((numSteps+1) * dt < branchLength) {
 		    // Run a small forward pass
 			curDtStart = numSteps * dt;
 			curDtEnd = (numSteps + 1) * dt;
 			numericallyIntegrateProcess(nodeConditionalLk, curDtStart, curDtEnd, false, false);
 
-			// Sample with conditional and partial
+			// Sample with freshly-calculated conditional and partial from backward pass
             int downpass = numChunksInBranch - 1 - numSteps; // since we are going opposite direction now
 			double[] branchPartialLk = branchPartialLks[nodeIdx].get(downpass);
             double[] branchPosterior = mergeArrays(branchPartialLk, nodeConditionalLk);
-            newState = sampleLksArray(branchPosterior) + 1;
+            newState = sampleLksArray(branchPosterior) + 1; // sampleArray will give index but our states are index by 1
 
-
-            if (newState != curState) { //report transition
+            // Log any transitions
+            if (newState != curState) {
                 transitionStates.add(newState);
                 double pastTransitionTimesSum = sum(transitionTimes);
 				double transitionTime = curDtEnd - pastTransitionTimesSum;
@@ -711,22 +717,30 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				numBranchStateChanges++;
 			}
 
+			// Log general information
 			timeInState[curState - 1] += dt;
             totalSpeciationRate += lambda[curState - 1];
             totalExtinctionRate += mu[curState - 1];
 
-            // Condition on the sampled state (but do not touch E)
+            // Condition D on the sampled state (but do not touch E)
 			initializeED(nodeConditionalLk, curState, true);
             numSteps += 1;
 		}
-		// This line is not used in other libraries. We integrate over the last chunk.
+		// We integrate over the last chunk (then sample). This way the stochasticity of the event at the node is more pronounced
+		// It seems this line is not used in other libraries.
 		numericallyIntegrateProcess(nodeConditionalLk, numSteps * dt, branchLength, false, false);
 
-		// if tip, use observed or above cur_state
 		if (node.isLeaf()) {
 			// Last chunk will be observation
 			newState = traitStash.getNodeState(node);
-			if (newState - 1 != -1 && newState != curState) {  // known tip states, report transition
+
+			// No observation, use curState for last chunk
+			if (newState - 1 != -1) {
+				newState = curState;
+			}
+
+			// Track transition activity
+			if (newState != curState) {
 				transitionStates.add(newState);
 				double pastTransitionTimesSum = sum(transitionTimes);
 				double transitionTime = branchLength - pastTransitionTimesSum;
@@ -734,29 +748,33 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				curState = newState;
 			}
 
-			timeInState[curState - 1] = branchLength % dt;  // the last chunk's length
-
+			// Track branch activity
+			timeInState[curState - 1] = branchLength % dt;  // the last chunk's length is the remainder
 			totalSpeciationRate += lambda[curState - 1];
 			totalExtinctionRate += mu[curState - 1];
+
+			// Finish average calculations
 			averageSpeciationRate = totalSpeciationRate / numSteps;
 			averageExtinctionRate = totalExtinctionRate / numSteps;
 			averageSpeciationRates[nodeIdx] = averageSpeciationRate;
 			averageExtinctionRates[nodeIdx] = averageExtinctionRate;
 
+			// Set the final state
 			endStates[nodeIdx] = curState;
 		} else {
-		    // Last chunk will be sample
+		    // Last chunk will be sampled
 			Node left = node.getChild(0);
 			Node right = node.getChild(1);
 			int leftIdx = left.getNr();
 			int rightIdx = right.getNr();
 
-			// sample and recurse
+			// sample using node likelihoods (TODO SHOULD WE BE USING THE LAST BRANCH PIECE?)
             double[] leftPartialLks = nodePartialScaledLksPostOde[leftIdx];
             double[] rightPartialLks = nodePartialScaledLksPostOde[rightIdx];
 			int[] sampledStates = sampleAncestralState(leftPartialLks, rightPartialLks, nodeConditionalLk);
-
 			newState = sampledStates[0];
+
+			// Track transition activity
 			if (curState != newState) {  //report transition
 				transitionStates.add(newState);
 				double pastTransitionTimesSum = sum(transitionTimes);
@@ -764,15 +782,19 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				transitionTimes.add(transitionTime);
 				curState = newState;
 			}
-			timeInState[curState - 1] = branchLength % dt;  // the last chunk's length
 
+			// Track branch activity
+			timeInState[curState - 1] = branchLength % dt;  // the last chunk's length
 			totalSpeciationRate += lambda[curState - 1];
 			totalExtinctionRate += mu[curState - 1];
+
+			// Finish average calculations
 			averageSpeciationRate = totalSpeciationRate / numSteps;
 			averageExtinctionRate = totalExtinctionRate / numSteps;
 			averageSpeciationRates[nodeIdx] = averageSpeciationRate;
 			averageExtinctionRates[nodeIdx] = averageExtinctionRate;
 
+			// Set states and recurse
 			endStates[nodeIdx] = curState;
 			startStates[leftIdx] = sampledStates[1];
 			startStates[rightIdx] = sampledStates[2];
@@ -788,6 +810,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	     */
 		numNodeStateChanges = 0;
 		numBranchStateChanges = 0;
+
+		// backward pass
     	this.calculateLogP();
 
 		Node node = tree.getRoot();
@@ -796,7 +820,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		int leftIdx = left.getNr();
 		int rightIdx = right.getNr();
 
-        double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray(); // Should my argument be double[] or Double[]?
+		// sample root
+        double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray();
 		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piUnboxed);
 		endStates[rootIdx] = sampledStates[0];
 		startStates[leftIdx] = sampledStates[1];
@@ -811,7 +836,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	private void recursivelyDrawJointConditionalAncestralStates(Node node) {
     	if (node.isLeaf()) {
     	    int state = traitStash.getNodeState(node);
-            if (state - 1 != -1) {  // known tip states
+
+    	    // known tip states/observation
+            if (state - 1 != -1) {
                 endStates[node.getNr()] = state;
 			} else {
 				int nodeIdx = node.getNr();
@@ -819,13 +846,15 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				double nodeAge = node.getHeight();
 
 				int startState = startStates[node.getNr()];
+
+				// zero Es and condition D, then run blind backward ODE to calculate E
 				initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
 				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
-				boolean backwardTime = false;
-				boolean extinctionOnly = false;
-				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], nodeAge, parentAge, backwardTime, extinctionOnly);
+				// run forward
+				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], nodeAge, parentAge, false, false);
 
+				// sample from the likelihoods for tip
 				state = sampleLksArray(nodeConditionalScaledLks[nodeIdx]) + 1;
 				endStates[nodeIdx] = state;
 			}
@@ -838,13 +867,17 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			double parentAge = node.getParent().getHeight();
 			double nodeAge = node.getHeight();
 
+			// zero Es and condition D, then run blind backward ODE to calculate E
 			int startState = startStates[node.getNr()];
 			initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
 			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
-			boolean backwardTime = false;
-			boolean extinctionOnly = false;
-			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], nodeAge, parentAge, backwardTime, extinctionOnly);
+			// run forward
+			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], nodeAge, parentAge, false, false);
+
+			// sample with freshly-calculated conditional likelihood and partial likelihoods from backwards pass
+			// We sample from speciation_rate * right_partial * left_partial * node_conditional,
+			// which is equivalent to node_partial * node_conditional
 			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalScaledLks[nodeIdx]);
 			endStates[nodeIdx] = sampledStates[0];
 			startStates[leftIdx] = sampledStates[1];
@@ -967,7 +1000,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
     	super.restore();
     }
 
-    // helper
+    /*
+    helper
+    This sampling will return a triplet in which each element is a number in {1, 2, ..., numStates}
+    Since our states are indexed by 1
+    Used for node sampling
+     */
     private int[] sampleAncestralState(double[] leftLks, double[] rightLks, double[] D) {
         // Pick cladogenetic or anagentic events
 		HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
@@ -978,7 +1016,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			speciationRates = lambda;
 		}
 
-		// Set up the event probabilities
+		// Set up the event probabilities with event <-> probability mapping
 		HashMap<int[], Double> eventProb = new HashMap<>();
 		double totalProb = 0;
         if (incorporateCladogenesis) {
@@ -1007,8 +1045,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 
 		// Sample from the events
-		int[] triplet = new int[]{1, 1, 1};
-        if (totalProb <= 1e-6) { // if totalProb is 0 basically
+		int[] triplet = new int[]{-1, -1, -1};
+        if (totalProb <= 1e-8) {
+        	// If we reach this point of the code, it is possible we need to scale our erronous code
+            System.out.println("SAMPLING UNIFORMLY SINCE PROBABILITIES ARE SO SMALL EVEN THO IT MAY NOT BE RIGHT");
 			int numEvents = eventProb.size();
 			double randNum = Math.random();
 			for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
@@ -1032,17 +1072,22 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		return triplet;
 	}
 
+	/*
+	Requires a likelihood array of format [E D]
+    NOTE: THIS SAMPLING IS INDEX BY 0 SINCE ITS SAMPLING AN ARRAY INDEX
+	IF SAMPLING STATE, PROBABLY NEED TO ADD 1 TO INDEX BY 1
+    Used for branch sampling
+	 */
 	private int sampleLksArray(double[] lks) {
-    	// NOTE: THIS SAMPLING IS INDEX BY 0 SINCE ITS SAMPLING AN ARRAY INDEX
-		// IF SAMPLING STATE, PROBABLY NEED TO ADD 1 TO INDEX BY 1
     	double totalProb = 0;
-    	for (int i = 0 ; i < numStates; i++) {
+    	for (int i = 0; i < numStates; i++) {
 			totalProb += lks[numStates + i];
 		}
 
         int ret = 0;
-		if (totalProb <= 1e-15) { // if totalProb is 0 basically
-			System.out.println("sample uniformly");
+		if (totalProb <= 1e-8) {
+			// If we reach this point of the code, it is possible we need to scale our erronous code
+			System.out.println("SAMPLING UNIFORMLY SINCE PROBABILITIES ARE SO SMALL EVEN THO IT MAY NOT BE RIGHT");
 			double randNum = Math.random();
 			for (int i = 0; i < numStates; i++) {
 				ret = i;
@@ -1064,9 +1109,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
     	return ret;
 	}
 
-	// a mapping from the node number to the node's ID
-	// Useful for matching internal nodes with different programs
-	// This maps internal nodes STARTING AT INDEX 0
+	/**
+	 * a mapping from the internal node number (STARTING WITH INDEX 0) to the node's ID/name/label
+	 * Useful for matching internal nodes with different programs who share node ID/name/label
+	 * idxLabelMapper[i] is the label of node i (internal nodes indexed from 0)
+	 */
 	public String[] getNodeIndexNameMapper() {
     	String[] indexNameMap = new String[tree.getInternalNodeCount()];
     	Node root = tree.getRoot();
@@ -1087,9 +1134,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		recursvelyGetNodeIndexNameMapper(node.getChild(1), indexNameMap);
 	}
 
+	/*
+    Initializes extinction and likelihoods for a node (extinction likelihoods to 0, survival likelihoods to 0 except the actual state to 1)
+    Useful to condition the node after sampling
+	If ignoreE is true, then we do not 0 out the extinction likelihoods
+	 */
 	private double[] initializeED(double[] lks, int state, boolean ignoreE) {
-    	// Initializes extinction and likelihoods for a node to be conditioned when sampled and integrated over
-		// If ignoreE is true, then we do not 0 it out
 		for (int i = 0; i < numStates; i++) {
 			if (!ignoreE)  {
 				lks[i] = 0.0;
@@ -1109,6 +1159,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	private double[] mergeArrays(double[] arr1, double[] arr2) {
+	    // element-wise product
         double[] ret = new double[arr1.length];
     	for (int i = 0; i < arr1.length; i++) {
     		ret[i] = arr2[i] * arr1[i];
@@ -1116,11 +1167,19 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		return ret;
 	}
 
+	/*
+	Used in BiSSE unit tests
+	TODO Extend to CLaSSE
+	TODO split sample and summarize into different methods?
+	Run the sampling many times (either drawJoint or drawStoc)
+	Returns a summary (posteriors) of the sampling for all tips and internal nodes
+	Important: tips and internal nodes!
+	 */
 	public double[] sampleAndSummarize(int numTrials, boolean joint) {
-		// Run the sampling many times (either drawJoint or drawStoc)
-		// Returns a summary of the sampling for all tips and internal nodes
 		int numNodes = tree.getNodeCount();
 		int[][] samples = new int[numTrials][numNodes];
+
+		// Sample tree numTrial times
 		for (int i = 0; i < numTrials; i++) {
 			int[] drawnAncestralEnd;
 			if (joint) {
@@ -1133,15 +1192,15 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		// Calculate the posterior probabilities by counting the frequency the node is in state one
 		double[] posterior = new double[numNodes];
-		int numStateOne;
+		int stateOneCount;
 		for (int nIdx = 0; nIdx < numNodes; nIdx++) {
-			numStateOne = 0;
+			stateOneCount = 0;
 			for (int nTrial = 0; nTrial < numTrials; nTrial++) {
 				if (samples[nTrial][nIdx] == 1) {
-					numStateOne++;
+					stateOneCount++;
 				}
 			}
-			posterior[nIdx] = 1.0 * numStateOne / numTrials;
+			posterior[nIdx] = 1.0 * stateOneCount / numTrials;
 		}
 
 		if (joint) {
