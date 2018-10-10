@@ -1,3 +1,10 @@
+/*
+Given a tree of 4 tips and a CLaSSE model, we check
+1. The backwards pass has a final tree likelihood matching diversitree
+2. The backwards pass has a final tree likelihood matching diversitree while sampling in the branches
+3. After the backwards pass, each node has the same likelihood with and without sampling in the branches
+ */
+
 package test;
 
 import org.junit.Assert;
@@ -22,7 +29,7 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 
-public class SDSEPCLaSSETest {
+public class SDSEPCLaSSEBackwardTest {
 	final static double EPSILON = 1e-10;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 

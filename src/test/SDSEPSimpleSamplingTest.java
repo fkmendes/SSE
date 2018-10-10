@@ -1,3 +1,8 @@
+/*
+Sample the tree with both drawJointConditionalAncestralState and drawStochasticCharacterMapping.
+Write the posteriors to csv's
+ */
+
 package src.test;
 
 import SSE.InstantaneousRateMatrix;
@@ -145,9 +150,6 @@ public class SDSEPSimpleSamplingTest {
 		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
-
-
-
 	}
 
 }

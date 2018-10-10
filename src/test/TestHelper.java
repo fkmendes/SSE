@@ -85,8 +85,14 @@ public class TestHelper {
     }
 
     public static void compareDivPosterior(HashMap<String, Double> divMap, String[] idxLabelMapper, double[] post) {
+        /*
+        idxLabelMapper - mapping from nodeIndex to node label, indexing for internal nodes starting at 0
+         */
         String lbl;
         double postBeast, postDiv;
+        if (idxLabelMapper.length != post.length) {
+            post = trimTips(post);
+        }
         for (int i = 0; i < idxLabelMapper.length; i++) {
             lbl = idxLabelMapper[i];
             postBeast = post[i];
