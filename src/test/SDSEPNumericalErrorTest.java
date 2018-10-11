@@ -3,7 +3,24 @@ Graph the posteriors against numTrials
 Graph the posteriors against numChunks
 
 Observe what values the asym behavior is reached
+
+We see what happens when we vary the variables
+{10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 20480}
+
+Varying the number of time slices for joint does not make a difference
+It doesn't use the slices
+
+Report how I ran this test
+Running this script takes a long time
+
+Results
+1. number of trials - running ~ 5000 is sufficient for these trees. converges as number increases
+2. number of time chunks - for small number of chunks, we get accurate answers (since it reduces to drawJoint)
+							but as number of chunks increases, at some point the error spikes then slowly converges again
+							under 128 and above 8000 time slices is good
  */
+
+
 
 package src.test;
 
@@ -57,7 +74,8 @@ public class SDSEPNumericalErrorTest {
 
 	public void runExperiment(String treeStr, String spAttr, String[] spNames, String expName,
 							  Double[] lambdas, Double[] mus, String q, int numTimeSlices,
-							  String[] divLbls, String[] divStates, double divAcc, int numTrials) throws Exception {
+							  String[] divLbls, String[] divStates, double divAcc, int numTrials,
+							  boolean onlyStoc) throws Exception {
 		// initializing states
 		int numberOfStates = 2; // BiSSE
 		int numSpecies = spNames.length;
@@ -106,15 +124,16 @@ public class SDSEPNumericalErrorTest {
 
 		// Sample many times with drawStochasticChar and calculate the posterior
 		sdsep.setNumTimeSlices(numTimeSlices);
+
 		double[] posteriorStoc = sdsep.sampleAndSummarizeBiSSE(numTrials, false);
-		double[] posteriorJoint = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
-
 		posteriorStoc = TestHelper.trimTips(posteriorStoc);
-		posteriorJoint = TestHelper.trimTips(posteriorJoint);
-
 		System.arraycopy(posteriorStoc, 0, posteriorStocPerParam[curSample], 0, posteriorStoc.length);
-		System.arraycopy(posteriorJoint, 0, posteriorJointPerParam[curSample], 0, posteriorJoint.length);
 
+		if (!onlyStoc) {
+			double[] posteriorJoint = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
+			posteriorJoint = TestHelper.trimTips(posteriorJoint);
+			System.arraycopy(posteriorJoint, 0, posteriorJointPerParam[curSample], 0, posteriorJoint.length);
+		}
 		curSample += 1;
 	}
 
@@ -130,20 +149,19 @@ public class SDSEPNumericalErrorTest {
 		resetCurSample();
 		for (int i = 0; i < numSamples; i++) {
 			params[i] = numTrials;
-			runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, 500, divLbls, divStates, divAcc, numTrials);
+			runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, 500, divLbls, divStates, divAcc, numTrials, false);
 			numTrials *= 2;
 		}
 		writeParams(params, posteriorJointPerParam, expName + "numErrorJointNumTrials.csv");
 		writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTrials.csv");
 
-		int numTimeSlices = 10;
+		int numTimeSlices = 2;
 		resetCurSample();
 		for (int i = 0; i < numSamples; i++) {
 			params[i] = numTimeSlices;
-			runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, numTimeSlices, divLbls, divStates, divAcc, 10000);
+			runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, numTimeSlices, divLbls, divStates, divAcc, 10000, true);
 			numTimeSlices *= 2;
 		}
-		writeParams(params, posteriorJointPerParam, expName + "numErrorJointNumTimeSlices.csv");
 		writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTimeSlices.csv");
 	}
 
@@ -168,7 +186,7 @@ public class SDSEPNumericalErrorTest {
 		String[] divStates = {"0", "0", "1", "0"};
 		double divAcc = 1;
 
-//		runWrapper(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, divLbls, divStates, divAcc);
+		runWrapper(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, divLbls, divStates, divAcc);
 
         // RB
 		treeStr = "(((sp15:0.5701922606,(sp22:0.1174274481,sp23:0.1174274481)nd22:0.4527648125)nd6:5.46955786,((sp4:2.913008462,(sp16:0.4790358056,sp17:0.4790358056)nd11:2.433972656)nd9:1.72680138,sp2:4.639809842)nd7:1.399940278)nd2:8.039087646,((sp1:5.262858931,((((sp10:1.936988093,sp11:1.936988093)nd15:0.8700699862,((sp20:0.1813602217,sp21:0.1813602217)nd17:2.59756285,sp6:2.778923072)nd16:0.02813500652)nd12:0.1038009358,(sp14:1.103215563,(sp18:0.2976700868,sp19:0.2976700868)nd21:0.805545476)nd13:1.807643452)nd10:0.5229591127,sp3:3.433818127)nd8:1.829040804)nd4:1.760591904,((((sp8:1.951198056,sp9:1.951198056)nd20:0.153294648,sp7:2.104492704)nd18:0.5588707339,sp12:2.663363438)nd14:0.2401874525,sp5:2.90355089)nd5:4.119899945)nd3:7.055386931)nd1;";

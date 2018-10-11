@@ -192,5 +192,13 @@ public class SDSEPCLaSSEBackwardTest {
 
 		assert2DArrayEquals(nodePartialsNoCharHist, nodePartialsWCharHist);
 		System.out.println("Passed matching likelihood test!");
+
+		int[] jointNodes = sdsep.drawJointConditionalAncestralStates();
+		int[] stocNodes = sdsep.drawStochasticCharacterMap();
+		System.out.println(Arrays.toString(jointNodes));
+		System.out.println(Arrays.toString(stocNodes));
+
+		double[][] post = sdsep.sampleAndSummarizeCLaSSE(100, false);
+
 	}
 }

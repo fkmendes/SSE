@@ -5,7 +5,6 @@ Then, check that the posterior probability of a node being in state 0 matches th
 
 package src.test;
 
-import src.test.TestHelper;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -720,7 +720,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 			// Log general information
 			timeInState[curState - 1] += dt;
-            totalSpeciationRate += lambda[curState - 1];
+            totalSpeciationRate += calculateEffectiveLambda(curState);
             totalExtinctionRate += mu[curState - 1];
 
             // Condition D on the sampled state (but do not touch E)
@@ -751,7 +751,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 			// Track branch activity
 			timeInState[curState - 1] = branchLength % dt;  // the last chunk's length is the remainder
-			totalSpeciationRate += lambda[curState - 1];
+			totalSpeciationRate += calculateEffectiveLambda(curState);
 			totalExtinctionRate += mu[curState - 1];
 
 			// Finish average calculations
@@ -786,7 +786,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 			// Track branch activity
 			timeInState[curState - 1] = branchLength % dt;  // the last chunk's length
-			totalSpeciationRate += lambda[curState - 1];
+			totalSpeciationRate += calculateEffectiveLambda(curState);
 			totalExtinctionRate += mu[curState - 1];
 
 			// Finish average calculations
@@ -1254,5 +1254,25 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public void setNumTimeSlices(int numSlices) {
         numTimeSlices = numSlices;
 		dt = tree.getRoot().getHeight() / numTimeSlices * 50.0;
+	}
+
+	public double calculateEffectiveLambda(int state) {
+		HashMap<int[], Double> eventMap;
+		if (incorporateCladogenesis) {
+			eventMap = cladoStash.getEventMap();
+		} else {
+		    return lambda[state - 1];
+		}
+
+		double lambda = 0;
+		for (HashMap.Entry<int[], Double> entry: eventMap.entrySet()) {
+			int[] states = entry.getKey();
+			int i = states[0] - 1;
+			double speciationRate = entry.getValue();
+			if (i == state - 1) {
+				lambda += speciationRate;
+			}
+		}
+		return lambda;
 	}
 }

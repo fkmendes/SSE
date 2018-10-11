@@ -139,7 +139,13 @@ public class TestHelper {
     // Verifies that the arrays have the same values for the first arr1.length elements
     public static void compareArr(double[] arr1, double[] arr2) {
         for (int i = 0; i < arr1.length; i++) {
-            Assert.assertEquals(arr1[i], arr2[i], EPSILON);
+            Assert.assertEquals(arr1[i], arr2[i], 1e-1);
+        }
+    }
+
+    public static void compareNestedArr(double[][] arr1, double[][] arr2) {
+        for (int i = 0; i < arr1.length; i++) {
+            compareArr(arr1[i], arr2[i]);
         }
     }
 
