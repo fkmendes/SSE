@@ -2,8 +2,11 @@ import pandas
 import matplotlib.pyplot as plt
 import argparse
 import numpy as np
+import os
 
 def plot(name, use_log):
+    if not os.path.exists("plots/"):
+        os.mkdir("plots")
     df = pandas.read_csv(name, index_col=0, header=None)
     n_samples, n_nodes = df.shape
     for i in range(1, n_nodes + 1):
