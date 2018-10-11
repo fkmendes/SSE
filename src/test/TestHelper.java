@@ -6,11 +6,25 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import SSE.StateDependentSpeciationExtinctionProcess;
 
 public class TestHelper {
     final static double EPSILON = 1e-5;
+
+    public static int argmax(double[] arr) {
+        int index = 0;
+        double max = arr[0];
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] > max) {
+                max = arr[i];
+                index = i;
+            }
+        }
+        return index;
+    }
 
     // Get number of tips from number of total nodes (internal nodes and tips)
     public static int numNodesToNumTips(int numNodes) {
@@ -177,5 +191,78 @@ public class TestHelper {
             }
         }
         return ret;
+    }
+
+    /**
+     * TODO Should I make it a deep copy
+     * @param posteriors posterior probabilities for all tree nodes for all states
+     *                   size numTotalNodes x numStates
+     * @return posterior probabilities for all internal nodes for all states
+     */
+    public static double[][] trimTipsCLaSSE(double[][] posteriors) {
+        int numTotalNodes = posteriors.length;
+        int numTips = numNodesToNumTips(numTotalNodes);
+        int numInternalNodes = numTotalNodes - numTips;
+        int numStates = posteriors[0].length;
+
+        double[][] ret = new double[numInternalNodes][numStates];
+
+        for (int i = 0; i < numInternalNodes; i++) {
+            ret[i] = posteriors[numTips + i];
+        }
+
+        return ret;
+    }
+
+    /**
+     * TODO Should I put this in the CLaSSECredibleSetTest instead of here? might do this for BiSSE too, so put here
+     * Note: this method will destory probs. Maybe make a deep copy
+     * @param probs probs[i][j] is posterior probability node i is in state j
+     * @return a credible set for each node
+     */
+    public static Set<Integer>[] constructCredibleSets(double[][] probs, double credibleThreshold) {
+        int numIntNodes = probs.length;
+        Set<Integer>[] credibleSets = new HashSet[numIntNodes];
+
+        double credibility;
+        for (int i = 0; i < numIntNodes; i++) {
+            credibility = 0.0;
+            credibleSets[i] = new HashSet<>();
+            while (credibility < credibleThreshold) {
+                int likelyState = argmax(probs[i]) + 1;
+                credibleSets[i].add(likelyState);
+                credibility += probs[i][likelyState - 1];
+                probs[i][likelyState - 1] = -1;  // so that we won't pick it again
+            }
+        }
+        return credibleSets;
+    }
+
+    /**
+     * TODO Should I put this in the CLaSSECredibleSetTest instead of here?
+     * @param divMap Map from node label/ID/name to the true state that the node is in.
+     *               in diversitree, states are indexed by 0
+     * @param credibleSets a set for every node in which
+     *                     for every node, the sum of the posteriors of those states adds up to be >= credible threshold
+     * @param idxLabelMapper idxLabelMapper[nodeIdx] provides the node label/ID/name
+     * @return accuracy measure. How often is the ground truth in our credible set
+     */
+    public static double computeProportionTruthInCredibleSet(HashMap<String, Double> divMap, Set<Integer>[] credibleSets, String[] idxLabelMapper) {
+        int numIntNodes = idxLabelMapper.length;
+
+        int numInside = 0;
+        for (int i = 0; i < numIntNodes; i++) {
+            String lbl = idxLabelMapper[i];
+            Set<Integer> credibleSet = credibleSets[i];
+            if (credibleSet.isEmpty()) {
+                Assert.fail("The credible set is empty!");
+            }
+            int trueState = divMap.get(lbl).intValue() + 1;
+            if (credibleSet.contains(trueState)) {
+                numInside++;
+            }
+        }
+
+        return 1.0 * numInside / numIntNodes;
     }
 }
