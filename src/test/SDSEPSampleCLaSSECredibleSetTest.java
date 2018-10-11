@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class SDSEPSampleCLaSSEVSTruthTest {
+public class SDSEPSampleCLaSSECredibleSetTest {
 	final static double EPSILON = 1e-2;
 	final static int numTrials = 10000;
 	private StateDependentSpeciationExtinctionProcess sdsep;
@@ -78,8 +78,8 @@ public class SDSEPSampleCLaSSEVSTruthTest {
 
 		// Sample many times with drawStochasticChar and calculate the posterior
 		sdsep.setNumTimeSlices(numTimeSlices);
-		double[] posteriorStoc = sdsep.sampleAndSummarize(numTrials, false);
-		double[] posteriorJoint = sdsep.sampleAndSummarize(numTrials, true);
+		double[] posteriorStoc = sdsep.sampleAndSummarizeBiSSE(numTrials, false);
+		double[] posteriorJoint = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
 
 		// Write only the ancestral states to csv
 		TestHelper.prepareAndWriteToCSV(posteriorJoint, expName + "-joint", sdsep);

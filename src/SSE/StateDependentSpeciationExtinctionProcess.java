@@ -1168,15 +1168,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		return ret;
 	}
 
-	/*
-	Used in BiSSE unit tests
-	TODO Extend to CLaSSE
-	TODO split sample and summarize into different methods?
-	Run the sampling many times (either drawJoint or drawStoc)
-	Returns a summary (posteriors) of the sampling for all tips and internal nodes
-	Important: tips and internal nodes!
-	 */
-	public double[] sampleAndSummarize(int numTrials, boolean joint) {
+	// Run the sampling of a tree many times (either drawJoint or drawStoc)
+	public int[][] sampleStatesForTree(int numTrials, boolean joint) {
 		int numNodes = tree.getNodeCount();
 		int[][] samples = new int[numTrials][numNodes];
 
@@ -1191,7 +1184,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			System.arraycopy(drawnAncestralEnd, 0, samples[i], 0, numNodes);
 		}
 
-		// Calculate the posterior probabilities by counting the frequency the node is in state one
+		return samples;
+	}
+
+	// Calculate the posterior probabilities by counting the frequency the node is in state one
+	public double[] summarizeBiSSE(int[][] samples, int numTrials) {
+		int numNodes = tree.getNodeCount();
 		double[] posterior = new double[numNodes];
 		int stateOneCount;
 		for (int nIdx = 0; nIdx < numNodes; nIdx++) {
@@ -1203,12 +1201,52 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			}
 			posterior[nIdx] = 1.0 * stateOneCount / numTrials;
 		}
+		return posterior;
+	}
+
+	// Calculate the posterior probabilities by counting the frequency the node is in state one
+	public double[][] summarizeCLaSSE(int[][] samples, int numTrials) {
+		int numNodes = tree.getNodeCount();
+		double[][] posterior = new double[numNodes][numStates];
+		for (int nIdx = 0; nIdx < numNodes; nIdx++) {
+			for (int nTrial = 0; nTrial < numTrials; nTrial++) {
+				int state = samples[nTrial][nIdx];
+				posterior[nIdx][state - 1] ++;
+			}
+		}
+		for (int i = 0; i < numNodes; i++) {
+			for (int j = 0; j < numStates; j++) {
+				posterior[i][j] *= 1.0 / numTrials;
+			}
+		}
+		return posterior;
+	}
+
+	/*
+	Used in BiSSE unit tests
+	Run the sampling many times (either drawJoint or drawStoc)
+	Returns a summary (posteriors) of the sampling for all tips and internal nodes
+	Important: tips and internal nodes!
+	 */
+	public double[] sampleAndSummarizeBiSSE(int numTrials, boolean joint) {
+	    int[][] samples = sampleStatesForTree(numTrials, joint);
+	    double[] posterior = summarizeBiSSE(samples, numTrials);
 
 		if (joint) {
 			System.out.println("Joint: Posterior probability of state 0: " + Arrays.toString(posterior));
 		} else {
 			System.out.println("Stoc: Posterior probability of state 0: " + Arrays.toString(posterior));
 		}
+
+		return posterior;
+	}
+
+	/*
+	posterior[nIdx][state] is proportion of the time the node nIdx is in state
+	 */
+	public double[][] sampleAndSummarizeCLaSSE(int numTrials, boolean joint) {
+		int[][] samples = sampleStatesForTree(numTrials, joint);
+		double[][] posterior = summarizeCLaSSE(samples, numTrials);
 
 		return posterior;
 	}

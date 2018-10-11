@@ -1,12 +1,15 @@
+// TODO this
 /*
-Under BiSSE model, sample the tree many times with drawStochasticCharacerMapping.
-Then, check that the posterior probability of a node being in state 0 matches that given by diversitree for all nodes
+Compare posterior probabilities at all internal nodes for drawJoint and drawStochastic
  */
 package src.test;
 
+import SSE.CladoTriplet;
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;
 import SSE.TraitStash;
+import SSE.CladogeneticSpeciationRateStash;
+import SSE.CladoTriplet.speciationType;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
@@ -16,13 +19,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
-
-public class SDSEPStochasticCharacterMapTest {
-	final static double EPSILON = 1e-5;
+public class SDSEPSampleCLaSSEComparisonTest {
+	final static double EPSILON = 1e-2;
 	final static int numTrials = 10000;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
@@ -30,7 +30,7 @@ public class SDSEPStochasticCharacterMapTest {
 							  Double[] lambdas, Double[] mus, String q, int numTimeSlices,
 							  String[] divLbls, String[] divStates) throws Exception {
 		// initializing states
-		int numberOfStates = 2; // BiSSE
+		int numberOfStates = 4; // CLaSSE
 		int numSpecies = spNames.length;
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
@@ -39,21 +39,98 @@ public class SDSEPStochasticCharacterMapTest {
 		traitStash.printLksMap();
 
 		// initializing birth-death parameters
+		double sympProb = 1.0; // DEC-like
+		double subsympProb = 1.0 / 6.0;
+		double vicProb = 1.0 / 6.0;
+		double jProb = 0.0; // no jump dispersal
+
+		double birthRate = 0.32222224;
+		double deathRate = 0.1; // DEC-like
+
+		Double[] mus = { deathRate, deathRate, deathRate, deathRate };
 		System.out.println("Mus: " + Arrays.toString(mus));
 		RealParameter mu = new RealParameter(mus);
-		mu.initByName("minordimension", 1);  // if matrix gets flattened, minor dimension is the # of rows/cols
+		mu.initByName("minordimension", 1);
 
-		RealParameter lambda = new RealParameter(lambdas);
+
+		Double[] sSpeciationRate = {sympProb * birthRate};
+		Double[] ssSpeciationRate = {subsympProb * birthRate};
+		Double[] vSpeciationRate = {vicProb * birthRate};
+		Double[] jSpeciationRate = {jProb * birthRate}; // 0.0
+		RealParameter sympatricSpeciationRate = new RealParameter(sSpeciationRate);
+		RealParameter subSympatricSpeciationRate = new RealParameter(ssSpeciationRate);
+		RealParameter vicariantSpeciationRate = new RealParameter(vSpeciationRate);
+		RealParameter jumpSpeciationRate = new RealParameter(jSpeciationRate);
+
+		CladoTriplet nullTriplet = new CladoTriplet();
+		nullTriplet.initByName("parentState", 1,
+				"leftChildState", 1,
+				"rightChildState", 1,
+				"speciationType", speciationType.SYMPATRY);
+
+		CladoTriplet sTriplet1 = new CladoTriplet();
+		sTriplet1.initByName("parentState", 2,
+				"leftChildState", 2,
+				"rightChildState", 2,
+				"speciationType", speciationType.SYMPATRY);
+
+		CladoTriplet sTriplet2 = new CladoTriplet();
+		sTriplet2.initByName("parentState", 3,
+				"leftChildState", 3,
+				"rightChildState", 3,
+				"speciationType", speciationType.SYMPATRY);
+
+		CladoTriplet jTriplet1 = new CladoTriplet();
+		jTriplet1.initByName("parentState", 2,
+				"leftChildState", 2,
+				"rightChildState", 3,
+				"speciationType", speciationType.JUMPDISPERSAL);
+
+		CladoTriplet jTriplet2 = new CladoTriplet();
+		jTriplet2.initByName("parentState", 3,
+				"leftChildState", 2,
+				"rightChildState", 3,
+				"speciationType", speciationType.JUMPDISPERSAL);
+
+		CladoTriplet vTriplet1 = new CladoTriplet();
+		vTriplet1.initByName("parentState", 4,
+				"leftChildState", 2,
+				"rightChildState", 3,
+				"speciationType", speciationType.VICARIANCE);
+
+		CladoTriplet ssTriplet1 = new CladoTriplet();
+		ssTriplet1.initByName("parentState", 4,
+				"leftChildState", 2,
+				"rightChildState", 4,
+				"speciationType", speciationType.SUBSYMPATRY);
+
+		CladoTriplet ssTriplet2 = new CladoTriplet();
+		ssTriplet2.initByName("parentState", 4,
+				"leftChildState", 3,
+				"rightChildState", 4,
+				"speciationType", speciationType.SUBSYMPATRY);
+
+		List<CladoTriplet> cladoTripletList = new ArrayList<CladoTriplet>();
+		Collections.addAll(cladoTripletList, nullTriplet, sTriplet1, sTriplet2, jTriplet1, jTriplet2, vTriplet1, ssTriplet1, ssTriplet2);
+
+		CladogeneticSpeciationRateStash csrt = new CladogeneticSpeciationRateStash();
+		csrt.initByName("cladoTriplets", cladoTripletList,
+				"sympatricRate", sympatricSpeciationRate,
+				"subsympatricRate", subSympatricSpeciationRate,
+				"vicariantRate", vicariantSpeciationRate,
+				"jumpRate", jumpSpeciationRate);
+		csrt.printEventMap();
 
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", q);
+		String FlatQMatrixString = "0.0 0.0 0.0 0.01 0.0 0.01 0.01 0.0 0.01 0.0 0.01 0.01";
+		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", FlatQMatrixString);
 		irm.printMatrix();
 
 		Double[] piEs = new Double[numberOfStates];
 		Arrays.fill(piEs, 0.0);
 		Double[] piDs = new Double[numberOfStates];
 		Arrays.fill(piDs, (1.0/numberOfStates));
-		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.5, 0.5
+		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25
 		// fixed equilibrium frequency
 		System.out.println("Pi is: " + Arrays.toString(pis));
 		RealParameter pi = new RealParameter(pis);
@@ -62,14 +139,14 @@ public class SDSEPStochasticCharacterMapTest {
 		TreeParser myTree = new TreeParser(treeStr, false, false, true, 0); // true b/c species are labelled, offset=0
 		// tree is given
 
-		boolean incorporateCladogenesis = false;
+		boolean incorporateCladogenesis = true;
 
 		sdsep = new StateDependentSpeciationExtinctionProcess();
 		sdsep.initByName(
 				"tree", myTree,
 				"traitStash", traitStash,
 				"instantaneousRateMatrix", irm,
-				"lambda", lambda,
+				"cladogeneticStash", csrt,
 				"mu", mu,
 				"pi", pi,
 				"incorporateCladogenesis", incorporateCladogenesis
@@ -78,28 +155,37 @@ public class SDSEPStochasticCharacterMapTest {
 		// Sample many times with drawStochasticChar and calculate the posterior
 		sdsep.setNumTimeSlices(numTimeSlices);
 		double[] posteriorStoc = sdsep.sampleAndSummarizeBiSSE(numTrials, false);
-		double[] posteriorJ = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
+		double[] posteriorJoint = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
 
 		// Write only the ancestral states to csv
+		TestHelper.prepareAndWriteToCSV(posteriorJoint, expName + "-joint", sdsep);
 		TestHelper.prepareAndWriteToCSV(posteriorStoc, expName + "-stoc", sdsep);
-		TestHelper.prepareAndWriteToCSV(posteriorJ, expName + "-joint", sdsep);
+
+		int[] posteriorStocMostCommon = TestHelper.parsimony(posteriorStoc);
+		int[] posteriorJointMostCommon = TestHelper.parsimony(posteriorJoint);
+
+		posteriorStocMostCommon = TestHelper.trimTipsInt(posteriorStocMostCommon);
+		posteriorJointMostCommon = TestHelper.trimTipsInt(posteriorJointMostCommon);
+
 
 		HashMap<String, Double> divMap = TestHelper.getDivMap(divLbls, divStates);
 		String[] idxLabelMapper = sdsep.getNodeIndexNameMapper();
-		TestHelper.compareDivPosterior(divMap, idxLabelMapper, posteriorJ);
+		double accStoc = TestHelper.compareDivTruth(divMap, idxLabelMapper, posteriorStocMostCommon);
+        double accJoint = TestHelper.compareDivTruth(divMap, idxLabelMapper, posteriorJointMostCommon);
+        System.out.println("Stoc accuracy: " + accStoc);
+		System.out.println("Joint accuracy: " + accJoint);
+        Assert.assertEquals(0.2380952, accStoc, EPSILON);
+        System.out.println("Draw stochastic mapping gets accuracy close to diversitree asr");
+		Assert.assertEquals(0.2380952, accJoint, EPSILON);
+		System.out.println("Draw joint gets accuracy close to diversitree asr");
 	}
 
 	@Before
 	public void setUp() throws Exception {
-
 	}
 
 	@Test
 	public void test() throws Exception {
-	    /*
-	    This test is not passing because while the graph of posteriors on diversitree vs drawStochasticCharacterMap are
-	    similar, they aren't identical like in drawJointAncestralState
-	     */
 		String treeStr = "(((sp15:0.5701922606,(sp22:0.1174274481,sp23:0.1174274481)nd22:0.4527648125)nd6:5.46955786,((sp4:2.913008462,(sp16:0.4790358056,sp17:0.4790358056)nd11:2.433972656)nd9:1.72680138,sp2:4.639809842)nd7:1.399940278)nd2:8.039087646,((sp1:5.262858931,((((sp10:1.936988093,sp11:1.936988093)nd15:0.8700699862,((sp20:0.1813602217,sp21:0.1813602217)nd17:2.59756285,sp6:2.778923072)nd16:0.02813500652)nd12:0.1038009358,(sp14:1.103215563,(sp18:0.2976700868,sp19:0.2976700868)nd21:0.805545476)nd13:1.807643452)nd10:0.5229591127,sp3:3.433818127)nd8:1.829040804)nd4:1.760591904,((((sp8:1.951198056,sp9:1.951198056)nd20:0.153294648,sp7:2.104492704)nd18:0.5588707339,sp12:2.663363438)nd14:0.2401874525,sp5:2.90355089)nd5:4.119899945)nd3:7.055386931)nd1;";
 		String spAttr = "sp1=1,sp2=1,sp3=1,sp4=2,sp5=1,sp6=1,sp7=2,sp8=1,sp9=1,sp10=1,sp11=1,sp12=1,sp14=1,sp15=2,sp16=2,sp17=1,sp18=1,sp19=1,sp20=2,sp21=2,sp22=1,sp23=1";
 		String[] spNames = new String[]{"sp1","sp2","sp3","sp4","sp5","sp6","sp7","sp8","sp9","sp10","sp11","sp12","sp14","sp15","sp16","sp17","sp18","sp19","sp20","sp21","sp22","sp23"};
@@ -107,16 +193,16 @@ public class SDSEPStochasticCharacterMapTest {
 		Double[] mus = new Double[] {0.01, 0.1};
 		String q = "0.1 0.4";
 		String[] divLbls = {"nd1","nd2","nd6","nd22","nd7","nd9","nd11","nd3","nd4","nd8","nd10","nd12","nd15","nd16","nd17","nd13","nd21","nd5","nd14","nd18","nd20"};
-		String[] divPost = {"0.496828659435485","0.747610592822919","0.54070581958834","0.990908945938804","0.684195873552787","0.500091563387162","0.389562358173027","0.787747417415793","0.76203945703495","0.681835197094071","0.639957090523386","0.629833156998255","0.794801757787853","0.627437648264238","0.000993638514564171","0.937863437609256","0.995074639758026","0.716769672225652","0.696967821969294","0.644739249755426","0.685178794413214"};
-//		runExperiment(treeStr, spAttr, spNames, "stoc_test", lambdas, mus, q, 500, divLbls, divPost);
-//
+		String[] divStates = {"0","1","1","0","1","1","1","0","0","0","0","0","0","0","1","0","0","0","0","0","0"};
+//		runExperiment(treeStr, spAttr, spNames, "beast_rb", lambdas, mus, q, 500, divLbls, divStates);
 //		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 //		sdsep.setSampleCharacterHistory(true);
 //		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 
+        String[] divPost;
 
 		treeStr = "((((sp13:1.091879977,sp14:1.091879977)nd18:0.6759211435,sp5:1.76780112)nd6:2.772232755,(((sp22:0.05611638081,sp23:0.05611638081)nd22:0.2713390715,sp19:0.3274554523)nd10:2.797675452,sp1:3.125130904)nd7:1.414902971)nd2:4.225862134,(((sp15:0.6802057993,sp16:0.6802057993)nd8:3.035233042,(((sp7:1.683835836,sp8:1.683835836)nd19:0.09043471409,(sp17:0.4689228608,sp18:0.4689228608)nd16:1.30534769)nd12:0.5383307309,(sp20:0.07351713161,sp21:0.07351713161)nd13:2.23908415)nd9:1.40283756)nd4:1.522763703,(sp2:2.860986153,(sp3:2.074989102,((((sp11:1.102714652,sp12:1.102714652)nd21:0.1185607974,sp10:1.221275449)nd20:0.3858338004,sp9:1.60710925)nd17:0.1656769653,sp4:1.772786215)nd14:0.3022028868)nd11:0.7859970509)nd5:2.377216391)nd3:3.527693465)nd1;";
-		spAttr = "sp1=1,sp2=2,sp3=2,sp4=2,sp5=2,sp7=2,sp8=2,sp9=1,sp10=1,sp11=1,sp12=2,sp13=2,sp14=2,sp15=2,sp16=2,sp17=2,sp18=2,sp19=2,sp20=2,sp21=2,sp22=2,sp23=2";
+		spAttr = "sp1=2,sp2=2,sp3=2,sp4=2,sp5=2,sp7=2,sp8=2,sp9=2,sp10=2,sp11=2,sp12=2,sp13=2,sp14=2,sp15=1,sp16=1,sp17=2,sp18=2,sp19=2,sp20=2,sp21=2,sp22=2,sp23=2";
 		spNames = new String[]{"sp1","sp2","sp3","sp4","sp5","sp7","sp8","sp9","sp10","sp11","sp12","sp13","sp14","sp15","sp16","sp17","sp18","sp19","sp20","sp21","sp22","sp23"};
 		lambdas = new Double[] {0.5, 0.4};
 		mus = new Double[] {0.02, 0.1};
@@ -128,7 +214,6 @@ public class SDSEPStochasticCharacterMapTest {
 		Assert.assertEquals(-46.09716, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-46.09716, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
-
 	}
 
 }

@@ -17,11 +17,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 public class SDSEPSimpleSamplingTest {
@@ -79,8 +75,8 @@ public class SDSEPSimpleSamplingTest {
 
 		// Sample many times with drawStochasticChar and calculate the posterior
 		sdsep.setNumTimeSlices(numTimeSlices);
-		double[] posteriorStoc = sdsep.sampleAndSummarize(numTrials, false);
-		double[] posteriorJoint = sdsep.sampleAndSummarize(numTrials, true);
+		double[] posteriorStoc = sdsep.sampleAndSummarizeBiSSE(numTrials, false);
+		double[] posteriorJoint = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
 		System.out.println(Arrays.toString(sdsep.getNodeIndexNameMapper()));
 
 		// Write only the ancestral states to csv

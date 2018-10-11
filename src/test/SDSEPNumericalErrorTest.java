@@ -15,16 +15,13 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 public class SDSEPNumericalErrorTest {
@@ -109,8 +106,8 @@ public class SDSEPNumericalErrorTest {
 
 		// Sample many times with drawStochasticChar and calculate the posterior
 		sdsep.setNumTimeSlices(numTimeSlices);
-		double[] posteriorStoc = sdsep.sampleAndSummarize(numTrials, false);
-		double[] posteriorJoint = sdsep.sampleAndSummarize(numTrials, true);
+		double[] posteriorStoc = sdsep.sampleAndSummarizeBiSSE(numTrials, false);
+		double[] posteriorJoint = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
 
 		posteriorStoc = TestHelper.trimTips(posteriorStoc);
 		posteriorJoint = TestHelper.trimTips(posteriorJoint);
@@ -119,6 +116,35 @@ public class SDSEPNumericalErrorTest {
 		System.arraycopy(posteriorJoint, 0, posteriorJointPerParam[curSample], 0, posteriorJoint.length);
 
 		curSample += 1;
+	}
+
+	public void runWrapper(String treeStr, String spAttr, String[] spNames, String expName,
+						   Double[] lambdas, Double[] mus, String q,
+						   String[] divLbls, String[] divStates, double divAcc) throws Exception {
+		int numIntNodes = spNames.length - 1;
+		posteriorStocPerParam = new double[numSamples][numIntNodes];
+		posteriorJointPerParam = new double[numSamples][numIntNodes];
+
+		// Commonly used, numTrials = 10000    and   numTimeSlices = 500
+		int numTrials = 10;
+		resetCurSample();
+		for (int i = 0; i < numSamples; i++) {
+			params[i] = numTrials;
+			runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, 500, divLbls, divStates, divAcc, numTrials);
+			numTrials *= 2;
+		}
+		writeParams(params, posteriorJointPerParam, expName + "numErrorJointNumTrials.csv");
+		writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTrials.csv");
+
+		int numTimeSlices = 10;
+		resetCurSample();
+		for (int i = 0; i < numSamples; i++) {
+			params[i] = numTimeSlices;
+			runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, numTimeSlices, divLbls, divStates, divAcc, 10000);
+			numTimeSlices *= 2;
+		}
+		writeParams(params, posteriorJointPerParam, expName + "numErrorJointNumTimeSlices.csv");
+		writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTimeSlices.csv");
 	}
 
 	@Before
@@ -142,32 +168,8 @@ public class SDSEPNumericalErrorTest {
 		String[] divStates = {"0", "0", "1", "0"};
 		double divAcc = 1;
 
-		int numIntNodes = spNames.length - 1;
-		posteriorStocPerParam = new double[numSamples][numIntNodes];
-		posteriorJointPerParam = new double[numSamples][numIntNodes];
+//		runWrapper(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, divLbls, divStates, divAcc);
 
-		// Commonly used, numTrials = 10000    and   numTimeSlices = 500
-		int numTrials = 10;
-		resetCurSample();
-		for (int i = 0; i < numSamples; i++) {
-		    params[i] = numTrials;
-			runExperiment(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, 500, divLbls, divStates, divAcc, numTrials);
-			numTrials *= 2;
-		}
-		writeParams(params, posteriorJointPerParam, "numErrorTestJointNumTrials.csv");
-		writeParams(params, posteriorStocPerParam, "numErrorTestStocNumTrials.csv");
-
-		int numTimeSlices = 10;
-		resetCurSample();
-		for (int i = 0; i < numSamples; i++) {
-			params[i] = numTimeSlices;
-			runExperiment(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, numTimeSlices, divLbls, divStates, divAcc, 10000);
-			numTimeSlices *= 2;
-		}
-		writeParams(params, posteriorJointPerParam, "numErrorJointNumTimeSlices.csv");
-		writeParams(params, posteriorStocPerParam, "numErrorStocNumTimeSlices.csv");
-
-		/*
         // RB
 		treeStr = "(((sp15:0.5701922606,(sp22:0.1174274481,sp23:0.1174274481)nd22:0.4527648125)nd6:5.46955786,((sp4:2.913008462,(sp16:0.4790358056,sp17:0.4790358056)nd11:2.433972656)nd9:1.72680138,sp2:4.639809842)nd7:1.399940278)nd2:8.039087646,((sp1:5.262858931,((((sp10:1.936988093,sp11:1.936988093)nd15:0.8700699862,((sp20:0.1813602217,sp21:0.1813602217)nd17:2.59756285,sp6:2.778923072)nd16:0.02813500652)nd12:0.1038009358,(sp14:1.103215563,(sp18:0.2976700868,sp19:0.2976700868)nd21:0.805545476)nd13:1.807643452)nd10:0.5229591127,sp3:3.433818127)nd8:1.829040804)nd4:1.760591904,((((sp8:1.951198056,sp9:1.951198056)nd20:0.153294648,sp7:2.104492704)nd18:0.5588707339,sp12:2.663363438)nd14:0.2401874525,sp5:2.90355089)nd5:4.119899945)nd3:7.055386931)nd1;";
 		spAttr = "sp1=1,sp2=1,sp3=1,sp4=2,sp5=1,sp6=1,sp7=2,sp8=1,sp9=1,sp10=1,sp11=1,sp12=1,sp14=1,sp15=2,sp16=2,sp17=1,sp18=1,sp19=1,sp20=2,sp21=2,sp22=1,sp23=1";
@@ -178,10 +180,8 @@ public class SDSEPNumericalErrorTest {
 		divLbls = new String[] {"nd1","nd2","nd6","nd22","nd7","nd9","nd11","nd3","nd4","nd8","nd10","nd12","nd15","nd16","nd17","nd13","nd21","nd5","nd14","nd18","nd20"};
 		divStates = new String[] {"0","1","1","0","1","1","1","0","0","0","0","0","0","0","1","0","0","0","0","0","0"};
 		divAcc = 0.7619048;
-		runExperiment(treeStr, spAttr, spNames, "beast_rb", lambdas, mus, q, 500, divLbls, divStates, divAcc, 10000);
-		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
-		sdsep.setSampleCharacterHistory(true);
-		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
+
+		runWrapper(treeStr, spAttr, spNames, "rb", lambdas, mus, q, divLbls, divStates, divAcc);
 
 
         // Test2
@@ -194,11 +194,8 @@ public class SDSEPNumericalErrorTest {
 		divLbls = new String[] {"nd1","nd2","nd6","nd18","nd7","nd10","nd22","nd3","nd4","nd8","nd9","nd12","nd19","nd16","nd13","nd5","nd11","nd14","nd17","nd20","nd21"};
 		divStates = new String[] {"0","1","1","1","1","1","1","0","0","0","1","1","1","1","1","1","1","1","1","1","1"};
 		divAcc = 0.8571429;
-		runExperiment(treeStr, spAttr, spNames, "test2", lambdas, mus, q, 500, divLbls, divStates, divAcc, 10000);
 
-		Assert.assertEquals(-46.09716, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
-		sdsep.setSampleCharacterHistory(true);
-		Assert.assertEquals(-46.09716, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
+		runWrapper(treeStr, spAttr, spNames, "test2", lambdas, mus, q, divLbls, divStates, divAcc);
 
 
 		//Asym
@@ -211,11 +208,8 @@ public class SDSEPNumericalErrorTest {
 		divLbls = new String[] {"nd1","nd2","nd6","nd13","nd17","nd18","nd19","nd4","nd7","nd8","nd9","nd10","nd12","nd14","nd24","nd15","nd16","nd21","nd22","nd11","nd23"};
 		divStates = new String[] {"1","0","1","1","1","1","1","1","1","1","1","1","1","1","1","1","0","0","0","1","1"};
 		divAcc = 0.8571429;
-		runExperiment(treeStr, spAttr, spNames, "beast_asym", lambdas, mus, q, 500, divLbls, divStates, divAcc, 10000);
-		Assert.assertEquals(-84.5913, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
-		sdsep.setSampleCharacterHistory(true);
-		Assert.assertEquals(-84.5913, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
-		*/
+
+		runWrapper(treeStr, spAttr, spNames, "asym", lambdas, mus, q, divLbls, divStates, divAcc);
 	}
 
 }

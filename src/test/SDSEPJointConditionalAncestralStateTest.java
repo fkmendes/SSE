@@ -14,8 +14,6 @@ import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;
 import SSE.TraitStash;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -85,7 +83,7 @@ public class SDSEPJointConditionalAncestralStateTest {
 
 		// Sample many times with drawJointConditional and calculate the posterior
 		sdsep.setNumTimeSlices(500);
-		double[] posterior = sdsep.sampleAndSummarize(10000, true);
+		double[] posterior = sdsep.sampleAndSummarizeBiSSE(10000, true);
 		posterior = TestHelper.trimTips(posterior);
 
 		// Write only the ancestral states to csv

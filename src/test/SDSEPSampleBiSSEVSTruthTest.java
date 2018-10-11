@@ -79,8 +79,8 @@ public class SDSEPSampleBiSSEVSTruthTest {
 
 		// Sample many times with drawStochasticChar and calculate the posterior
 		sdsep.setNumTimeSlices(numTimeSlices);
-		double[] posteriorStoc = sdsep.sampleAndSummarize(numTrials, false);
-		double[] posteriorJoint = sdsep.sampleAndSummarize(numTrials, true);
+		double[] posteriorStoc = sdsep.sampleAndSummarizeBiSSE(numTrials, false);
+		double[] posteriorJoint = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
 
 		// Write only the ancestral states to csv
 		TestHelper.prepareAndWriteToCSV(posteriorJoint, expName + "-joint", sdsep);

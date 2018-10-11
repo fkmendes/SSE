@@ -9,7 +9,7 @@ def plot(name, use_log):
     for i in range(1, n_nodes + 1):
         fig, ax = plt.subplots()
         plt.title(name)
-        if False and use_log:
+        if use_log:
             ax.scatter(np.log(df.index), df[i])
         else:
             ax.scatter(df.index, df[i])
