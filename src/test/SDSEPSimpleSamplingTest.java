@@ -81,6 +81,7 @@ public class SDSEPSimpleSamplingTest {
 		sdsep.setNumTimeSlices(numTimeSlices);
 		double[] posteriorStoc = sdsep.sampleAndSummarize(numTrials, false);
 		double[] posteriorJoint = sdsep.sampleAndSummarize(numTrials, true);
+		System.out.println(Arrays.toString(sdsep.getNodeIndexNameMapper()));
 
 		// Write only the ancestral states to csv
 		TestHelper.prepareAndWriteToCSV(posteriorJoint, expName + "-joint", sdsep);

@@ -167,7 +167,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		sampleCharacterHistory = false;
         branchPartialLks = new ArrayList[tree.getNodeCount()];
-        dt = tree.getRoot().getHeight() / numTimeSlices * 50.0; // why we multiply by 50? following RevBayes code
+//        dt = tree.getRoot().getHeight() / numTimeSlices * 50.0; // why we multiply by 50? following RevBayes code
+		dt = tree.getRoot().getHeight() / numTimeSlices; // why we multiply by 50? following RevBayes code
 		nodeTransitionStates = new ArrayList[tree.getNodeCount()];
 		nodeTransitionTimes = new ArrayList[tree.getNodeCount()];
 		nodeTimeInState = new double[tree.getNodeCount()][numStates];

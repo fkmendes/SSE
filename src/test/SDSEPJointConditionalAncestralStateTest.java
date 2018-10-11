@@ -84,6 +84,7 @@ public class SDSEPJointConditionalAncestralStateTest {
 		);
 
 		// Sample many times with drawJointConditional and calculate the posterior
+		sdsep.setNumTimeSlices(500);
 		double[] posterior = sdsep.sampleAndSummarize(10000, true);
 		posterior = TestHelper.trimTips(posterior);
 
