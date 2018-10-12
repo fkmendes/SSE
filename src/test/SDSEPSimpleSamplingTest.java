@@ -95,13 +95,14 @@ public class SDSEPSimpleSamplingTest {
 
 	@Test
 	public void test() throws Exception {
+	    int numTimeSlices = 1000;
 		String treeStr = "(((sp5:1.753921149,sp6:1.753921149)nd5:10.54206596,sp2:12.2959871)nd3:5.60266132,(sp3:6.029064844,sp4:6.029064844)nd4:11.86958358)nd2;";
 		String spAttr = "sp2=1,sp3=1,sp4=1,sp5=2,sp6=2";
 		String[] spNames = new String[] {"sp2","sp3","sp4","sp5","sp6"};
 		Double[] lambdas = {0.08, 0.08};
 		Double[] mus = { 0.01, 0.01 };
 		String q = "0.01 0.01";
-		runExperiment(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, 500);
+		runExperiment(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, numTimeSlices);
 		Assert.assertEquals(-17.97332, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-17.97332, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
@@ -109,7 +110,7 @@ public class SDSEPSimpleSamplingTest {
 		treeStr = "(((((((sp23:0.1790943213,sp24:0.1790943213)nd24:1.092201813,(sp25:0.07202419731,sp26:0.07202419731)nd25:1.199271937)nd13:11.36119223,sp4:12.63248837)nd11:1.446039834,(((sp9:10.42249592,sp10:10.42249592)nd15:0.404458011,sp6:10.82695394)nd14:0.008741084797,sp5:10.83569502)nd12:3.24283318)nd8:5.258830888,(sp7:10.79794068,sp8:10.79794068)nd9:8.539418405)nd5:10.54206596,((((sp13:6.968607434,(sp21:0.8635028776,sp22:0.8635028776)nd22:6.105104556)nd19:0.7298402864,(sp15:7.029426078,sp12:7.029426078)nd20:0.6690216423)nd18:2.616431804,(sp19:1.17454796,sp20:1.17454796)nd23:9.140331564)nd10:7.268558415,sp3:17.58343794)nd6:12.2959871)nd3:5.60266132,((sp17:2.68800466,sp18:2.68800466)nd7:20.92449812,sp2:23.61250278)nd4:11.86958358)nd2;";
 		spAttr = "sp2=1,sp3=2,sp4=2,sp5=2,sp6=2,sp7=2,sp8=2,sp9=2,sp10=2,sp12=1,sp13=1,sp15=1,sp17=1,sp18=1,sp19=1,sp20=1,sp21=1,sp22=1,sp23=2,sp24=2,sp25=2,sp26=2";
 		spNames = new String[] {"sp2","sp3","sp4","sp5","sp6","sp7","sp8","sp9","sp10","sp12","sp13","sp15","sp17","sp18","sp19","sp20","sp21","sp22","sp23","sp24","sp25","sp26"};
-		runExperiment(treeStr, spAttr, spNames, "beast_large", lambdas, mus, q, 500);
+		runExperiment(treeStr, spAttr, spNames, "beast_large", lambdas, mus, q, numTimeSlices);
 		Assert.assertEquals(-81.12881, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-81.12881, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
@@ -120,7 +121,7 @@ public class SDSEPSimpleSamplingTest {
 		lambdas = new Double[] {0.04, 0.08};
 		mus = new Double[] {0.01, 0.02};
 		q = "0.04 0.01";
-		runExperiment(treeStr, spAttr, spNames, "beast_asym", lambdas, mus, q, 500);
+		runExperiment(treeStr, spAttr, spNames, "beast_asym", lambdas, mus, q, numTimeSlices);
 		Assert.assertEquals(-84.5913, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-84.5913, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
@@ -131,7 +132,7 @@ public class SDSEPSimpleSamplingTest {
 		lambdas = new Double[] {0.08, 0.04};
 		mus = new Double[] {0.01, 0.02};
 		q = "0.001 0.01";
-		runExperiment(treeStr, spAttr, spNames, "beast_asym2", lambdas, mus, q, 500);
+		runExperiment(treeStr, spAttr, spNames, "beast_asym2", lambdas, mus, q, numTimeSlices);
 		Assert.assertEquals(-79.40287, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-79.40287, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
@@ -143,7 +144,7 @@ public class SDSEPSimpleSamplingTest {
 		lambdas = new Double[] {0.2, 0.4};
 		mus = new Double[] {0.01, 0.1};
 		q = "0.1 0.4";
-		runExperiment(treeStr, spAttr, spNames, "beast_rb", lambdas, mus, q, 500);
+		runExperiment(treeStr, spAttr, spNames, "beast_rb", lambdas, mus, q, numTimeSlices);
 		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
