@@ -112,6 +112,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	private double[] averageSpeciationRates; // Over all states in the branch, the speciation rate
 	private double[] averageExtinctionRates; // Over all states in the branch, the extinction rate
 
+	// Integrator parameters
+	private double integratorMinStep;
+	private double integratorTolerance;
+
     
 	@Override
 	public void initAndValidate() {		
@@ -176,6 +180,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		numBranchStateChanges = 0;
 		averageSpeciationRates = new double[tree.getNodeCount()];
 		averageExtinctionRates = new double[tree.getNodeCount()];
+
+		// Integrator parameters
+		integratorMinStep = 1.0e-8;
+		integratorTolerance = 1.0e-6;
 	}
 	
 /* Original constructor before interfacing with BEAST 2 */
@@ -589,13 +597,21 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		
 		return update; // this is the reason why computeNodeLk isn't void() as in the original V0 version (we need update to carry out caching)
 	}
-	
+
+	public void setIntegratorMinStep(double minStep) {
+    	integratorMinStep = minStep;
+	}
+
+	public void setIntegratorTolerance(double tolerance) {
+    	integratorTolerance = tolerance;
+	}
+
 	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge, boolean backwardTime, boolean extinctionOnly) {
 		if (beginAge > endAge) {
 		    throw new IllegalArgumentException("Improper integration. beginAge is greater than endAge");
 		}
-		FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-6, 1.0e-6);
-		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis, backwardTime, extinctionOnly);
+		FirstOrderIntegrator dp853 = new DormandPrince853Integrator(integratorMinStep, 100.0, integratorTolerance, integratorTolerance);
+		SSE.SSEODE ode = new SSE.SSEODE(mu, q, rate, incorporateCladogenesis, backwardTime, extinctionOnly);
 
 		if (incorporateCladogenesis) {
 			HashMap<int[], Double> eventMap = cladoStash.getEventMap();

@@ -45,7 +45,7 @@ public class SDSEPNumericalErrorTest {
 	final static double EPSILON = 1e-2;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
-	int numSamples = 12;
+	int numSamples = 13;
 	int curSample = 0;
 	int[] params = new int[numSamples];
 	double[][] posteriorStocPerParam;
@@ -75,7 +75,7 @@ public class SDSEPNumericalErrorTest {
 	public void runExperiment(String treeStr, String spAttr, String[] spNames, String expName,
 							  Double[] lambdas, Double[] mus, String q, int numTimeSlices,
 							  String[] divLbls, String[] divStates, double divAcc, int numTrials,
-							  boolean onlyStoc) throws Exception {
+							  boolean onlyStoc, double integratorMinStep, double integratorTolerance) throws Exception {
 		// initializing states
 		int numberOfStates = 2; // BiSSE
 		int numSpecies = spNames.length;
@@ -124,6 +124,8 @@ public class SDSEPNumericalErrorTest {
 
 		// Sample many times with drawStochasticChar and calculate the posterior
 		sdsep.setNumTimeSlices(numTimeSlices);
+		sdsep.setIntegratorMinStep(integratorMinStep);
+		sdsep.setIntegratorTolerance(integratorTolerance);
 
 		double[] posteriorStoc = sdsep.sampleAndSummarizeBiSSE(numTrials, false);
 		posteriorStoc = TestHelper.trimTips(posteriorStoc);
@@ -139,30 +141,58 @@ public class SDSEPNumericalErrorTest {
 
 	public void runWrapper(String treeStr, String spAttr, String[] spNames, String expName,
 						   Double[] lambdas, Double[] mus, String q,
-						   String[] divLbls, String[] divStates, double divAcc) throws Exception {
+						   String[] divLbls, String[] divStates, double divAcc,
+						   boolean testNumChunks, boolean testNumSlices, boolean testNumSlicesAndIntegrator) throws Exception {
 		int numIntNodes = spNames.length - 1;
 		posteriorStocPerParam = new double[numSamples][numIntNodes];
 		posteriorJointPerParam = new double[numSamples][numIntNodes];
+		double integratorMinStep = 1.0e-8;
+		double integratorTolerance = 1.0e-6;
 
 		// Commonly used, numTrials = 10000    and   numTimeSlices = 500
-		int numTrials = 10;
-		resetCurSample();
-		for (int i = 0; i < numSamples; i++) {
-			params[i] = numTrials;
-			runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, 500, divLbls, divStates, divAcc, numTrials, false);
-			numTrials *= 2;
+        if (testNumChunks) {
+			int numTrials = 10;
+			resetCurSample();
+			for (int i = 0; i < numSamples; i++) {
+				params[i] = numTrials;
+				runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, 500, divLbls, divStates,
+						divAcc, numTrials, false, integratorMinStep, integratorTolerance);
+				numTrials *= 2;
+			}
+			writeParams(params, posteriorJointPerParam, expName + "numErrorJointNumTrials.csv");
+			writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTrials.csv");
 		}
-		writeParams(params, posteriorJointPerParam, expName + "numErrorJointNumTrials.csv");
-		writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTrials.csv");
 
-		int numTimeSlices = 2;
-		resetCurSample();
-		for (int i = 0; i < numSamples; i++) {
-			params[i] = numTimeSlices;
-			runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, numTimeSlices, divLbls, divStates, divAcc, 10000, true);
-			numTimeSlices *= 2;
+		if (testNumSlices) {
+			int numTimeSlices = 2;
+			resetCurSample();
+			for (int i = 0; i < numSamples; i++) {
+				params[i] = numTimeSlices;
+				runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, numTimeSlices, divLbls, divStates,
+						divAcc, 5000, true, integratorMinStep, integratorTolerance);
+				numTimeSlices *= 2;
+			}
+			writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTimeSlices.csv");
 		}
-		writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTimeSlices.csv");
+
+		if (testNumSlicesAndIntegrator) {
+		    for (int j = 0; j < 1.0 * numSamples / 2; j++) {
+				int numTimeSlices = 2;
+				resetCurSample();
+				for (int i = 0; i < numSamples; i++) {
+					params[i] = numTimeSlices;
+					runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, numTimeSlices, divLbls, divStates,
+							divAcc, 5000, true, integratorMinStep, integratorTolerance);
+					numTimeSlices *= 2;
+				}
+				System.out.println(integratorMinStep);
+				System.out.println(integratorTolerance);
+				writeParams(params, posteriorStocPerParam, expName + "integrator" + j + "numErrorStocNumTimeSlices.csv");
+
+				integratorMinStep /= 2;
+				integratorTolerance /= 2;
+			}
+		}
 	}
 
 	@Before
@@ -175,6 +205,9 @@ public class SDSEPNumericalErrorTest {
 
 	@Test
 	public void test() throws Exception {
+	    double defaultIntegratorMinStep = 1.0e-8;
+	    double defaultIntegratorTolerance = 1.0e-9;
+
 		// Small
 		String treeStr = "(((sp5:1.753921149,sp6:1.753921149)nd5:10.54206596,sp2:12.2959871)nd3:5.60266132,(sp3:6.029064844,sp4:6.029064844)nd4:11.86958358)nd2;";
 		String spAttr = "sp2=1,sp3=1,sp4=1,sp5=2,sp6=2";
@@ -186,7 +219,7 @@ public class SDSEPNumericalErrorTest {
 		String[] divStates = {"0", "0", "1", "0"};
 		double divAcc = 1;
 
-		runWrapper(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, divLbls, divStates, divAcc);
+//		runWrapper(treeStr, spAttr, spNames, "beast_small", lambdas, mus, q, divLbls, divStates, divAcc, false);
 
         // RB
 		treeStr = "(((sp15:0.5701922606,(sp22:0.1174274481,sp23:0.1174274481)nd22:0.4527648125)nd6:5.46955786,((sp4:2.913008462,(sp16:0.4790358056,sp17:0.4790358056)nd11:2.433972656)nd9:1.72680138,sp2:4.639809842)nd7:1.399940278)nd2:8.039087646,((sp1:5.262858931,((((sp10:1.936988093,sp11:1.936988093)nd15:0.8700699862,((sp20:0.1813602217,sp21:0.1813602217)nd17:2.59756285,sp6:2.778923072)nd16:0.02813500652)nd12:0.1038009358,(sp14:1.103215563,(sp18:0.2976700868,sp19:0.2976700868)nd21:0.805545476)nd13:1.807643452)nd10:0.5229591127,sp3:3.433818127)nd8:1.829040804)nd4:1.760591904,((((sp8:1.951198056,sp9:1.951198056)nd20:0.153294648,sp7:2.104492704)nd18:0.5588707339,sp12:2.663363438)nd14:0.2401874525,sp5:2.90355089)nd5:4.119899945)nd3:7.055386931)nd1;";
@@ -199,7 +232,7 @@ public class SDSEPNumericalErrorTest {
 		divStates = new String[] {"0","1","1","0","1","1","1","0","0","0","0","0","0","0","1","0","0","0","0","0","0"};
 		divAcc = 0.7619048;
 
-		runWrapper(treeStr, spAttr, spNames, "rb", lambdas, mus, q, divLbls, divStates, divAcc);
+		runWrapper(treeStr, spAttr, spNames, "rb", lambdas, mus, q, divLbls, divStates, divAcc, false, false, true);
 
 
         // Test2
@@ -213,7 +246,7 @@ public class SDSEPNumericalErrorTest {
 		divStates = new String[] {"0","1","1","1","1","1","1","0","0","0","1","1","1","1","1","1","1","1","1","1","1"};
 		divAcc = 0.8571429;
 
-		runWrapper(treeStr, spAttr, spNames, "test2", lambdas, mus, q, divLbls, divStates, divAcc);
+//		runWrapper(treeStr, spAttr, spNames, "test2", lambdas, mus, q, divLbls, divStates, divAcc, false);
 
 
 		//Asym
@@ -227,7 +260,7 @@ public class SDSEPNumericalErrorTest {
 		divStates = new String[] {"1","0","1","1","1","1","1","1","1","1","1","1","1","1","1","1","0","0","0","1","1"};
 		divAcc = 0.8571429;
 
-		runWrapper(treeStr, spAttr, spNames, "asym", lambdas, mus, q, divLbls, divStates, divAcc);
+//		runWrapper(treeStr, spAttr, spNames, "asym", lambdas, mus, q, divLbls, divStates, divAcc, false);
 	}
 
 }

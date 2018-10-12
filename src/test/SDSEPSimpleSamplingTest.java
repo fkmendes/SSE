@@ -95,7 +95,7 @@ public class SDSEPSimpleSamplingTest {
 
 	@Test
 	public void test() throws Exception {
-	    int numTimeSlices = 1000;
+	    int numTimeSlices = 100;
 		String treeStr = "(((sp5:1.753921149,sp6:1.753921149)nd5:10.54206596,sp2:12.2959871)nd3:5.60266132,(sp3:6.029064844,sp4:6.029064844)nd4:11.86958358)nd2;";
 		String spAttr = "sp2=1,sp3=1,sp4=1,sp5=2,sp6=2";
 		String[] spNames = new String[] {"sp2","sp3","sp4","sp5","sp6"};
