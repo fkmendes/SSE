@@ -2,97 +2,68 @@
         
     <data id="seq0" name="alignment">
         <sequence id="seq_sp10" taxon="sp10" totalcount="4" value="CAATCTGCAATTCGAGATGCGTGATTTGAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp11" taxon="sp11" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp12" taxon="sp12" totalcount="4" value="GAATCTGCAATCCGAGATGCATGATTTGAACCCTCACGTT"/>
-                            
         <sequence id="seq_sp13" taxon="sp13" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGAGTCCTCACGTT"/>
-                            
         <sequence id="seq_sp14" taxon="sp14" totalcount="4" value="CGATCTGCAAATCGAAATGCAGGATTTTGAGCCTCACGTT"/>
-                            
         <sequence id="seq_sp15" taxon="sp15" totalcount="4" value="CGATCTGCAAATCGAAATGCATGATTTTGAGCCTCACGTT"/>
-                            
         <sequence id="seq_sp16" taxon="sp16" totalcount="4" value="CAATCCGCAATTCGAGATGCATGATTTGAGGCCTCAAGTT"/>
-                            
         <sequence id="seq_sp17" taxon="sp17" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp18" taxon="sp18" totalcount="4" value="CAATCTGCAATTCGAGATGGATGATTTGAGGCCTCAAGTT"/>
-                            
         <sequence id="seq_sp19" taxon="sp19" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp20" taxon="sp20" totalcount="4" value="CAATTTGTAGTGAGACATACATGATTTGAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp21" taxon="sp21" totalcount="4" value="CAGTCTGTAATGAGACATACATGATTTGAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp22" taxon="sp22" totalcount="4" value="CAATCTGCCATTTGAGATGCATGATTTGAGGCCTCAAGTT"/>
-                            
         <sequence id="seq_sp23" taxon="sp23" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGAGGCCTCAAGTT"/>
-                            
         <sequence id="seq_sp24" taxon="sp24" totalcount="4" value="CAGTCTGCAATTCGAGACGCATAATTTGAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp25" taxon="sp25" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp26" taxon="sp26" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGGGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp27" taxon="sp27" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
-                            
         <sequence id="seq_sp28" taxon="sp28" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
-                            
         <sequence id="seq_sp29" taxon="sp29" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
-                            
         <sequence id="seq_sp3" taxon="sp3" totalcount="4" value="CAATGTGCAATTCGAGATGCACGATTTAAGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp30" taxon="sp30" totalcount="4" value="CAATCTGCAATTCTAGATGCATGATTTGGGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp31" taxon="sp31" totalcount="4" value="CAATCTGCAATTCTAGATGCATGATTTGGGGCCTCACGTT"/>
-                            
         <sequence id="seq_sp32" taxon="sp32" totalcount="4" value="CAACCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
-                            
         <sequence id="seq_sp33" taxon="sp33" totalcount="4" value="CAACCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
-                            
         <sequence id="seq_sp5" taxon="sp5" totalcount="4" value="CGATCTGCAATTCGAGATGCACGATTTGAGGCCTTGCATC"/>
-                            
         <sequence id="seq_sp6" taxon="sp6" totalcount="4" value="CGATCTGCAATTCGAGAAGCATGCTTTGAGACCTCATATT"/>
-                            
         <sequence id="seq_sp7" taxon="sp7" totalcount="4" value="CGACTTGCAATTCGAGAAGCATGATTTGAGGCCTCACACT"/>
-                            
         <sequence id="seq_sp8" taxon="sp8" totalcount="4" value="CGATCTGCAGTTCGAGATCCATGATTTGAGGCCTCACATT"/>
-                            
         <sequence id="seq_sp9" taxon="sp9" totalcount="4" value="CAATCTGCAATTGGAGATGCATGATTTGGGGCCTCACGTT"/>
       
-      <taxonset id="TaxonSet" spec="TaxonSet">
-	<taxon id="sp3" spec="Taxon"/>
- 	<taxon id="sp5" spec="Taxon"/>
- 	<taxon id="sp6" spec="Taxon"/>
- 	<taxon id="sp7" spec="Taxon"/>
- 	<taxon id="sp8" spec="Taxon"/>
- 	<taxon id="sp9" spec="Taxon"/>
- 	<taxon id="sp10" spec="Taxon"/>
- 	<taxon id="sp11" spec="Taxon"/>
- 	<taxon id="sp12" spec="Taxon"/>
- 	<taxon id="sp13" spec="Taxon"/>
- 	<taxon id="sp14" spec="Taxon"/>
- 	<taxon id="sp15" spec="Taxon"/>
- 	<taxon id="sp16" spec="Taxon"/>
- 	<taxon id="sp17" spec="Taxon"/>
- 	<taxon id="sp18" spec="Taxon"/>
- 	<taxon id="sp19" spec="Taxon"/>
- 	<taxon id="sp20" spec="Taxon"/>
- 	<taxon id="sp21" spec="Taxon"/>
- 	<taxon id="sp22" spec="Taxon"/>
- 	<taxon id="sp23" spec="Taxon"/>
- 	<taxon id="sp24" spec="Taxon"/>
- 	<taxon id="sp25" spec="Taxon"/>
- 	<taxon id="sp26" spec="Taxon"/>
- 	<taxon id="sp27" spec="Taxon"/>
- 	<taxon id="sp28" spec="Taxon"/>
- 	<taxon id="sp29" spec="Taxon"/>
- 	<taxon id="sp30" spec="Taxon"/>
- 	<taxon id="sp31" spec="Taxon"/>
- 	<taxon id="sp32" spec="Taxon"/>
- 	<taxon id="sp33" spec="Taxon"/>
-      </taxonset>
+      	<taxonset id="TaxonSet" spec="TaxonSet">
+			<taxon id="sp3" spec="Taxon"/>
+		 	<taxon id="sp5" spec="Taxon"/>
+		 	<taxon id="sp6" spec="Taxon"/>
+		 	<taxon id="sp7" spec="Taxon"/>
+		 	<taxon id="sp8" spec="Taxon"/>
+		 	<taxon id="sp9" spec="Taxon"/>
+		 	<taxon id="sp10" spec="Taxon"/>
+		 	<taxon id="sp11" spec="Taxon"/>
+		 	<taxon id="sp12" spec="Taxon"/>
+		 	<taxon id="sp13" spec="Taxon"/>
+		 	<taxon id="sp14" spec="Taxon"/>
+		 	<taxon id="sp15" spec="Taxon"/>
+		 	<taxon id="sp16" spec="Taxon"/>
+		 	<taxon id="sp17" spec="Taxon"/>
+		 	<taxon id="sp18" spec="Taxon"/>
+		 	<taxon id="sp19" spec="Taxon"/>
+		 	<taxon id="sp20" spec="Taxon"/>
+		 	<taxon id="sp21" spec="Taxon"/>
+		 	<taxon id="sp22" spec="Taxon"/>
+		 	<taxon id="sp23" spec="Taxon"/>
+		 	<taxon id="sp24" spec="Taxon"/>
+		 	<taxon id="sp25" spec="Taxon"/>
+		 	<taxon id="sp26" spec="Taxon"/>
+		 	<taxon id="sp27" spec="Taxon"/>
+		 	<taxon id="sp28" spec="Taxon"/>
+		 	<taxon id="sp29" spec="Taxon"/>
+		 	<taxon id="sp30" spec="Taxon"/>
+		 	<taxon id="sp31" spec="Taxon"/>
+		 	<taxon id="sp32" spec="Taxon"/>
+		 	<taxon id="sp33" spec="Taxon"/>
+      	</taxonset>
     </data>
       
     <map name="Uniform" >beast.math.distributions.Uniform</map>    
@@ -108,10 +79,10 @@
     
     <run id="mcmc" spec="MCMC" chainLength="10000000">            
 
-      <state id="state" storeEvery="5000">              
-	<tree id="Tree.t:seq0" name="stateNode">
-	  <taxonset idref="TaxonSet"/>
-	</tree>
+      <state id="state" storeEvery="1000">              
+		<tree id="Tree.t:seq0" name="stateNode">
+	  		<taxonset idref="TaxonSet"/>
+		</tree>
 
         <stateNode idref="SympatricRate"/>
         <stateNode idref="SubsympatricRate"/>
@@ -252,7 +223,7 @@
         <log idref="likelihood"/>                    
         <log idref="prior"/>                    
         <log idref="treeLikelihood.seq0"/>                    
-	<log idref="SympatricRate"/>
+		<log idref="SympatricRate"/>
         <log idref="SubsympatricRate"/>
         <log idref="VicariantRate"/>
         <log idref="Mu"/>
@@ -260,7 +231,7 @@
         <log id="TreeHeight.t:seq0" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:seq0"/>         <log idref="kappa.s:seq0"/>
       </logger>
             
-      <logger id="screenlog" logEvery="1000">                    
+      <logger id="screenlog" logEvery="5000">                    
         <log idref="posterior"/>                    
         <log id="ESS.0" spec="util.ESS" arg="@posterior"/>                    
         <log idref="likelihood"/>                    

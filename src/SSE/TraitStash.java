@@ -105,7 +105,7 @@ public class TraitStash extends TraitSet {
 			String sp_name = entry.getKey();
 			int sp_idx = entry.getValue();
 			spnameLksMap.put(sp_name, lks);
-			System.out.println(taxonValues[sp_idx]);
+			// System.out.println(taxonValues[sp_idx]);
 			spnameLksMap.get(sp_name)[numberOfStates - 1 + Integer.parseInt(taxonValues[sp_idx])] = 1.0;
         }
 	}
