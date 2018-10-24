@@ -16,11 +16,11 @@ public class StateDependentSpeciationExtinctionProcessBiSSETestDriver2 {
 		
 		// initializing parameter values
 		int numberOfStates = 2; // BiSSE
-		String[] spNames = new String[] { "sp4", "sp7", "sp9", "sp11", "sp14", "sp16", "sp21", "sp22", "sp25", "sp27", "sp29", "sp30", "sp33", "sp35", "sp36", "sp37", "sp38", "sp39", "sp42", "sp45", "sp46", "sp48", "sp50", "sp51", "sp52", "sp53", "sp54", "sp55", "sp57", "sp58", "sp59", "sp61=1", "sp64", "sp67", "sp68", "sp69", "sp70", "sp71", "sp72", "sp73", "sp74", "sp75", "sp79", "sp80", "sp81", "sp82", "sp84", "sp85", "sp86", "sp87", "sp88", "sp89", "sp90", "sp91", "sp92", "sp93", "sp94", "sp95", "sp96", "sp97", "sp98", "sp99", "sp100", "sp101", "sp102", "sp103", "sp104", "sp105", "sp106", "sp107", "sp108", "sp109", "sp110", "sp111", "sp112", "sp113", "sp114", "sp115", "sp117", "sp118", "sp119", "sp121", "sp122", "sp123", "sp124", "sp125", "sp126", "sp127", "sp128", "sp129", "sp130", "sp131", "sp132", "sp133", "sp134", "sp135", "sp136", "sp137", "sp138", "sp139", "sp140", "sp141", "sp142", "sp143", "sp144", "sp145", "sp146", "sp148", sp149=1,sp150=1,sp151=1,sp152=1,sp153=1,sp154=1,sp155=1,sp156=1,sp158=1,sp159=1,sp160=1,sp161=1,sp162=1,sp163=1,sp164=1,sp165=1,sp166=1, "sp167", "sp168", "sp169", "sp170", "sp171", "sp172" };
+		String[] spNames = new String[] { "sp4", "sp7", "sp9", "sp11", "sp14", "sp16", "sp21", "sp22", "sp25", "sp27", "sp29", "sp30", "sp33", "sp35", "sp36", "sp37", "sp38", "sp39", "sp42", "sp45", "sp46", "sp48", "sp50", "sp51", "sp52", "sp53", "sp54", "sp55", "sp57", "sp58", "sp59", "sp61", "sp64", "sp67", "sp68", "sp69", "sp70", "sp71", "sp72", "sp73", "sp74", "sp75", "sp79", "sp80", "sp81", "sp82", "sp84", "sp85", "sp86", "sp87", "sp88", "sp89", "sp90", "sp91", "sp92", "sp93", "sp94", "sp95", "sp96", "sp97", "sp98", "sp99", "sp100", "sp101", "sp102", "sp103", "sp104", "sp105", "sp106", "sp107", "sp108", "sp109", "sp110", "sp111", "sp112", "sp113", "sp114", "sp115", "sp117", "sp118", "sp119", "sp121", "sp122", "sp123", "sp124", "sp125", "sp126", "sp127", "sp128", "sp129", "sp130", "sp131", "sp132", "sp133", "sp134", "sp135", "sp136", "sp137", "sp138", "sp139", "sp140", "sp141", "sp142", "sp143", "sp144", "sp145", "sp146", "sp148", "sp149", "sp150", "sp151", "sp152", "sp153", "sp154", "sp155", "sp156", "sp158", "sp159", "sp160", "sp161", "sp162", "sp163", "sp164", "sp165", "sp166", "sp167", "sp168", "sp169", "sp170", "sp171", "sp172" };
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		TraitStash traitStash = new TraitStash();
-		traitStash.initByName("NumberOfStates", numberOfStates, "taxa", taxonSet, "value", "sp4=2,sp7=2,sp9=2,sp11=1,sp14=1,sp16=2,sp21=2,sp22=2,sp25=1,sp27=2,sp29=1,sp30=1,sp33=2,sp35=1,sp36=2,sp37=1,sp38=1,sp39=1,sp42=1,sp45=1,sp46=1,sp48=1,sp50=1,sp51=2,sp52=2,sp53=1,sp54=1,sp55=1,sp57=1,sp58=1,sp59=1,sp61=1,sp64=1,sp67=1,sp68=1,sp69=1,sp70=1,sp71=2,sp72=1,sp73=1,sp74=1,sp75=1,sp79=1,sp80=1,sp81=1,sp82=1,sp84=1,sp85=1,sp86=1,sp87=1,sp88=1,sp89=1,sp90=1,sp91=1,sp92=1,sp93=1,sp94=1,sp95=1,sp96=1,sp97=1,sp98=1,sp99=1,sp100=1,sp101=2,sp102=2,sp103=1,sp104=1,sp105=1,sp106=1,sp107=1,sp108=1,sp109=1,sp110=1,sp111=2,sp112=1,sp113=1,sp114=2,sp115=2,sp117=1,sp118=1,sp119=1,sp121=1,sp122=1,sp123=1,sp124=1,sp125=1,sp126=1,sp127=1,sp128=1,sp129=1,sp130=1,sp131=1,sp132=1,sp133=1,sp134=1,sp135=1,sp136=1,sp137=1,sp138=1,sp139=1,sp140=1,sp141=1,sp142=1,sp143=1,sp144=1,sp145=1,sp146=1,sp148=1,sp149=1,sp150=1,sp151=1,sp152=1,sp153=1,sp154=1,sp155=1,sp156=1,sp158=1,sp159=1,sp160=1,sp161=1,sp162=1,sp163=1,sp164=1,sp165=1,sp166=1,sp167=1,sp168=1,sp169=2,sp170=2,sp171=1,sp172=1");
+		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "sp4=2,sp7=2,sp9=2,sp11=1,sp14=1,sp16=2,sp21=2,sp22=2,sp25=1,sp27=2,sp29=1,sp30=1,sp33=2,sp35=1,sp36=2,sp37=1,sp38=1,sp39=1,sp42=1,sp45=1,sp46=1,sp48=1,sp50=1,sp51=2,sp52=2,sp53=1,sp54=1,sp55=1,sp57=1,sp58=1,sp59=1,sp61=1,sp64=1,sp67=1,sp68=1,sp69=1,sp70=1,sp71=2,sp72=1,sp73=1,sp74=1,sp75=1,sp79=1,sp80=1,sp81=1,sp82=1,sp84=1,sp85=1,sp86=1,sp87=1,sp88=1,sp89=1,sp90=1,sp91=1,sp92=1,sp93=1,sp94=1,sp95=1,sp96=1,sp97=1,sp98=1,sp99=1,sp100=1,sp101=2,sp102=2,sp103=1,sp104=1,sp105=1,sp106=1,sp107=1,sp108=1,sp109=1,sp110=1,sp111=2,sp112=1,sp113=1,sp114=2,sp115=2,sp117=1,sp118=1,sp119=1,sp121=1,sp122=1,sp123=1,sp124=1,sp125=1,sp126=1,sp127=1,sp128=1,sp129=1,sp130=1,sp131=1,sp132=1,sp133=1,sp134=1,sp135=1,sp136=1,sp137=1,sp138=1,sp139=1,sp140=1,sp141=1,sp142=1,sp143=1,sp144=1,sp145=1,sp146=1,sp148=1,sp149=1,sp150=1,sp151=1,sp152=1,sp153=1,sp154=1,sp155=1,sp156=1,sp158=1,sp159=1,sp160=1,sp161=1,sp162=1,sp163=1,sp164=1,sp165=1,sp166=1,sp167=1,sp168=1,sp169=2,sp170=2,sp171=1,sp172=1");
 		traitStash.printLksMap();
 		
 		Double birthRate = 0.222222222;
@@ -35,7 +35,7 @@ public class StateDependentSpeciationExtinctionProcessBiSSETestDriver2 {
 		RealParameter lambda = new RealParameter(lambdas);
 		
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		irm.initByName("NumberOfStates", numberOfStates, "FlatQMatrix", "0.00112606341068786 0.00532672696281225");
+		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", "0.00112606341068786 0.00532672696281225");
 		irm.printMatrix();
 		
 		Double[] piEs = new Double[numberOfStates];
@@ -56,12 +56,12 @@ public class StateDependentSpeciationExtinctionProcessBiSSETestDriver2 {
         StateDependentSpeciationExtinctionProcess sdsep = new StateDependentSpeciationExtinctionProcess();
         sdsep.initByName(
         		"tree", myTree,
-        		"TraitStash", traitStash,
-        		"InstantaneousRateMatrix", irm,
-        		"Lambda", lambda,
-        		"Mu", mu,
-        		"Pi", pi,
-        		"IncorporateCladogenesis", incorporateCladogenesis
+        		"traitStash", traitStash,
+        		"instantaneousRateMatrix", irm,
+        		"lambda", lambda,
+        		"mu", mu,
+        		"pi", pi,
+        		"incorporateCladogenesis", incorporateCladogenesis
         		);
     	
     	System.out.println(sdsep.calculateLogP());
