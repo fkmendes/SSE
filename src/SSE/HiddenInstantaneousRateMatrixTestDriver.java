@@ -12,7 +12,13 @@ public class HiddenInstantaneousRateMatrixTestDriver {
 		stateMapper.initByName("hiddenStates", hiddenStatesString);
 		stateMapper.makeMaps();
 				
+		System.out.println("If number of hidden states > 0, matrix is expanded:");
 		irm.initByName("numberOfStates", 4, "numberOfHiddenStates", 3, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", true, "hiddenObsStateMapper", stateMapper);
+		irm.printMatrix();
+		
+		System.out.println("If number of hidden states is zero, it's just plain ClaSSE:");
+		String flatQMatrixString2 = "0.2 0.3 0.4 1.0 1.2 1.3 2.0 2.1 2.3 3.0 3.1 3.2";
+		irm.initByName("numberOfStates", 4, "numberOfHiddenStates", 0, "flatQMatrix", flatQMatrixString2, "disallowDoubleTransitions", false, "hiddenObsStateMapper", stateMapper);
 		irm.printMatrix();
 //		System.out.println(irm.getCell(2, 1, 1.0));
 	}

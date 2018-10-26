@@ -67,18 +67,18 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 				}
 			}
 			
-			else {
+			else if (numberOfHiddenStates > 0 && disallowDoubleTransitions){
 				String errorMsg = "Tried to fill transition matrix Q (ignoring diagonal elements and also double transitions), but was given ";
-				if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - 2*2*numberOfStates) > numberOfInputElements) {
-					throw new RuntimeException(errorMsg + "too few values."); // 2*2 b/c it's top-right and bottom-left
-				} else if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - 2*2*numberOfStates) < numberOfInputElements) {
+				if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - (2 * (numberOfStates * numberOfHiddenStates - numberOfStates))) > numberOfInputElements) {
+					throw new RuntimeException(errorMsg + "too few values."); // subtract diagonal and then double transitions (twice b/c it's top-right and bottom-left)
+				} else if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - (2 * (numberOfStates * numberOfHiddenStates - numberOfStates))) < numberOfInputElements) {
 					throw new RuntimeException(errorMsg + "too many values.");
 				}
 			}
 		}
 				
 		// grabbing cells with double transitions (populating doubleTransitionIRMCellsMap), which will be ignored when populating IRM and remain 0's
-		if (disallowDoubleTransitions) {
+		if (numberOfHiddenStates > 0 && disallowDoubleTransitions) {
 			findDoubleTransitionIRMCells(numberOfHiddenStates, totalNumberOfStates);
 			// printDoubleTransitionIRMCellsMap();
 		}
@@ -90,11 +90,11 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 					continue;
 				} // ignore diagonal element (make it zero)
 				
-				if (disallowDoubleTransitions && doubleTransitionIRMCellsMap.get(i).contains(j)) {
+				if (numberOfHiddenStates > 0 && disallowDoubleTransitions && doubleTransitionIRMCellsMap.get(i).contains(j)) {
 					setCell(i, j, 0.0);
 					continue;
 				} // ignore double transitions (make it zero)
-				
+
 				setCell(i, j, matrixContent[q]);
 				q += 1;
 			}
@@ -105,6 +105,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		irmDirty = false; // after re-population of IRM, things are clean
 	}
 	
+	/* Later I should make sure this is made just once for each k when rjMCMC is implemented, or even when any transition rate is operated on */
 	public void findDoubleTransitionIRMCells(int numberOfHiddenStates, int totalNumberOfStates) {
 		for (int i=0; i<totalNumberOfStates; ++i) {
 			// i-th row
@@ -120,10 +121,11 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 						// j is hidden state idx
 						if (doubleTransitionIRMCellsMap.get(i) == null) {
 							List<Integer> v = new ArrayList<>();
-							doubleTransitionIRMCellsMap.put(i, v);
+							doubleTransitionIRMCellsMap.put(i, v); // recording
 						}
-						doubleTransitionIRMCellsMap.get(i).add(j); 
-						System.out.println("Top-right i=" + i + " j=" + j);
+						doubleTransitionIRMCellsMap.get(i).add(j); // recording
+						
+						// System.out.println("Top-right i=" + i + " j=" + j);
 					}
 				}
 			}
@@ -137,13 +139,13 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 					if (!o.contains(j)) {			
 						if (doubleTransitionIRMCellsMap.get(i) == null) {
 							List<Integer> v = new ArrayList<>();
-							doubleTransitionIRMCellsMap.put(i, v);
+							doubleTransitionIRMCellsMap.put(i, v); // recording
 						}
-						doubleTransitionIRMCellsMap.get(i).add(j);
+						doubleTransitionIRMCellsMap.get(i).add(j); // recording
 					}
 
 					// System.out.println("Bottom-left i=" + i + " j=" +j);
-				} // recording
+				}
 			}
 		}
 	}
@@ -156,6 +158,10 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	// getters
 	public int getNumStates() {
 		return numberOfStates;
+	}
+	
+	public int getNumHiddenStates() {
+		return numberOfHiddenStates;
 	}
 	
 	public double getCell(int from, int to, double rate) {
