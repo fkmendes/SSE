@@ -164,6 +164,10 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		return numberOfHiddenStates;
 	}
 	
+	public int getTotalNumStates () {
+		return totalNumberOfStates;
+	}
+	
 	public double getCell(int from, int to, double rate) {
 		// return Q.getMatrixValue(from, to) * rate;
 		if (irmDirty) {

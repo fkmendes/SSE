@@ -31,7 +31,7 @@ year=2012, firstAuthorSurname="Goldberg", DOI="10.1111/j.1558-5646.2012.01730.x"
 public class HiddenStateDependentSpeciationExtinctionProcess extends Distribution {
 
 	final public Input<Tree> treeInput = new Input<>("tree", "Tree object containing tree.", Validate.REQUIRED);
-	final public Input<TraitStash> traitStashInput = new Input<>("traitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
+	final public Input<HiddenTraitStash> hiddenTraitStashInput = new Input<>("hiddenTraitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
 	final public Input<HiddenInstantaneousRateMatrix> hirmInput = new Input<>("hiddenInstantaneousRateMatrix", "HiddenInstantaneousRateMatrix object containing anagenenetic rates for both observed and hidden states.", Validate.REQUIRED);
 	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
 	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
@@ -44,7 +44,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 
 	// input
 	private Tree tree;
-	private TraitStash traitStash;
+	private HiddenTraitStash hiddenTraitStash;
 	private HiddenInstantaneousRateMatrix q;
 	private CladogeneticSpeciationRateStash cladoStash;
 	private Double[] lambda;
@@ -102,7 +102,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	public void initAndValidate() {		
 		super.initAndValidate();
 		tree = treeInput.get();
-		traitStash = traitStashInput.get();
+		hiddenTraitStash = hiddenTraitStashInput.get();
 		q = hirmInput.get();
 		mu = muInput.get().getValues();
 		pi = piInput.get().getValues();
@@ -123,7 +123,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		// dt = rootAge / ((double) (numTimeSlices * 50));
 		
 		// likelihood-related
-		// nodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; // tips have initialization lks, internal nodes (and root) just after merge
+		// nodePartialScaledLksPreOde = new double[tree.getNodeCount()][totalNumStates*2]; // tips have initialization lks, internal nodes (and root) just after merge
 		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][totalNumStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
 		scalingConstants = new double[tree.getNodeCount()]; // equivalent to diversitree's lq (but not in log-scale), these are used as denominators during the likelihood computation
 		
@@ -132,7 +132,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		finalLogLk = 0.0;
 		
 		// cache-related
-		// storedNodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; 
+		// storedNodePartialScaledLksPreOde = new double[tree.getNodeCount()][totalNumStates*2]; 
 		storedNodePartialScaledLksPostOde = new double[tree.getNodeCount()][totalNumStates*2];  
 		storedScalingConstants = new double[tree.getNodeCount()]; 
 		branchLengths = new double[tree.getNodeCount()];
@@ -327,7 +327,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
         	if (update != Tree.IS_CLEAN) {
         		// nodePartialScaledLksPreOde[nodeIdx] = traitStash.getSpLks(node.getID());
         		// nodePartialScaledLksPostOde[nodeIdx] = traitStash.getSpLks(node.getID()).clone();
-        		System.arraycopy(traitStash.getSpLks(node.getID()), 0, nodePartial, 0, nodePartial.length);
+        		System.arraycopy(hiddenTraitStash.getSpLks(node.getID()), 0, nodePartial, 0, nodePartial.length);
         	}
         	
 			// System.out.println("Leaf " + node.getID() + " has node idx: " + node.getNr());
@@ -370,7 +370,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 				}
 				
 				// merge descendant lks
-				for (int i = 0; i < numStates; ++i) {
+				for (int i = 0; i < totalNumStates; ++i) {
 					// E's
 					
 					/* Original version (V0) dealt w/ scaling here at merge */
@@ -399,28 +399,28 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 								/*
 								 * RevBayes version of Equation A3 (with scaling)
 								 */
-								// double likelihoods = leftLks[numStates + j] / scalingConstants[leftIdx] * 
+								// double likelihoods = leftLks[totalNumStates + j] / scalingConstants[leftIdx] * 
 								// 		 rightLks[numStates + k] / scalingConstants[rightIdx];
 								// likeSum += likelihoods * speciationRate;
 								
 								// System.out.println("Left lk array pre-scaling: " + Arrays.toString(leftLks));
 								// System.out.println("Right lk array pre-scaling: " + Arrays.toString(rightLks));
-								// System.out.println("Left j: " + Double.toString(leftLks[numStates + j]) + "\nRight k: " + Double.toString(rightLks[numStates + k]));
-								// System.out.println("Left k: " + Double.toString(leftLks[numStates + k]) + "\nRight j: " + Double.toString(rightLks[numStates + j]));
+								// System.out.println("Left j: " + Double.toString(leftLks[totalNumStates + j]) + "\nRight k: " + Double.toString(rightLks[numStates + k]));
+								// System.out.println("Left k: " + Double.toString(leftLks[totalNumStates + k]) + "\nRight j: " + Double.toString(rightLks[numStates + j]));
 								// System.out.println("Left scale factor: " + Double.toString(scaling_constants[leftIdx]) + "\nRight scale factor: " + Double.toString(scaling_constants[rightIdx]));
-								// System.out.println("Scaled left j: " + Double.toString(leftLks[numStates + j]/scalingConstants[leftIdx]) + "\nScaled right k: " + Double.toString(right_lks[numStates + k]/scaling_constants[rightIdx]));
-								// System.out.println("Scaled left k: " + Double.toString(leftLks[numStates + k]/scalingConstants[leftIdx]) + "\nScaled right j: " + Double.toString(right_lks[numStates + j]/scaling_constants[rightIdx]));
+								// System.out.println("Scaled left j: " + Double.toString(leftLks[totalNumStates + j]/scalingConstants[leftIdx]) + "\nScaled right k: " + Double.toString(right_lks[numStates + k]/scaling_constants[rightIdx]));
+								// System.out.println("Scaled left k: " + Double.toString(leftLks[totalNumStates + k]/scalingConstants[leftIdx]) + "\nScaled right j: " + Double.toString(right_lks[numStates + j]/scaling_constants[rightIdx]));
 	
 								/*
 								 * Equation A3 (original version V0 took care of scaling here -- not anymore)
 								 */
-								// double dnjDmk = (leftLks[numStates + j] / scalingConstants[leftIdx]) *
-								//     (rightLks[numStates + k] / scalingConstants[rightIdx]);
+								// double dnjDmk = (leftLks[totalNumStates + j] / scalingConstants[leftIdx]) *
+								//     (rightLks[totalNumStates + k] / scalingConstants[rightIdx]);
 								// double dnkDmj = (leftLks[numStates + k] / scalingConstants[leftIdx]) *
-								//     (rightLks[numStates + j] / scalingConstants[rightIdx]);
+								//     (rightLks[totalNumStates + j] / scalingConstants[rightIdx]);
 								// double dnjDmkPlusDnkDmj = dnjDmk + dnkDmj;
-								double dnjDmk = (leftLks[numStates + j] ) * (rightLks[numStates + k]);
-								double dnkDmj = (leftLks[numStates + k] ) *	(rightLks[numStates + j]);
+								double dnjDmk = (leftLks[totalNumStates + j] ) * (rightLks[totalNumStates + k]);
+								double dnkDmj = (leftLks[totalNumStates + k] ) *	(rightLks[totalNumStates + j]);
 								double dnjDmkPlusDnkDmj = dnjDmk + dnkDmj;
 								likeSum += 0.5 * dnjDmkPlusDnkDmj * speciationRate;
 								
@@ -430,14 +430,14 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 						}
 	
 						/* Original version V0 scaled here */
-						// nodePartialScaledLksPostOde[leftIdx][numStates + i] = leftLks[numStates + i] / scalingConstants[leftIdx];
-						// nodePartialScaledLksPostOde[rightIdx][numStates + i] = rightLks[numStates + i] / scalingConstants[rightIdx];
+						// nodePartialScaledLksPostOde[leftIdx][totalNumStates + i] = leftLks[totalNumStates + i] / scalingConstants[leftIdx];
+						// nodePartialScaledLksPostOde[rightIdx][totalNumStates + i] = rightLks[totalNumStates + i] / scalingConstants[rightIdx];
 						
 						// finalizing merging for state Di
-						nodePartial[numStates + i] = likeSum;
+						nodePartial[totalNumStates + i] = likeSum;
 
 						// preOde vector was not being used at all (even in original version, it was just to match diversitree's)
-						// nodePartialScaledLksPreOde[nodeIdx][numStates + i] = nodePartialScaledLksPostOde[nodeIdx][numStates + i]; // this is a double, so no deep copy necessary
+						// nodePartialScaledLksPreOde[nodeIdx][totalNumStates + i] = nodePartialScaledLksPostOde[nodeIdx][totalNumStates + i]; // this is a double, so no deep copy necessary
 						// so preOde for internal nodes contains post-merging, but before ODE of parent kicks in
 					}
 					
@@ -446,17 +446,17 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 						// D's pre-merging steps (scaling left and right children)
 						
 						/* Original version V0 had scaling being done here */
-						// nodePartialScaledLksPostOde[leftIdx][numStates + i] = leftLks[numStates + i] /
+						// nodePartialScaledLksPostOde[leftIdx][totalNumStates + i] = leftLks[totalNumStates + i] /
 						//	   dLeftScalingConstant; // now we update left child lk with scaled value
-						// nodePartialScaledLksPostOde[rightIdx][numStates + i] = rightLks[numStates + i] / 
+						// nodePartialScaledLksPostOde[rightIdx][totalNumStates + i] = rightLks[totalNumStates + i] / 
 						//     dRightScalingConstant; // now we update right child lk with scaled value
-						nodePartial[numStates + i] = leftLks[numStates + i] *
-								rightLks[numStates + i];
-						nodePartial[numStates + i] *= speciationRates[i];
+						nodePartial[totalNumStates + i] = leftLks[totalNumStates + i] *
+								rightLks[totalNumStates + i];
+						nodePartial[totalNumStates + i] *= speciationRates[i];
 						
 						// preOde vector was not being used at all (even in original version, it was just to match diversitree's)
 						// keeping track of likelihoods right before ODE, at all nodes (so at internal nodes, it's post scaling and merging)
-						// nodePartialScaledLksPreOde[nodeIdx][numStates + i] = nodePartialScaledLksPostOde[nodeIdx][numStates + i]; // this is a double, so no deep copy necessary
+						// nodePartialScaledLksPreOde[nodeIdx][totalNumStates + i] = nodePartialScaledLksPostOde[nodeIdx][totalNumStates + i]; // this is a double, so no deep copy necessary
 					}
 				}
 							
@@ -496,10 +496,10 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 //				}
 				
 				// scaling is done not at time of merging as original V0 version, but prior to returning when recurring
-				double dScalingConstant = sum(nodePartial, numStates, nodePartial.length, -1, false); // -1 means don't ignore any item
+				double dScalingConstant = sum(nodePartial, totalNumStates, nodePartial.length, -1, false); // -1 means don't ignore any item
 				scalingConstants[nodeIdx] = dScalingConstant;
-				for (int i = 0; i < numStates; i++) {
-					nodePartial[numStates + i] /= dScalingConstant;
+				for (int i = 0; i < totalNumStates; i++) {
+					nodePartial[totalNumStates + i] /= dScalingConstant;
 				}
 				
             }
@@ -518,8 +518,8 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 			// }
 			
 			double prob = 0.0;
-			for (int i = 0; i < numStates; ++i) {
-				prob += pi[numStates + i] * nodePartial[numStates + i];
+			for (int i = 0; i < totalNumStates; ++i) {
+				prob += pi[totalNumStates + i] * nodePartial[totalNumStates + i];
 			}
 			
 			boolean takeLog = true;

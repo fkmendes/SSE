@@ -3,9 +3,11 @@ package SSE;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import beast.core.Input;
+import beast.core.Input.Validate;
 import beast.core.util.Log;
 import beast.evolution.tree.*;
 
@@ -13,6 +15,7 @@ public class HiddenTraitStash extends TraitSet {
 
 	final public Input<Integer> nStatesInput = new Input<>("numberOfStates", "How many observed states or geographical ranges can affect speciation and extinction.");
 	final public Input<Integer> nHiddenStatesInput = new Input<>("numberOfHiddenStates", "How many hidden states or geographical ranges can affect speciation and extinction.");
+	final public Input<Boolean> passingHidden = new Input<>("passingHidden", "Whether both and hidden states are being passed", Validate.REQUIRED);
 	
 	// if Human=1,Chimp=1,Gorilla=1
 	// inheriting taxonValues, map, and values variables
@@ -23,6 +26,8 @@ public class HiddenTraitStash extends TraitSet {
 	private int numberOfStates;
 	private int numberOfHiddenStates;
 	private int totalNumberOfStates;
+	private String[] taxonHiddenValues;
+	protected Map<String, Integer> hiddenMap;
 	
 	public HiddenTraitStash() {
 		traitNameInput.setRule(Input.Validate.FORBIDDEN);
@@ -36,7 +41,9 @@ public class HiddenTraitStash extends TraitSet {
 		totalNumberOfStates = numberOfStates + numberOfHiddenStates;
         List<String> labels = taxaInput.get().asStringList();
         String[] traits = traitsInput.get().split(","); // ["Human=1", "Chimp=1", "Gorilla=1"]
-        taxonValues = new String[labels.size()];
+        boolean hiddenWasPassed = passingHidden.get();
+        taxonValues = new String[labels.size()]; // one observed state string per taxon
+        taxonHiddenValues = new String[labels.size()];
         values = new double[labels.size()];
         
         for (String trait : traits) {
@@ -46,15 +53,22 @@ public class HiddenTraitStash extends TraitSet {
             if (strs.length != 2) {
                 throw new IllegalArgumentException("Could not parse trait: " + trait);
             }
-            
-            String taxonID = normalize(strs[0]);
-            int taxonNr = labels.indexOf(taxonID);
+                        
+            String taxonID = normalize(strs[0]); // taxon name
+            int taxonNr = labels.indexOf(taxonID); // taxon idx
             
             if (taxonNr < 0) {
                 throw new IllegalArgumentException("Trait (" + taxonID + ") is not a known taxon. Spelling error perhaps?");
             }
             
-            taxonValues[taxonNr] = normalize(strs[1]);
+            if (!hiddenWasPassed) {
+            	taxonValues[taxonNr] = normalize(strs[1]);
+            } // only observed passed
+            else {
+            	String[] obsAndHiddenStrs = strs[1].split("|");            	
+            	taxonValues[taxonNr] = normalize(obsAndHiddenStrs[0]);
+            	taxonHiddenValues[taxonNr] = normalize(obsAndHiddenStrs[2]);
+            } // "observed,hidden" was passed (only used for validation)
             
             // converting state to double
             try {
@@ -64,7 +78,7 @@ public class HiddenTraitStash extends TraitSet {
                 System.exit(1);
             }
             
-            map.put(taxonID, taxonNr);
+            map.put(taxonID, taxonNr); // {taxon name: taxon idx}
         }
         
         // num_states = numOfValues(taxonValues);
@@ -113,10 +127,15 @@ public class HiddenTraitStash extends TraitSet {
 			// System.out.println(taxonValues[sp_idx]);
 			spNameLksMap.get(spName)[totalNumberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
 			
-			// all hidden states are initialized to 1
-			for (int h=0; h<numberOfHiddenStates; ++h) {
-				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates + h] = 1.0; // skip E's, then skip observed D's
-			}
+			if (!hiddenWasPassed) {
+				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
+//				for (int h=0; h<numberOfHiddenStates; ++h) {
+//					spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates + h] = 1.0; // skip E's, then skip observed D's
+//				}
+			} // all hidden states are initialized to 1 if hidden states not passed
+			else {
+				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates - 1 + Integer.parseInt(taxonHiddenValues[spIdx])] = 1.0;
+			} // hidden states are passed and initialized like observed states (only used for validation)
         }
 	}
 	
