@@ -498,6 +498,13 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 				// scaling is done not at time of merging as original V0 version, but prior to returning when recurring
 				double dScalingConstant = sum(nodePartial, totalNumStates, nodePartial.length, -1, false); // -1 means don't ignore any item
 				scalingConstants[nodeIdx] = dScalingConstant;
+				
+				// debugging the scaling constants being < 0...?
+				if (dScalingConstant < 0) {
+					System.out.println("The nodePartial array below adds up to a negative number because some of the D's are negative. This shouldn't happen...?");
+					System.out.println(Arrays.toString(nodePartial));
+				}
+				
 				for (int i = 0; i < totalNumStates; i++) {
 					nodePartial[totalNumStates + i] /= dScalingConstant;
 				}

@@ -127,15 +127,13 @@ public class HiddenTraitStash extends TraitSet {
 			// System.out.println(taxonValues[sp_idx]);
 			spNameLksMap.get(spName)[totalNumberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
 			
-			if (!hiddenWasPassed) {
+			if (!hiddenWasPassed && numberOfHiddenStates > 0) {
 				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
-//				for (int h=0; h<numberOfHiddenStates; ++h) {
-//					spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates + h] = 1.0; // skip E's, then skip observed D's
-//				}
 			} // all hidden states are initialized to 1 if hidden states not passed
-			else {
-				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates - 1 + Integer.parseInt(taxonHiddenValues[spIdx])] = 1.0;
-			} // hidden states are passed and initialized like observed states (only used for validation)
+
+			//			else {
+			//				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates - 1 + Integer.parseInt(taxonHiddenValues[spIdx])] = 1.0;
+			//			} // hidden states are passed and initialized like observed states (only used for validation)
         }
 	}
 	

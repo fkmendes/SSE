@@ -102,6 +102,6 @@ public class HiddenStateDependentSpeciationExtinctionProcessMuSSETestDriver {
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
     	
-    	System.out.println(hsdsep.calculateLogP());
+    	System.out.println(hsdsep.calculateLogP()); // -122.88014232305367
 	}
 }
