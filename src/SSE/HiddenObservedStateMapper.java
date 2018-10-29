@@ -32,14 +32,14 @@ public class HiddenObservedStateMapper extends BEASTObject {
 			obs2HiddenMap.put(i, Integer.parseInt(hiddenStateStrings[i]));
 		}
 		
-		printObs2HiddenMap();
+		// printObs2HiddenMap(); // for debugging
 		
 		for (Entry<Integer, Integer> entry: obs2HiddenMap.entrySet()) {
 			hidden2ObsMap.put(entry.getValue(), entry.getKey());
 		}
 		
-		printHidden2ObsMap();
-		// TODO Create hidden2ObsMap, then pass this class instance to the HiddenIRM class so that it can disallow double transitions
+		// printHidden2ObsMap(); // for debugging
+
 	}
 	
 	// helper

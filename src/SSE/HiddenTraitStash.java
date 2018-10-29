@@ -15,7 +15,6 @@ public class HiddenTraitStash extends TraitSet {
 
 	final public Input<Integer> nStatesInput = new Input<>("numberOfStates", "How many observed states or geographical ranges can affect speciation and extinction.");
 	final public Input<Integer> nHiddenStatesInput = new Input<>("numberOfHiddenStates", "How many hidden states or geographical ranges can affect speciation and extinction.");
-	final public Input<Boolean> passingHidden = new Input<>("passingHidden", "Whether both and hidden states are being passed", Validate.REQUIRED);
 	
 	// if Human=1,Chimp=1,Gorilla=1
 	// inheriting taxonValues, map, and values variables
@@ -40,8 +39,7 @@ public class HiddenTraitStash extends TraitSet {
 		numberOfHiddenStates = nHiddenStatesInput.get();
 		totalNumberOfStates = numberOfStates + numberOfHiddenStates;
         List<String> labels = taxaInput.get().asStringList();
-        String[] traits = traitsInput.get().split(","); // ["Human=1", "Chimp=1", "Gorilla=1"]
-        boolean hiddenWasPassed = passingHidden.get();
+        String[] traits = traitsInput.get().split(","); // ["sp1=1", "sp2=1", "sp3=1"]
         taxonValues = new String[labels.size()]; // one observed state string per taxon
         taxonHiddenValues = new String[labels.size()];
         values = new double[labels.size()];
@@ -61,14 +59,7 @@ public class HiddenTraitStash extends TraitSet {
                 throw new IllegalArgumentException("Trait (" + taxonID + ") is not a known taxon. Spelling error perhaps?");
             }
             
-            if (!hiddenWasPassed) {
-            	taxonValues[taxonNr] = normalize(strs[1]);
-            } // only observed passed
-            else {
-            	String[] obsAndHiddenStrs = strs[1].split("|");            	
-            	taxonValues[taxonNr] = normalize(obsAndHiddenStrs[0]);
-            	taxonHiddenValues[taxonNr] = normalize(obsAndHiddenStrs[2]);
-            } // "observed,hidden" was passed (only used for validation)
+            taxonValues[taxonNr] = normalize(strs[1]);
             
             // converting state to double
             try {
@@ -127,13 +118,10 @@ public class HiddenTraitStash extends TraitSet {
 			// System.out.println(taxonValues[sp_idx]);
 			spNameLksMap.get(spName)[totalNumberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
 			
-			if (!hiddenWasPassed && numberOfHiddenStates > 0) {
+			if (numberOfHiddenStates > 0) {
 				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
-			} // all hidden states are initialized to 1 if hidden states not passed
+			} // hidden states match observed states (if 1 is observed, then 1A, 1B are set to 1)
 
-			//			else {
-			//				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates - 1 + Integer.parseInt(taxonHiddenValues[spIdx])] = 1.0;
-			//			} // hidden states are passed and initialized like observed states (only used for validation)
         }
 	}
 	

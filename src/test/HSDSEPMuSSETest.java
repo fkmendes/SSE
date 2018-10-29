@@ -1,8 +1,15 @@
-package SSE;
+package test;
 
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import SSE.HiddenInstantaneousRateMatrix;
+import SSE.HiddenObservedStateMapper;
+import SSE.HiddenStateDependentSpeciationExtinctionProcess;
+import SSE.HiddenTraitStash;
 import java.util.Arrays;
 import java.util.List;
-
 import org.apache.commons.lang3.ArrayUtils;
 
 import beast.core.parameter.RealParameter;
@@ -10,11 +17,12 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 
-public class HiddenStateDependentSpeciationExtinctionProcessMuSSETestDriver {
+public class HSDSEPMuSSETest {
+	final static double EPSILON = 1E-4;
+	private double negLnl;
 
-	public static void main(String[] args) {
-		
-		// initializing parameter values
+	@Before
+	public void setUp() throws Exception {
 		int numberOfStates = 4;
 		int numberOfHiddenStates = 0;
 		int totalNumberOfStates = numberOfStates + numberOfHiddenStates;
@@ -38,7 +46,6 @@ public class HiddenStateDependentSpeciationExtinctionProcessMuSSETestDriver {
 		Double mu3 = 0.06;
 		Double mu4 = 0.03;
 		Double[] mus = { mu1, mu2, mu3, mu4 };
-		
 		System.out.println("Mus: " + Arrays.toString(mus));
 		
 		RealParameter mu = new RealParameter(mus);
@@ -47,23 +54,23 @@ public class HiddenStateDependentSpeciationExtinctionProcessMuSSETestDriver {
 		RealParameter lambda = new RealParameter(lambdas);
 
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
-		String flatQMatrixString = "0.05 0.05 0.0 0.05 0.0 0.05 0.05 0.0 0.05 0.0 0.05 0.05"; // MuSSE
-		String hiddenStatesString = "0,1"; // observed state 1 and 2 will transition to hidden states 1 and 2, respectively
+		String flatQMatrixString = "0.05 0.05 0.0 0.05 0.0 0.05 0.05 0.0 0.05 0.0 0.05 0.05"; // passing the 0.0s of "double transitions" explicitly (even though there are no hidden states)
+		String hiddenStatesString = "0,1"; // not used
 		HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper();
 		stateMapper.initByName("hiddenStates", hiddenStatesString);
 		stateMapper.makeMaps();
-		boolean disallowDoubleTransitions = false;
-
+		boolean disallowDoubleTransitions = false; // not used
 		hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 0, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "hiddenObsStateMapper", stateMapper); // MuSSE
+		
+		System.out.println("Qs:");
 		hirm.printMatrix();
 		
 		Double[] piEs = new Double[totalNumberOfStates];
 		Arrays.fill(piEs, 0.0);
 		Double[] piDs = new Double[totalNumberOfStates];
 		Arrays.fill(piDs, (1.0/totalNumberOfStates));
-		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25String treeStr = "(((sp1:1.0,sp2:1.0):1.0,sp3:2.0):1.0,(sp4:1.0,sp5:1.0):2.0)0.0;";
-		
-		
+		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25
+				
 		System.out.println("Pi is: " + Arrays.toString(pis));
 		RealParameter pi = new RealParameter(pis);
 		pi.initByName("minordimension", 1);
@@ -84,6 +91,18 @@ public class HiddenStateDependentSpeciationExtinctionProcessMuSSETestDriver {
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
     	
-    	System.out.println(hsdsep.calculateLogP()); // -122.88014232305367
+    	negLnl = hsdsep.calculateLogP();
+    	System.out.println(negLnl); // -122.88014232305267
 	}
+
+	@Test
+	public void againstDiversitreeMuSSE() {
+		Assert.assertEquals(-122.8801, negLnl, EPSILON); 
+	}
+
+	@Test
+	public void againstMyMuHiSSE() {
+		Assert.assertEquals(-122.88014179920914, negLnl, EPSILON);
+	}
+
 }
