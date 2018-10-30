@@ -21,7 +21,7 @@ public class HiddenObservedStateMapper extends BEASTObject {
 	
 	@Override
 	public void initAndValidate() {
-		// TODO Auto-generated method stub
+		makeMaps();
 	}
 
 	public void makeMaps() {

@@ -80,7 +80,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		// grabbing cells with double transitions (populating doubleTransitionIRMCellsMap), which will be ignored when populating IRM and remain 0's
 		if (numberOfHiddenStates > 0 && disallowDoubleTransitions) {
 			findDoubleTransitionIRMCells(numberOfHiddenStates, totalNumberOfStates);
-			printDoubleTransitionIRMCellsMap();
+			// printDoubleTransitionIRMCellsMap(); // for debugging
 		}
 		
 		List<Integer> hiddenIdxList = new ArrayList<Integer>(); // will store list of hidden idx associated to observed idx (and be rewritten in a loop)

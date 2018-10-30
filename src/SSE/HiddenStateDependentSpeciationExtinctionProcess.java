@@ -184,6 +184,9 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	public double calculateLogP() {
 		muInput.get().getValues(mu); // every time this method is called, we need to update mu; instead of creating a new vector and assigning that to mu, we can just copy the contents of muInput into it (note that getValues is called with an argument here)
 		piInput.get().getValues(pi); // same as above
+		
+		// TODO: when LambdaMuAssigner is incorporated here, we just call updateLambdasAndMus()
+		// and then catch return into mu and pi above
 
 		if (!incorporateCladogenesis) { lambdaInput.get().getValues(lambda); }
 

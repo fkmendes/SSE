@@ -17,8 +17,8 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 
-public class HSDSEPHiSSETest1 {
-	final static double EPSILON = 1E-2;
+public class HSDSEPCIDTest {
+	final static double EPSILON = 1E-4;
 	private double negLnl;
 
 	@Before
@@ -38,18 +38,14 @@ public class HSDSEPHiSSETest1 {
 		hiddenTraitStash.initByName("numberOfStates", numberOfStates, "numberOfHiddenStates", numberOfHiddenStates, "taxa", taxonSet, "hiddenObsStateMapper", stateMapper, "value", "sp6=1,sp10=1,sp11=1,sp12=1,sp14=2,sp15=1,sp16=2,sp17=2,sp18=1,sp19=1,sp21=1,sp22=1,sp23=1,sp24=1,sp25=1,sp26=2,sp27=2,sp28=1,sp29=2,sp30=2,sp31=2,sp32=2,sp33=2,sp34=2,sp35=1,sp36=1,sp37=2,sp38=2,sp39=1,sp40=1,sp41=1,sp42=2,sp43=2,sp44=2,sp45=2,sp46=2,sp47=2,sp48=2,sp49=1,sp50=1,sp51=2,sp52=2,sp53=1,sp54=1,sp55=2,sp56=2,sp57=1, sp58=1,sp59=1,sp60=1");
 		hiddenTraitStash.printLksMap();
 		
-		Double lambda1 = 6.440928E-10; // 0A
-		Double lambda2 = 0.1128975; // 1A
-		Double lambda3 = 0.1308483; // 0B
-		Double lambda4 = 85.03492; // 1B
-		Double[] lambdas = { lambda1, lambda2, lambda3, lambda4 };
+		Double lambda1 = 0.2108637; // 0A and 1A
+		Double lambda2 = 0.0688838; // 0B and 1B
+		Double[] lambdas = { lambda1, lambda1, lambda2, lambda2 };
 		System.out.println("Lambdas: " + Arrays.toString(lambdas));
 		
-		Double mu1 = 1.417061E-09; // 0A
-		Double mu2 = 0.04597049; // 1A
-		Double mu3 = 0.03687651; // 0B
-		Double mu4 = 1.266694E-06; // 1B
-		Double[] mus = { mu1, mu2, mu3, mu4 };		
+		Double mu1 = 0.04285281; // 0A and 1A
+		Double mu2 = 1.419801E-10; // 0B and 1B
+		Double[] mus = { mu1, mu1, mu2, mu2 };		
 		System.out.println("Mus: " + Arrays.toString(mus));
 		
 		RealParameter mu = new RealParameter(mus);
@@ -59,7 +55,7 @@ public class HSDSEPHiSSETest1 {
 
 		boolean disallowDoubleTransitions = true;
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
-		String flatQMatrixString = "2.11773E-09 2.061154E-09 6.432635e-03 2.479683E-09 2.355085E-09 1.565876E-02 100 100"; // test 1 
+		String flatQMatrixString = "3.054604E-02 0.129056368 2.061154E-09 2.001798E-01 5.421624E-02 2.061154E-09 2.061154E-09 0.008978002"; 
 		hirm.initByName("numberOfStates", 2, "numberOfHiddenStates", 2, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "hiddenObsStateMapper", stateMapper);
 		
 		System.out.println("Qs:");
@@ -92,12 +88,12 @@ public class HSDSEPHiSSETest1 {
         		);
     	
     	negLnl = hsdsep.calculateLogP();
-    	System.out.println(negLnl); // -172.02167619855217
+    	System.out.println(negLnl); // -178.95314816436746
 
 	}
 
 	@Test
 	public void againstDiversitreeHiSSE() {
-		Assert.assertEquals(-172.02, negLnl, EPSILON); // difference due to precision and rounding
+		Assert.assertEquals(-178.9531, negLnl, EPSILON); // difference due to precision and rounding
 	}
 }
