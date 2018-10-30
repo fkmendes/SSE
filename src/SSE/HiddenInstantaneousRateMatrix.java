@@ -69,9 +69,9 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 			
 			else if (numberOfHiddenStates > 0 && disallowDoubleTransitions){
 				String errorMsg = "Tried to fill transition matrix Q (ignoring diagonal elements and also double transitions), but was given ";
-				if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - (2 * (numberOfStates * numberOfHiddenStates - numberOfStates))) > numberOfInputElements) {
+				if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - (2 * (numberOfStates * numberOfHiddenStates - numberOfHiddenStates))) > numberOfInputElements) {
 					throw new RuntimeException(errorMsg + "too few values."); // subtract diagonal and then double transitions (twice b/c it's top-right and bottom-left)
-				} else if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - (2 * (numberOfStates * numberOfHiddenStates - numberOfStates))) < numberOfInputElements) {
+				} else if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - (2 * (numberOfStates * numberOfHiddenStates - numberOfHiddenStates))) < numberOfInputElements) {
 					throw new RuntimeException(errorMsg + "too many values.");
 				}
 			}
@@ -80,9 +80,10 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		// grabbing cells with double transitions (populating doubleTransitionIRMCellsMap), which will be ignored when populating IRM and remain 0's
 		if (numberOfHiddenStates > 0 && disallowDoubleTransitions) {
 			findDoubleTransitionIRMCells(numberOfHiddenStates, totalNumberOfStates);
-			// printDoubleTransitionIRMCellsMap();
+			printDoubleTransitionIRMCellsMap();
 		}
 		
+		List<Integer> hiddenIdxList = new ArrayList<Integer>(); // will store list of hidden idx associated to observed idx (and be rewritten in a loop)
 		for (int i=0; i<totalNumberOfStates; ++i) {
 			for (int j=0; j<totalNumberOfStates; ++j) {
 				if (ignoreDiagonal && j == diagEntry) { 
@@ -90,9 +91,15 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 					continue;
 				} // ignore diagonal element (make it zero)
 				
-				if (numberOfHiddenStates > 0 && disallowDoubleTransitions && doubleTransitionIRMCellsMap.get(i).contains(j)) {
-					setCell(i, j, 0.0);
-					continue;
+				if (numberOfHiddenStates > 0 && disallowDoubleTransitions) {
+					hiddenIdxList = doubleTransitionIRMCellsMap.get(i);
+					
+					if (hiddenIdxList != null) {
+						if (hiddenIdxList.contains(j)) {
+							setCell(i, j, 0.0);
+							continue;
+						}
+					}
 				} // ignore double transitions (make it zero)
 
 				setCell(i, j, matrixContent[q]);
@@ -117,6 +124,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 
 					int h = hiddenObsStateMapper.getHiddenFromObs(i);
 					
+					// this is checking the diagonal of the hidden states sub-matrix (off-diagonal are 0!)
 					if ((j - numberOfStates) != h) {
 						// j is hidden state idx
 						if (doubleTransitionIRMCellsMap.get(i) == null) {
@@ -133,10 +141,10 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 			// recording double transition cells from bottom-left of IRM
 			if (i >= numberOfStates) {
 				int h = i-numberOfStates;
-				Collection<Integer> o = hiddenObsStateMapper.getObsCollFromHidden(h);
+				Collection<Integer> obsIdxColl = hiddenObsStateMapper.getObsCollFromHidden(h);
 				
 				for (int j=0; j < numberOfStates; ++j) {
-					if (!o.contains(j)) {			
+					if (!obsIdxColl.contains(j)) {			
 						if (doubleTransitionIRMCellsMap.get(i) == null) {
 							List<Integer> v = new ArrayList<>();
 							doubleTransitionIRMCellsMap.put(i, v); // recording

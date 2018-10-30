@@ -15,6 +15,7 @@ public class HiddenTraitStash extends TraitSet {
 
 	final public Input<Integer> nStatesInput = new Input<>("numberOfStates", "How many observed states or geographical ranges can affect speciation and extinction.");
 	final public Input<Integer> nHiddenStatesInput = new Input<>("numberOfHiddenStates", "How many hidden states or geographical ranges can affect speciation and extinction.");
+	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.", Validate.REQUIRED);
 	
 	// if Human=1,Chimp=1,Gorilla=1
 	// inheriting taxonValues, map, and values variables
@@ -25,8 +26,8 @@ public class HiddenTraitStash extends TraitSet {
 	private int numberOfStates;
 	private int numberOfHiddenStates;
 	private int totalNumberOfStates;
-	private String[] taxonHiddenValues;
 	protected Map<String, Integer> hiddenMap;
+	private HiddenObservedStateMapper hiddenObsStateMapper;
 	
 	public HiddenTraitStash() {
 		traitNameInput.setRule(Input.Validate.FORBIDDEN);
@@ -41,8 +42,9 @@ public class HiddenTraitStash extends TraitSet {
         List<String> labels = taxaInput.get().asStringList();
         String[] traits = traitsInput.get().split(","); // ["sp1=1", "sp2=1", "sp3=1"]
         taxonValues = new String[labels.size()]; // one observed state string per taxon
-        taxonHiddenValues = new String[labels.size()];
         values = new double[labels.size()];
+        
+        if (numberOfHiddenStates > 0) { hiddenObsStateMapper = HiddenObservedStateMapperInput.get(); }
         
         for (String trait : traits) {
             trait = trait.replaceAll("\\s+", " ");
@@ -110,6 +112,7 @@ public class HiddenTraitStash extends TraitSet {
         }
         
         // populating spNameLksMap
+        int hiddenIdx;
         for (Entry<String, Integer> entry : map.entrySet()) {
         	double[] lks = new double[totalNumberOfStates*2];
 			String spName = entry.getKey();
@@ -119,9 +122,13 @@ public class HiddenTraitStash extends TraitSet {
 			spNameLksMap.get(spName)[totalNumberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
 			
 			if (numberOfHiddenStates > 0) {
-				spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
-			} // hidden states match observed states (if 1 is observed, then 1A, 1B are set to 1)
-
+				hiddenIdx = hiddenObsStateMapper.getHiddenFromObs(Integer.parseInt(taxonValues[spIdx])-1);
+				
+				// only if hiddenIdx is matched with some observed state
+				if (hiddenIdx != -1) {
+					spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates + hiddenIdx] = 1.0;
+				}
+			} // hidden states match observed states according to hiddenObsStateMapper
         }
 	}
 	
