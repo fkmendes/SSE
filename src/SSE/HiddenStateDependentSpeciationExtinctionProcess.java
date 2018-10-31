@@ -33,6 +33,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	final public Input<Tree> treeInput = new Input<>("tree", "Tree object containing tree.", Validate.REQUIRED);
 	final public Input<HiddenTraitStash> hiddenTraitStashInput = new Input<>("hiddenTraitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
 	final public Input<HiddenInstantaneousRateMatrix> hirmInput = new Input<>("hiddenInstantaneousRateMatrix", "HiddenInstantaneousRateMatrix object containing anagenenetic rates for both observed and hidden states.", Validate.REQUIRED);
+	final public Input<LambdaMuAssigner> lambdaMuAssignerInput = new Input<>("lambdaMuAssigner", "LambdaMuAssigner object that assigns distinct parameters to each state.", Validate.REQUIRED);
 	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
 	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
 	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
@@ -46,9 +47,10 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	private Tree tree;
 	private HiddenTraitStash hiddenTraitStash;
 	private HiddenInstantaneousRateMatrix q;
+	private LambdaMuAssigner lambdaMuAssigner;
 	private CladogeneticSpeciationRateStash cladoStash;
-	private Double[] lambda;
-	private Double[] mu;
+	private Double[] lambda; // this guy exists in lambdaMuAssigner... ask someone
+	private Double[] mu; // this guy exists in lambdaMuAssigner... ask someone
 	private Double[] pi; // root eq freqs
 	private int numStates; // number of observed states
 	private int numHiddenStates;
@@ -104,7 +106,8 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		tree = treeInput.get();
 		hiddenTraitStash = hiddenTraitStashInput.get();
 		q = hirmInput.get();
-		mu = muInput.get().getValues();
+		lambdaMuAssigner = lambdaMuAssignerInput.get();
+//		mu = muInput.get().getValues();
 		pi = piInput.get().getValues();
 		numStates = q.getNumStates();
 		numHiddenStates = q.getNumHiddenStates();
@@ -115,7 +118,11 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		if (incorporateCladogenesis) {
 			cladoStash = cladoStashInput.get();
 		}
-		else { lambda = lambdaInput.get().getValues(); }
+		else { 
+			lambda = lambdaMuAssigner.getLambdas();
+			mu = lambdaMuAssigner.getMus();
+//			lambda = lambdaInput.get().getValues();
+		}
 		
 		// Original version V0: fixed-step-size ode-related stuff
 		// numTimeSlices = 1;
@@ -182,13 +189,14 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	
 	@Override
 	public double calculateLogP() {
-		muInput.get().getValues(mu); // every time this method is called, we need to update mu; instead of creating a new vector and assigning that to mu, we can just copy the contents of muInput into it (note that getValues is called with an argument here)
+		mu = lambdaMuAssigner.getMus();
+//		muInput.get().getValues(mu); // every time this method is called, we need to update mu; instead of creating a new vector and assigning that to mu, we can just copy the contents of muInput into it (note that getValues is called with an argument here)
 		piInput.get().getValues(pi); // same as above
-		
-		// TODO: when LambdaMuAssigner is incorporated here, we just call updateLambdasAndMus()
-		// and then catch return into mu and pi above
 
-		if (!incorporateCladogenesis) { lambdaInput.get().getValues(lambda); }
+		if (!incorporateCladogenesis) {
+			lambda = lambdaMuAssigner.getLambdas();
+//			lambdaInput.get().getValues(lambda);
+		}
 
 		// when a biogeographical parameter changes, tree is filthy, we can use threads
 		// otherwise, caching allows us to only recompute part of the tree likelihood, and thread overhead not worth it

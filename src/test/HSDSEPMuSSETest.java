@@ -8,6 +8,8 @@ import SSE.HiddenInstantaneousRateMatrix;
 import SSE.HiddenObservedStateMapper;
 import SSE.HiddenStateDependentSpeciationExtinctionProcess;
 import SSE.HiddenTraitStash;
+import SSE.LambdaMuAssigner;
+
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
@@ -30,36 +32,36 @@ public class HSDSEPMuSSETest {
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		
+		HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper(); // don't need to put anything in it (see later how to make this optional, etc.)
+		
 		HiddenTraitStash hiddenTraitStash = new HiddenTraitStash();
-		hiddenTraitStash.initByName("numberOfStates", numberOfStates, "numberOfHiddenStates", numberOfHiddenStates, "taxa", taxonSet, "value", "sp4=1,sp6=4,sp10=2,sp11=3,sp12=1,sp15=1,sp16=4,sp17=1,sp18=4,sp20=2,sp21=3,sp23=1,sp24=1,sp25=2,sp26=2,sp27=2,sp28=2,sp30=2,sp31=2,sp32=2,sp33=2,sp34=2,sp35=4,sp36=2,sp37=2,sp38=2,sp39=1,sp40=1,sp41=2,sp42=2");
+		hiddenTraitStash.initByName("numberOfStates", numberOfStates, "numberOfHiddenStates", numberOfHiddenStates, "taxa", taxonSet, "hiddenObsStateMapper", stateMapper, "value", "sp4=1,sp6=4,sp10=2,sp11=3,sp12=1,sp15=1,sp16=4,sp17=1,sp18=4,sp20=2,sp21=3,sp23=1,sp24=1,sp25=2,sp26=2,sp27=2,sp28=2,sp30=2,sp31=2,sp32=2,sp33=2,sp34=2,sp35=4,sp36=2,sp37=2,sp38=2,sp39=1,sp40=1,sp41=2,sp42=2");
 		hiddenTraitStash.printLksMap();
 		
+		String lambdasToStatesString = "0,1,2,3"; // first lambda to first state, second lambda to second state, and so no...
 		Double lambda1 = 0.1;
 		Double lambda2 = 0.15;
 		Double lambda3 = 0.2;
 		Double lambda4 = 0.1;
 		Double[] lambdas = { lambda1, lambda2, lambda3, lambda4 };
-		System.out.println("Lambdas: " + Arrays.toString(lambdas));
+		RealParameter lambda = new RealParameter(lambdas);
 		
+		String musToStatesString = "0,1,2,3";
 		Double mu1 = 0.03;
 		Double mu2 = 0.045;
 		Double mu3 = 0.06;
 		Double mu4 = 0.03;
 		Double[] mus = { mu1, mu2, mu3, mu4 };
-		System.out.println("Mus: " + Arrays.toString(mus));
-		
 		RealParameter mu = new RealParameter(mus);
-		mu.initByName("minordimension", 1);
 		
-		RealParameter lambda = new RealParameter(lambdas);
+		LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
+		lambdaMuAssigner.initByName("totalNumberOfStates", 4, "nDistinctLambdas", 4, "nDistinctMus", 4, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu);
+		System.out.println("Lambdas: " + Arrays.toString(lambdaMuAssigner.getLambdas()));
+		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
 
+		boolean disallowDoubleTransitions = false; // not used
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
 		String flatQMatrixString = "0.05 0.05 0.0 0.05 0.0 0.05 0.05 0.0 0.05 0.0 0.05 0.05"; // passing the 0.0s of "double transitions" explicitly (even though there are no hidden states)
-		String hiddenStatesString = "0,1"; // not used
-		HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper();
-		stateMapper.initByName("hiddenStates", hiddenStatesString);
-		stateMapper.makeMaps();
-		boolean disallowDoubleTransitions = false; // not used
 		hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 0, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "hiddenObsStateMapper", stateMapper); // MuSSE
 		
 		System.out.println("Qs:");
@@ -84,6 +86,7 @@ public class HSDSEPMuSSETest {
         hsdsep.initByName(
         		"tree", myTree,
         		"hiddenTraitStash", hiddenTraitStash,
+        		"lambdaMuAssigner", lambdaMuAssigner,
         		"hiddenInstantaneousRateMatrix", hirm,
         		"lambda", lambda,
         		"mu", mu,

@@ -8,6 +8,8 @@ import SSE.HiddenInstantaneousRateMatrix;
 import SSE.HiddenObservedStateMapper;
 import SSE.HiddenStateDependentSpeciationExtinctionProcess;
 import SSE.HiddenTraitStash;
+import SSE.LambdaMuAssigner;
+
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
@@ -38,23 +40,25 @@ public class HSDSEPHiSSETest2 {
 		hiddenTraitStash.initByName("numberOfStates", numberOfStates, "numberOfHiddenStates", numberOfHiddenStates, "taxa", taxonSet, "hiddenObsStateMapper", stateMapper, "value", "sp1=2,sp10=1,sp11=1,sp12=1,sp14=1,sp15=2,sp16=1,sp18=1,sp19=1,sp20=2,sp22=1,sp24=1,sp25=2,sp26=2,sp27=2,sp28=2,sp29=2,sp30=1,sp31=1,sp32=2,sp33=1,sp34=1,sp35=2,sp36=2,sp37=2,sp38=2,sp39=2,sp40=2,sp41=2,sp42=2");
 		hiddenTraitStash.printLksMap();
 		
+		String lambdasToStatesString = "0,1,2";
 		Double lambda1 = 0.08885618; // 0A
 		Double lambda2 = 0.1509081; // 0B
 		Double lambda3 = 3.597251; // 1B
 		Double[] lambdas = { lambda1, lambda2, lambda3 };
-		System.out.println("Lambdas: " + Arrays.toString(lambdas));
+		RealParameter lambda = new RealParameter(lambdas);
 		
+		String musToStatesString = "0,1,2";
 		Double mu1 = 0.0224435; // 0A
 		Double mu2 = 0.05379272; // 0B
 		Double mu3 = 1.809666E-08; // 1B
 		Double[] mus = { mu1, mu2, mu3 };		
-		System.out.println("Mus: " + Arrays.toString(mus));
-		
 		RealParameter mu = new RealParameter(mus);
-		mu.initByName("minordimension", 1);
-		
-		RealParameter lambda = new RealParameter(lambdas);
 
+		LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
+		lambdaMuAssigner.initByName("totalNumberOfStates", 3, "nDistinctLambdas", 3, "nDistinctMus", 3, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu);
+		System.out.println("Lambdas: " + Arrays.toString(lambdaMuAssigner.getLambdas()));
+		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
+		
 		boolean disallowDoubleTransitions = true;
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
 		String flatQMatrixString = "0.02597671 0.04404249 2.061154E-09 4.59653214"; // test 1 
@@ -82,6 +86,7 @@ public class HSDSEPHiSSETest2 {
         hsdsep.initByName(
         		"tree", myTree,
         		"hiddenTraitStash", hiddenTraitStash,
+        		"lambdaMuAssigner", lambdaMuAssigner,
         		"hiddenInstantaneousRateMatrix", hirm,
         		"lambda", lambda,
         		"mu", mu,
@@ -96,6 +101,6 @@ public class HSDSEPHiSSETest2 {
 
 	@Test
 	public void againstDiversitreeHiSSE() {
-		Assert.assertEquals(-5, 5, EPSILON); // difference due to precision and rounding
+		Assert.assertEquals(-100.67, negLnl, EPSILON); // difference due to precision and rounding
 	}
 }
