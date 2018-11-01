@@ -1,6 +1,5 @@
 package SSE;
 
-import java.util.Arrays;
 import java.util.regex.Pattern;
 import beast.core.BEASTObject;
 import beast.core.Input;
@@ -10,12 +9,12 @@ import beast.core.parameter.RealParameter;
 public class LambdaMuAssigner extends BEASTObject {
 
 	final public Input<Integer> TotalNstatesInput = new Input<>("totalNumberOfStates", "How many states (observed + hidden) or geographical ranges can affect speciation and extinction.");
-	final public Input<Integer> NDistinctLambdasInput = new Input<>("nDistinctLambdas", "How many distinct lambda values.");
 	final public Input<Integer> NDistinctMusInput = new Input<>("nDistinctMus", "How many distinct mu values.");
-	final public Input<String> LambdasToStatesAssignerStringInput = new Input<>("lambdasToStates", "Comma-separated integer string, one lambda per state.");
 	final public Input<String> MusToStatesAssignerStringInput = new Input<>("musToStates", "Comma-separated integer string, one mu per state.");
 	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
 	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
+	final public Input<String> LambdasToStatesAssignerStringInput = new Input<>("lambdasToStates", "Comma-separated integer string, one lambda per state.", Validate.XOR, cladoStashInput);
+	final public Input<Integer> NDistinctLambdasInput = new Input<>("nDistinctLambdas", "How many distinct lambda values.", Validate.XOR, cladoStashInput);
 	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
 	
 	private int totalNumberOfStates;
@@ -33,29 +32,29 @@ public class LambdaMuAssigner extends BEASTObject {
 		
 	@Override
 	public void initAndValidate() {
+		Pattern comma = Pattern.compile(",");
 		totalNumberOfStates = TotalNstatesInput.get();
-		lambda = new Double[totalNumberOfStates];
-		mu = new Double[totalNumberOfStates];
 		
-		numberOfDistinctLambdas = NDistinctLambdasInput.get();
-		distinctLambdas = new Double[numberOfDistinctLambdas];
+		// no incorporate cladogenesis
+		if (cladoStashInput.get() == null) {
+			lambda = new Double[totalNumberOfStates];
+			numberOfDistinctLambdas = NDistinctLambdasInput.get();
+			distinctLambdas = new Double[numberOfDistinctLambdas];
+			lambdaToStatesString = LambdasToStatesAssignerStringInput.get();
+			lambdaAssignments = comma.splitAsStream(lambdaToStatesString).mapToInt(Integer::parseInt).toArray(); // convert comma-separated string into array of ints
+			updateLambdasNoClado();
+		}
+		
+		mu = new Double[totalNumberOfStates];
 		numberOfDistinctMus = NDistinctMusInput.get();
 		distinctMus = new Double[numberOfDistinctMus];
-		
-		Pattern comma = Pattern.compile(",");
-		
-		lambdaToStatesString = LambdasToStatesAssignerStringInput.get();
-		lambdaAssignments = comma.splitAsStream(lambdaToStatesString).mapToInt(Integer::parseInt).toArray(); // convert comma-separated string into array of ints
-		
 		muToStatesString = MusToStatesAssignerStringInput.get();
 		muAssignments = comma.splitAsStream(muToStatesString).mapToInt(Integer::parseInt).toArray();
 		// muAssignments = comma.splitAsStream(muToStatesString).map(Double::parseDouble).toArray(Double[]::new); // if Double[]
-		
-		 updateLambdas();
-		 updateMus();
+		updateMus();
 	}
 
-	public void updateLambdas() {
+	public void updateLambdasNoClado() {
 		// if lambdas were operated on, things are dirty, we need to update
 		lambdaInput.get().getValues(distinctLambdas); // not creating new object, just writing on it
 					
@@ -83,7 +82,7 @@ public class LambdaMuAssigner extends BEASTObject {
 	public Double[] getLambdas() {
 		// if lambdas were operated on, things are dirty, we need to update
 		if (assignerDirty) {
-			updateLambdas();
+			updateLambdasNoClado();
 		}
 		return lambda;
 	}

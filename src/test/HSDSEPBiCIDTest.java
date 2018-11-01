@@ -19,7 +19,7 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 
-public class HSDSEPCIDTest {
+public class HSDSEPBiCIDTest {
 	final static double EPSILON = 1E-4;
 	private double negLnl;
 
