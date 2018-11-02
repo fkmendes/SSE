@@ -1,12 +1,12 @@
 package SSE;
 
 import java.util.regex.Pattern;
-import beast.core.BEASTObject;
+import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 
-public class LambdaMuAssigner extends BEASTObject {
+public class LambdaMuAssigner extends CalculationNode {
 
 	final public Input<Integer> TotalNstatesInput = new Input<>("totalNumberOfStates", "How many states (observed + hidden) or geographical ranges can affect speciation and extinction.");
 	final public Input<Integer> NDistinctMusInput = new Input<>("nDistinctMus", "How many distinct mu values.");
@@ -32,6 +32,10 @@ public class LambdaMuAssigner extends BEASTObject {
 		
 	@Override
 	public void initAndValidate() {
+		populateAssigner();
+	}
+
+	public void populateAssigner() {
 		Pattern comma = Pattern.compile(",");
 		totalNumberOfStates = TotalNstatesInput.get();
 		
@@ -44,16 +48,16 @@ public class LambdaMuAssigner extends BEASTObject {
 			lambdaAssignments = comma.splitAsStream(lambdaToStatesString).mapToInt(Integer::parseInt).toArray(); // convert comma-separated string into array of ints
 			updateLambdasNoClado();
 		}
-		
+				
 		mu = new Double[totalNumberOfStates];
 		numberOfDistinctMus = NDistinctMusInput.get();
 		distinctMus = new Double[numberOfDistinctMus];
 		muToStatesString = MusToStatesAssignerStringInput.get();
 		muAssignments = comma.splitAsStream(muToStatesString).mapToInt(Integer::parseInt).toArray();
-		// muAssignments = comma.splitAsStream(muToStatesString).map(Double::parseDouble).toArray(Double[]::new); // if Double[]
+//		muAssignments = comma.splitAsStream(muToStatesString).map(Double::parseDouble).toArray(Double[]::new); // if Double[]
 		updateMus();
 	}
-
+	
 	public void updateLambdasNoClado() {
 		// if lambdas were operated on, things are dirty, we need to update
 		lambdaInput.get().getValues(distinctLambdas); // not creating new object, just writing on it
@@ -93,5 +97,15 @@ public class LambdaMuAssigner extends BEASTObject {
 			updateMus();
 		}
 		return mu;
+	}
+	
+	protected boolean requiresRecalculation() {
+		assignerDirty = true;
+		return super.requiresRecalculation();
+	}
+
+	protected void restore() {
+		populateAssigner();
+		super.restore();
 	}
 }

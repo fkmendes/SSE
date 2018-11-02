@@ -60,9 +60,10 @@ public class HSDSEPBiCIDTest {
 		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
 		
 		boolean disallowDoubleTransitions = true;
+		int symmetrifyAcrossDiagonal = -1;
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
 		String flatQMatrixString = "3.054604E-02 0.129056368 2.061154E-09 2.001798E-01 5.421624E-02 2.061154E-09 2.061154E-09 0.008978002"; 
-		hirm.initByName("numberOfStates", 2, "numberOfHiddenStates", 2, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "hiddenObsStateMapper", stateMapper);
+		hirm.initByName("numberOfStates", 2, "numberOfHiddenStates", 2, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, "hiddenObsStateMapper", stateMapper);
 		
 		System.out.println("Qs:");
 		hirm.printMatrix();

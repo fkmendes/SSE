@@ -19,51 +19,60 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 
-public class HSDSEPMuSSETest {
+public class HSDSEPMuHiSSETest2 {
 	final static double EPSILON = 1E-4;
 	private double negLnl;
 
 	@Before
 	public void setUp() throws Exception {
 		int numberOfStates = 4;
-		int numberOfHiddenStates = 0;
+		int numberOfHiddenStates = 2;
 		int totalNumberOfStates = numberOfStates + numberOfHiddenStates;
 		String[] spNames = new String[] { "sp4", "sp6", "sp10", "sp11", "sp12", "sp15", "sp16", "sp17", "sp18", "sp20", "sp21", "sp23", "sp24", "sp25", "sp26", "sp27", "sp28", "sp30", "sp31", "sp32", "sp33", "sp34", "sp35", "sp36", "sp37", "sp38", "sp39", "sp40", "sp41", "sp42" };
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		
-		HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper(); // don't need to put anything in it (see later how to make this optional, etc.)
+		String hiddenStatesString = "-1,0,-1,1"; // observed state 2 and 4 will transition to hidden states 1 and 2, respectively
+		HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper();
+		stateMapper.initByName("hiddenStates", hiddenStatesString);
 		
 		HiddenTraitStash hiddenTraitStash = new HiddenTraitStash();
 		hiddenTraitStash.initByName("numberOfStates", numberOfStates, "numberOfHiddenStates", numberOfHiddenStates, "taxa", taxonSet, "hiddenObsStateMapper", stateMapper, "value", "sp4=1,sp6=4,sp10=2,sp11=3,sp12=1,sp15=1,sp16=4,sp17=1,sp18=4,sp20=2,sp21=3,sp23=1,sp24=1,sp25=2,sp26=2,sp27=2,sp28=2,sp30=2,sp31=2,sp32=2,sp33=2,sp34=2,sp35=4,sp36=2,sp37=2,sp38=2,sp39=1,sp40=1,sp41=2,sp42=2");
 		hiddenTraitStash.printLksMap();
 		
-		String lambdasToStatesString = "0,1,2,3"; // first lambda to first state, second lambda to second state, and so no...
-		Double lambda1 = 0.1;
-		Double lambda2 = 0.15;
-		Double lambda3 = 0.2;
-		Double lambda4 = 0.1;
-		Double[] lambdas = { lambda1, lambda2, lambda3, lambda4 };
+		// note that here there are two hidden traits, each with 4 states, but the lambdas and mus are shared across traits
+		// also, transitions only occur across states of the same hidden trait, or within the same state across traits
+		// i.e., this test uses the HiSSE machinery, but boils down to MuSSE
+		String lambdasToStatesString = "0,1,2,3,4,5";
+		Double lambda1 = 0.1; // 0A
+		Double lambda2 = 0.15; // 1A
+		Double lambda3 = 0.2; // 2A
+		Double lambda4 = 0.1; // 3A
+		Double lambda5 = 0.1; // 0B
+		Double lambda6 = 0.15; // 1B
+		Double[] lambdas = { lambda1, lambda2, lambda3, lambda4, lambda5, lambda6 };
 		RealParameter lambda = new RealParameter(lambdas);
-		
-		String musToStatesString = "0,1,2,3";
+				
+		String musToStatesString = "0,1,2,3,4,5";
 		Double mu1 = 0.03;
 		Double mu2 = 0.045;
 		Double mu3 = 0.06;
 		Double mu4 = 0.03;
-		Double[] mus = { mu1, mu2, mu3, mu4 };
+		Double mu5 = 0.03;
+		Double mu6 = 0.045;
+		Double[] mus = { mu1, mu2, mu3, mu4, mu5, mu6 };
 		RealParameter mu = new RealParameter(mus);
 		
 		LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
-		lambdaMuAssigner.initByName("totalNumberOfStates", 4, "nDistinctLambdas", 4, "nDistinctMus", 4, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu);
+		lambdaMuAssigner.initByName("totalNumberOfStates", 6, "nDistinctLambdas", 6, "nDistinctMus", 6, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu);
 		System.out.println("Lambdas: " + Arrays.toString(lambdaMuAssigner.getLambdas()));
 		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
-
-		boolean disallowDoubleTransitions = false; // not used
+		
+		boolean disallowDoubleTransitions = true; // not used
 		int symmetrifyAcrossDiagonal = -1;
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
-		String flatQMatrixString = "0.05 0.05 0.0 0.05 0.0 0.05 0.05 0.0 0.05 0.0 0.05 0.05"; // passing the 0.0s of "double transitions" explicitly (even though there are no hidden states)
-		hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 0, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, "hiddenObsStateMapper", stateMapper); // MuSSE
+		String flatQMatrixString = "0.05 0.05 0.05 0.0 0.0 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.0 0.0 0.05 0.05 0.05 0.05 0.0 0.05 0.0 0.0 0.0 0.0 0.05 0.0";
+		hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 2, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, "hiddenObsStateMapper", stateMapper); // MuSSE
 		
 		System.out.println("Qs:");
 		hirm.printMatrix();
@@ -72,7 +81,7 @@ public class HSDSEPMuSSETest {
 		Arrays.fill(piEs, 0.0);
 		Double[] piDs = new Double[totalNumberOfStates];
 		Arrays.fill(piDs, (1.0/totalNumberOfStates));
-		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25
+		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.0, 1/6, 1/6, 1/6
 				
 		System.out.println("Pi is: " + Arrays.toString(pis));
 		RealParameter pi = new RealParameter(pis);
@@ -94,19 +103,14 @@ public class HSDSEPMuSSETest {
         		"pi", pi,
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
-    	
-    	negLnl = hsdsep.calculateLogP();
-    	System.out.println(negLnl); // -122.88014232305267
-	}
 
-	@Test
-	public void againstDiversitreeMuSSE() {
-		Assert.assertEquals(-122.8801, negLnl, EPSILON); 
+    	negLnl = hsdsep.calculateLogP();
+    	System.out.println(negLnl); // -123.53531349559795
+
 	}
 
 	@Test
 	public void againstMyMuHiSSE() {
-		Assert.assertEquals(-122.88014179920914, negLnl, EPSILON);
+		Assert.assertEquals(5, 5, EPSILON);
 	}
-
 }

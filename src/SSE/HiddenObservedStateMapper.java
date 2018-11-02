@@ -32,13 +32,13 @@ public class HiddenObservedStateMapper extends BEASTObject {
 			obs2HiddenMap.put(i, Integer.parseInt(hiddenStateStrings[i]));
 		}
 		
-		// printObs2HiddenMap(); // for debugging
+		printObs2HiddenMap(); // for debugging
 		
 		for (Entry<Integer, Integer> entry: obs2HiddenMap.entrySet()) {
 			hidden2ObsMap.put(entry.getValue(), entry.getKey());
 		}
 		
-		// printHidden2ObsMap(); // for debugging
+		printHidden2ObsMap(); // for debugging
 
 	}
 	

@@ -129,7 +129,7 @@ public class HiddenTraitStash extends TraitSet {
 					spNameLksMap.get(spName)[totalNumberOfStates + numberOfStates + hiddenIdx] = 1.0;
 				}
 			} // hidden states match observed states according to hiddenObsStateMapper
-        }
+        }        
 	}
 	
 	// getters and setters

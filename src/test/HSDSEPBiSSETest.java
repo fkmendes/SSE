@@ -8,11 +8,7 @@ import SSE.HiddenInstantaneousRateMatrix;
 import SSE.HiddenObservedStateMapper;
 import SSE.HiddenStateDependentSpeciationExtinctionProcess;
 import SSE.HiddenTraitStash;
-import SSE.InstantaneousRateMatrix;
 import SSE.LambdaMuAssigner;
-import SSE.StateDependentSpeciationExtinctionProcess;
-import SSE.TraitStash;
-
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
@@ -61,9 +57,10 @@ public class HSDSEPBiSSETest {
 		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
 		
 		boolean disallowDoubleTransitions = false; // not used
+		int symmetrifyAcrossDiagonal = -1; // not used
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
 		String flatQMatrixString = "0.05 0.05"; 
-		hirm.initByName("numberOfStates", 2, "numberOfHiddenStates", 0, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "hiddenObsStateMapper", stateMapper);
+		hirm.initByName("numberOfStates", 2, "numberOfHiddenStates", 0, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, "hiddenObsStateMapper", stateMapper);
 		
 		System.out.println("Qs:");
 		hirm.printMatrix();

@@ -73,9 +73,10 @@ public class HSDSEPMuHiSSETest {
 		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
 		
 		boolean disallowDoubleTransitions = true; // not used
+		int symmetrifyAcrossDiagonal = -1;
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
 		String flatQMatrixString = "0.05 0.05 0.0 1.0 0.05 0.0 0.05 1.0 0.05 0.0 0.05 1.0 0.0 0.05 0.05 1.0 1.0 0.05 0.05 0.0 1.0 0.05 0.0 0.05 1.0 0.05 0.0 0.05 1.0 0.0 0.05 0.05";
-		hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 4, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "hiddenObsStateMapper", stateMapper); // MuSSE
+		hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 4, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, "hiddenObsStateMapper", stateMapper); // MuSSE
 		
 		System.out.println("Qs:");
 		hirm.printMatrix();

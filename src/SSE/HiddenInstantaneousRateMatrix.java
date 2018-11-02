@@ -15,22 +15,28 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 
+/*
+ * Note: getCell is where dirty check is done
+ */
 public class HiddenInstantaneousRateMatrix extends CalculationNode {
 
 	final public Input<Integer> NstatesInput = new Input<>("numberOfStates", "How many states or geographical ranges can affect speciation and extinction.");
 	final public Input<Integer> NHiddenStatesInput = new Input<>("numberOfHiddenStates", "How many hidden states or geographical ranges can affect speciation and extinction.");
 	final public Input<RealParameter> FlatQmatrixInput = new Input<>("flatQMatrix", "Array (matrix whose rows were pasted) containing the instantaneous transition rate between character states.");
 	final public Input<Boolean> DisallowDoubleTransitionsInput = new Input<>("disallowDoubleTransitions", "Whether or not to set double transition parameters to zero.", Validate.REQUIRED);
+	final public Input<Integer> SymmetrifyAcrossDiagonalInput = new Input<>("symmetrifyAcrossDiagonal", "Whether or not to set transition from observed to hidden the same as transitions from hidden to observed.", Validate.REQUIRED);
 	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.", Validate.REQUIRED);
 	
 	private int numberOfStates; // number of observed states (never changes)
 	private int numberOfHiddenStates;
 	private int totalNumberOfStates;
 	private boolean disallowDoubleTransitions;
+	private int symmetrifyAcrossDiagonalStateIdx;
 	private HiddenObservedStateMapper hiddenObsStateMapper;
 	private Map<Integer, List<Integer>> doubleTransitionIRMCellsMap = new HashMap<>();
 	private boolean ignoreDiagonal = true; // right now, always true (we never query Qij for i=j in SSEODE)
 	private boolean irmDirty = true;
+	private Double[] matrixContent; // these transition rates will be used to populate 'q' 2D-array
 	private Double[][] q;
 	
 	@Override
@@ -42,13 +48,14 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 			hiddenObsStateMapper = HiddenObservedStateMapperInput.get();
 		}
 
-		populateIRM(ignoreDiagonal, disallowDoubleTransitions);
+		symmetrifyAcrossDiagonalStateIdx = SymmetrifyAcrossDiagonalInput.get(); // if -1, no symmetrifying done
+		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx);
 				
 		// Q.initByName("minordimension", numberOfStates);
 	}
 		
-	public void populateIRM(boolean ignoreDiagonal, boolean disallowDoubleTransitions) {
-		Double[] matrixContent = FlatQmatrixInput.get().getValues();
+	public void populateIRM(boolean ignoreDiagonal, boolean disallowDoubleTransitions, int symmetrifyAcrossDiagonal) {
+		matrixContent = FlatQmatrixInput.get().getValues();
 		numberOfHiddenStates = NHiddenStatesInput.get(); // when rjMCMC implemented, this can change at different steps
 		totalNumberOfStates = numberOfStates + numberOfHiddenStates; // this will also change as a result
 		q = new Double[totalNumberOfStates][totalNumberOfStates]; // and so we need to vary the size of q
@@ -67,8 +74,8 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 				}
 			}
 			
-			else if (numberOfHiddenStates > 0 && disallowDoubleTransitions){
-				String errorMsg = "Tried to fill transition matrix Q (ignoring diagonal elements and also double transitions), but was given ";
+			else if ((numberOfHiddenStates > 0) && (numberOfHiddenStates == numberOfStates) && disallowDoubleTransitions){
+				String errorMsg = "Tried to fill transition matrix Q with Nobs=Nhidden (ignoring diagonal elements and also double transitions), but was given ";
 				if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - (2 * (numberOfStates * numberOfHiddenStates - numberOfHiddenStates))) > numberOfInputElements) {
 					throw new RuntimeException(errorMsg + "too few values."); // subtract diagonal and then double transitions (twice b/c it's top-right and bottom-left)
 				} else if (((totalNumberOfStates) * (totalNumberOfStates) - (totalNumberOfStates) - (2 * (numberOfStates * numberOfHiddenStates - numberOfHiddenStates))) < numberOfInputElements) {
@@ -109,6 +116,11 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 			diagEntry += 1; // index of element we should ignore
 		}
 		
+		// make q_hidden2obs = q_obs2hidden for all states
+		if (symmetrifyAcrossDiagonal != -1) {
+			symmetrifyAcrossDiagonal(symmetrifyAcrossDiagonal);
+		}
+		
 		irmDirty = false; // after re-population of IRM, things are clean
 	}
 	
@@ -122,33 +134,38 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 				for (int j=numberOfStates; j<totalNumberOfStates; ++j) {
 					// j-th col
 
-					int h = hiddenObsStateMapper.getHiddenFromObs(i);
+					int h = hiddenObsStateMapper.getHiddenFromObs(i); // hidden state idx
 					
 					// this is checking the diagonal of the hidden states sub-matrix (off-diagonal are 0!)
-					if ((j - numberOfStates) != h) {
+					// if double transition; or if Nhidden < Nobs, and this obs never transitions into a hidden state (h == -1)
+					if ((j - numberOfStates) != h || h == -1) {
 						// j is hidden state idx
 						if (doubleTransitionIRMCellsMap.get(i) == null) {
 							List<Integer> v = new ArrayList<>();
 							doubleTransitionIRMCellsMap.put(i, v); // recording
 						}
 						doubleTransitionIRMCellsMap.get(i).add(j); // recording
-						
-						// System.out.println("Top-right i=" + i + " j=" + j);
 					}
+					
 				}
 			}
 			
 			// recording double transition cells from bottom-left of IRM
 			if (i >= numberOfStates) {
-				int h = i-numberOfStates;
-				Collection<Integer> obsIdxColl = hiddenObsStateMapper.getObsCollFromHidden(h);
+				int h = i-numberOfStates; // hidden state idx
+				Collection<Integer> obsIdxColl = hiddenObsStateMapper.getObsCollFromHidden(h); // collection of observed state idxs
 				
+				// left cols (j) of the bottom half
 				for (int j=0; j < numberOfStates; ++j) {
-					if (!obsIdxColl.contains(j)) {			
+					/* the observed states that never transition to/from hidden states are taken care of automatically below,
+					 * as their indexes will not be obsIdxColl
+					 */
+					if (!obsIdxColl.contains(j)) {		
 						if (doubleTransitionIRMCellsMap.get(i) == null) {
 							List<Integer> v = new ArrayList<>();
 							doubleTransitionIRMCellsMap.put(i, v); // recording
 						}
+						
 						doubleTransitionIRMCellsMap.get(i).add(j); // recording
 					}
 
@@ -156,6 +173,22 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 				}
 			}
 		}
+					
+	}
+	
+	/* necessary for the intermediate step in rjMCMC */
+	public void symmetrifyAcrossDiagonal(int obsStateToSymmIdx) {
+		// top-right
+		for (int col = numberOfStates; col < totalNumberOfStates; ++col) {
+			if (q[obsStateToSymmIdx][col] > 0.0) {
+				setCell(col, obsStateToSymmIdx, q[obsStateToSymmIdx][col]);
+			}
+		}
+//		for (int i = 0; i<totalNumberOfStates; ++i) {
+//			for (int j = 0; j<totalNumberOfStates; ++j) {
+//				setCell(j, i, q[i][j]);
+//			}
+//		}
 	}
 	
 	public void setCell(int from, int to, double prob) {
@@ -179,7 +212,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	public double getCell(int from, int to, double rate) {
 		// return Q.getMatrixValue(from, to) * rate;
 		if (irmDirty) {
-			populateIRM(ignoreDiagonal, disallowDoubleTransitions); // only re-populate IRM if some transition rate was operated on
+			populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx); // only re-populate IRM if some transition rate was operated on
 		}
 		return q[from][to] * rate;
 	}
@@ -212,7 +245,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	}
 
 	protected void restore() {
-		populateIRM(ignoreDiagonal, disallowDoubleTransitions);
+		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx);
 		super.restore();
 	}
 }
