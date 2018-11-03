@@ -1,4 +1,4 @@
-// TODO this
+//
 /*
 Compare posterior probabilities at all internal nodes for drawJoint and drawStochastic
  */

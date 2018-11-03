@@ -7,12 +7,8 @@ Do this for many trees with Joint and Stoc. Our accuracy better be 95%. (or what
  */
 package src.test;
 
-import SSE.CladogeneticSpeciationRateStash;
+import SSE.*;
 import SSE.CladoTriplet.speciationType;
-import SSE.CladoTriplet;
-import SSE.InstantaneousRateMatrix;
-import SSE.StateDependentSpeciationExtinctionProcess;
-import SSE.TraitStash;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
@@ -22,21 +18,18 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.lang.reflect.Array;
 import java.util.*;
 
-public class SDSEPSampleCLaSSECredibleSetTest {
+public class SDSEPSampleCLaSSECredibleSetLargeTest {
 	final static double EPSILON = 1e-2;
-	final static int numTrials = 10000;
+	final static int numTrials = 5000;
+	final int numberOfStates = 8;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
 	public double runExperiment(String treeStr, String spAttr, String[] spNames,
 								int numTimeSlices, String[] divLbls, String[] divStates,
 								boolean useJoint, double credibleThreshold) throws Exception {
 		// initializing states
-		int numberOfStates = 4; // CLaSSE
 		int numSpecies = spNames.length;
 		int numNodes = numSpecies * 2 - 1;
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
@@ -51,10 +44,10 @@ public class SDSEPSampleCLaSSECredibleSetTest {
 		double vicProb = 1.0 / 6.0;
 		double jProb = 0.0; // no jump dispersal
 
-		double birthRate = 0.32222224;
+		double birthRate = 0.4;
 		double deathRate = 0.1; // DEC-like
 
-		Double[] mus = {deathRate, deathRate, deathRate, deathRate };
+		Double[] mus = {deathRate, deathRate, deathRate, deathRate, deathRate, deathRate, deathRate, deathRate };
 		System.out.println("Mus: " + Arrays.toString(mus));
 		RealParameter mu = new RealParameter(mus);
 		mu.initByName("minordimension", 1);
@@ -87,6 +80,18 @@ public class SDSEPSampleCLaSSECredibleSetTest {
 				"rightChildState", 3,
 				"speciationType", speciationType.SYMPATRY);
 
+		CladoTriplet sTriplet3 = new CladoTriplet();
+		sTriplet3.initByName("parentState", 5,
+				"leftChildState", 5,
+				"rightChildState", 5,
+				"speciationType", speciationType.SYMPATRY);
+
+		CladoTriplet sTriplet4 = new CladoTriplet();
+		sTriplet4.initByName("parentState", 6,
+				"leftChildState", 6,
+				"rightChildState", 6,
+				"speciationType", speciationType.SYMPATRY);
+
 		CladoTriplet jTriplet1 = new CladoTriplet();
 		jTriplet1.initByName("parentState", 2,
 				"leftChildState", 2,
@@ -99,10 +104,34 @@ public class SDSEPSampleCLaSSECredibleSetTest {
 				"rightChildState", 3,
 				"speciationType", speciationType.JUMPDISPERSAL);
 
+		CladoTriplet jTriplet3 = new CladoTriplet();
+		jTriplet3.initByName("parentState", 5,
+				"leftChildState", 5,
+				"rightChildState", 6,
+				"speciationType", speciationType.JUMPDISPERSAL);
+
+		CladoTriplet jTriplet4 = new CladoTriplet();
+		jTriplet4.initByName("parentState", 6,
+				"leftChildState", 6,
+				"rightChildState", 5,
+				"speciationType", speciationType.JUMPDISPERSAL);
+
 		CladoTriplet vTriplet1 = new CladoTriplet();
 		vTriplet1.initByName("parentState", 4,
 				"leftChildState", 2,
 				"rightChildState", 3,
+				"speciationType", speciationType.VICARIANCE);
+
+		CladoTriplet vTriplet2 = new CladoTriplet();
+		vTriplet2.initByName("parentState", 7,
+				"leftChildState", 5,
+				"rightChildState", 6,
+				"speciationType", speciationType.VICARIANCE);
+
+		CladoTriplet vTriplet3 = new CladoTriplet();
+		vTriplet3.initByName("parentState", 8,
+				"leftChildState", 7,
+				"rightChildState", 4,
 				"speciationType", speciationType.VICARIANCE);
 
 		CladoTriplet ssTriplet1 = new CladoTriplet();
@@ -117,8 +146,34 @@ public class SDSEPSampleCLaSSECredibleSetTest {
 				"rightChildState", 4,
 				"speciationType", speciationType.SUBSYMPATRY);
 
+		CladoTriplet ssTriplet3 = new CladoTriplet();
+		ssTriplet3.initByName("parentState", 7,
+				"leftChildState", 7,
+				"rightChildState", 5,
+				"speciationType", speciationType.SUBSYMPATRY);
+
+
+		CladoTriplet ssTriplet4 = new CladoTriplet();
+		ssTriplet4.initByName("parentState", 7,
+				"leftChildState", 7,
+				"rightChildState", 6,
+				"speciationType", speciationType.SUBSYMPATRY);
+
+
+		CladoTriplet ssTriplet5 = new CladoTriplet();
+		ssTriplet5.initByName("parentState", 8,
+				"leftChildState", 8,
+				"rightChildState", 4,
+				"speciationType", speciationType.SUBSYMPATRY);
+
+		CladoTriplet ssTriplet6 = new CladoTriplet();
+		ssTriplet6.initByName("parentState", 8,
+				"leftChildState", 8,
+				"rightChildState", 7,
+				"speciationType", speciationType.SUBSYMPATRY);
+
 		List<CladoTriplet> cladoTripletList = new ArrayList<CladoTriplet>();
-		Collections.addAll(cladoTripletList, nullTriplet, sTriplet1, sTriplet2, jTriplet1, jTriplet2, vTriplet1, ssTriplet1, ssTriplet2);
+		Collections.addAll(cladoTripletList, nullTriplet, sTriplet1, sTriplet2, sTriplet3, sTriplet4, jTriplet1, jTriplet2, jTriplet3, jTriplet4, vTriplet1, vTriplet2, vTriplet3, ssTriplet1, ssTriplet2, ssTriplet3, ssTriplet4, ssTriplet5, ssTriplet6);
 
 		CladogeneticSpeciationRateStash csrt = new CladogeneticSpeciationRateStash();
 		csrt.initByName("cladoTriplets", cladoTripletList,
@@ -128,9 +183,29 @@ public class SDSEPSampleCLaSSECredibleSetTest {
 				"jumpRate", jumpSpeciationRate);
 		csrt.printEventMap();
 
+		double defaultRate = 0.01;
 		InstantaneousRateMatrix irm = new InstantaneousRateMatrix();
-		String FlatQMatrixString = "0.0 0.0 0.0 0.01 0.0 0.01 0.01 0.0 0.01 0.0 0.01 0.01";
-		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", FlatQMatrixString);
+		String flatQMatrixString = "";
+		for (int i = 0; i < numberOfStates*numberOfStates - numberOfStates; i++) {
+			flatQMatrixString += "0.0 ";
+		}
+		irm.initByName("numberOfStates", numberOfStates, "flatQMatrix", flatQMatrixString);
+
+		irm.setCell(2 - 1, 1 - 1, defaultRate);
+		irm.setCell(2 - 1, 4 - 1, defaultRate);
+		irm.setCell(3 - 1, 1 - 1, defaultRate);
+		irm.setCell(3 - 1, 4 - 1, defaultRate);
+		irm.setCell(4 - 1, 2 - 1, defaultRate);
+		irm.setCell(4 - 1, 3 - 1, defaultRate);
+
+		irm.setCell(5 - 1, 1 - 1, defaultRate);
+		irm.setCell(5 - 1, 7 - 1, defaultRate);
+		irm.setCell(6 - 1, 1 - 1, defaultRate);
+		irm.setCell(6 - 1, 7 - 1, defaultRate);
+		irm.setCell(7 - 1, 5 - 1, defaultRate);
+		irm.setCell(7 - 1, 6 - 1, defaultRate);
+		irm.setCell(8 - 1, 4 - 1, defaultRate);
+		irm.setCell(8 - 1, 7 - 1, defaultRate);
 		irm.printMatrix();
 
 		Double[] piEs = new Double[numberOfStates];

@@ -2,9 +2,8 @@ package src.test;
 
 import org.junit.Assert;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -257,12 +256,39 @@ public class TestHelper {
             if (credibleSet.isEmpty()) {
                 Assert.fail("The credible set is empty!");
             }
-            int trueState = divMap.get(lbl).intValue() + 1;
+            int trueState = divMap.get(lbl).intValue();
             if (credibleSet.contains(trueState)) {
                 numInside++;
             }
         }
 
         return 1.0 * numInside / numIntNodes;
+    }
+
+    public static String readFirstLine(String filename) throws Exception {
+        BufferedReader br = new BufferedReader(new FileReader(filename));
+        String line;
+        try {
+            line = br.readLine();
+        } finally {
+            br.close();
+        }
+        return line;
+    }
+
+    public static ArrayList<String> readFile(String filename) throws Exception {
+        BufferedReader br = new BufferedReader(new FileReader(filename));
+        ArrayList<String> strArr = new ArrayList<>();
+        try {
+            String line = br.readLine();
+
+            while (line != null) {
+                strArr.add(line);
+                line = br.readLine();
+            }
+        } finally {
+            br.close();
+        }
+        return strArr;
     }
 }
