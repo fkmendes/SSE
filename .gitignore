@@ -7,4 +7,5 @@
 out/*
 *.state
 plots/*
+data/*
 
