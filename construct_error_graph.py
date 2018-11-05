@@ -22,6 +22,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Generate asr validation", description="Generates ancestral state reconstruction figures that validate method.")
     parser.add_argument("-n", "--csv-name", action="store", dest="csv", default=None, type=str, help="CSV file containing post data.")
     parser.add_argument("-l", "--log-scale", action="store", dest="log", default=True, type=bool, help=".")
+    # NOTE THE LOG SCALE FLAG IS NOT WORKING AS INTENDED
     args = parser.parse_args()
 
     plot(args.csv, args.log)

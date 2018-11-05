@@ -45,7 +45,7 @@ public class SDSEPNumericalErrorTest {
 	final static double EPSILON = 1e-2;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
-	int numSamples = 13;
+	int numSamples = 10;
 	int curSample = 0;
 	int[] params = new int[numSamples];
 	double[][] posteriorStocPerParam;
@@ -232,7 +232,7 @@ public class SDSEPNumericalErrorTest {
 		divStates = new String[] {"0","1","1","0","1","1","1","0","0","0","0","0","0","0","1","0","0","0","0","0","0"};
 		divAcc = 0.7619048;
 
-		runWrapper(treeStr, spAttr, spNames, "rb", lambdas, mus, q, divLbls, divStates, divAcc, false, false, true);
+		runWrapper(treeStr, spAttr, spNames, "rb", lambdas, mus, q, divLbls, divStates, divAcc, true, true, false);
 
 
         // Test2

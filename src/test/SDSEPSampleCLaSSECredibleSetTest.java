@@ -198,7 +198,7 @@ public class SDSEPSampleCLaSSECredibleSetTest {
 
 	@Test
 	public void test() throws Exception {
-	    String baseTestName = "data/large/large";
+	    String baseTestName = "data/test/test"; // dir + exp name
 	    int numTrees = 100;
 		double credibleThreshold = 0.7;
 
