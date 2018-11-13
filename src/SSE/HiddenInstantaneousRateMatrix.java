@@ -1,5 +1,6 @@
 package SSE;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -122,6 +123,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 				if (realParameterToQCell.get(realParameterIdx) == null) {
 					int[] nonZeroIJ = {i, j};
 					realParameterToQCell.put(realParameterIdx, nonZeroIJ);
+					// System.out.println("Recording RealParameter transition index " + realParameterIdx + " and its cell " + Arrays.toString(nonZeroIJ));
 				}
 				
 				realParameterIdx += 1;
@@ -234,6 +236,15 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	
 	public Map<Integer, int[]> getRealParameterToQCellMap() {
 		return realParameterToQCell;
+	}
+	
+	/*
+	 * only used by masquerade ball (not by ODE),
+	 * so does not check for dirtyness nor populateIRM
+	 * (getCell is the method that does that because that's what the ODE uses)
+	 */
+	public Double[][] getQ() {
+		return q;
 	}
 	
 	// helper

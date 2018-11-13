@@ -7,10 +7,6 @@ import beast.core.parameter.RealParameter;
 public class MasqueradeBallTestDriver {
 
 	public static void main(String[] args) {
-		int numberOfStates = 4;
-		int numberOfHiddenStates = 4;
-		int totalNumberOfStates = numberOfStates + numberOfHiddenStates;
-		
 		String hiddenStatesString = "0,1,2,3";
 		HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper();
 		stateMapper.initByName("hiddenStates", hiddenStatesString);
@@ -65,8 +61,10 @@ public class MasqueradeBallTestDriver {
 		RealParameter mask6 = new RealParameter(mask6Array);
 		
 		MasqueradeBall maskBall = new MasqueradeBall();
-		maskBall.initByName("modelMask", mask1, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
+		maskBall.initByName("modelMask", mask3, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
 		System.out.println(Arrays.toString(maskBall.getLambdas()));
+		System.out.println(Arrays.toString(maskBall.getMus()));
+		
 //		maskBall.initByName("modelMask", mask6, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
 //		System.out.println(Arrays.toString(maskBall.getLambdas()));
 	}

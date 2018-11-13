@@ -1,9 +1,9 @@
 package SSE;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import beast.core.CalculationNode;
 import beast.core.Input;
@@ -23,9 +23,8 @@ public class MasqueradeBall extends CalculationNode {
 	private int numberOfHiddenStatesInMask; // number of observed states
 	private int totalNumberOfStates;
 	
-	private Double[][] q;
 	private Double[] matrixContent;
-	private List<Integer> hiddenStateIdxToIgnore;
+	private Set<Integer> hiddenStateIdxToIgnore;
 	private Map<Integer, int[]> realParameterToQCell;
 	private HiddenInstantaneousRateMatrix hirm;
 	
@@ -56,7 +55,7 @@ public class MasqueradeBall extends CalculationNode {
 		 * < (mask.length-1) because we do not care about CID indicator at this point, which would be =(mask.length-1)
 		 */
 		int hiddenStateIdx = 0;
-		hiddenStateIdxToIgnore = new ArrayList<Integer>();
+		hiddenStateIdxToIgnore = new HashSet<Integer>();
 		for (int i = 0; i < mask.length-1; ++i) {
 			double maskItem = mask[i];
 			
@@ -81,8 +80,8 @@ public class MasqueradeBall extends CalculationNode {
 			}
 		}
 										
-		System.out.println("Hidden state indexes to ignore: " + Arrays.toString(hiddenStateIdxToIgnore.toArray()));
-		System.out.println("Hidden to Obs map: " + Arrays.toString(hiddenStatesInFocalOrder));
+		// System.out.println("Hidden state indexes to ignore: " + Arrays.toString(hiddenStateIdxToIgnore.toArray()));
+		// System.out.println("Hidden to Obs map: " + Arrays.toString(hiddenStatesInFocalOrder));
 		
 		numberOfHiddenStatesInMask = 0;
 		for (int i=0; i<numberOfStates; ++i) {
@@ -117,10 +116,12 @@ public class MasqueradeBall extends CalculationNode {
 	// apply mask steps
 	private void updateHIRM() { 
 		matrixContent = hirm.getMatrixContent();
-		int newMatrixContentLength = (int) (matrixContent.length - hiddenStateIdxToIgnore.size() - Math.pow(hiddenStateIdxToIgnore.size(), 2)); // 2* because it's top-right and bottom-left of hidden transition matrix Q
+		// int newMatrixContentLength = (int) (matrixContent.length - hiddenStateIdxToIgnore.size() - Math.pow(hiddenStateIdxToIgnore.size(), 2)); // 2* because it's top-right and bottom-left of hidden transition matrix Q
+		int newMatrixContentLength = (int) (Math.pow(numberOfStates, 2) - numberOfStates + // top-left
+				numberOfHiddenStatesInMask*2 + // upper-right and bottom-left
+				(Math.pow(numberOfHiddenStatesInMask, 2) - numberOfHiddenStatesInMask)); // bottom-right
 		Double[] newMatrixContent = new Double[newMatrixContentLength];
-		realParameterToQCell = hirm.getRealParameterToQCellMap();
-		
+		realParameterToQCell = hirm.getRealParameterToQCellMap();	
 		totalNumberOfStates = numberOfStates + numberOfHiddenStatesInMask;
 		
 		System.out.println("Number of observed states = " + numberOfStates);
@@ -132,16 +133,13 @@ public class MasqueradeBall extends CalculationNode {
 		int j = 0;
 		for (int i=0; i<matrixContent.length; ++i) {
 			int[] qCell = realParameterToQCell.get(i); // for each of the RealParameters, get the cell they occupy in Q matrix
-			System.out.println(Arrays.toString(qCell));
 			
 			// now see if either row or column of that cell has a hidden state that is inactive; if active, include that (ith) RealParameter in the newMatrixContent
-			if (!hiddenStateIdxToIgnore.contains(qCell[0]) || !hiddenStateIdxToIgnore.contains(qCell[1])) {  
-//				newMatrixContent.add(matrixContent[i]);
+			if ( !(hiddenStateIdxToIgnore.contains(qCell[0]) || hiddenStateIdxToIgnore.contains(qCell[1])) ) {  
 				newMatrixContent[j] = matrixContent[i];
 				j++;
 			}
 		}
-
 		
 		System.out.println(Arrays.toString(matrixContent));
 		
@@ -150,6 +148,7 @@ public class MasqueradeBall extends CalculationNode {
 		System.out.println("Matrix content I'm feeding into populateIRM: " + Arrays.toString(newMatrixContent));
 		
 		hirm.populateIRM(true, true, 0, numberOfStates, numberOfHiddenStatesInMask, newMatrixContent);
+		
 	}
 	
 	private void updateLambdaMuAssigner() {
@@ -204,10 +203,7 @@ public class MasqueradeBall extends CalculationNode {
 	}
 	
 	// getters
-	public Double[] getLambdas() {
-		
-		// TODO: want to return just the right lambdas (up to totalNumberOfStates) -- will need to update LambdaMuAssigner so it "crops" the return array instead of returning all lambdas it was initialized with
-		
+	public Double[] getLambdas() {		
 		// if lambdas were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
 			applyMask();
@@ -228,7 +224,7 @@ public class MasqueradeBall extends CalculationNode {
 		if (masqueradeBallDirty) {
 			applyMask();
 		}
-		return q;
+		return hirm.getQ();
 	}
 	
 	protected boolean requiresRecalculation() {
