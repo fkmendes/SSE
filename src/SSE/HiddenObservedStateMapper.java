@@ -1,10 +1,11 @@
 package SSE;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.*;
-
+import java.util.regex.Pattern;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -15,21 +16,29 @@ import beast.core.Input;
 public class HiddenObservedStateMapper extends BEASTObject {
 
 	final public Input<String> hiddenStatesInFocalOrderInput = new Input<>("hiddenStates", "Comma-separated integer strings corresponding to hidden states, one per focal states (in the order of focal states).");
-	private Map<Integer, Integer> obs2HiddenMap = new HashMap<>(); // makeMaps populates this
-	private Multimap<Integer, Integer> hidden2ObsMap = HashMultimap.create();
-	// private HashMap<Integer, Integer[]> hidden2ObsMap = new HashMap<>(); // makeMaps populates this
+
+	private Map<Integer, Integer> obs2HiddenMap; // makeMaps populates this
+	private Multimap<Integer, Integer> hidden2ObsMap;
+	private int[] hiddenStateAssignments;
+	Pattern comma;
 	
 	@Override
 	public void initAndValidate() {
+		comma = Pattern.compile(",");
+		String hiddenStateString = hiddenStatesInFocalOrderInput.get();
+//		hiddenStateStrings = hiddenStateString.split(",");
+		hiddenStateAssignments = comma.splitAsStream(hiddenStateString).mapToInt(Integer::parseInt).toArray();
+//		hiddenStateAssignments = Arrays.asList(hiddenStateString).stream().mapToInt(Integer::parseInt).toArray();
 		makeMaps();
 	}
 
 	public void makeMaps() {
-		String hiddenStateString = hiddenStatesInFocalOrderInput.get();
-		String[] hiddenStateStrings = hiddenStateString.split(",");
-	
-		for (int i=0; i<hiddenStateStrings.length; i++) {
-			obs2HiddenMap.put(i, Integer.parseInt(hiddenStateStrings[i]));
+		obs2HiddenMap = new HashMap<>();
+		hidden2ObsMap = HashMultimap.create();
+		
+		for (int i=0; i<hiddenStateAssignments.length; i++) {
+//			obs2HiddenMap.put(i, Integer.parseInt(hiddenStateStrings[i]));
+			obs2HiddenMap.put(i, hiddenStateAssignments[i]);
 		}
 		
 		printObs2HiddenMap(); // for debugging
@@ -42,7 +51,7 @@ public class HiddenObservedStateMapper extends BEASTObject {
 
 	}
 	
-	// helper
+	// getters
 	public int getHiddenFromObs(int obsIdx) {
 		return obs2HiddenMap.get(obsIdx);
 	}
@@ -51,6 +60,14 @@ public class HiddenObservedStateMapper extends BEASTObject {
 		return hidden2ObsMap.get(hiddenIdx);
 	}
 	
+	// setters
+	public void setHiddenStateStrings(int[] aHiddenStateArray) {
+		hiddenStateAssignments = aHiddenStateArray;
+		System.out.println("Updated hiddenStateAssignments to " + Arrays.toString(hiddenStateAssignments));
+		makeMaps();
+	}
+	
+	// helper
 	public void printObs2HiddenMap() {
 		for (Integer obs: obs2HiddenMap.keySet()) {
 			String obsString = Integer.toString(obs);

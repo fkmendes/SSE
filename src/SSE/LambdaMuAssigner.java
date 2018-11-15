@@ -9,13 +9,13 @@ import beast.core.parameter.RealParameter;
 
 public class LambdaMuAssigner extends CalculationNode {
 
-	final public Input<Integer> TotalNstatesInput = new Input<>("totalNumberOfStates", "How many states (observed + hidden) or geographical ranges can affect speciation and extinction.");
-	final public Input<Integer> NDistinctMusInput = new Input<>("nDistinctMus", "How many distinct mu values.");
-	final public Input<String> MusToStatesAssignerStringInput = new Input<>("musToStates", "Comma-separated integer string, one mu per state.");
+	final public Input<Integer> totalNstatesInput = new Input<>("totalNumberOfStates", "How many states (observed + hidden) or geographical ranges can affect speciation and extinction.");
+	final public Input<Integer> nDistinctMusInput = new Input<>("nDistinctMus", "How many distinct mu values.");
+	final public Input<String> musToStatesAssignerStringInput = new Input<>("musToStates", "Comma-separated integer string, one mu per state.");
 	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
 	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
-	final public Input<String> LambdasToStatesAssignerStringInput = new Input<>("lambdasToStates", "Comma-separated integer string, one lambda per state.", Validate.XOR, cladoStashInput);
-	final public Input<Integer> NDistinctLambdasInput = new Input<>("nDistinctLambdas", "How many distinct lambda values.", Validate.XOR, cladoStashInput);
+	final public Input<String> lambdasToStatesAssignerStringInput = new Input<>("lambdasToStates", "Comma-separated integer string, one lambda per state.", Validate.XOR, cladoStashInput);
+	final public Input<Integer> nDistinctLambdasInput = new Input<>("nDistinctLambdas", "How many distinct lambda values.", Validate.XOR, cladoStashInput);
 	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
 	
 	private int totalNumberOfStates;
@@ -42,16 +42,16 @@ public class LambdaMuAssigner extends CalculationNode {
 	 * called by initAndValidate and getters when assigner is dirty 
 	 */
 	public void populateAssigner() {
-		lambdaToStatesString = LambdasToStatesAssignerStringInput.get();
+		lambdaToStatesString = lambdasToStatesAssignerStringInput.get();
 		lambdaAssignments = comma.splitAsStream(lambdaToStatesString).mapToInt(Integer::parseInt).toArray(); // comma-separated string comes from xml (done only once)
-		muToStatesString = MusToStatesAssignerStringInput.get();
+		muToStatesString = musToStatesAssignerStringInput.get();
 		muAssignments = comma.splitAsStream(muToStatesString).mapToInt(Integer::parseInt).toArray();
 //		muAssignments = comma.splitAsStream(muToStatesString).map(Double::parseDouble).toArray(Double[]::new); // if Double[]
 		lambdasContent = lambdaInput.get().getValues();
 		musContent = muInput.get().getValues();
-		totalNumberOfStates = TotalNstatesInput.get();
-		numberOfDistinctLambdas = NDistinctLambdasInput.get();
-		numberOfDistinctMus = NDistinctMusInput.get();
+		totalNumberOfStates = totalNstatesInput.get();
+		numberOfDistinctLambdas = nDistinctLambdasInput.get();
+		numberOfDistinctMus = nDistinctMusInput.get();
 		
 		// updating lambdas (no incorporate cladogenesis support for now)
 		if (cladoStashInput.get() == null) {
@@ -67,10 +67,12 @@ public class LambdaMuAssigner extends CalculationNode {
 	/*
 	 * called by masquerade ball when applying mask (and updating assigner)
 	 */
-	public void populateAssigner(int totalNStates, int nDistinctLambdas, int nDistinctMus, Double[] aLambdaContent, Double[] aMuContent) {
+	public void populateAssigner(int totalNStates, int nDistinctLambdas, int nDistinctMus, Double[] aLambdaContent, Double[] aMuContent, int[] aLambdaAssignment, int[] aMuAssignment) {
 		totalNumberOfStates = totalNStates;
 		numberOfDistinctLambdas = nDistinctLambdas;
 		numberOfDistinctMus = nDistinctMus;
+		lambdaAssignments = aLambdaAssignment;
+		muAssignments = aMuAssignment;
 		
 		// updating lambdas (no incorporate cladogenesis support for now)
 		if (cladoStashInput.get() == null) {

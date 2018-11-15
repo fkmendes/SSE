@@ -16,7 +16,6 @@ public class MasqueradeBall extends CalculationNode {
 	final public Input<LambdaMuAssigner> lambdaMuAssignerInput = new Input<>("lambdaMuAssigner", "LambdaMuAssigner object that assigns distinct parameters to each state.", Validate.REQUIRED);
 
 	private Double[] mask;
-	private int[] hiddenStatesInFocalOrder;
 	private boolean masqueradeBallDirty = true;
 
 	private int numberOfStates; // number of observed states
@@ -24,6 +23,8 @@ public class MasqueradeBall extends CalculationNode {
 	private int totalNumberOfStates;
 	
 	private Double[] matrixContent;
+	private int[] hiddenToObsAssignment;
+	private int[] obsStatesToSymmetrify;
 	private Set<Integer> hiddenStateIdxToIgnore;
 	private Map<Integer, int[]> realParameterToQCell;
 	private HiddenInstantaneousRateMatrix hirm;
@@ -39,14 +40,16 @@ public class MasqueradeBall extends CalculationNode {
 	@Override
 	public void initAndValidate() {
 		hirm = hirmInput.get(); // this will be done again every time apply mask is called
-		numberOfStates = hirm.getNumStates(); // numberOfStates never changes, so done only once
-		hiddenStatesInFocalOrder = new int[numberOfStates]; // same as above
-		mask = new Double[numberOfStates + 1]; // same as above
+		numberOfStates = hirm.getNumStates(); // numberOfStates never changes, so done only once (same below)
+		hiddenToObsAssignment = new int[numberOfStates];
+		obsStatesToSymmetrify = new int[numberOfStates];
+		mask = new Double[numberOfStates + 1];
 		
 		applyMask();
 	}
 	
-	public void applyMask() {					
+	public void applyMask() {
+		
 		// mask
 		modelMaskInput.get().getValues(mask);
 				
@@ -61,60 +64,57 @@ public class MasqueradeBall extends CalculationNode {
 			
 			// no hidden state for this particular observed state
 			if (maskItem == 0) {
-				hiddenStatesInFocalOrder[i] = -1;
+				hiddenToObsAssignment[i] = -1;
 				hiddenStateIdxToIgnore.add(numberOfStates + i); // used to update both hirm and lambdaMuAssigner
 			}
 								
 			// add hidden state for this particular observed state, but transition from and to are symmetrical
 			if (maskItem == 1) {
-				// int obsStateToSymmetrifyIdx = i;
+				obsStatesToSymmetrify[i] = i;
 				// hirm.symmetrifyAcrossDiagonal(obsStateToSymmetrifyIdx);
-				hiddenStatesInFocalOrder[i] = hiddenStateIdx;
+				hiddenToObsAssignment[i] = hiddenStateIdx;
 				hiddenStateIdx++;
 			};
 								
 			// add hidden state for this particular observed state, with different transition rates
 			if (maskItem == 2) {
-				hiddenStatesInFocalOrder[i] = hiddenStateIdx;
+				hiddenToObsAssignment[i] = hiddenStateIdx;
 				hiddenStateIdx++;				
 			}
 		}
 										
-		// System.out.println("Hidden state indexes to ignore: " + Arrays.toString(hiddenStateIdxToIgnore.toArray()));
-		// System.out.println("Hidden to Obs map: " + Arrays.toString(hiddenStatesInFocalOrder));
+		System.out.println("Hidden state indexes to ignore: " + Arrays.toString(hiddenStateIdxToIgnore.toArray()));
+		System.out.println("Hidden to Obs map: " + Arrays.toString(hiddenToObsAssignment));
 		
 		numberOfHiddenStatesInMask = 0;
 		for (int i=0; i<numberOfStates; ++i) {
-			if (hiddenStatesInFocalOrder[i] != -1 ) {
+			if (hiddenToObsAssignment[i] != -1 ) {
 				numberOfHiddenStatesInMask += 1;
 			}
 		}
 		
 		// transition matrix stuff
-		hirm = hirmInput.get();
-		
-		hirm.printMatrix();
-		
+		// hirm = hirmInput.get();
+		hirm.setHiddenObsStateAssignment(hiddenToObsAssignment); // updating HiddenObservedStateMapper inside hirm	
+
 		updateHIRM();
-		totalNumberOfStates = hirm.getTotalNumStates();
-		
+		for (int obsStateIdx: obsStatesToSymmetrify) {
+			hirm.symmetrifyAcrossDiagonal(obsStateIdx);
+		}
 		hirm.printMatrix();
 		
 		// lambda and mu stuff
+		totalNumberOfStates = hirm.getTotalNumStates();
 		lambdaMuAssigner = lambdaMuAssignerInput.get();
 		lambdaAssignmentArray = new int[totalNumberOfStates];
 		muAssignmentArray = new int[totalNumberOfStates];
-		
 		updateLambdaMuAssigner();
-					
-		lambdaMuAssigner.getLambdas();
-		lambdaMuAssigner.getMus();
 		
 		masqueradeBallDirty = false;
 	}
 	
 	// apply mask steps
-	private void updateHIRM() { 
+	private void updateHIRM() {
 		matrixContent = hirm.getMatrixContent();
 		// int newMatrixContentLength = (int) (matrixContent.length - hiddenStateIdxToIgnore.size() - Math.pow(hiddenStateIdxToIgnore.size(), 2)); // 2* because it's top-right and bottom-left of hidden transition matrix Q
 		int newMatrixContentLength = (int) (Math.pow(numberOfStates, 2) - numberOfStates + // top-left
@@ -133,10 +133,13 @@ public class MasqueradeBall extends CalculationNode {
 		int j = 0;
 		for (int i=0; i<matrixContent.length; ++i) {
 			int[] qCell = realParameterToQCell.get(i); // for each of the RealParameters, get the cell they occupy in Q matrix
+			// System.out.println("qCell = " + Arrays.toString(qCell));
 			
 			// now see if either row or column of that cell has a hidden state that is inactive; if active, include that (ith) RealParameter in the newMatrixContent
 			if ( !(hiddenStateIdxToIgnore.contains(qCell[0]) || hiddenStateIdxToIgnore.contains(qCell[1])) ) {  
+				System.out.println("Printing matrixContent[i] where i=" + i + " = " + matrixContent[i]);
 				newMatrixContent[j] = matrixContent[i];
+				System.out.println("Putting " + i + "th RealParameter of transition rates into newMatrixContent. Its qCell was " + Arrays.toString(qCell));
 				j++;
 			}
 		}
@@ -148,7 +151,6 @@ public class MasqueradeBall extends CalculationNode {
 		System.out.println("Matrix content I'm feeding into populateIRM: " + Arrays.toString(newMatrixContent));
 		
 		hirm.populateIRM(true, true, 0, numberOfStates, numberOfHiddenStatesInMask, newMatrixContent);
-		
 	}
 	
 	private void updateLambdaMuAssigner() {
@@ -180,8 +182,10 @@ public class MasqueradeBall extends CalculationNode {
 					muAssignmentArray[i] = 0;
 				}
 				else {
-					lambdaAssignmentArray[i] = 1;
-					muAssignmentArray[i] = 1;
+//					lambdaAssignmentArray[i] = 1;
+//					muAssignmentArray[i] = 1;
+					lambdaAssignmentArray[i] = numberOfStates; // we give the first hidden state lambda to all hidden states
+					muAssignmentArray[i] = numberOfStates;
 				}
 			}
 
@@ -199,7 +203,7 @@ public class MasqueradeBall extends CalculationNode {
 			nDistinctMus = nDistinctLambdas;
 		}
 
-		 lambdaMuAssigner.populateAssigner(totalNumberOfStates, nDistinctLambdas, nDistinctMus, newLambdaContent, newMuContent);
+		 lambdaMuAssigner.populateAssigner(totalNumberOfStates, nDistinctLambdas, nDistinctMus, newLambdaContent, newMuContent, lambdaAssignmentArray, muAssignmentArray);
 	}
 	
 	// getters

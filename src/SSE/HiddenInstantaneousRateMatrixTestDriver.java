@@ -31,8 +31,16 @@ public class HiddenInstantaneousRateMatrixTestDriver {
 		hirm2.initByName("numberOfStates", 4, "numberOfHiddenStates", 2, "flatQMatrix", flatQMatrixString3, "disallowDoubleTransitions", true, "symmetrifyAcrossDiagonal", -1, "hiddenObsStateMapper", stateMapper2);
 		hirm2.printMatrix();
 		
-		System.out.println("Now symmetrifying diagonals for observed state 2 (hidden state 1). Note that element row=4 col=2 (bottom-left) matches that of row=2 col=4 (top-right)");
-		hirm2.initByName("numberOfStates", 4, "numberOfHiddenStates", 2, "flatQMatrix", flatQMatrixString3, "disallowDoubleTransitions", true, "symmetrifyAcrossDiagonal", 1, "hiddenObsStateMapper", stateMapper2);
+		String flatQMatrixString4 = "0.1 0.2 0.3 1.0 1.2 1.3 1.5 2.0 2.1 2.3 3.0 3.1 3.2 4.1"; // no double transitions and no q's for observed states that are not linked to hidden states
+		int[] aHiddenStateAssignment = new int[] { -1, 0, -1, -1 };
+		stateMapper2.setHiddenStateStrings(aHiddenStateAssignment);
+		hirm2.initByName("numberOfStates", 4, "numberOfHiddenStates", 1, "flatQMatrix", flatQMatrixString4, "disallowDoubleTransitions", true, "symmetrifyAcrossDiagonal", -1, "hiddenObsStateMapper", stateMapper2);
 		hirm2.printMatrix();
+		
+//		System.out.println("Now symmetrifying diagonals for observed state 2 (hidden state 1). Note that element row=4 col=2 (bottom-left) matches that of row=2 col=4 (top-right)");
+//		hirm2.initByName("numberOfStates", 4, "numberOfHiddenStates", 2, "flatQMatrix", flatQMatrixString3, "disallowDoubleTransitions", true, "symmetrifyAcrossDiagonal", 1, "hiddenObsStateMapper", stateMapper2);
+//		hirm2.printMatrix();
+		
+		
 	}
 }
