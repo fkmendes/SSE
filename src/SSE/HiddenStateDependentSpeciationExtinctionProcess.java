@@ -35,8 +35,8 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	final public Input<HiddenInstantaneousRateMatrix> hirmInput = new Input<>("hiddenInstantaneousRateMatrix", "HiddenInstantaneousRateMatrix object containing anagenenetic rates for both observed and hidden states.", Validate.REQUIRED);
 	final public Input<LambdaMuAssigner> lambdaMuAssignerInput = new Input<>("lambdaMuAssigner", "LambdaMuAssigner object that assigns distinct parameters to each state.", Validate.REQUIRED);
 	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
-	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
-	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
+//	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
+//	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
 	final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
 	final public Input<Boolean> cladoFlagInput = new Input<>("incorporateCladogenesis", "Whether or not to incorporate cladogenetic events.", Validate.REQUIRED);
 
@@ -156,46 +156,13 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		}
 	}
 	
-/* Original constructor before interfacing with BEAST 2 */
-//	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, double[] pi, int numStates,
-//			TraitStash traitStash, CladogeneticSpeciationRateStash clado_stash, InstantaneousRateMatrix q, double rate,
-//			boolean incorporateCladogenesis) {
-//		this.lambda = lambda;
-//		this.mu = mu;
-//		this.pi = pi;
-//		this.numStates = numStates;
-//		this.traitStash = traitStash;
-//		this.cladoStash = clado_stash;
-//		Q = q;
-//		this.rate = rate;
-//		this.incorporateCladogenesis = incorporateCladogenesis;
-//		
-//		numTimeSlices = 1;
-//		double rootAge = tree.getRoot().getHeight();
-//		dt = rootAge / ((double) (numTimeSlices * 50));
-//		// System.out.println("Root age (height): " + Double.toString(rootAge));
-//		// System.out.println("dt: " + Double.toString(dt));
-//		
-//		// initializing members for lk computation
-//		nodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; // tips have initialization lks, internal nodes (and root) just after merge
-//		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
-//		
-//		scalingConstants = new double[tree.getNodeCount()];
-//		Arrays.fill(scalingConstants, 1.0);
-//		
-//		finalLk = 0.0;
-//		finalLogLk = 0.0;
-//	}
-	
 	@Override
 	public double calculateLogP() {
 		mu = lambdaMuAssigner.getMus();
-//		muInput.get().getValues(mu); // every time this method is called, we need to update mu; instead of creating a new vector and assigning that to mu, we can just copy the contents of muInput into it (note that getValues is called with an argument here)
 		piInput.get().getValues(pi); // same as above
 
 		if (!incorporateCladogenesis) {
 			lambda = lambdaMuAssigner.getLambdas();
-//			lambdaInput.get().getValues(lambda);
 		}
 
 		// when a biogeographical parameter changes, tree is filthy, we can use threads
@@ -627,8 +594,14 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 //    	}
         hasDirt = Tree.IS_CLEAN;
 		if ((hirmInput.get().isDirtyCalculation()) ||
-			(lambdaInput.get() != null && lambdaInput.get().somethingIsDirty()) || 
-			(muInput.get().somethingIsDirty()) || 
+				/*
+				 * Original version (Remco)
+				 */
+				// (lambdaInput.get() != null && lambdaInput.get().somethingIsDirty()) || 
+				// (muInput.get().somethingIsDirty()) ||
+			(lambdaMuAssigner.getLambdasRealParameter() != null && lambdaMuAssigner.getLambdasRealParameter().somethingIsDirty()) || 
+			(lambdaMuAssigner.getMusRealParameter().somethingIsDirty()) ||
+			
 			(piInput.get().somethingIsDirty()) ||
 			(cladoStash != null && cladoStash.isDirtyCalculation())) {
 			hasDirt = Tree.IS_FILTHY;

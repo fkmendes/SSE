@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" required="BEAST v2.5.0" version="2.5">
+
+  <run id="mcmc" spec="MCMC" chainLength="5000000">
+    <state id="state" storeEvery="5000">
+      <stateNode idref="Lambda"/>
+      <stateNode idref="Mu"/>
+      <stateNode idref="FlatQMatrix"/>
+    </state>
+
+    <distribution id="posterior" spec="util.CompoundDistribution">
+
+      <!-- START prior -->
+      <distribution id="prior" spec="util.CompoundDistribution">
+        <distribution id="LambdaPrior" spec="beast.math.distributions.Prior" x="@Lambda">
+	  	<distr id="Exponential.Lambda" spec="beast.math.distributions.Exponential" offset="0.0" mean="5.0"/>
+        </distribution>
+
+        <distribution id="MuPrior" spec="beast.math.distributions.Prior" x="@Mu">
+	  	<distr id="Exponential.Mu" spec="beast.math.distributions.Exponential" offset="0.0" mean="10.0"/>
+        </distribution>
+
+        <distribution id="FlatQMatrixPrior" spec="beast.math.distributions.Prior" x="@FlatQMatrix">
+	  	<distr id="Exponential.FlatQMatrix" spec="beast.math.distributions.Exponential" offset="0.0" mean="20.0"/>
+        </distribution>
+      </distribution>
+      <!-- END prior -->
+
+      <distribution id="likelihood" spec="util.CompoundDistribution" useThreads="true">
+	<distribution id="HiddenStateDependentSpeciationExtinctionProcess" spec="SSE.HiddenStateDependentSpeciationExtinctionProcess" incorporateCladogenesis="false">
+	  <tree id="FixedTree" spec="beast.util.TreeParser" IsLabelledNewick="true" adjustTipHeights="false" newick="(((sp15:10.27880339,(sp57:0.4327353378,sp58:0.4327353378):9.846068053):21.30935137,((((sp49:1.322566942,sp50:1.322566942):6.531246386,(((((sp42:1.618558172,sp43:1.618558172):1.249323508,sp37:2.86788168):0.4105311845,sp36:3.278412865):1.110829025,sp28:4.38924189):2.453996398,((sp53:0.6765630317,sp54:0.6765630317):5.834067793,sp21:6.510630824):0.3326074635):1.01057504):6.546385565,sp12:14.40019889):3.891878236,((((sp18:8.595427361,((sp19:6.988162304,((sp39:1.941330272,(sp59:0.4256083779,sp60:0.4256083779):1.515721894):1.374985348,sp35:3.31631562):3.671846684):1.028692949,(sp24:5.527011086,(sp25:5.478875203,(sp40:1.898502308,sp41:1.898502308):3.580372894):0.04813588287):2.489844168):0.5785721075):0.8605508177,((sp47:1.324188282,sp48:1.324188282):1.210143714,sp38:2.534331996):6.921646183):1.848794077,(sp22:6.144323416,sp23:6.144323416):5.160448839):4.752352041,sp10:16.0571243):2.234952832):13.29607763):8.9940146,(sp6:33.80408947,(((sp29:4.271294196,sp30:4.271294196):3.963360008,(sp46:1.515605972,(sp51:0.6842469553,sp52:0.6842469553):0.8313590168):6.719048232):21.69107479,((((sp44:1.517683119,sp45:1.517683119):13.83340518,((sp33:3.451233406,sp34:3.451233406):7.318030201,sp14:10.76926361):4.581824694):2.3268441,((sp31:3.988873926,sp32:3.988873926):13.39833,(sp26:5.46221229,sp27:5.46221229):11.92499164):0.2907284735):12.10203097,((sp16:9.676541191,sp17:9.676541191):11.55054389,(sp11:16.00734921,(sp55:0.6152478573,sp56:0.6152478573):15.39210136):5.219735869):8.552878292):0.1457656227):3.878360468):6.778079891):0.0;" offset="0" singlechild="false">
+
+	    <taxonset id="TaxonSet" spec="TaxonSet">
+	      <taxon id="sp6" spec="Taxon"/>
+	      <taxon id="sp10" spec="Taxon"/>
+	      <taxon id="sp11" spec="Taxon"/>
+	      <taxon id="sp12" spec="Taxon"/>
+              <taxon id="sp14" spec="Taxon"/>
+	      <taxon id="sp15" spec="Taxon"/>
+	      <taxon id="sp16" spec="Taxon"/>
+	      <taxon id="sp17" spec="Taxon"/>
+	      <taxon id="sp18" spec="Taxon"/>
+	      <taxon id="sp19" spec="Taxon"/>
+	      <taxon id="sp21" spec="Taxon"/>
+	      <taxon id="sp22" spec="Taxon"/>
+	      <taxon id="sp23" spec="Taxon"/>
+	      <taxon id="sp24" spec="Taxon"/>
+	      <taxon id="sp25" spec="Taxon"/>
+	      <taxon id="sp26" spec="Taxon"/>
+	      <taxon id="sp27" spec="Taxon"/>
+	      <taxon id="sp28" spec="Taxon"/>
+	      <taxon id="sp29" spec="Taxon"/>
+	      <taxon id="sp30" spec="Taxon"/>
+	      <taxon id="sp31" spec="Taxon"/>
+	      <taxon id="sp32" spec="Taxon"/>
+	      <taxon id="sp33" spec="Taxon"/>
+	      <taxon id="sp34" spec="Taxon"/>
+	      <taxon id="sp35" spec="Taxon"/>
+	      <taxon id="sp36" spec="Taxon"/>
+	      <taxon id="sp37" spec="Taxon"/>
+	      <taxon id="sp38" spec="Taxon"/>
+	      <taxon id="sp39" spec="Taxon"/>
+	      <taxon id="sp40" spec="Taxon"/>
+	      <taxon id="sp41" spec="Taxon"/>
+	      <taxon id="sp42" spec="Taxon"/>
+	      <taxon id="sp43" spec="Taxon"/>
+	      <taxon id="sp44" spec="Taxon"/>
+	      <taxon id="sp45" spec="Taxon"/>
+	      <taxon id="sp46" spec="Taxon"/>
+	      <taxon id="sp47" spec="Taxon"/>
+	      <taxon id="sp48" spec="Taxon"/>
+	      <taxon id="sp49" spec="Taxon"/>
+	      <taxon id="sp50" spec="Taxon"/>
+	      <taxon id="sp51" spec="Taxon"/>
+	      <taxon id="sp52" spec="Taxon"/>
+	      <taxon id="sp53" spec="Taxon"/>
+	      <taxon id="sp54" spec="Taxon"/>
+	      <taxon id="sp55" spec="Taxon"/>
+	      <taxon id="sp56" spec="Taxon"/>
+	      <taxon id="sp57" spec="Taxon"/>
+	      <taxon id="sp58" spec="Taxon"/>
+	      <taxon id="sp59" spec="Taxon"/>
+	      <taxon id="sp60" spec="Taxon"/>
+	    </taxonset>
+	  </tree>
+
+	  <hiddenTraitStash id="HiddenTraitStash" spec="SSE.HiddenTraitStash" value="sp6=1,sp10=1,sp11=1,sp12=1,sp14=2,sp15=1,sp16=2,sp17=2,sp18=1,sp19=1,sp21=1,sp22=1,sp23=1,sp24=1,sp25=1,sp26=2,sp27=2,sp28=1,sp29=2,sp30=2,sp31=2,sp32=2,sp33=2,sp34=2,sp35=1,sp36=1,sp37=2,sp38=2,sp39=1,sp40=1,sp41=1,sp42=2,sp43=2,sp44=2,sp45=2,sp46=2,sp47=2,sp48=2,sp49=1,sp50=1,sp51=2,sp52=2,sp53=1,sp54=1,sp55=2,sp56=2,sp57=1,sp58=1,sp59=1,sp60=1" numberOfStates="2" numberOfHiddenStates="0">
+	    <taxa idref="TaxonSet"/>
+	    <hiddenObsStateMapper id="StateMapper" spec="SSE.HiddenObservedStateMapper"/> <!-- Not using it (for HiSSE/MuHiSSE) --> 
+	  </hiddenTraitStash>
+
+	  <lambdaMuAssigner id="LambdaMuAssigner" spec="SSE.LambdaMuAssigner" totalNumberOfStates="2" nDistinctLambdas="2" nDistinctMus="2" lambdasToStates="0,1" musToStates="0,1">
+	    <lambda id="Lambda" dimension="2" spec="parameter.RealParameter">0.09345285 0.1784429</lambda>
+	    <mu id="Mu" dimension="2" spec="parameter.RealParameter">0.02256041 0.001453006</mu>
+	  </lambdaMuAssigner>
+	  
+	  <hiddenInstantaneousRateMatrix id="HiddenInstantaneousRateMatrix" spec="SSE.HiddenInstantaneousRateMatrix" numberOfStates="2" numberOfHiddenStates="0" disallowDoubleTransitions="true" symmetrifyAcrossDiagonal="-1">
+	    <hiddenObsStateMapper idref="StateMapper"/>
+	    <parameter id="FlatQMatrix" dimension="2" lower="0.0" name="flatQMatrix">0.1044134 0.1262957</parameter>
+	  </hiddenInstantaneousRateMatrix>
+
+	  <pi id="Pi" dimension="4" spec="parameter.RealParameter">0.0 0.0 0.5 0.5</pi>
+	</distribution> <!-- END SSE -->
+      </distribution> <!-- END Likelihood -->
+    </distribution> <!-- END Posterior -->
+
+    <operator id="LambdaScaler" spec="ScaleOperator" parameter="@Lambda" scaleFactor="0.75" weight="3.0"/>
+    <operator id="MuScaler" spec="ScaleOperator" parameter="@Mu" scaleFactor="0.75" weight="3.0"/>
+    <operator id="FlatQMatrixScaler" spec="ScaleOperator" parameter="@FlatQMatrix" scaleFactor="0.75" weight="3.0"/>
+
+    <logger id="tracelog" fileName="/nesi/project/nesi00390/fkmendes/calibrated_validation/bisse_beast_outputs/bisse1_sim.log" logEvery="5000" model="@posterior" sanitiseHeaders="true" sort="smart">
+        <log idref="posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+	<log idref="Lambda"/>
+        <log idref="Mu"/>
+        <log idref="FlatQMatrix"/>
+    </logger>
+
+    <logger id="screenlog" logEvery="10000">
+        <log idref="posterior"/>
+        <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+    </logger>
+
+    <logger id="treelog.t:firsthalf" fileName="/nesi/project/nesi00390/fkmendes/calibrated_validation/bisse_beast_outputs/bisse1_sim.trees" logEvery="5000000" mode="tree">
+        <log id="TreeWithMetaDataLogger" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@FixedTree"/>
+    </logger>
+  </run>
+</beast>

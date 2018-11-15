@@ -104,6 +104,11 @@ public class LambdaMuAssigner extends CalculationNode {
 	}
 	
 	// getters
+	// returns lambda real parameters
+	public RealParameter getLambdasRealParameter() {
+		return lambdaInput.get();
+	}
+	
 	// returns only lambdas that matter (after applying mask, for example)
 	public Double[] getLambdas() {
 		// if lambdas were operated on, things are dirty, we need to update
@@ -121,6 +126,11 @@ public class LambdaMuAssigner extends CalculationNode {
 		return lambdasContent;
 	}
 	
+	// returns mu real parameters
+	public RealParameter getMusRealParameter() {
+		return muInput.get();
+	}
+		
 	// returns only mus that matter (after applying mask, for example)
 	public Double[] getMus() {
 		// if mus were operated on, things are dirty, we need to update
