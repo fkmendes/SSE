@@ -137,18 +137,14 @@ public class MasqueradeBall extends CalculationNode {
 			
 			// now see if either row or column of that cell has a hidden state that is inactive; if active, include that (ith) RealParameter in the newMatrixContent
 			if ( !(hiddenStateIdxToIgnore.contains(qCell[0]) || hiddenStateIdxToIgnore.contains(qCell[1])) ) {  
-				System.out.println("Printing matrixContent[i] where i=" + i + " = " + matrixContent[i]);
 				newMatrixContent[j] = matrixContent[i];
-				System.out.println("Putting " + i + "th RealParameter of transition rates into newMatrixContent. Its qCell was " + Arrays.toString(qCell));
+				// System.out.println("Putting " + i + "th RealParameter of transition rates into newMatrixContent. Its qCell was " + Arrays.toString(qCell));
 				j++;
 			}
 		}
 		
 		System.out.println(Arrays.toString(matrixContent));
-		
 		System.out.println(Arrays.toString(newMatrixContent));
-		
-		System.out.println("Matrix content I'm feeding into populateIRM: " + Arrays.toString(newMatrixContent));
 		
 		hirm.populateIRM(true, true, 0, numberOfStates, numberOfHiddenStatesInMask, newMatrixContent);
 	}

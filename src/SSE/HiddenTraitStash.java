@@ -15,7 +15,7 @@ public class HiddenTraitStash extends TraitSet {
 
 	final public Input<Integer> nStatesInput = new Input<>("numberOfStates", "How many observed states or geographical ranges can affect speciation and extinction.");
 	final public Input<Integer> nHiddenStatesInput = new Input<>("numberOfHiddenStates", "How many hidden states or geographical ranges can affect speciation and extinction.");
-	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.", Validate.REQUIRED);
+	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.", Validate.OPTIONAL);
 	
 	// if Human=1,Chimp=1,Gorilla=1
 	// inheriting taxonValues, map, and values variables
@@ -39,6 +39,11 @@ public class HiddenTraitStash extends TraitSet {
 		numberOfStates = nStatesInput.get();
 		numberOfHiddenStates = nHiddenStatesInput.get();
 		totalNumberOfStates = numberOfStates + numberOfHiddenStates;
+		
+		if (numberOfHiddenStates > 0 && HiddenObservedStateMapperInput.get() == null) {
+			throw new IllegalArgumentException("Number of hidden states > 0, but no mapping between observed and hidden states was found.");
+		}
+		
         List<String> labels = taxaInput.get().asStringList();
         String[] traits = traitsInput.get().split(","); // ["sp1=1", "sp2=1", "sp3=1"]
         taxonValues = new String[labels.size()]; // one observed state string per taxon

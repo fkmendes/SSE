@@ -1,7 +1,6 @@
 package SSE;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,7 +24,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	final public Input<RealParameter> FlatQmatrixInput = new Input<>("flatQMatrix", "Array (matrix whose rows were pasted) containing the instantaneous transition rate between character states.");
 	final public Input<Boolean> DisallowDoubleTransitionsInput = new Input<>("disallowDoubleTransitions", "Whether or not to set double transition parameters to zero.", Validate.REQUIRED);
 	final public Input<Integer> SymmetrifyAcrossDiagonalInput = new Input<>("symmetrifyAcrossDiagonal", "Whether or not to set transition from observed to hidden the same as transitions from hidden to observed.", Validate.REQUIRED);
-	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.", Validate.REQUIRED);
+	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.", Validate.OPTIONAL);
 	
 	private int numberOfStates; // number of observed states (never changes)
 	private int numberOfHiddenStates;
@@ -46,6 +45,10 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		matrixContent = FlatQmatrixInput.get().getValues();
 		numberOfHiddenStates = NHiddenStatesInput.get(); // when rjMCMC implemented, this can change at different steps
 			
+		if (numberOfHiddenStates > 0 && HiddenObservedStateMapperInput.get() == null) {
+			throw new IllegalArgumentException("Number of hidden states > 0, but no mapping between observed and hidden states was found.");
+		}
+		
 		disallowDoubleTransitions = DisallowDoubleTransitionsInput.get();
 		if (disallowDoubleTransitions) {
 			hiddenObsStateMapper = HiddenObservedStateMapperInput.get();
@@ -58,6 +61,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	}
 		
 	public void populateIRM(boolean ignoreDiagonal, boolean disallowDoubleTransitions, int symmetrifyAcrossDiagonal, int nObsStates, int nHiddenStates, Double[] someMatrixContent) {
+		matrixContent = someMatrixContent; 
 		numberOfHiddenStates = nHiddenStates;
 		totalNumberOfStates = nObsStates + nHiddenStates; // this will also change as a result
 		q = new Double[totalNumberOfStates][totalNumberOfStates]; // and so we need to vary the size of q
@@ -89,7 +93,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		if (numberOfHiddenStates > 0 && disallowDoubleTransitions) {
 			doubleTransitionIRMCellsMap = new HashMap<>();
 			findDoubleTransitionIRMCells(numberOfHiddenStates, totalNumberOfStates);
-			printDoubleTransitionIRMCellsMap(); // for debugging
+			// printDoubleTransitionIRMCellsMap(); // for debugging
 		}
 		
 		int realParameterIdx = 0;
@@ -233,6 +237,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	public double getCell(int from, int to, double rate) {
 		// return Q.getMatrixValue(from, to) * rate;
 		if (irmDirty) {
+			matrixContent = FlatQmatrixInput.get().getValues();
 			populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfStates, numberOfHiddenStates, matrixContent); // only re-populate IRM if some transition rate was operated on
 		}
 		return q[from][to] * rate;
@@ -288,6 +293,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	}
 
 	protected void restore() {
+		matrixContent = FlatQmatrixInput.get().getValues();
 		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfStates, numberOfHiddenStates, matrixContent);
 		super.restore();
 	}

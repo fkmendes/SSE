@@ -76,7 +76,7 @@ public class MasqueradeBallTestDriver {
 		RealParameter mask12 = new RealParameter(mask12Array);
 		
 		MasqueradeBall maskBall = new MasqueradeBall();
-		maskBall.initByName("modelMask", mask12, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
+		maskBall.initByName("modelMask", mask9, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
 		System.out.println(Arrays.toString(maskBall.getLambdas()));
 		System.out.println(Arrays.toString(maskBall.getMus()));
 		

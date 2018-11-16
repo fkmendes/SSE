@@ -123,7 +123,7 @@ public class HSDSEPClaSSETest {
 		RealParameter mu = new RealParameter(mus);
 		LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
 		lambdaMuAssigner.initByName("totalNumberOfStates", 4, "nDistinctMus", 1, "musToStates", musToStatesString, "mu", mu, "cladogeneticStash", csrt);
-						
+	
 		System.out.println("Lambdas: " + Arrays.toString(lambdaMuAssigner.getLambdas()));
 		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
 		
@@ -157,8 +157,8 @@ public class HSDSEPClaSSETest {
         		"hiddenTraitStash", hiddenTraitStash,
         		"lambdaMuAssigner", lambdaMuAssigner,
         		"hiddenInstantaneousRateMatrix", hirm,
-        		"cladogeneticStash", csrt,
-        		"mu", mu,
+        		// "cladogeneticStash", csrt,
+        		// "mu", mu,
         		"pi", pi,
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
@@ -173,10 +173,10 @@ public class HSDSEPClaSSETest {
 		Assert.assertEquals(-129.9762, negLnl, EPSILON1); 
 	}
 
-	@Test
-	public void againstMyClaSSE() {
-		Assert.assertEquals(-129.97617749574326, negLnl, EPSILON2);
-	}
+//	@Test
+//	public void againstMyClaSSE() {
+//		Assert.assertEquals(-129.97617749574326, negLnl, EPSILON2);
+//	}
 
 
 }

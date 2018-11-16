@@ -34,9 +34,9 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	final public Input<HiddenTraitStash> hiddenTraitStashInput = new Input<>("hiddenTraitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
 	final public Input<HiddenInstantaneousRateMatrix> hirmInput = new Input<>("hiddenInstantaneousRateMatrix", "HiddenInstantaneousRateMatrix object containing anagenenetic rates for both observed and hidden states.", Validate.REQUIRED);
 	final public Input<LambdaMuAssigner> lambdaMuAssignerInput = new Input<>("lambdaMuAssigner", "LambdaMuAssigner object that assigns distinct parameters to each state.", Validate.REQUIRED);
-	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
-//	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
-//	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
+	// final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
+	// final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
+	// final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
 	final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
 	final public Input<Boolean> cladoFlagInput = new Input<>("incorporateCladogenesis", "Whether or not to incorporate cladogenetic events.", Validate.REQUIRED);
 
@@ -107,22 +107,25 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		hiddenTraitStash = hiddenTraitStashInput.get();
 		q = hirmInput.get();
 		lambdaMuAssigner = lambdaMuAssignerInput.get();
-//		mu = muInput.get().getValues();
+		incorporateCladogenesis = cladoFlagInput.get();
+		// mu = muInput.get().getValues(); // before lambdaMuAssigner
 		pi = piInput.get().getValues();
 		numStates = q.getNumStates();
 		numHiddenStates = q.getNumHiddenStates();
 		totalNumStates = numStates + numHiddenStates;
 		rate = 1.0;
-		incorporateCladogenesis = cladoFlagInput.get();
 		
 		if (incorporateCladogenesis) {
-			cladoStash = cladoStashInput.get();
+			cladoStash = lambdaMuAssigner.getCladoStash();
+			// cladoStash = cladoStashInput.get();
 		}
 		else { 
 			lambda = lambdaMuAssigner.getLambdas();
-			mu = lambdaMuAssigner.getMus();
-//			lambda = lambdaInput.get().getValues();
+			// mu = lambdaMuAssigner.getMus();
+			// lambda = lambdaInput.get().getValues(); // before lambdaMuAssigner
 		}
+		
+		mu = lambdaMuAssigner.getMus();
 		
 		// Original version V0: fixed-step-size ode-related stuff
 		// numTimeSlices = 1;
@@ -478,10 +481,10 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 				scalingConstants[nodeIdx] = dScalingConstant;
 				
 				// debugging the scaling constants being < 0...?
-				if (dScalingConstant < 0) {
-					System.out.println("The nodePartial array below adds up to a negative number because some of the D's are negative. This shouldn't happen...?");
-					System.out.println(Arrays.toString(nodePartial));
-				}
+				// if (dScalingConstant < 0) {
+				//     System.out.println("The nodePartial array below adds up to a negative number because some of the D's are negative. This shouldn't happen...?");
+				//     System.out.println(Arrays.toString(nodePartial));
+				// }
 				
 				for (int i = 0; i < totalNumStates; i++) {
 					nodePartial[totalNumStates + i] /= dScalingConstant;
@@ -603,7 +606,10 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 			(lambdaMuAssigner.getMusRealParameter().somethingIsDirty()) ||
 			
 			(piInput.get().somethingIsDirty()) ||
-			(cladoStash != null && cladoStash.isDirtyCalculation())) {
+			// (cladoStash != null && cladoStash.isDirtyCalculation())
+			(lambdaMuAssigner.getCladoStash() != null && lambdaMuAssigner.getCladoStash().isDirtyCalculation())
+			) 
+		{
 			hasDirt = Tree.IS_FILTHY;
 			return true;
 		}

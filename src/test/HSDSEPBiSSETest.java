@@ -86,8 +86,8 @@ public class HSDSEPBiSSETest {
         		"hiddenTraitStash", hiddenTraitStash,
         		"lambdaMuAssigner", lambdaMuAssigner,
         		"hiddenInstantaneousRateMatrix", hirm,
-//        		"lambda", lambda,
-//        		"mu", mu,
+        		// "lambda", lambda,
+        		// "mu", mu,
         		"pi", pi,
         		"incorporateCladogenesis", incorporateCladogenesis
         		);

@@ -1,6 +1,5 @@
 package SSE;
 
-import java.util.Arrays;
 import java.util.regex.Pattern;
 import beast.core.CalculationNode;
 import beast.core.Input;
@@ -35,6 +34,15 @@ public class LambdaMuAssigner extends CalculationNode {
 	@Override
 	public void initAndValidate() {
 		comma = Pattern.compile(",");
+		
+		if (cladoStashInput.get() == null) {
+			lambdaToStatesString = lambdasToStatesAssignerStringInput.get();
+			lambdaAssignments = comma.splitAsStream(lambdaToStatesString).mapToInt(Integer::parseInt).toArray(); // comma-separated string comes from xml (done only once)
+		}
+		
+		muToStatesString = musToStatesAssignerStringInput.get();
+		muAssignments = comma.splitAsStream(muToStatesString).mapToInt(Integer::parseInt).toArray();
+		
 		populateAssigner();
 	}
 	
@@ -42,26 +50,23 @@ public class LambdaMuAssigner extends CalculationNode {
 	 * called by initAndValidate and getters when assigner is dirty 
 	 */
 	public void populateAssigner() {
-		lambdaToStatesString = lambdasToStatesAssignerStringInput.get();
-		lambdaAssignments = comma.splitAsStream(lambdaToStatesString).mapToInt(Integer::parseInt).toArray(); // comma-separated string comes from xml (done only once)
-		muToStatesString = musToStatesAssignerStringInput.get();
-		muAssignments = comma.splitAsStream(muToStatesString).mapToInt(Integer::parseInt).toArray();
-//		muAssignments = comma.splitAsStream(muToStatesString).map(Double::parseDouble).toArray(Double[]::new); // if Double[]
-		lambdasContent = lambdaInput.get().getValues();
-		musContent = muInput.get().getValues();
 		totalNumberOfStates = totalNstatesInput.get();
-		numberOfDistinctLambdas = nDistinctLambdasInput.get();
-		numberOfDistinctMus = nDistinctMusInput.get();
 		
 		// updating lambdas (no incorporate cladogenesis support for now)
 		if (cladoStashInput.get() == null) {
+			numberOfDistinctLambdas = nDistinctLambdasInput.get();
+			lambdasContent = lambdaInput.get().getValues();
 			lambda = new Double[totalNumberOfStates];
 			updateLambdasNoClado(lambdasContent);
 		}
-		
+				
 		// updating mus
 		mu = new Double[totalNumberOfStates];
+		numberOfDistinctMus = nDistinctMusInput.get();
+		musContent = muInput.get().getValues();
 		updateMus(musContent);
+		
+		assignerDirty = false; // we got the new values, not dirty anymore
 	}
 	
 	/*
@@ -83,6 +88,8 @@ public class LambdaMuAssigner extends CalculationNode {
 		// updating mus
 		mu = new Double[totalNumberOfStates];
 		updateMus(aMuContent);
+		
+		assignerDirty = false; // we got the new values, not dirty anymore
 	}
 	
 	public void updateLambdasNoClado(Double[] aLambdaContent) {
@@ -90,8 +97,6 @@ public class LambdaMuAssigner extends CalculationNode {
 			int lambdaAssignmentIdx = lambdaAssignments[i];
 			lambda[i] = aLambdaContent[lambdaAssignmentIdx];
 		}
-			
-		assignerDirty = false; // we got the new values, not dirty anymore
 	}
 	
 	public void updateMus(Double[] aMuContent) {					
@@ -99,8 +104,6 @@ public class LambdaMuAssigner extends CalculationNode {
 			int muAssignmentIdx = muAssignments[i];
 			mu[i] = aMuContent[muAssignmentIdx];
 		}
-			
-		assignerDirty = false; // we got the new values, not dirty anymore
 	}
 	
 	// getters
@@ -115,8 +118,6 @@ public class LambdaMuAssigner extends CalculationNode {
 		if (assignerDirty) {
 			populateAssigner();
 		}
-		
-		System.out.println("Getting lambdas from LambdaMuAssigner: " + Arrays.toString(lambda));
 		
 		return lambda;
 	}
@@ -138,8 +139,6 @@ public class LambdaMuAssigner extends CalculationNode {
 			populateAssigner();
 		}
 		
-		System.out.println("Getting mus from LambdaMuAssigner: " + Arrays.toString(mu));
-		
 		return mu;
 	}
 	
@@ -148,6 +147,9 @@ public class LambdaMuAssigner extends CalculationNode {
 		return musContent;
 	}
 	
+	public CladogeneticSpeciationRateStash getCladoStash() {
+		return cladoStashInput.get();
+	}
 	// setters
 	// for CID
 //	public void setLambdas(int nDistinctLambdas, int[] aLambdaToStatesArray) {

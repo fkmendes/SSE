@@ -45,14 +45,12 @@ public class HSDSEPBiCIDTest {
 		Double lambda2 = 0.0688838; // 0B and 1B
 		Double[] lambdas = { lambda1, lambda2 };
 		RealParameter lambda = new RealParameter(lambdas);
-//		Double[] lambdas = { lambda1, lambda1, lambda2, lambda2 };
 		
 		String musToStatesString = "0,0,1,1";
 		Double mu1 = 0.04285281; // 0A and 1A
 		Double mu2 = 1.419801E-10; // 0B and 1B
 		Double[] mus = { mu1, mu2 };
 		RealParameter mu = new RealParameter(mus);
-//		Double[] mus = { mu1, mu1, mu2, mu2 };		
 		
 		LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
 		lambdaMuAssigner.initByName("totalNumberOfStates", 4, "nDistinctLambdas", 2, "nDistinctMus", 2, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu);
@@ -89,8 +87,8 @@ public class HSDSEPBiCIDTest {
         		"hiddenTraitStash", hiddenTraitStash,
         		"lambdaMuAssigner", lambdaMuAssigner,
         		"hiddenInstantaneousRateMatrix", hirm,
-        		"lambda", lambda,
-        		"mu", mu,
+        		// "lambda", lambda,
+        		// "mu", mu,
         		"pi", pi,
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
