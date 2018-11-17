@@ -51,10 +51,18 @@ public class HSDSEPBiSSETest {
 		Double[] mus = { mu1, mu2 };
 		RealParameter mu = new RealParameter(mus);
 		
+		Double[] piEs = new Double[totalNumberOfStates];
+		Arrays.fill(piEs, 0.0);
+		Double[] piDs = new Double[totalNumberOfStates];
+		Arrays.fill(piDs, (1.0/totalNumberOfStates));
+		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.5, 0.5
+		RealParameter pi = new RealParameter(pis);
+		
 		LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
-		lambdaMuAssigner.initByName("totalNumberOfStates", 2, "nDistinctLambdas", 2, "nDistinctMus", 2, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu);
+		lambdaMuAssigner.initByName("totalNumberOfStates", 2, "nDistinctLambdas", 2, "nDistinctMus", 2, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu, "pi", pi);
 		System.out.println("Lambdas: " + Arrays.toString(lambdaMuAssigner.getLambdas()));
 		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
+		System.out.println("Pis: " + Arrays.toString(lambdaMuAssigner.getPis()));
 		
 		boolean disallowDoubleTransitions = false; // not used
 		int symmetrifyAcrossDiagonal = -1; // not used
@@ -64,15 +72,6 @@ public class HSDSEPBiSSETest {
 		
 		System.out.println("Qs:");
 		hirm.printMatrix();
-		
-		Double[] piEs = new Double[totalNumberOfStates];
-		Arrays.fill(piEs, 0.0);
-		Double[] piDs = new Double[totalNumberOfStates];
-		Arrays.fill(piDs, (1.0/totalNumberOfStates));
-		Double[] pis = ArrayUtils.addAll(piEs, piDs); // 0.0, 0.0, 0.5, 0.5
-		
-		System.out.println("Pi is: " + Arrays.toString(pis));
-		RealParameter pi = new RealParameter(pis);
 		
 		// 50 tips
 		String treeStr = "(((sp15:10.27880339,(sp57:0.4327353378,sp58:0.4327353378):9.846068053):21.30935137,((((sp49:1.322566942,sp50:1.322566942):6.531246386,(((((sp42:1.618558172,sp43:1.618558172):1.249323508,sp37:2.86788168):0.4105311845,sp36:3.278412865):1.110829025,sp28:4.38924189):2.453996398,((sp53:0.6765630317,sp54:0.6765630317):5.834067793,sp21:6.510630824):0.3326074635):1.01057504):6.546385565,sp12:14.40019889):3.891878236,((((sp18:8.595427361,((sp19:6.988162304,((sp39:1.941330272,(sp59:0.4256083779,sp60:0.4256083779):1.515721894):1.374985348,sp35:3.31631562):3.671846684):1.028692949,(sp24:5.527011086,(sp25:5.478875203,(sp40:1.898502308,sp41:1.898502308):3.580372894):0.04813588287):2.489844168):0.5785721075):0.8605508177,((sp47:1.324188282,sp48:1.324188282):1.210143714,sp38:2.534331996):6.921646183):1.848794077,(sp22:6.144323416,sp23:6.144323416):5.160448839):4.752352041,sp10:16.0571243):2.234952832):13.29607763):8.9940146,(sp6:33.80408947,(((sp29:4.271294196,sp30:4.271294196):3.963360008,(sp46:1.515605972,(sp51:0.6842469553,sp52:0.6842469553):0.8313590168):6.719048232):21.69107479,((((sp44:1.517683119,sp45:1.517683119):13.83340518,((sp33:3.451233406,sp34:3.451233406):7.318030201,sp14:10.76926361):4.581824694):2.3268441,((sp31:3.988873926,sp32:3.988873926):13.39833,(sp26:5.46221229,sp27:5.46221229):11.92499164):0.2907284735):12.10203097,((sp16:9.676541191,sp17:9.676541191):11.55054389,(sp11:16.00734921,(sp55:0.6152478573,sp56:0.6152478573):15.39210136):5.219735869):8.552878292):0.1457656227):3.878360468):6.778079891):0.0;";
@@ -86,15 +85,11 @@ public class HSDSEPBiSSETest {
         		"hiddenTraitStash", hiddenTraitStash,
         		"lambdaMuAssigner", lambdaMuAssigner,
         		"hiddenInstantaneousRateMatrix", hirm,
-        		// "lambda", lambda,
-        		// "mu", mu,
-        		"pi", pi,
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
     	
     	negLnl = hsdsep.calculateLogP();
-    	System.out.println(negLnl); // -198.25144916399813
-    	
+    	System.out.println(negLnl); // -198.25144916399813    	
 	}
 
 	@Test

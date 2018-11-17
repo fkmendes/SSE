@@ -94,7 +94,6 @@ public class MasqueradeBall extends CalculationNode {
 		}
 		
 		// transition matrix stuff
-		// hirm = hirmInput.get();
 		hirm.setHiddenObsStateAssignment(hiddenToObsAssignment); // updating HiddenObservedStateMapper inside hirm	
 
 		updateHIRM();
@@ -104,7 +103,7 @@ public class MasqueradeBall extends CalculationNode {
 		hirm.printMatrix();
 		
 		// lambda and mu stuff
-		totalNumberOfStates = hirm.getTotalNumStates();
+		totalNumberOfStates = numberOfStates + numberOfHiddenStatesInMask;
 		lambdaMuAssigner = lambdaMuAssignerInput.get();
 		lambdaAssignmentArray = new int[totalNumberOfStates];
 		muAssignmentArray = new int[totalNumberOfStates];
@@ -116,13 +115,11 @@ public class MasqueradeBall extends CalculationNode {
 	// apply mask steps
 	private void updateHIRM() {
 		matrixContent = hirm.getMatrixContent();
-		// int newMatrixContentLength = (int) (matrixContent.length - hiddenStateIdxToIgnore.size() - Math.pow(hiddenStateIdxToIgnore.size(), 2)); // 2* because it's top-right and bottom-left of hidden transition matrix Q
 		int newMatrixContentLength = (int) (Math.pow(numberOfStates, 2) - numberOfStates + // top-left
 				numberOfHiddenStatesInMask*2 + // upper-right and bottom-left
 				(Math.pow(numberOfHiddenStatesInMask, 2) - numberOfHiddenStatesInMask)); // bottom-right
 		Double[] newMatrixContent = new Double[newMatrixContentLength];
 		realParameterToQCell = hirm.getRealParameterToQCellMap();	
-		totalNumberOfStates = numberOfStates + numberOfHiddenStatesInMask;
 		
 		System.out.println("Number of observed states = " + numberOfStates);
 		System.out.println("Number of hidden states = " + numberOfHiddenStatesInMask);
@@ -150,8 +147,6 @@ public class MasqueradeBall extends CalculationNode {
 	}
 	
 	private void updateLambdaMuAssigner() {
-		// TODO: Update LambdaMuAssigner so it has the right number of total states and hidden states (need to go over mask)
-		// lambdaMuAssigner.setNDistinctLambdas(numberOfHiddenStates + hiddenStateIdx);
 		lambdaContent = lambdaMuAssigner.getLambdaContent();
 		muContent = lambdaMuAssigner.getMuContent();
 		Double[] newLambdaContent = new Double[totalNumberOfStates];
@@ -203,6 +198,14 @@ public class MasqueradeBall extends CalculationNode {
 	}
 	
 	// getters
+	public Double[] getPis() {		
+		// if lambdas were operated on, things are dirty, we need to update
+		if (masqueradeBallDirty) {
+			applyMask();
+		}
+		return lambdaMuAssigner.getPis();
+	}
+	
 	public Double[] getLambdas() {		
 		// if lambdas were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {

@@ -21,6 +21,7 @@ public class MasqueradeBallTest {
 	String musToStatesString;
 	RealParameter lambda;
 	RealParameter mu;
+	RealParameter pi;
 	boolean disallowDoubleTransitions;
 	int symmetrifyAcrossDiagonal;
 	
@@ -39,7 +40,9 @@ public class MasqueradeBallTest {
 	ArrayList<RealParameter> masks;
 	
 	public interface Instance {
-        Double[] getLambdas();
+		Double[] getPis();
+		
+		Double[] getLambdas();
 
         Double[] getMus();
 
@@ -47,6 +50,11 @@ public class MasqueradeBallTest {
     }
 	
 	Instance test1 = new Instance() {
+		@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0 };
+		}
+		
 		@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .15, .2, .1 };
@@ -69,7 +77,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test2 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0,
+					1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .15, .2, .1, .2 };
 		}
@@ -92,7 +106,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test3 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+					1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .15, .2, .1, .2, .3 };
 		}
@@ -116,7 +136,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test4 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+					1.0/7.0, 1.0/7.0, 1.0/7.0, 1.0/7.0, 1.0/7.0, 1.0/7.0, 1.0/7.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .15, .2, .1, .2, .3, .4 };
 		}
@@ -141,7 +167,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test5 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+					1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .15, .2, .1, .2, .3, .4, .2 };
 		}
@@ -167,7 +199,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test6 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+					1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .1, .1, .1, .2, .2, .2, .2 };
 		}
@@ -193,7 +231,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test7 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0,
+					1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .15, .2, .1, .3 };
 		}
@@ -216,7 +260,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test8 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+					1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .15, .2, .1, .2, .3 };
 		}
@@ -240,7 +290,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test9 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+					1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .1, .1, .1, .3, .3 };
 		}
@@ -264,7 +320,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test10 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+					1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .1, .1, .1, .3, .3 };
 		}
@@ -288,7 +350,12 @@ public class MasqueradeBallTest {
     };
     
     Instance test11 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .1, .1, .1 };
 		}
@@ -310,7 +377,13 @@ public class MasqueradeBallTest {
     };
     
     Instance test12 = new Instance() {
-		@Override
+    	@Override
+		public Double[] getPis() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+					1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0 };
+		}
+    	
+    	@Override
 		public Double[] getLambdas() {
 			return new Double[] { .1, .1, .1, .1, .2, .2, .2, .2 };
 		}
@@ -363,6 +436,9 @@ public class MasqueradeBallTest {
 		Double mu8 = 0.06;
 		Double[] mus = { mu1, mu2, mu3, mu4, mu5, mu6, mu7, mu8 };
 		mu = new RealParameter(mus);
+		
+		Double[] pis = { 0.0, 0.0, 0.0, 0.0, 0.25, 0.25, 0.25, 0.25 };
+		pi = new RealParameter(pis);
 		
 		disallowDoubleTransitions = true; // not used
 		symmetrifyAcrossDiagonal = -1;
@@ -432,7 +508,7 @@ public class MasqueradeBallTest {
 			System.out.println();
 			
 			LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
-			lambdaMuAssigner.initByName("totalNumberOfStates", 8, "nDistinctLambdas", 8, "nDistinctMus", 8, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu);
+			lambdaMuAssigner.initByName("totalNumberOfStates", 8, "nDistinctLambdas", 8, "nDistinctMus", 8, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu, "pi", pi);
 			
 			HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper();
 			stateMapper.initByName("hiddenStates", hiddenStatesString);
@@ -443,6 +519,7 @@ public class MasqueradeBallTest {
 			maskBall = new MasqueradeBall();
 			maskBall.initByName("modelMask", masks.get(i), "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
 	
+			Assert.assertArrayEquals(test.getPis(), maskBall.getPis());
 			Assert.assertArrayEquals(test.getLambdas(), maskBall.getLambdas());
 			Assert.assertArrayEquals(test.getMus(), maskBall.getMus());
 			Assert.assertArrayEquals(test.getQ(), maskBall.getQs());

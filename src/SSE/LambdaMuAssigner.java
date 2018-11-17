@@ -6,16 +6,17 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
 
-public class LambdaMuAssigner extends CalculationNode {
-
+public class LambdaMuAssigner extends CalculationNode {	
+	
 	final public Input<Integer> totalNstatesInput = new Input<>("totalNumberOfStates", "How many states (observed + hidden) or geographical ranges can affect speciation and extinction.");
+	final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies of each state.", Validate.REQUIRED);
 	final public Input<Integer> nDistinctMusInput = new Input<>("nDistinctMus", "How many distinct mu values.");
 	final public Input<String> musToStatesAssignerStringInput = new Input<>("musToStates", "Comma-separated integer string, one mu per state.");
+	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);	
 	final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
 	final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
 	final public Input<String> lambdasToStatesAssignerStringInput = new Input<>("lambdasToStates", "Comma-separated integer string, one lambda per state.", Validate.XOR, cladoStashInput);
 	final public Input<Integer> nDistinctLambdasInput = new Input<>("nDistinctLambdas", "How many distinct lambda values.", Validate.XOR, cladoStashInput);
-	final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
 	
 	private int totalNumberOfStates;
 	private int numberOfDistinctLambdas;
@@ -24,8 +25,10 @@ public class LambdaMuAssigner extends CalculationNode {
 	private String muToStatesString;
 	private int[] lambdaAssignments;
 	private int[] muAssignments;
+	private Double[] pisContent;
 	private Double[] lambdasContent;
 	private Double[] musContent;
+	private Double[] pi;
 	private Double[] lambda;
 	private Double[] mu;
 	private boolean assignerDirty = true;
@@ -51,6 +54,11 @@ public class LambdaMuAssigner extends CalculationNode {
 	 */
 	public void populateAssigner() {
 		totalNumberOfStates = totalNstatesInput.get();
+		
+		// updating pis
+		pi = new Double[2 * totalNumberOfStates];
+		pisContent = piInput.get().getValues();
+		updatePis(pisContent);
 		
 		// updating lambdas (no incorporate cladogenesis support for now)
 		if (cladoStashInput.get() == null) {
@@ -79,6 +87,23 @@ public class LambdaMuAssigner extends CalculationNode {
 		lambdaAssignments = aLambdaAssignment;
 		muAssignments = aMuAssignment;
 		
+		/*
+		 *  updating pis (for now, the eq freq distribution is always flat)
+		 *  note that I'm doing this everytime I call applyMask (and in some cases, when
+		 *  totalNumberOfStates isn't changed, I'm doing this without having to)
+		 */
+		pi = new Double[2 * totalNumberOfStates]; // E's and D's
+		pisContent = new Double[2 * totalNumberOfStates]; // E's and D's
+		for (int i = 0; i<pisContent.length; ++i) {
+			if (i < totalNumberOfStates) { 
+				pisContent[i] = 0.0; // E's
+			}
+			else {
+				pisContent[i] = 1.0 / totalNumberOfStates;	
+			}
+		}
+		updatePis(pisContent);
+		
 		// updating lambdas (no incorporate cladogenesis support for now)
 		if (cladoStashInput.get() == null) {
 			lambda = new Double[totalNumberOfStates];
@@ -90,6 +115,13 @@ public class LambdaMuAssigner extends CalculationNode {
 		updateMus(aMuContent);
 		
 		assignerDirty = false; // we got the new values, not dirty anymore
+	}
+	
+	// for now, always flat eq freq distribution, not doing complex assignments
+	public void updatePis(Double[] aPiContent) {
+		for (int i = 0; i<pisContent.length; ++i) {
+			pi[i] = aPiContent[i];
+		}
 	}
 	
 	public void updateLambdasNoClado(Double[] aLambdaContent) {
@@ -107,7 +139,21 @@ public class LambdaMuAssigner extends CalculationNode {
 	}
 	
 	// getters
-	// returns lambda real parameters
+	// for (H)SDSEP requiresRecalculation()
+	public RealParameter getPisRealParameter() {
+		return piInput.get();
+	}
+	
+	public Double[] getPis() {
+		// if pis were operated on, things are dirty, we need to update (this isn't supported yet anyway)
+		if (assignerDirty) {
+			populateAssigner();
+		}
+		
+		return pi;
+	}
+	
+	// for (H)SDSEP requiresRecalculation()
 	public RealParameter getLambdasRealParameter() {
 		return lambdaInput.get();
 	}
@@ -127,7 +173,7 @@ public class LambdaMuAssigner extends CalculationNode {
 		return lambdasContent;
 	}
 	
-	// returns mu real parameters
+	// for (H)SDSEP requiresRecalculation()
 	public RealParameter getMusRealParameter() {
 		return muInput.get();
 	}

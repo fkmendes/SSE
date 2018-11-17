@@ -37,7 +37,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	// final public Input<CladogeneticSpeciationRateStash> cladoStashInput = new Input<>("cladogeneticStash", "CladogeneticSpeciationRateStash object that generates event map.");
 	// final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each state (if cladogenetic events are not considered).", Validate.XOR, cladoStashInput);
 	// final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each state.", Validate.REQUIRED);
-	final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
+	// final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies at root.", Validate.REQUIRED);
 	final public Input<Boolean> cladoFlagInput = new Input<>("incorporateCladogenesis", "Whether or not to incorporate cladogenetic events.", Validate.REQUIRED);
 
 	final public Input<Boolean> useThreadsInput = new Input<>("useThreads", "calculated the distributions in parallel using threads (default false)", false);
@@ -109,7 +109,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		lambdaMuAssigner = lambdaMuAssignerInput.get();
 		incorporateCladogenesis = cladoFlagInput.get();
 		// mu = muInput.get().getValues(); // before lambdaMuAssigner
-		pi = piInput.get().getValues();
+		// pi = piInput.get().getValues(); // before lambdaMuAssigner
 		numStates = q.getNumStates();
 		numHiddenStates = q.getNumHiddenStates();
 		totalNumStates = numStates + numHiddenStates;
@@ -125,6 +125,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 			// lambda = lambdaInput.get().getValues(); // before lambdaMuAssigner
 		}
 		
+		pi = lambdaMuAssigner.getPis();
 		mu = lambdaMuAssigner.getMus();
 		
 		// Original version V0: fixed-step-size ode-related stuff
@@ -162,7 +163,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	@Override
 	public double calculateLogP() {
 		mu = lambdaMuAssigner.getMus();
-		piInput.get().getValues(pi); // same as above
+		pi = lambdaMuAssigner.getPis();
 
 		if (!incorporateCladogenesis) {
 			lambda = lambdaMuAssigner.getLambdas();
@@ -605,7 +606,9 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 			(lambdaMuAssigner.getLambdasRealParameter() != null && lambdaMuAssigner.getLambdasRealParameter().somethingIsDirty()) || 
 			(lambdaMuAssigner.getMusRealParameter().somethingIsDirty()) ||
 			
-			(piInput.get().somethingIsDirty()) ||
+			//(piInput.get().somethingIsDirty()) ||
+			(lambdaMuAssigner.getPisRealParameter().somethingIsDirty()) ||
+			
 			// (cladoStash != null && cladoStash.isDirtyCalculation())
 			(lambdaMuAssigner.getCladoStash() != null && lambdaMuAssigner.getCladoStash().isDirtyCalculation())
 			) 

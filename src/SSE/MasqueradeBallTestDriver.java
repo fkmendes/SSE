@@ -35,10 +35,16 @@ public class MasqueradeBallTestDriver {
 		Double[] mus = { mu1, mu2, mu3, mu4, mu5, mu6, mu7, mu8 };
 		RealParameter mu = new RealParameter(mus);
 		
+		// Double[] pis = { 0.0, 0.0, 0.0, 0.0, 1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0 };
+		// Double[] pis = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0 };
+		Double[] pis = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0 };
+		RealParameter pi = new RealParameter(pis);
+		
 		LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
-		lambdaMuAssigner.initByName("totalNumberOfStates", 8, "nDistinctLambdas", 8, "nDistinctMus", 8, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu);
+		lambdaMuAssigner.initByName("totalNumberOfStates", 8, "nDistinctLambdas", 8, "nDistinctMus", 8, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu, "pi", pi);
 		System.out.println("Lambdas: " + Arrays.toString(lambdaMuAssigner.getLambdas()));
 		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
+		System.out.println("Pis: " + Arrays.toString(lambdaMuAssigner.getPis()));
 		
 		boolean disallowDoubleTransitions = true; // not used
 		int symmetrifyAcrossDiagonal = -1;
@@ -76,9 +82,10 @@ public class MasqueradeBallTestDriver {
 		RealParameter mask12 = new RealParameter(mask12Array);
 		
 		MasqueradeBall maskBall = new MasqueradeBall();
-		maskBall.initByName("modelMask", mask9, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
+		maskBall.initByName("modelMask", mask3, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
 		System.out.println(Arrays.toString(maskBall.getLambdas()));
 		System.out.println(Arrays.toString(maskBall.getMus()));
+		System.out.println(Arrays.toString(maskBall.getPis()));
 		
 //		maskBall.initByName("modelMask", mask6, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
 //		System.out.println(Arrays.toString(maskBall.getLambdas()));
