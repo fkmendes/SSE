@@ -85,7 +85,9 @@ public class HSDSEPBiSSETest {
         		"hiddenTraitStash", hiddenTraitStash,
         		"lambdaMuAssigner", lambdaMuAssigner,
         		"hiddenInstantaneousRateMatrix", hirm,
-        		"incorporateCladogenesis", incorporateCladogenesis
+        		"incorporateCladogenesis", incorporateCladogenesis,
+        		"useThreads", true, 
+        		"threads", 2
         		);
     	
     	negLnl = hsdsep.calculateLogP();

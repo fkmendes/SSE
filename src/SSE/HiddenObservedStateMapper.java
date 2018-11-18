@@ -26,9 +26,8 @@ public class HiddenObservedStateMapper extends BEASTObject {
 	public void initAndValidate() {
 		comma = Pattern.compile(",");
 		String hiddenStateString = hiddenStatesInFocalOrderInput.get();
-//		hiddenStateStrings = hiddenStateString.split(",");
 		hiddenStateAssignments = comma.splitAsStream(hiddenStateString).mapToInt(Integer::parseInt).toArray();
-//		hiddenStateAssignments = Arrays.asList(hiddenStateString).stream().mapToInt(Integer::parseInt).toArray();
+		
 		makeMaps();
 	}
 

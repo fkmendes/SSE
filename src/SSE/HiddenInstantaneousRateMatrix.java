@@ -24,7 +24,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	final public Input<RealParameter> FlatQmatrixInput = new Input<>("flatQMatrix", "Array (matrix whose rows were pasted) containing the instantaneous transition rate between character states.");
 	final public Input<Boolean> DisallowDoubleTransitionsInput = new Input<>("disallowDoubleTransitions", "Whether or not to set double transition parameters to zero.", Validate.REQUIRED);
 	final public Input<Integer> SymmetrifyAcrossDiagonalInput = new Input<>("symmetrifyAcrossDiagonal", "Whether or not to set transition from observed to hidden the same as transitions from hidden to observed.", Validate.REQUIRED);
-	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.", Validate.OPTIONAL);
+	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.");
 	
 	private int numberOfStates; // number of observed states (never changes)
 	private int numberOfHiddenStates;
@@ -50,7 +50,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		}
 		
 		disallowDoubleTransitions = DisallowDoubleTransitionsInput.get();
-		if (disallowDoubleTransitions) {
+		if (numberOfHiddenStates > 0 && disallowDoubleTransitions) {
 			hiddenObsStateMapper = HiddenObservedStateMapperInput.get();
 		}
 

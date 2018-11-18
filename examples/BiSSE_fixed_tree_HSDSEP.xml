@@ -99,6 +99,7 @@
 	  </hiddenTraitStash>
 
 	  <lambdaMuAssigner id="LambdaMuAssigner" spec="SSE.LambdaMuAssigner" totalNumberOfStates="2" nDistinctLambdas="2" nDistinctMus="2" lambdasToStates="0,1" musToStates="0,1">
+	    <pi id="Pi" dimension="4" spec="parameter.RealParameter">0.0 0.0 0.5 0.5</pi>
 	    <lambda id="Lambda" dimension="2" spec="parameter.RealParameter">0.09345285 0.1784429</lambda>
 	    <mu id="Mu" dimension="2" spec="parameter.RealParameter">0.02256041 0.001453006</mu>
 	  </lambdaMuAssigner>
@@ -107,7 +108,6 @@
 	    <parameter id="FlatQMatrix" dimension="2" lower="0.0" name="flatQMatrix">0.02256041 0.001453006</parameter>
 	  </hiddenInstantaneousRateMatrix>
 
-	  <pi id="Pi" dimension="4" spec="parameter.RealParameter">0.0 0.0 0.5 0.5</pi>
 	</distribution> <!-- END SSE -->
       </distribution> <!-- END Likelihood -->
     </distribution> <!-- END Posterior -->
