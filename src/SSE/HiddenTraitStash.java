@@ -15,7 +15,7 @@ public class HiddenTraitStash extends TraitSet {
 
 	final public Input<Integer> nStatesInput = new Input<>("numberOfStates", "How many observed states or geographical ranges can affect speciation and extinction.");
 	final public Input<Integer> nHiddenStatesInput = new Input<>("numberOfHiddenStates", "How many hidden states or geographical ranges can affect speciation and extinction.");
-	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.", Validate.OPTIONAL);
+	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.");
 	
 	// if Human=1,Chimp=1,Gorilla=1
 	// inheriting taxonValues, map, and values variables
