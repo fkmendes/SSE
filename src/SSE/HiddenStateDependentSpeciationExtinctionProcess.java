@@ -21,7 +21,6 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.State;
-import beast.core.parameter.RealParameter;
 import beast.core.util.Log;
 import beast.evolution.tree.*;
 
