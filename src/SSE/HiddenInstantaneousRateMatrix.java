@@ -237,9 +237,11 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	}
 	
 	public double getCell(int from, int to, double rate) {
-		if (irmDirty) {
-			Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
-			 populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfStates, numberOfHiddenStates, someMatrixContent); // only re-populate IRM if some transition rate was operated on
+		synchronized (this) {
+			if (irmDirty) {
+				Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
+				 populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfStates, numberOfHiddenStates, someMatrixContent); // only re-populate IRM if some transition rate was operated on
+			}			
 		}
 		return q[from][to] * rate;
 	}
