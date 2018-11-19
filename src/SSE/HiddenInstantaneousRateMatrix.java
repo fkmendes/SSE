@@ -45,7 +45,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		numberOfStates = NstatesInput.get();
 		numberOfHiddenStates = NHiddenStatesInput.get(); // when rjMCMC implemented, this can change at different steps
 		totalNumberOfStates = numberOfHiddenStates + numberOfStates; // this will also change as a result
-//		q = new Double[totalNumberOfStates][totalNumberOfStates]; // and so we need to vary the size of q
+		q = new Double[totalNumberOfStates][totalNumberOfStates]; // and so we need to vary the size of q
 				
 		if (numberOfHiddenStates > 0 && HiddenObservedStateMapperInput.get() == null) {
 			throw new IllegalArgumentException("Number of hidden states > 0, but no mapping between observed and hidden states was found.");
@@ -68,7 +68,9 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		matrixContent = someMatrixContent; 
 		numberOfHiddenStates = nHiddenStates;
 		totalNumberOfStates = nObsStates + nHiddenStates; // this will also change as a result
-		q = new Double[totalNumberOfStates][totalNumberOfStates]; // and so we need to vary the size of q
+//		q = new Double[totalNumberOfStates][totalNumberOfStates]; // and so we need to vary the size of q
+		// apparently the line above breaks with threads... so I wrote resetQ method so I can run threads + the code that depends on this reset
+		// but I dont know why it has to be this way with threads (i.e., why I cant call new on q)
 		int numberOfInputElements = FlatQmatrixInput.get().getDimension();
 		int diagEntry = 0;
 		
@@ -212,6 +214,11 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		}
 	}
 	
+	public void resetQ(int aNumberOfStates, int aNumberOfHiddenStatesInMask) {
+		totalNumberOfStates = aNumberOfStates + aNumberOfHiddenStatesInMask;
+		q = new Double[totalNumberOfStates][totalNumberOfStates];
+	}
+	
 	public void setCell(int from, int to, double prob) {
         this.q[from][to] = prob;
 	}
@@ -238,8 +245,9 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	
 	public double getCell(int from, int to, double rate) {
 		if (irmDirty) {
+//			q = new Double[totalNumberOfStates][totalNumberOfStates];
 			Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
-			 populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfStates, numberOfHiddenStates, someMatrixContent); // only re-populate IRM if some transition rate was operated on
+			populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfStates, numberOfHiddenStates, someMatrixContent); // only re-populate IRM if some transition rate was operated on
 		}
 		return q[from][to] * rate;
 	}
@@ -294,9 +302,8 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	}
 
 	protected void restore() {
-		// matrixContent = FlatQmatrixInput.get().getValues();
+//		q = new Double[totalNumberOfStates][totalNumberOfStates];
 		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
-		// populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfStates, numberOfHiddenStates, matrixContent);
 		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfStates, numberOfHiddenStates, someMatrixContent);
 		super.restore();
 	}
