@@ -54,7 +54,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 			hiddenObsStateMapper = HiddenObservedStateMapperInput.get();
 		}
 
-//		symmetrifyAcrossDiagonalStateIdx = SymmetrifyAcrossDiagonalInput.get(); // if -1, no symmetrifying done
+		symmetrifyAcrossDiagonalStateIdx = SymmetrifyAcrossDiagonalInput.get(); // if -1, no symmetrifying done
 //		realParameterToQCell = new HashMap<>();
 		
 //		matrixContent = FlatQmatrixInput.get().getValues();
