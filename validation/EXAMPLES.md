@@ -4,7 +4,7 @@ This will guide you through the preparation of input for the .xmls in the exampl
 
 ## Running simulations (see examples_xml_inputs.R)
 
-``
+```
 library(ape)
 library(diversitree)
 library(hisse)
@@ -26,4 +26,4 @@ paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
 # find MLE
 lik <- make.bisse(phy, phy$tip.state)
 fit <- find.mle(lik, pars)
-``
+```
