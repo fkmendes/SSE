@@ -143,7 +143,6 @@ public class MasqueradeBall extends CalculationNode {
 		System.out.println(Arrays.toString(matrixContent));
 		System.out.println(Arrays.toString(newMatrixContent));
 		
-		// hirm.resetQ(numberOfStates, numberOfHiddenStatesInMask); // apparently to use threads, I need to reset here, not in populateIRM()
 		hirm.populateIRM(true, true, 0, numberOfStates, numberOfHiddenStatesInMask, newMatrixContent);
 	}
 	
