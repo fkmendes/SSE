@@ -43,19 +43,19 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
     final public Input<Integer> maxNrOfThreadsInput = new Input<>("threads","maximum number of threads to use, if less than 1 the number of threads in BeastMCMC is used (default -1)", -1);
 
 	// input
-	private Tree tree;
-	private HiddenTraitStash hiddenTraitStash;
-	private HiddenInstantaneousRateMatrix q;
+	protected Tree tree;
+	protected HiddenTraitStash hiddenTraitStash;
+	protected HiddenInstantaneousRateMatrix q;
 	private LambdaMuAssigner lambdaMuAssigner;
 	private CladogeneticSpeciationRateStash cladoStash;
-	private Double[] lambda; // this guy exists in lambdaMuAssigner... ask someone
-	private Double[] mu; // this guy exists in lambdaMuAssigner... ask someone
-	private Double[] pi; // root eq freqs
-	private int numStates; // number of observed states
-	private int numHiddenStates;
-	private int totalNumStates;
-	private double rate;
-	private boolean incorporateCladogenesis;
+	protected Double[] lambda; // this guy exists in lambdaMuAssigner... ask someone
+	protected Double[] mu; // this guy exists in lambdaMuAssigner... ask someone
+	protected Double[] pi; // root eq freqs
+	protected int numStates; // number of observed states
+	protected int numHiddenStates;
+	protected int totalNumStates;
+	protected double rate;
+	protected boolean incorporateCladogenesis;
 	
 	/* Original version: sliced branches into chunks, aimed at fixed step size ODE solvers */ 
 	// private double dt; // time slice size (ctor populates)
@@ -64,13 +64,13 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 	
 	// members used for lk computation
 	// private double[][] nodePartialScaledLksPreOde;
-	private double[][] nodePartialScaledLksPostOde;
-	private double[] scalingConstants;
+	protected double[][] nodePartialScaledLksPostOde;
+	protected double[] scalingConstants;
 	
 	// cache used for lk computation
 	// private double[][] storedNodePartialScaledLksPreOde;
-	private double[][] storedNodePartialScaledLksPostOde;
-	private double[] storedScalingConstants;
+	protected double[][] storedNodePartialScaledLksPostOde;
+	protected double[] storedScalingConstants;
 	
 	double finalLogLk;
 	double finalLk;
@@ -267,7 +267,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
     	}
     }
 
-    private void computeNodeLkUsingThreads() {
+    protected void computeNodeLkUsingThreads() {
         try {
         	// set up queue
         	done = new boolean[tree.getNodeCount()];
@@ -290,7 +290,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
         }
     }
 	
-	private int computeNodeLk(Node node, boolean recurse) {
+	protected int computeNodeLk(Node node, boolean recurse) {
 		int nodeIdx = node.getNr();
 		
 		// cache-related stuff
@@ -523,7 +523,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		return update; // this is the reason why computeNodeLk isn't void() as in the original V0 version (we need update to carry out caching)
 	}
 	
-	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge) {
+	protected void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge) {
 		FirstOrderIntegrator dp853 = new 
 				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-6, 1.0e-6);
 		HiddenSSEODE ode = new HiddenSSEODE(mu, q, rate, incorporateCladogenesis);

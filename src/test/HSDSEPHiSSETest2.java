@@ -32,7 +32,7 @@ public class HSDSEPHiSSETest2 {
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 		
-		String hiddenStatesString = "-1,0"; // observed state 1 and 2 will transition to hidden states 1 and 2, respectively
+		String hiddenStatesString = "-1,0"; // observed state 2 will transition to hidden states 1
 		HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper();
 		stateMapper.initByName("hiddenStates", hiddenStatesString);
 		

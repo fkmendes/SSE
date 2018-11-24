@@ -63,21 +63,26 @@ public class MasqueradeBall extends CalculationNode {
 			double maskItem = mask[i];
 			
 			// no hidden state for this particular observed state
-			if (maskItem == 0) {
+			if (maskItem == 0.0) {
+				obsStatesToSymmetrify[i] = -1;
+				System.out.println("Not symmetrifying state " + i);
 				hiddenToObsAssignment[i] = -1;
 				hiddenStateIdxToIgnore.add(numberOfStates + i); // used to update both hirm and lambdaMuAssigner
 			}
 								
 			// add hidden state for this particular observed state, but transition from and to are symmetrical
-			if (maskItem == 1) {
+			if (maskItem == 1.0) {
 				obsStatesToSymmetrify[i] = i;
+				System.out.println("Symmetrifying state " + i);
 				// hirm.symmetrifyAcrossDiagonal(obsStateToSymmetrifyIdx);
 				hiddenToObsAssignment[i] = hiddenStateIdx;
 				hiddenStateIdx++;
 			};
 								
 			// add hidden state for this particular observed state, with different transition rates
-			if (maskItem == 2) {
+			if (maskItem == 2.0) {
+				System.out.println("Not symmetrifying state (with mask value 2.0) " + i);
+				obsStatesToSymmetrify[i] = -1;
 				hiddenToObsAssignment[i] = hiddenStateIdx;
 				hiddenStateIdx++;				
 			}
@@ -92,18 +97,20 @@ public class MasqueradeBall extends CalculationNode {
 				numberOfHiddenStatesInMask += 1;
 			}
 		}
+		totalNumberOfStates = numberOfStates + numberOfHiddenStatesInMask;
 		
 		// transition matrix stuff
 		hirm.setHiddenObsStateAssignment(hiddenToObsAssignment); // updating HiddenObservedStateMapper inside hirm	
 
 		updateHIRM();
 		for (int obsStateIdx: obsStatesToSymmetrify) {
-			hirm.symmetrifyAcrossDiagonal(obsStateIdx);
+			if (obsStateIdx != -1) {
+				hirm.symmetrifyAcrossDiagonal(obsStateIdx);
+			}
 		}
 		hirm.printMatrix();
 		
 		// lambda and mu stuff
-		totalNumberOfStates = numberOfStates + numberOfHiddenStatesInMask;
 		lambdaMuAssigner = lambdaMuAssignerInput.get();
 		lambdaAssignmentArray = new int[totalNumberOfStates];
 		muAssignmentArray = new int[totalNumberOfStates];
@@ -130,20 +137,20 @@ public class MasqueradeBall extends CalculationNode {
 		int j = 0;
 		for (int i=0; i<matrixContent.length; ++i) {
 			int[] qCell = realParameterToQCell.get(i); // for each of the RealParameters, get the cell they occupy in Q matrix
-			// System.out.println("qCell = " + Arrays.toString(qCell));
+//			System.out.println("qCell = " + Arrays.toString(qCell));
 			
 			// now see if either row or column of that cell has a hidden state that is inactive; if active, include that (ith) RealParameter in the newMatrixContent
 			if ( !(hiddenStateIdxToIgnore.contains(qCell[0]) || hiddenStateIdxToIgnore.contains(qCell[1])) ) {  
 				newMatrixContent[j] = matrixContent[i];
-				// System.out.println("Putting " + i + "th RealParameter of transition rates into newMatrixContent. Its qCell was " + Arrays.toString(qCell));
+//				System.out.println("Putting " + i + "th RealParameter of transition rates into newMatrixContent. Its qCell was " + Arrays.toString(qCell));
 				j++;
 			}
 		}
 		
-		System.out.println(Arrays.toString(matrixContent));
-		System.out.println(Arrays.toString(newMatrixContent));
+		System.out.println("matrixContent: " + Arrays.toString(matrixContent));
+		System.out.println("newMatrixContent: " + Arrays.toString(newMatrixContent));
 		
-		hirm.populateIRM(true, true, 0, numberOfStates, numberOfHiddenStatesInMask, newMatrixContent);
+		hirm.populateIRM(true, true, -1, numberOfStates, numberOfHiddenStatesInMask, newMatrixContent);
 	}
 	
 	private void updateLambdaMuAssigner() {
@@ -222,6 +229,14 @@ public class MasqueradeBall extends CalculationNode {
 		return lambdaMuAssigner.getMus();
 	}
 	
+	public HiddenInstantaneousRateMatrix getHIRM() {
+		if (masqueradeBallDirty) {
+			applyMask();
+		}
+		return hirm;
+	}
+	
+	// for testing (actual likelihood calls getHIRM)
 	public Double[][] getQs() {
 		// if qs were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
