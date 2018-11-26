@@ -18,8 +18,8 @@ public class TraitStash extends TraitSet {
 	// protected String[] taxonValues; // state values as str, e.g., ["1", "1", "1"]
 	// Map<String, Integer> map; // "spname":sp index, e.g. {"Human":0, "Chimp":1, "Gorilla":2}
 	// double[] values; // state values as doubles, e.g., [1.0, 1.0, 1.0]
-	private HashMap<String, double[]> spnameLksMap = new HashMap<String, double[]>(); // initialized by ctor
-	private int numberOfStates;
+	protected HashMap<String, double[]> spNameLksMap = new HashMap<String, double[]>(); // initialized by ctor
+	protected int numberOfObsStates;
 	
 	public TraitStash() {
 		traitNameInput.setRule(Input.Validate.FORBIDDEN);
@@ -28,8 +28,24 @@ public class TraitStash extends TraitSet {
 	
 	public void initAndValidate() {
 		map = new HashMap<>();
-		numberOfStates = nStatesInput.get();
-        List<String> labels = taxaInput.get().asStringList();
+		numberOfObsStates = nStatesInput.get();
+        
+		// checking
+        check();
+        
+        // populating spname_lks_map
+        for (Entry<String, Integer> entry : map.entrySet()) {
+        	double[] lks = new double[numberOfObsStates*2];
+			String sp_name = entry.getKey();
+			int sp_idx = entry.getValue();
+			spNameLksMap.put(sp_name, lks);
+			// System.out.println(taxonValues[sp_idx]);
+			spNameLksMap.get(sp_name)[numberOfObsStates - 1 + Integer.parseInt(taxonValues[sp_idx])] = 1.0;
+        }
+	}
+	
+	protected void check() {
+		List<String> labels = taxaInput.get().asStringList();
         String[] traits = traitsInput.get().split(","); // ["Human=1", "Chimp=1", "Gorilla=1"]
         taxonValues = new String[labels.size()];
         values = new double[labels.size()];
@@ -86,7 +102,7 @@ public class TraitStash extends TraitSet {
         // }
         
         // checking all distinct states are consecutive order (1,2,4 is not allowed)
-         if ((double) numberOfStates < maxValue) {
+         if ((double) numberOfObsStates < maxValue) {
              Log.warning.println("WARNING: The larger state is greater than number of states (i.e., you specified 3 states, but then one species is =4). Exiting...");
              System.exit(1);
          }
@@ -99,20 +115,10 @@ public class TraitStash extends TraitSet {
             }
         }
         
-        // populating spname_lks_map
-        for (Entry<String, Integer> entry : map.entrySet()) {
-        	double[] lks = new double[numberOfStates*2];
-			String sp_name = entry.getKey();
-			int sp_idx = entry.getValue();
-			spnameLksMap.put(sp_name, lks);
-			// System.out.println(taxonValues[sp_idx]);
-			spnameLksMap.get(sp_name)[numberOfStates - 1 + Integer.parseInt(taxonValues[sp_idx])] = 1.0;
-        }
 	}
-	
 	// getters and setters
 	public double[] getSpLks(String spname) {
-		return spnameLksMap.get(spname);
+		return spNameLksMap.get(spname);
 	}
 	
 	// helper
@@ -121,7 +127,7 @@ public class TraitStash extends TraitSet {
 	}
 	
 	public void printLksMap() {
-		for (HashMap.Entry<String, double[]> entry : spnameLksMap.entrySet()) {	
+		for (HashMap.Entry<String, double[]> entry : spNameLksMap.entrySet()) {	
 			String spname = entry.getKey();
 			double[] lks = entry.getValue();
 			System.out.println(spname + " initial lks = " + Arrays.toString(lks));

@@ -6,29 +6,43 @@ import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 
 public class SSEODE implements FirstOrderDifferentialEquations {
 
-	private int numStates; // ctor populates
-	private double rate; // ctor populates
-	private Double[] mu; // ctor arg
-	private Double[] lambda; // ctor arg
+	protected int numStates; // ctor populates
+	protected double rate; // ctor populates
+	protected Double[] mu; // ctor arg
+	protected Double[] lambda; // ctor arg
 	private InstantaneousRateMatrix q; // ctor arg
-	private boolean incorporateCladogenesis; // ctor arg
-	private HashMap<int[], Double> eventMap; // setter
-    private boolean backwardTime;
-    private boolean extinctionOnly;
+
+	protected boolean incorporateCladogenesis; // ctor arg
+	protected HashMap<int[], Double> eventMap; // setter 
+	protected boolean backwardTime;
+	protected boolean extinctionOnly;
 
 	/*
 	 * Constructor
 	 * Speciation rates and event map are set independently so more or less general models can use this class
 	 */
-	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis, boolean backwardTime, boolean extinctionOnly) {
+	public SSEODE(Double[] mu, double rate, boolean incorporateCladogenesis) {
 		this.mu = mu;
-		this.q = q;
 		this.rate = rate;
 		this.incorporateCladogenesis = incorporateCladogenesis;
+	}
+
+	public SSEODE(Double[] mu, double rate, boolean incorporateCladogenesis, boolean backwardTime, boolean extinctionOnly) {
+		this(mu, rate, incorporateCladogenesis);
 		this.backwardTime = backwardTime;
 		this.extinctionOnly = extinctionOnly;
+	}
+
+	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis) {
+		this(mu, rate, incorporateCladogenesis);
+		this.q = q;
 		numStates = q.getNumObsStates();
-		// System.out.println("SSEODE: Self-initialized " + Integer.toString(num_states) + " states.");
+	}
+
+	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis, boolean backwardTime, boolean extinctionOnly) {
+        this(mu, q, rate, incorporateCladogenesis);
+		this.backwardTime = backwardTime;
+		this.extinctionOnly = extinctionOnly;
 	}
 
 	// setters and getters
@@ -46,6 +60,10 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	}
 
 	// for integrator (this is where we specify the diff eqn)
+	protected double getQCell(int from, int to, double rate) {
+		return q.getCell(from, to, rate);
+	}
+	
 	public void computeDerivatives(double t, double[] x, double[] dxdt) {
 
 		// I haven't personally checked this, but Will seems to have
@@ -98,7 +116,8 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			double no_event_rate = mu[i] + lambda_sum;
 	        for (int j = 0; j < numStates; ++j) {
 	            if (i != j) {
-	                no_event_rate += q.getCell(i, j, rate);
+	            	no_event_rate += this.getQCell(i, j, rate);
+//	                no_event_rate += q.getCell(i, j, rate);
 	            }
 	        }
 	        dxdt[i] -= no_event_rate * safeX[i];
@@ -125,7 +144,8 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			// anagenetic change
 			for (int j = 0; j < numStates; ++j) {
 				if (i != j) {
-					dxdt[i] += q.getCell(i, j, rate) * safeX[j];
+					dxdt[i] += this.getQCell(i, j, rate) * safeX[j];
+//					dxdt[i] += q.getCell(i, j, rate) * safeX[j];
 				}
 			}
 
@@ -185,10 +205,10 @@ public class SSEODE implements FirstOrderDifferentialEquations {
             for (int j = 0; j < numStates; ++j) {
             	if (i != j) {
                     if (backwardTime) {
-            		    dxdt[i + numStates] += q.getCell(i, j, rate) * safeX[j + numStates];
+            		    dxdt[i + numStates] += this.getQCell(i, j, rate) * safeX[j + numStates];
 //            		    System.out.println("anagen: " + Double.toString(q.getCell(i, j, rate) * safeX[j + numStates]));
                     } else {
-            		    dxdt[i + numStates] += q.getCell(j, i, rate) * safeX[j + numStates];
+            		    dxdt[i + numStates] += this.getQCell(j, i, rate) * safeX[j + numStates];
                     }
             	}
             }
