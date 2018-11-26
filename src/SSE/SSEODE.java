@@ -15,7 +15,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	private HashMap<int[], Double> eventMap; // setter
     private boolean backwardTime;
     private boolean extinctionOnly;
-	
+
 	/*
 	 * Constructor
 	 * Speciation rates and event map are set independently so more or less general models can use this class
@@ -35,46 +35,46 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 	public void setSpeciationRates(Double[] speciationRates) {
 		lambda = speciationRates;
 	}
-	
+
 	public void setEventMap(HashMap<int[], Double> eventMap) {
 		this.eventMap = eventMap;
 	}
-	
+
 	// for integrator
 	public int getDimension() {
 		return numStates * 2; // numStates for E and for D
 	}
 
-	// for integrator (this is where we specify the diff eqn) 
+	// for integrator (this is where we specify the diff eqn)
 	public void computeDerivatives(double t, double[] x, double[] dxdt) {
-		
+
 		// I haven't personally checked this, but Will seems to have
 		// noticed this behavior: every new x can have negative probs
 		// or probs greater than 1 coming from the ODE stepper, due to
-		// rounding error; so fixing this here 
+		// rounding error; so fixing this here
 		double[] safeX = x;
 		for (int i = 0; i < numStates * 2; ++i) {
 			safeX[i] = (x[i] < 0.0 ? 0.0 : x[i]);
 			safeX[i] = (x[i] > 1.0 ? 1.0 : x[i]);
 		}
-		
+
 		// System.out.println(Arrays.toString(safeX));
-		
+
 		// iterating over states (ranges)
 		for (int i = 0; i < numStates; ++i) {
-			
+
 			/*
 			 * Step 1: get sum of lambdas to be used in A2 and A1
 			 */
 			double lambda_sum = 0.0;
-			
+
 			if (incorporateCladogenesis) {
-				
-				// for each event, grab respective sp rate (lambda) and keep adding	
+
+				// for each event, grab respective sp rate (lambda) and keep adding
 				for (HashMap.Entry<int[], Double> entry : eventMap.entrySet()) {
 					int[] states = entry.getKey();
 					double this_lambda = entry.getValue();
-					
+
 					if (i == (states[0]-1)) {
 						// System.out.println("Matched " + Double.toString(this_lambda));
 						lambda_sum += this_lambda;
@@ -82,7 +82,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 					// else { System.out.println("Did not match " + Double.toString(this_lambda)); }
 				}
 			}
-			
+
 			else {
 				lambda_sum = lambda[i];
 			}
@@ -93,7 +93,7 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 
 			// extinction
 			dxdt[i] = mu[i];
-			
+
 			// no event (what's inside parentheses)
 			double no_event_rate = mu[i] + lambda_sum;
 	        for (int j = 0; j < numStates; ++j) {
@@ -105,23 +105,23 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 
 	        // speciation
 	        if (incorporateCladogenesis) {
-		        for (HashMap.Entry<int[], Double> entry : eventMap.entrySet()) {	
+		        for (HashMap.Entry<int[], Double> entry : eventMap.entrySet()) {
 					int[] states = entry.getKey();
 					int j = states[1]-1;
 					int k = states[2]-1;
 		        	double thisLambda = entry.getValue();
-		        	
+
 		        	// if parent state (range) is the same as current (ith) state
 		        	if (i == (states[0]-1)) {
 	            		dxdt[i] += thisLambda * safeX[j] * safeX[k];
 	            	}
 		        }
 	        }
-	        
+
 	        else {
 	        	dxdt[i] += lambda[i] * safeX[i] * safeX[i];
 	        }
-	        
+
 			// anagenetic change
 			for (int j = 0; j < numStates; ++j) {
 				if (i != j) {
@@ -174,13 +174,13 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 
                 }
             }
-            
+
             else {
             	dxdt[i + numStates] += 2.0 * lambda[i] * safeX[i] * safeX[i + numStates];
 //            	System.out.println("speciation: " + Double.toString(2.0 * lambda[i] * safeX[i] + safeX[i + numStates]));
 //            	System.out.println("speciation (Ei): " + Double.toString(safeX[i]));
             }
-            
+
             // anagenetic change
             for (int j = 0; j < numStates; ++j) {
             	if (i != j) {
@@ -194,6 +194,6 @@ public class SSEODE implements FirstOrderDifferentialEquations {
             }
 		}
 		// end of for iteration over states (ranges)
-		
+
 	}
 }
