@@ -9,7 +9,8 @@ You are going to need the following R packages:
 
 ## Running simulations in R (see examples_xml_inputs.R)    
 ### BiSSE_fixed_tree_SDSEP.xml and BiSSE_fixed_tree_HSDSEP.xml    
-SDSEP and HSDSEP amount to the same analysis, we're doing them just to show the more general Java class with hidden states reduces to the original one.    
+SDSEP and HSDSEP amount to the same analysis, we're doing them just to show the more general Java class with hidden states reduces to the original one.
+Simulating and computing MLEs below.    
 
 ```
 library(ape)
@@ -35,8 +36,8 @@ lik <- make.bisse(phy, phy$tip.state)
 fit <- find.mle(lik, pars)
 ```
 
-### BiSSE_fixed_tree_on_HiSSE_HSDSEP.xml    
-Conducting simulations with hidden trait (one hidden state).    
+### HiSSE_fixed_tree_on_HiSSE_HSDSEP.xml and BiSSE_fixed_tree_on_HiSSE_HSDSEP.xml    
+Conducting simulations with hidden trait (one hidden state), and computing MLEs.    
 
 ```
 pars <- c(.1,  .1,  .3,  # lambda 1, 2, 3

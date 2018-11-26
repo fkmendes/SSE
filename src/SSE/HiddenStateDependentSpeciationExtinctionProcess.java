@@ -109,7 +109,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends Distributio
 		incorporateCladogenesis = cladoFlagInput.get();
 		// mu = muInput.get().getValues(); // before lambdaMuAssigner
 		// pi = piInput.get().getValues(); // before lambdaMuAssigner
-		numStates = q.getNumStates();
+		numStates = q.getNumObsStates();
 		numHiddenStates = q.getNumHiddenStates();
 		totalNumStates = numStates + numHiddenStates;
 		rate = 1.0;

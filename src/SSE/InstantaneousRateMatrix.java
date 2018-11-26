@@ -9,10 +9,10 @@ public class InstantaneousRateMatrix extends CalculationNode {
 	final public Input<Integer> NstatesInput = new Input<>("numberOfStates", "How many states or geographical ranges can affect speciation and extinction.");
 	final public Input<RealParameter> FlatQmatrixInput = new Input<>("flatQMatrix", "Array (matrix whose rows were pasted) containing the instantaneous transition rate between character states.");
 	
-	private int numberOfStates;
-	private boolean ignoreDiagonal = true; // right now, always true (we never query Qij for i=j in SSEODE)
-	private boolean irmDirty = true;
-	private Double[][] q;
+	protected int numberOfStates;
+	protected boolean ignoreDiagonal = true; // right now, always true (we never query Qij for i=j in SSEODE)
+	protected boolean irmDirty = true;
+	protected Double[][] q;
 	
 	@Override
 	public void initAndValidate() {
@@ -63,7 +63,7 @@ public class InstantaneousRateMatrix extends CalculationNode {
 	}
 
 	// getters
-	public int getNumStates() {
+	public int getNumObsStates() {
 		return numberOfStates;
 	}
 	

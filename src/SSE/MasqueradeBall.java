@@ -40,7 +40,7 @@ public class MasqueradeBall extends CalculationNode {
 	@Override
 	public void initAndValidate() {
 		hirm = hirmInput.get(); // this will be done again every time apply mask is called
-		numberOfStates = hirm.getNumStates(); // numberOfStates never changes, so done only once (same below)
+		numberOfStates = hirm.getNumObsStates(); // numberOfStates never changes, so done only once (same below)
 		hiddenToObsAssignment = new int[numberOfStates];
 		obsStatesToSymmetrify = new int[numberOfStates];
 		mask = new Double[numberOfStates + 1];

@@ -23,7 +23,7 @@ public class HiddenSSEODE implements FirstOrderDifferentialEquations {
 		this.q = q;
 		this.rate = rate;
 		this.incorporateCladogenesis = incorporateCladogenesis;
-		numStates = q.getTotalNumStates();
+		numStates = q.getNumStates();
 		// System.out.println("SSEODE: Self-initialized " + Integer.toString(numStates) + " states.");
 	}
 
