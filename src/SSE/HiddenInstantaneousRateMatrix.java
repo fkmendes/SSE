@@ -9,26 +9,34 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.base.Joiner;
+import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.parameter.RealParameter;
 
 /*
  * Note: getCell is where dirty check is done
  */
-public class HiddenInstantaneousRateMatrix extends InstantaneousRateMatrix {
+public class HiddenInstantaneousRateMatrix extends CalculationNode {
 
+	final public Input<Integer> NstatesInput = new Input<>("numberOfStates", "How many states or geographical ranges can affect speciation and extinction.");
 	final public Input<Integer> NHiddenStatesInput = new Input<>("numberOfHiddenStates", "How many hidden states or geographical ranges can affect speciation and extinction.");
+	final public Input<RealParameter> FlatQmatrixInput = new Input<>("flatQMatrix", "Array (matrix whose rows were pasted) containing the instantaneous transition rate between character states.");
 	final public Input<Boolean> DisallowDoubleTransitionsInput = new Input<>("disallowDoubleTransitions", "Whether or not to set double transition parameters to zero.", Validate.REQUIRED);
 	final public Input<Integer> SymmetrifyAcrossDiagonalInput = new Input<>("symmetrifyAcrossDiagonal", "Whether or not to set transition from observed to hidden the same as transitions from hidden to observed.", Validate.REQUIRED);
 	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.");
 	
 	private int numberOfObsStates; // number of observed states (never changes)
 	private int numberOfHiddenStates;
+	private int numberOfStates;
 	private boolean disallowDoubleTransitions = true;
 	private int symmetrifyAcrossDiagonalStateIdx;
 	private HiddenObservedStateMapper hiddenObsStateMapper;
 	private Map<Integer, List<Integer>> doubleTransitionIRMCellsMap;
+	private boolean ignoreDiagonal = true; // right now, always true (we never query Qij for i=j in SSEODE)
+	private boolean irmDirty = true;
 	private Double[] matrixContent; // these transition rates will be used to populate 'q' 2D-array
+	private Double[][] q;
 	private Map<Integer, int[]> realParameterToQCell;
 	
 	@Override
@@ -52,7 +60,7 @@ public class HiddenInstantaneousRateMatrix extends InstantaneousRateMatrix {
 		
 		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
       
-		this.populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfObsStates, numberOfHiddenStates, someMatrixContent);
+		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfObsStates, numberOfHiddenStates, someMatrixContent);
 	}
 	
 	public void populateIRM(boolean ignoreDiagonal, boolean disallowDoubleTransitions, int symmetrifyAcrossDiagonal, int nObsStates, int nHiddenStates, Double[] someMatrixContent) {
@@ -207,6 +215,10 @@ public class HiddenInstantaneousRateMatrix extends InstantaneousRateMatrix {
 		numberOfStates = aNumberOfStates + aNumberOfHiddenStatesInMask;
 		q = new Double[numberOfStates][numberOfStates];
 	}
+	
+	public void setCell(int from, int to, double prob) {
+        this.q[from][to] = prob;
+	}
 
 	/* 
 	 * called by masquerade ball during rjMCMC
@@ -216,7 +228,6 @@ public class HiddenInstantaneousRateMatrix extends InstantaneousRateMatrix {
 	}
 	
 	// getters
-	@Override
 	public int getNumObsStates() {
 		return numberOfObsStates;
 	}
@@ -226,10 +237,9 @@ public class HiddenInstantaneousRateMatrix extends InstantaneousRateMatrix {
 	}
 	
 	public int getNumStates () {
-		return numberOfStates; // total number of states
+		return numberOfStates;
 	}
 	
-	@Override
 	public double getCell(int from, int to, double rate) {
 		synchronized (this) {
 			if (irmDirty) {
@@ -257,6 +267,17 @@ public class HiddenInstantaneousRateMatrix extends InstantaneousRateMatrix {
 		return q;
 	}
 	
+	// helper
+	public void printMatrix() {
+		for (int i = 0; i < numberOfStates; ++i) {
+			for (int j = 0; j < numberOfStates; ++j) {
+				// System.out.print(Double.toString(Q.getMatrixValue(i, j)) + " ");
+				System.out.print(Double.toString(q[i][j]) + " ");
+			}
+			System.out.println();
+		}
+	}
+	
 	public void printDoubleTransitionIRMCellsMap() {
 		System.out.println("IRM cells that contain double transitions and that should get 0s.");
 		Iterator<Entry<Integer, List<Integer>>> iter = doubleTransitionIRMCellsMap.entrySet().iterator();
@@ -272,8 +293,12 @@ public class HiddenInstantaneousRateMatrix extends InstantaneousRateMatrix {
 		hiddenObsStateMapper.printHidden2ObsMap();
 		hiddenObsStateMapper.printObs2HiddenMap();
 	}
+	
+	protected boolean requiresRecalculation() {
+		irmDirty = true;
+		return super.requiresRecalculation();
+	}
 
-	@Override
 	protected void restore() {
 		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
 		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfObsStates, numberOfHiddenStates, someMatrixContent);
