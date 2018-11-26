@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><beast beautitemplate='Standard' beautistatus='' namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" required="BEAST v2.5.0" version="2.5">
+        
+    <data id="seq0" name="alignment">
+        <sequence id="seq_sp10" taxon="sp10" totalcount="4" value="CAATCTGCAATTCGAGATGCGTGATTTGAGGCCTCACGTT"/>
+        <sequence id="seq_sp11" taxon="sp11" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGAGGCCTCACGTT"/>
+        <sequence id="seq_sp12" taxon="sp12" totalcount="4" value="GAATCTGCAATCCGAGATGCATGATTTGAACCCTCACGTT"/>
+        <sequence id="seq_sp13" taxon="sp13" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGAGTCCTCACGTT"/>
+        <sequence id="seq_sp14" taxon="sp14" totalcount="4" value="CGATCTGCAAATCGAAATGCAGGATTTTGAGCCTCACGTT"/>
+        <sequence id="seq_sp15" taxon="sp15" totalcount="4" value="CGATCTGCAAATCGAAATGCATGATTTTGAGCCTCACGTT"/>
+        <sequence id="seq_sp16" taxon="sp16" totalcount="4" value="CAATCCGCAATTCGAGATGCATGATTTGAGGCCTCAAGTT"/>
+        <sequence id="seq_sp17" taxon="sp17" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGAGGCCTCACGTT"/>
+        <sequence id="seq_sp18" taxon="sp18" totalcount="4" value="CAATCTGCAATTCGAGATGGATGATTTGAGGCCTCAAGTT"/>
+        <sequence id="seq_sp19" taxon="sp19" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACGTT"/>
+        <sequence id="seq_sp20" taxon="sp20" totalcount="4" value="CAATTTGTAGTGAGACATACATGATTTGAGGCCTCACGTT"/>
+        <sequence id="seq_sp21" taxon="sp21" totalcount="4" value="CAGTCTGTAATGAGACATACATGATTTGAGGCCTCACGTT"/>
+        <sequence id="seq_sp22" taxon="sp22" totalcount="4" value="CAATCTGCCATTTGAGATGCATGATTTGAGGCCTCAAGTT"/>
+        <sequence id="seq_sp23" taxon="sp23" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGAGGCCTCAAGTT"/>
+        <sequence id="seq_sp24" taxon="sp24" totalcount="4" value="CAGTCTGCAATTCGAGACGCATAATTTGAGGCCTCACGTT"/>
+        <sequence id="seq_sp25" taxon="sp25" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACGTT"/>
+        <sequence id="seq_sp26" taxon="sp26" totalcount="4" value="CAATCTGCAATTCGAGATGCATGATTTGGGGCCTCACGTT"/>
+        <sequence id="seq_sp27" taxon="sp27" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
+        <sequence id="seq_sp28" taxon="sp28" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
+        <sequence id="seq_sp29" taxon="sp29" totalcount="4" value="CAATCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
+        <sequence id="seq_sp3" taxon="sp3" totalcount="4" value="CAATGTGCAATTCGAGATGCACGATTTAAGGCCTCACGTT"/>
+        <sequence id="seq_sp30" taxon="sp30" totalcount="4" value="CAATCTGCAATTCTAGATGCATGATTTGGGGCCTCACGTT"/>
+        <sequence id="seq_sp31" taxon="sp31" totalcount="4" value="CAATCTGCAATTCTAGATGCATGATTTGGGGCCTCACGTT"/>
+        <sequence id="seq_sp32" taxon="sp32" totalcount="4" value="CAACCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
+        <sequence id="seq_sp33" taxon="sp33" totalcount="4" value="CAACCTGCAATTCGAGACGCATAATTTGAGGCCTCACATT"/>
+        <sequence id="seq_sp5" taxon="sp5" totalcount="4" value="CGATCTGCAATTCGAGATGCACGATTTGAGGCCTTGCATC"/>
+        <sequence id="seq_sp6" taxon="sp6" totalcount="4" value="CGATCTGCAATTCGAGAAGCATGCTTTGAGACCTCATATT"/>
+        <sequence id="seq_sp7" taxon="sp7" totalcount="4" value="CGACTTGCAATTCGAGAAGCATGATTTGAGGCCTCACACT"/>
+        <sequence id="seq_sp8" taxon="sp8" totalcount="4" value="CGATCTGCAGTTCGAGATCCATGATTTGAGGCCTCACATT"/>
+        <sequence id="seq_sp9" taxon="sp9" totalcount="4" value="CAATCTGCAATTGGAGATGCATGATTTGGGGCCTCACGTT"/>
+      
+      	<taxonset id="TaxonSet" spec="TaxonSet">
+			<taxon id="sp3" spec="Taxon"/>
+		 	<taxon id="sp5" spec="Taxon"/>
+		 	<taxon id="sp6" spec="Taxon"/>
+		 	<taxon id="sp7" spec="Taxon"/>
+		 	<taxon id="sp8" spec="Taxon"/>
+		 	<taxon id="sp9" spec="Taxon"/>
+		 	<taxon id="sp10" spec="Taxon"/>
+		 	<taxon id="sp11" spec="Taxon"/>
+		 	<taxon id="sp12" spec="Taxon"/>
+		 	<taxon id="sp13" spec="Taxon"/>
+		 	<taxon id="sp14" spec="Taxon"/>
+		 	<taxon id="sp15" spec="Taxon"/>
+		 	<taxon id="sp16" spec="Taxon"/>
+		 	<taxon id="sp17" spec="Taxon"/>
+		 	<taxon id="sp18" spec="Taxon"/>
+		 	<taxon id="sp19" spec="Taxon"/>
+		 	<taxon id="sp20" spec="Taxon"/>
+		 	<taxon id="sp21" spec="Taxon"/>
+		 	<taxon id="sp22" spec="Taxon"/>
+		 	<taxon id="sp23" spec="Taxon"/>
+		 	<taxon id="sp24" spec="Taxon"/>
+		 	<taxon id="sp25" spec="Taxon"/>
+		 	<taxon id="sp26" spec="Taxon"/>
+		 	<taxon id="sp27" spec="Taxon"/>
+		 	<taxon id="sp28" spec="Taxon"/>
+		 	<taxon id="sp29" spec="Taxon"/>
+		 	<taxon id="sp30" spec="Taxon"/>
+		 	<taxon id="sp31" spec="Taxon"/>
+		 	<taxon id="sp32" spec="Taxon"/>
+		 	<taxon id="sp33" spec="Taxon"/>
+      	</taxonset>
+    </data>
+      
+    <map name="Uniform" >beast.math.distributions.Uniform</map>    
+    <map name="Exponential" >beast.math.distributions.Exponential</map>    
+    <map name="LogNormal" >beast.math.distributions.LogNormalDistributionModel</map>
+    <map name="Normal" >beast.math.distributions.Normal</map>    
+    <map name="Beta" >beast.math.distributions.Beta</map>    
+    <map name="Gamma" >beast.math.distributions.Gamma</map>    
+    <map name="LaplaceDistribution" >beast.math.distributions.LaplaceDistribution</map>    
+    <map name="prior" >beast.math.distributions.Prior</map>    
+    <map name="InverseGamma" >beast.math.distributions.InverseGamma</map>    
+    <map name="OneOnX" >beast.math.distributions.OneOnX</map>
+    
+    <run id="mcmc" spec="MCMC" chainLength="10000000">            
+
+      <state id="state" storeEvery="1000">              
+		<tree id="Tree.t:seq0" name="stateNode">
+	  		<taxonset idref="TaxonSet"/>
+		</tree>
+
+        <stateNode idref="SympatricRate"/>
+        <stateNode idref="SubsympatricRate"/>
+        <stateNode idref="VicariantRate"/>
+        <stateNode idref="Mu"/>
+        <stateNode idref="FlatQMatrix"/>
+                    
+        <parameter id="kappa.s:seq0" lower="0.0" name="stateNode">2.0</parameter>
+
+	<parameter id="freqParameter.s:seq0" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+      </state>
+            
+      <init id="RandomTree.t:seq0" spec="beast.evolution.tree.RandomTree" estimate="false" initial="@Tree.t:seq0" taxa="@seq0">
+        <populationModel id="ConstantPopulation0.t:seq0" spec="ConstantPopulation">
+          <parameter id="randomPopSize.t:seq0" name="popSize">1.0</parameter>
+        </populationModel>
+      </init>
+        
+      <distribution id="posterior" spec="util.CompoundDistribution">
+        <distribution id="prior" spec="util.CompoundDistribution">
+	  <distribution id="StateDependentSpeciationExtinctionProcess" spec="SSE.StateDependentSpeciationExtinctionProcess" incorporateCladogenesis="true">
+
+	    <tree idref="Tree.t:seq0"/>
+
+	    <traitStash id="TraitStash" spec="SSE.TraitStash" value="sp3=2,sp5=2,sp6=1,sp7=1,sp8=1,sp9=2,sp10=3,sp11=1,sp12=2,sp13=1,sp14=1,sp15=1,sp16=2,sp17=1,sp18=1,sp19=2,sp20=1,sp21=3,sp22=1,sp23=3,sp24=2,sp25=3,sp26=2,sp27=3,sp28=1,sp29=2,sp30=1,sp31=1,sp32=1,sp33=3" numberOfStates="3">
+	      <taxa idref="TaxonSet"/>
+	    </traitStash>
+
+	    <instantaneousRateMatrix id="InstantaneousRateMatrix" spec="SSE.InstantaneousRateMatrix" numberOfStates="3">
+	      <parameter id="FlatQMatrix" dimension="6" lower="0.0" name="flatQMatrix">0.0904668366494489 0.0202843843027949 0.00972537517081946 0.0681905102895057 0.151011495283785 0.00458054289802842 </parameter>
+	    </instantaneousRateMatrix>
+
+	    <cladogeneticStash id="CladogeneticSpeciationRateStash" spec="SSE.CladogeneticSpeciationRateStash">
+	      <cladoTriplets id="CladoTriplet1" spec="SSE.CladoTriplet" leftChildState="1" parentState="3" rightChildState="3" speciationType="SUBSYMPATRY"/>
+	      <cladoTriplets id="CladoTriplet2" spec="SSE.CladoTriplet" leftChildState="2" parentState="3" rightChildState="3" speciationType="SUBSYMPATRY"/>
+	      <cladoTriplets id="CladoTriplet3" spec="SSE.CladoTriplet" leftChildState="1" parentState="1" rightChildState="1" speciationType="SYMPATRY"/>
+	      <cladoTriplets id="CladoTriplet4" spec="SSE.CladoTriplet" leftChildState="2" parentState="2" rightChildState="2" speciationType="SYMPATRY"/>
+	      <cladoTriplets id="CladoTriplet5" spec="SSE.CladoTriplet" leftChildState="3" parentState="3" rightChildState="3" speciationType="SYMPATRY"/>
+	      <cladoTriplets id="CladoTriplet6" spec="SSE.CladoTriplet" leftChildState="1" parentState="3" rightChildState="2" speciationType="VICARIANCE"/>
+	      <vicariantRate id="VicariantRate" spec="parameter.RealParameter">0.0038387571442539</vicariantRate> <!-- e.g., 0.05 -->
+	      <sympatricRate id="SympatricRate" spec="parameter.RealParameter">0.00631326954961372</sympatricRate> <!-- e.g., 0.05 -->
+	      <subsympatricRate id="SubsympatricRate" spec="parameter.RealParameter">0.0240574244176969</subsympatricRate> <!-- e.g., 0.05 -->
+	    </cladogeneticStash>
+
+	    <mu id="Mu" dimension="3" spec="parameter.RealParameter">0.00838562664575875 0.0170486086508596 0.00692971966345795 </mu>
+
+	    <pi id="Pi" dimension="6" spec="parameter.RealParameter">0 0 0 0.333333333333 0.333333333333 0.333333333333</pi>
+	  </distribution>
+	  
+	  <distribution id="SympatricRatePrior" spec="beast.math.distributions.Prior" x="@SympatricRate">
+	    <distr id="Exponential.SympatricRate" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.05"/>
+          </distribution>
+                       
+          <distribution id="SubsympatricRatePrior" spec="beast.math.distributions.Prior" x="@SubsympatricRate">
+	    <distr id="Exponential.SubsympatricRate" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.05"/>
+	  </distribution>
+                       
+          <distribution id="VicariantRatePrior" spec="beast.math.distributions.Prior" x="@VicariantRate">
+	    <distr id="Exponential.VicariantRate" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.05"/>
+          </distribution>
+                        
+          <distribution id="MuPrior" spec="beast.math.distributions.Prior" x="@Mu"> 
+	    <distr id="Exponential.Mu" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.0125"/>
+	  </distribution>
+            
+          <distribution id="FlatQMatrixPrior" spec="beast.math.distributions.Prior" x="@FlatQMatrix"> 
+	    <distr id="Exponential.FlatQMatrix" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.05"/>
+	  </distribution>
+
+	  <distribution id="root.prior" spec="beast.math.distributions.MRCAPrior" monophyletic="true" tree="@Tree.t:seq0">
+	    <taxonset idref="TaxonSet"/>
+	    <LogNormal id="LogNormalDistributionModel.1" name="distr">
+              <parameter id="RealParameter.3" estimate="false" name="M">3.4</parameter>
+              <parameter id="RealParameter.4" estimate="false" lower="0.0" name="S" upper="5.0">1.0E-6</parameter>
+	    </LogNormal>
+	  </distribution>
+	    
+          <prior id="KappaPrior.s:seq0" name="distribution" x="@kappa.s:seq0">
+            <LogNormal id="LogNormalDistributionModel.0" name="distr">
+              <parameter id="RealParameter.1" estimate="false" name="M">1.0</parameter>
+              <parameter id="RealParameter.2" estimate="false" name="S">1.25</parameter>
+            </LogNormal>
+          </prior>
+        </distribution>
+                    
+      <distribution id="likelihood" spec="util.CompoundDistribution" useThreads="true">
+          <distribution id="treeLikelihood.seq0" spec="ThreadedTreeLikelihood" data="@seq0" tree="@Tree.t:seq0">
+            <siteModel id="SiteModel.s:seq0" spec="SiteModel">
+              <parameter id="mutationRate.s:seq0" estimate="false" name="mutationRate">1.0</parameter>
+              <parameter id="gammaShape.s:seq0" estimate="false" name="shape">1.0</parameter>
+              <parameter id="proportionInvariant.s:seq0" estimate="false" lower="0.0" name="proportionInvariant" upper="1.0">0.0</parameter>
+
+	      <substModel id="hky.s:seq0" spec="HKY" kappa="@kappa.s:seq0">
+                <frequencies id="equalFreqs.s:seq0" spec="Frequencies" data="@seq0" estimate="false"/>
+              </substModel>
+            </siteModel>
+                                    
+            <branchRateModel id="StrictClock.c:seq0" spec="beast.evolution.branchratemodel.StrictClockModel">
+              <parameter id="clockRate.c:seq0" estimate="false" name="clock.rate">0.006568651</parameter>
+            </branchRateModel>
+                                
+          </distribution>
+      </distribution>
+    </distribution>
+
+      <operator id="TreeScaler.t:seq0" spec="ScaleOperator" scaleFactor="0.5" tree="@Tree.t:seq0" weight="3.0"/>
+            
+      <operator id="TreeRootScaler.t:seq0" spec="ScaleOperator" rootOnly="true" scaleFactor="0.5" tree="@Tree.t:seq0" weight="3.0"/>
+            
+      <operator id="UniformOperator.t:seq0" spec="Uniform" tree="@Tree.t:seq0" weight="30.0"/>
+            
+      <operator id="SubtreeSlide.t:seq0" spec="SubtreeSlide" tree="@Tree.t:seq0" weight="15.0"/>
+            
+      <operator id="Narrow.t:seq0" spec="Exchange" tree="@Tree.t:seq0" weight="15.0"/>
+            
+      <operator id="Wide.t:seq0" spec="Exchange" isNarrow="false" tree="@Tree.t:seq0" weight="3.0"/>
+            
+      <operator id="WilsonBalding.t:seq0" spec="WilsonBalding" tree="@Tree.t:seq0" weight="3.0"/>
+
+      <operator id="KappaScaler.s:seq0" spec="ScaleOperator" parameter="@kappa.s:seq0" scaleFactor="0.5" weight="0.1"/>
+	
+      <operator id="FrequenciesExchanger.s:seq0" spec="DeltaExchangeOperator" delta="0.01" weight="0.1">
+        <parameter idref="freqParameter.s:seq0"/>
+      </operator>
+      
+      <operator id="SympatricRateScaler" spec="ScaleOperator" parameter="@SympatricRate" scaleFactor="0.75" weight="3.0"/>
+      
+      <operator id="SubsympatricRateScaler" spec="ScaleOperator" parameter="@SubsympatricRate" scaleFactor="0.75" weight="3.0"/>
+      
+      <operator id="VicariantRateScaler" spec="ScaleOperator" parameter="@VicariantRate" scaleFactor="0.75" weight="3.0"/>
+      
+      <operator id="MuScaler" spec="ScaleOperator" parameter="@Mu" scaleFactor="0.75" weight="3.0"/>
+      
+      <operator id="FlatQMatrixScaler" spec="ScaleOperator" parameter="@FlatQMatrix" scaleFactor="0.75" weight="3.0"/>
+
+      <logger id="tracelog" fileName="seq0.log" logEvery="1000" model="@posterior" sanitiseHeaders="true" sort="smart">                    
+        <log idref="posterior"/>                    
+        <log idref="likelihood"/>                    
+        <log idref="prior"/>                    
+        <log idref="treeLikelihood.seq0"/>                    
+		<log idref="SympatricRate"/>
+        <log idref="SubsympatricRate"/>
+        <log idref="VicariantRate"/>
+        <log idref="Mu"/>
+        <log idref="FlatQMatrix"/>
+        <log id="TreeHeight.t:seq0" spec="beast.evolution.tree.TreeHeightLogger" tree="@Tree.t:seq0"/>         <log idref="kappa.s:seq0"/>
+      </logger>
+            
+      <logger id="screenlog" logEvery="5000">                    
+        <log idref="posterior"/>                    
+        <log id="ESS.0" spec="util.ESS" arg="@posterior"/>                    
+        <log idref="likelihood"/>                    
+        <log idref="prior"/>                
+      </logger>
+            
+      <logger id="treelog.t:seq0" fileName="$(tree).trees" logEvery="1000" mode="tree">
+        <log id="TreeWithMetaDataLogger.t:seq0" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@Tree.t:seq0"/>
+      </logger>
+        
+    </run>
+</beast>

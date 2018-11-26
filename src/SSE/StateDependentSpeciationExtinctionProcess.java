@@ -125,7 +125,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		q = irmInput.get();
 		mu = muInput.get().getValues();
 		pi = piInput.get().getValues();
-		numStates = q.getNumStates();
+		numStates = q.getNumObsStates();
 		rate = 1.0;
 		incorporateCladogenesis = cladoFlagInput.get();
 		

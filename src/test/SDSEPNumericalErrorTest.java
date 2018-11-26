@@ -45,7 +45,7 @@ public class SDSEPNumericalErrorTest {
 	final static double EPSILON = 1e-2;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
-	int numSamples = 10;
+	int numSamples = 5;  // This test takes a long time with larger number of samples... crazy long.
 	int curSample = 0;
 	int[] params = new int[numSamples];
 	double[][] posteriorStocPerParam;

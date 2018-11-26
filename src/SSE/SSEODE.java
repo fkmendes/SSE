@@ -1,6 +1,5 @@
 package SSE;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
@@ -28,8 +27,8 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 		this.incorporateCladogenesis = incorporateCladogenesis;
 		this.backwardTime = backwardTime;
 		this.extinctionOnly = extinctionOnly;
-		numStates = q.getNumStates();
-		// System.out.println("SSEODE: Self-initialized " + Integer.toString(numStates) + " states.");
+		numStates = q.getNumObsStates();
+		// System.out.println("SSEODE: Self-initialized " + Integer.toString(num_states) + " states.");
 	}
 
 	// setters and getters

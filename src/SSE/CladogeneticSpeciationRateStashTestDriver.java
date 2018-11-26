@@ -11,16 +11,16 @@ public class CladogeneticSpeciationRateStashTestDriver {
 
 	public static void main(String[] args) {
 		CladoTriplet sTriplet = new CladoTriplet();
-		sTriplet.initByName("ParentState", 1,
-				"LeftChildState", 1,
-				"RightChildState", 1,
-				"SpeciationType", speciationType.SYMPATRY);
+		sTriplet.initByName("parentState", 1,
+				"leftChildState", 1,
+				"rightChildState", 1,
+				"speciationType", speciationType.SYMPATRY);
 		
 		CladoTriplet ssTriplet = new CladoTriplet();
-		ssTriplet.initByName("ParentState", 2,
-				"LeftChildState", 2,
-				"RightChildState", 1,
-				"SpeciationType", speciationType.SUBSYMPATRY);
+		ssTriplet.initByName("parentState", 2,
+				"leftChildState", 2,
+				"rightChildState", 1,
+				"speciationType", speciationType.SUBSYMPATRY);
 		
 		List<CladoTriplet> cladoTripletList = new ArrayList<CladoTriplet>();
 		Collections.addAll(cladoTripletList, sTriplet, ssTriplet);
@@ -35,11 +35,11 @@ public class CladogeneticSpeciationRateStashTestDriver {
 		RealParameter jumpSpeciationRate = new RealParameter(jSpeciationRate);
 
 		CladogeneticSpeciationRateStash csrt = new CladogeneticSpeciationRateStash();
-		csrt.initByName("CladoTriplets", cladoTripletList,
-				"SympatricRate", sympatricSpeciationRate,
-				"SubsympatricRate", subSympatricSpeciationRate,
-				"VicariantRate", vicariantSpeciationRate,
-				"JumpRate", jumpSpeciationRate);
+		csrt.initByName("cladoTriplets", cladoTripletList,
+				"sympatricRate", sympatricSpeciationRate,
+				"subsympatricRate", subSympatricSpeciationRate,
+				"vicariantRate", vicariantSpeciationRate,
+				"jumpRate", jumpSpeciationRate);
 		csrt.printEventMap();	
 	}
 }
