@@ -6,25 +6,28 @@ import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 
 public class SSEODE implements FirstOrderDifferentialEquations {
 
-	private int numStates; // ctor populates
-	private double rate; // ctor populates
-	private Double[] mu; // ctor arg
-	private Double[] lambda; // ctor arg
+	protected int numStates; // ctor populates
+	protected double rate; // ctor populates
+	protected Double[] mu; // ctor arg
+	protected Double[] lambda; // ctor arg
 	private InstantaneousRateMatrix q; // ctor arg
-	private boolean incorporateCladogenesis; // ctor arg
-	private HashMap<int[], Double> eventMap; // setter 
+	protected boolean incorporateCladogenesis; // ctor arg
+	protected HashMap<int[], Double> eventMap; // setter 
 	
 	/*
 	 * Constructor
 	 * Speciation rates and event map are set independently so more or less general models can use this class
 	 */
-	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis) {
+	public SSEODE(Double[] mu, double rate, boolean incorporateCladogenesis) {
 		this.mu = mu;
-		this.q = q;
 		this.rate = rate;
 		this.incorporateCladogenesis = incorporateCladogenesis;
+	}
+	
+	public SSEODE(Double[] mu, InstantaneousRateMatrix q, double rate, boolean incorporateCladogenesis) {
+		this(mu, rate, incorporateCladogenesis);
+		this.q = q;
 		numStates = q.getNumObsStates();
-		// System.out.println("SSEODE: Self-initialized " + Integer.toString(num_states) + " states.");
 	}
 
 	// setters and getters
@@ -41,6 +44,10 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 		return numStates * 2; // num_states for E and for D
 	}
 
+	protected double getQCell(int from, int to, double rate) {
+		return q.getCell(from, to, rate);
+	}
+	
 	// for integrator (this is where we specify the diff eqn) 
 	public void computeDerivatives(double t, double[] x, double[] dxdt) {
 		
@@ -94,7 +101,8 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			double no_event_rate = mu[i] + lambda_sum;
 	        for (int j = 0; j < numStates; ++j) {
 	            if (i != j) {
-	                no_event_rate += q.getCell(i, j, rate);
+	            	no_event_rate += this.getQCell(i, j, rate);
+//	                no_event_rate += q.getCell(i, j, rate);
 	            }
 	        }
 	        dxdt[i] -= no_event_rate * safeX[i];
@@ -121,7 +129,8 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 			// anagenetic change
 			for (int j = 0; j < numStates; ++j) {
 				if (i != j) {
-					dxdt[i] += q.getCell(i, j, rate) * safeX[j];
+					dxdt[i] += this.getQCell(i, j, rate) * safeX[j];
+//					dxdt[i] += q.getCell(i, j, rate) * safeX[j];
 				}
 			}
 			
@@ -160,7 +169,8 @@ public class SSEODE implements FirstOrderDifferentialEquations {
             // anagenetic change
             for (int j = 0; j < numStates; ++j) {
             	if (i != j) {
-            		dxdt[i + numStates] += q.getCell(i, j, rate) * safeX[j + numStates];
+            		dxdt[i + numStates] += this.getQCell(i, j, rate) * safeX[j + numStates];
+//            		dxdt[i + numStates] += q.getCell(i, j, rate) * safeX[j + numStates];
 //            		System.out.println("anagen: " + Double.toString(Q.getCell(i, j, rate) * safe_x[j + num_states]));
             	}
             }
