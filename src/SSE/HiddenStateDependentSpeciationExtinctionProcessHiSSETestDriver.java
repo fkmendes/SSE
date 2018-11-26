@@ -147,6 +147,6 @@ public class HiddenStateDependentSpeciationExtinctionProcessHiSSETestDriver {
     	
         System.out.println(hsdsep1.calculateLogP());
         
-    	System.out.println(hsdsep2.calculateLogP());
+//    	System.out.println(hsdsep2.calculateLogP());
 	}
 }
