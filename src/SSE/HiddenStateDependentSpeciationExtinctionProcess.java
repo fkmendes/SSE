@@ -96,11 +96,6 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends StateDepend
 		numBranchStateChanges = 0;
 		averageSpeciationRates = new double[tree.getNodeCount()];
 		averageExtinctionRates = new double[tree.getNodeCount()];
-
-		// Integrator parameters
-		integratorMinStep = 1.0e-8;
-		integratorTolerance = 1.0e-6;
-
 	}
 	
 	@Override

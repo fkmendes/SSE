@@ -113,10 +113,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	protected double[] averageExtinctionRates; // Over all states in the branch, the extinction rate
 
 	// Integrator parameters
-	protected double integratorMinStep;
-	protected double integratorTolerance;
+	protected double integratorMinStep = 1.0e-8;
+	protected double integratorTolerance = 1.0e-6;
 
-    
+
 	@Override
 	public void initAndValidate() {		
 		super.initAndValidate();
@@ -181,10 +181,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		numBranchStateChanges = 0;
 		averageSpeciationRates = new double[tree.getNodeCount()];
 		averageExtinctionRates = new double[tree.getNodeCount()];
-
-		// Integrator parameters
-		integratorMinStep = 1.0e-8;
-		integratorTolerance = 1.0e-6;
 	}
 	
 /* Original constructor before interfacing with BEAST 2 */
