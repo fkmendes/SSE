@@ -96,25 +96,25 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public int[] startStates;
 	public int[] endStates;
 
-	private double[][] nodeConditionalScaledLks;
+	protected double[][] nodeConditionalScaledLks;
 
 	// The below parameters are used for drawStochasticCharacterMapping and mostly have to do with the activity on branches
-	private boolean sampleCharacterHistory;
+	protected boolean sampleCharacterHistory;
 	// above is using RevBayes name convention. I prefer sampleBranch. This is used using drawStochastic where we want to sample the state along a branch, not just at a node
-	private ArrayList<double[]>[] branchPartialLks;  // likelihoods along the branch above a node. use Arraylist since no fixed num samples along variable length branches
-	private int numTimeSlices = 500;
-	private double dt; // dt is calculated as a function of the number of time slices
+	protected ArrayList<double[]>[] branchPartialLks;  // likelihoods along the branch above a node. use Arraylist since no fixed num samples along variable length branches
+	protected int numTimeSlices = 500;
+	protected double dt; // dt is calculated as a function of the number of time slices
 	public ArrayList[] nodeTransitionStates; // Tracks transitions along the branch above the node
 	public ArrayList[] nodeTransitionTimes; // Tracks how long the state was occupied before transitioning
 	public double[][] nodeTimeInState; // Total time of the node in the state
 	public int numBranchStateChanges; // TODO remove
 	public int numNodeStateChanges; // TODO remove
-	private double[] averageSpeciationRates; // Over all states in the branch, the speciation rate
-	private double[] averageExtinctionRates; // Over all states in the branch, the extinction rate
+	protected double[] averageSpeciationRates; // Over all states in the branch, the speciation rate
+	protected double[] averageExtinctionRates; // Over all states in the branch, the extinction rate
 
 	// Integrator parameters
-	private double integratorMinStep;
-	private double integratorTolerance;
+	protected double integratorMinStep;
+	protected double integratorTolerance;
 
     
 	@Override

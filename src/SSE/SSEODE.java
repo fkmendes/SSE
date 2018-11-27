@@ -91,13 +91,13 @@ public class SSEODE implements FirstOrderDifferentialEquations {
 				// for each event, grab respective sp rate (lambda) and keep adding
 				for (HashMap.Entry<int[], Double> entry : eventMap.entrySet()) {
 					int[] states = entry.getKey();
-					double this_lambda = entry.getValue();
+					double thisLambda = entry.getValue();
 
 					if (i == (states[0]-1)) {
-						// System.out.println("Matched " + Double.toString(this_lambda));
-						lambda_sum += this_lambda;
+						// System.out.println("Matched " + Double.toString(thisLambda));
+						lambda_sum += thisLambda;
 					}
-					// else { System.out.println("Did not match " + Double.toString(this_lambda)); }
+					// else { System.out.println("Did not match " + Double.toString(thisLambda)); }
 				}
 			}
 
@@ -173,22 +173,22 @@ public class SSEODE implements FirstOrderDifferentialEquations {
                     int a = states[0]-1;
 					int l = states[1]-1;
 					int r = states[2]-1;
-	            	double this_lambda = entry.getValue();
+	            	double thisLambda = entry.getValue();
 
                     if (backwardTime) {
 	            	    // if parent state (range) is the same as current (ith) state
 	            	    if (i == a) {
 	            		    double dnj_times_ek = safeX[l + numStates] * safeX[r]; // D_Nj * E_k
 	            		    double dnk_times_ej = safeX[r + numStates] * safeX[l]; // D_Nj * E_k
-	            		    dxdt[i + numStates] += this_lambda * (dnj_times_ek + dnk_times_ej);
+	            		    dxdt[i + numStates] += thisLambda * (dnj_times_ek + dnk_times_ej);
 	            	    }
                     }
                     else {
                         if (i == l) {
-	            		    dxdt[i + numStates] += this_lambda * safeX[a + numStates] * safeX[r];
+	            		    dxdt[i + numStates] += thisLambda * safeX[a + numStates] * safeX[r];
                         }
                         if (i == r) {
-	            		    dxdt[i + numStates] += this_lambda * safeX[a + numStates] * safeX[l];
+	            		    dxdt[i + numStates] += thisLambda * safeX[a + numStates] * safeX[l];
                         }
                     }
 

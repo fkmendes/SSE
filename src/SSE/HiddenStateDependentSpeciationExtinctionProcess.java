@@ -1,5 +1,6 @@
 package SSE;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Executors;
 import beast.app.BeastMCMC;
@@ -79,10 +80,32 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends StateDepend
 		if (useThreads) {
 		     exec = Executors.newFixedThreadPool(nrOfThreads);
 		}
+
+		startStates = new int[tree.getNodeCount()];
+		endStates = new int[tree.getNodeCount()];
+		nodeConditionalScaledLks = new double[tree.getNodeCount()][numStates*2];
+
+		sampleCharacterHistory = false;
+		branchPartialLks = new ArrayList[tree.getNodeCount()];
+//        dt = tree.getRoot().getHeight() / numTimeSlices * 50.0; // why we multiply by 50? following RevBayes code
+		dt = tree.getRoot().getHeight() / numTimeSlices; // why we multiply by 50? following RevBayes code
+		nodeTransitionStates = new ArrayList[tree.getNodeCount()];
+		nodeTransitionTimes = new ArrayList[tree.getNodeCount()];
+		nodeTimeInState = new double[tree.getNodeCount()][numStates];
+		numNodeStateChanges = 0;
+		numBranchStateChanges = 0;
+		averageSpeciationRates = new double[tree.getNodeCount()];
+		averageExtinctionRates = new double[tree.getNodeCount()];
+
+		// Integrator parameters
+		integratorMinStep = 1.0e-8;
+		integratorTolerance = 1.0e-6;
+
 	}
 	
 	@Override
 	public double calculateLogP() {
+    	System.out.println(sampleCharacterHistory);
 		mu = lambdaMuAssigner.getMus();
 		pi = lambdaMuAssigner.getPis();
 
