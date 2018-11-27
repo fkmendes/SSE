@@ -52,7 +52,7 @@ if (is.null(phy)) {
     print("bad tree")
     q()
 }
-tips = phy$tip.state
+tips = phy$tip.state + 1  # to make the two states 1 and 2
 print("Tree tips")
 print(tips)
 print("Tree in Newick format")
@@ -60,7 +60,7 @@ write.tree(phy)
 tree.file.name = paste0(dir, exp.name, ".tree")
 write.tree(phy, file=tree.file.name)
 ntips = length(tips)
-node.truth = phy$node.state
+node.truth = phy$node.state + 1 # to make the two states 1 and 2
 
 print("Node truths")
 
@@ -70,7 +70,7 @@ node.truth.names = names(node.truth)
 node.truth.save = t(node.truth.save)
 node.truth.save = rbind(node.truth.names, node.truth.save)
 node.file.name = paste0(dir, exp.name, "-node_truth.csv")
-write.table(node.truth.save, file=node.file.name, sep=",", col.names=FALSE, row.names=FALSE)
+write.table(node.truth.save, file=node.file.name, sep=",", col.names=FALSE, row.names=FALSE, quote=FALSE)
 
 
 tips.save = tips
@@ -78,14 +78,14 @@ tips.save.names = names(tips.save)
 tips.save = t(tips.save)
 tips.save = rbind(tips.save.names, tips.save)
 tips.file.name = paste0(dir, exp.name, "-tips.csv")
-write.table(tips.save, file=tips.file.name, sep=",", col.names=FALSE, row.names=FALSE)
+write.table(tips.save, file=tips.file.name, sep=",", col.names=FALSE, row.names=FALSE, quote=FALSE)
 
 
 beast.data = ""
 for (i in 1:length(tips)) {
     beast.data = paste0(beast.data, names(tips[i]), "=", tips[i], ",")
 }   
-beast.data = substr(beast.data, 0, nchar(beast.data) - 1)
+beast.data = substr(beast.data, 0, nchar(beast.data) - 1) # to remove the extra comma added
 beast.data.file.name = paste0(root, dir, exp.name, "-beast_str.txt")
 cat(beast.data, file=beast.data.file.name)
 
@@ -134,7 +134,7 @@ print("asr marginal likelyhoods")
 asr.marginal.labeled = rbind(phy$node.label, asr.marginal)
 print(asr.marginal.labeled)
 asr.file.name = paste0(dir, exp.name, "-div_anc_states.csv")
-write.table(asr.marginal.labeled, file = asr.file.name, row.names=FALSE, col.names=FALSE, sep=",")
+write.table(asr.marginal.labeled, file = asr.file.name, row.names=FALSE, col.names=FALSE, sep=",", quote=FALSE)
 
 
 #attributes(phy)
