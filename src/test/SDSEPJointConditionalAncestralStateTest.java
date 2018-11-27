@@ -86,7 +86,7 @@ public class SDSEPJointConditionalAncestralStateTest {
 		posterior = TestHelper.trimTips(posterior);
 
 		// Write only the ancestral states to csv
-		String dir = "/Users/jeff/Documents/Research/Phylogenetics/calibrated_validation/scm/beast";
+		String dir = "/Users/jeff/Documents/Research/Phylogenetics/SSE/validation/beast_results";
 		TestHelper.writeToCSV(dir, "rb.csv", posterior, sdsep);
 
 		String[] divLbls = {"nd1","nd2","nd6","nd22","nd7","nd9","nd11","nd3","nd4","nd8","nd10","nd12","nd15","nd16","nd17","nd13","nd21","nd5","nd14","nd18","nd20"};

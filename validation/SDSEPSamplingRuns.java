@@ -3,7 +3,7 @@ Sample the tree with both drawJointConditionalAncestralState and drawStochasticC
 Write the posteriors to csv's
  */
 
-package src.test;
+package validation;
 
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;
@@ -14,13 +14,12 @@ import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import src.test.TestHelper;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class SDSEPSimpleSamplingTest {
+public class SDSEPSamplingRuns {
 	final static double EPSILON = 1e-2;
 	final static int numTrials = 10000;
 	private StateDependentSpeciationExtinctionProcess sdsep;
@@ -89,12 +88,7 @@ public class SDSEPSimpleSamplingTest {
 //		TestHelper.compareDiv(divLbls, divLks, indexNameMapper, posterior);
 	}
 
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@Test
-	public void test() throws Exception {
+	public void run() throws Exception {
 	    int numTimeSlices = 100;
 		String treeStr = "(((sp5:1.753921149,sp6:1.753921149)nd5:10.54206596,sp2:12.2959871)nd3:5.60266132,(sp3:6.029064844,sp4:6.029064844)nd4:11.86958358)nd2;";
 		String spAttr = "sp2=1,sp3=1,sp4=1,sp5=2,sp6=2";
@@ -148,6 +142,11 @@ public class SDSEPSimpleSamplingTest {
 		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
 		sdsep.setSampleCharacterHistory(true);
 		Assert.assertEquals(-63.0014, sdsep.calculateLogP(), 1e-3); // Used in original version with fixed-step size ODE solver
+	}
+
+	public static void main(String[] args) throws Exception {
+		SDSEPSamplingRuns runs = new SDSEPSamplingRuns();
+		runs.run();
 	}
 
 }

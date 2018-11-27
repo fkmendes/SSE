@@ -22,7 +22,7 @@ Results
 
 
 
-package src.test;
+package validation;
 
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;
@@ -32,8 +32,7 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Before;
-import org.junit.Test;
+import src.test.TestHelper;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -41,7 +40,8 @@ import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.List;
 
-public class SDSEPNumericalErrorTest {
+public class SDSEPNumericalErrorAnalysis {
+	public String dir = "validation/numerical_error/";
 	final static double EPSILON = 1e-2;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
@@ -159,8 +159,8 @@ public class SDSEPNumericalErrorTest {
 						divAcc, numTrials, false, integratorMinStep, integratorTolerance);
 				numTrials *= 2;
 			}
-			writeParams(params, posteriorJointPerParam, expName + "numErrorJointNumTrials.csv");
-			writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTrials.csv");
+			writeParams(params, posteriorJointPerParam, dir + expName + "numErrorJointNumTrials.csv");
+			writeParams(params, posteriorStocPerParam, dir + expName + "numErrorStocNumTrials.csv");
 		}
 
 		if (testNumSlices) {
@@ -172,7 +172,7 @@ public class SDSEPNumericalErrorTest {
 						divAcc, 5000, true, integratorMinStep, integratorTolerance);
 				numTimeSlices *= 2;
 			}
-			writeParams(params, posteriorStocPerParam, expName + "numErrorStocNumTimeSlices.csv");
+			writeParams(params, posteriorStocPerParam, dir + expName + "numErrorStocNumTimeSlices.csv");
 		}
 
 		if (testNumSlicesAndIntegrator) {
@@ -187,7 +187,7 @@ public class SDSEPNumericalErrorTest {
 				}
 				System.out.println(integratorMinStep);
 				System.out.println(integratorTolerance);
-				writeParams(params, posteriorStocPerParam, expName + "integrator" + j + "numErrorStocNumTimeSlices.csv");
+				writeParams(params, posteriorStocPerParam, dir + expName + "integrator" + j + "numErrorStocNumTimeSlices.csv");
 
 				integratorMinStep /= 2;
 				integratorTolerance /= 2;
@@ -195,16 +195,11 @@ public class SDSEPNumericalErrorTest {
 		}
 	}
 
-	@Before
-	public void setUp() throws Exception {
-	}
-
 	public void resetCurSample() {
 		curSample = 0;
 	}
 
-	@Test
-	public void test() throws Exception {
+	public void run() throws Exception {
 	    double defaultIntegratorMinStep = 1.0e-8;
 	    double defaultIntegratorTolerance = 1.0e-9;
 
@@ -261,6 +256,11 @@ public class SDSEPNumericalErrorTest {
 		divAcc = 0.8571429;
 
 //		runWrapper(treeStr, spAttr, spNames, "asym", lambdas, mus, q, divLbls, divStates, divAcc, false);
+	}
+
+	public static void main (String[] args) throws Exception {
+		SDSEPNumericalErrorAnalysis analysis = new SDSEPNumericalErrorAnalysis();
+		analysis.run();
 	}
 
 }
