@@ -100,7 +100,6 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends StateDepend
 	
 	@Override
 	public double calculateLogP() {
-    	System.out.println(sampleCharacterHistory);
 		mu = lambdaMuAssigner.getMus();
 		pi = lambdaMuAssigner.getPis();
 
