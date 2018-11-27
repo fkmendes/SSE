@@ -168,7 +168,7 @@ public class TestHelper {
     public static void prepareAndWriteToCSV(double[] posteriorWTips, String expName, StateDependentSpeciationExtinctionProcess sdsep) throws Exception {
         int numSpecies = (int) ((posteriorWTips.length + 1) / 2);
         double[] posterior = TestHelper.trimTips(posteriorWTips);
-        String dir = "/Users/jeff/Documents/Research/Phylogenetics/calibrated_validation/scm/beast";
+        String dir = "/Users/jeff/Documents/Research/Phylogenetics/SSE/validation";
         String fileName = expName + ".csv";
         TestHelper.writeToCSV(dir, fileName, posterior, sdsep);
     }
