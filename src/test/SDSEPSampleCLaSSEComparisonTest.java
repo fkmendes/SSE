@@ -157,12 +157,21 @@ public class SDSEPSampleCLaSSEComparisonTest {
 		double[][] posteriorStoc = sdsep.sampleAndSummarizeCLaSSE(numTrials, false);
 		double[][] posteriorJoint = sdsep.sampleAndSummarizeCLaSSE(numTrials, true);
 
+		double[] posteriorStoc1D = new double[numNodes];
+		double[] posteriorJoint1D = new double[numNodes];
+
 		for (int i = 0; i < numNodes; i++) {
 			System.out.println("Stoch for node " + i + Arrays.toString(posteriorStoc[i]));
 			System.out.println("Joint for node " + i + Arrays.toString(posteriorJoint[i]));
+
+			posteriorStoc1D[i] = posteriorStoc[i][0];
+			posteriorJoint1D[i] = posteriorJoint[i][0];
 		}
 
 		TestHelper.compareNestedArr(posteriorJoint, posteriorStoc);
+
+		TestHelper.prepareAndWriteToCSV(posteriorStoc1D, "beast_results/" + expName + "-stoc", sdsep);
+		TestHelper.prepareAndWriteToCSV(posteriorJoint1D, "beast_results/" + expName + "-joint", sdsep);
 	}
 
 	@Before
@@ -170,19 +179,19 @@ public class SDSEPSampleCLaSSEComparisonTest {
 	}
 
 	@Test
-	public void test() throws Exception {
+	public void testSmall() throws Exception {
 		String treeStr = "(((Human:1.0,Chimp:1.0):1.0,Gorilla:2.0):1.0,Orang:3.0);";
 		String[] spNames = new String[] { "Human", "Chimp", "Gorilla", "Orang" };
 		String spAttr = "Human=3,Chimp=1,Gorilla=4,Orang=3";
-
 		runExperiment(treeStr, spAttr, spNames, "CLaSSE", 50);
+	}
 
-
-
-		treeStr = "(((sp15:0.5701922606,(sp22:0.1174274481,sp23:0.1174274481)nd22:0.4527648125)nd6:5.46955786,((sp4:2.913008462,(sp16:0.4790358056,sp17:0.4790358056)nd11:2.433972656)nd9:1.72680138,sp2:4.639809842)nd7:1.399940278)nd2:8.039087646,((sp1:5.262858931,((((sp10:1.936988093,sp11:1.936988093)nd15:0.8700699862,((sp20:0.1813602217,sp21:0.1813602217)nd17:2.59756285,sp6:2.778923072)nd16:0.02813500652)nd12:0.1038009358,(sp14:1.103215563,(sp18:0.2976700868,sp19:0.2976700868)nd21:0.805545476)nd13:1.807643452)nd10:0.5229591127,sp3:3.433818127)nd8:1.829040804)nd4:1.760591904,((((sp8:1.951198056,sp9:1.951198056)nd20:0.153294648,sp7:2.104492704)nd18:0.5588707339,sp12:2.663363438)nd14:0.2401874525,sp5:2.90355089)nd5:4.119899945)nd3:7.055386931)nd1;";
-		spNames = new String[]{"sp1","sp2","sp3","sp4","sp5","sp6","sp7","sp8","sp9","sp10","sp11","sp12","sp14","sp15","sp16","sp17","sp18","sp19","sp20","sp21","sp22","sp23"};
-		spAttr = "sp1=1,sp2=1,sp3=1,sp4=2,sp5=1,sp6=1,sp7=2,sp8=1,sp9=1,sp10=1,sp11=1,sp12=1,sp14=1,sp15=2,sp16=2,sp17=1,sp18=1,sp19=1,sp20=2,sp21=2,sp22=1,sp23=1";
-		runExperiment(treeStr, spAttr, spNames, "CLaSSE", 50);
+	@Test
+	public void testBig() throws Exception {
+		String treeStr = "(((sp15:0.5701922606,(sp22:0.1174274481,sp23:0.1174274481)nd22:0.4527648125)nd6:5.46955786,((sp4:2.913008462,(sp16:0.4790358056,sp17:0.4790358056)nd11:2.433972656)nd9:1.72680138,sp2:4.639809842)nd7:1.399940278)nd2:8.039087646,((sp1:5.262858931,((((sp10:1.936988093,sp11:1.936988093)nd15:0.8700699862,((sp20:0.1813602217,sp21:0.1813602217)nd17:2.59756285,sp6:2.778923072)nd16:0.02813500652)nd12:0.1038009358,(sp14:1.103215563,(sp18:0.2976700868,sp19:0.2976700868)nd21:0.805545476)nd13:1.807643452)nd10:0.5229591127,sp3:3.433818127)nd8:1.829040804)nd4:1.760591904,((((sp8:1.951198056,sp9:1.951198056)nd20:0.153294648,sp7:2.104492704)nd18:0.5588707339,sp12:2.663363438)nd14:0.2401874525,sp5:2.90355089)nd5:4.119899945)nd3:7.055386931)nd1;";
+		String[] spNames = new String[]{"sp1","sp2","sp3","sp4","sp5","sp6","sp7","sp8","sp9","sp10","sp11","sp12","sp14","sp15","sp16","sp17","sp18","sp19","sp20","sp21","sp22","sp23"};
+		String spAttr = "sp1=1,sp2=1,sp3=1,sp4=2,sp5=1,sp6=1,sp7=2,sp8=1,sp9=1,sp10=1,sp11=1,sp12=1,sp14=1,sp15=2,sp16=2,sp17=1,sp18=1,sp19=1,sp20=2,sp21=2,sp22=1,sp23=1";
+		runExperiment(treeStr, spAttr, spNames, "CLaSSELarge", 50);
 	}
 
 }
