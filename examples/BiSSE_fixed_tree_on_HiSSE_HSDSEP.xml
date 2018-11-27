@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" required="BEAST v2.5.0" version="2.5">
+
+  <run id="mcmc" spec="MCMC" chainLength="10000000">
+    <state id="state" storeEvery="10000">
+      <stateNode idref="Lambda"/>
+      <stateNode idref="Mu"/>
+      <stateNode idref="FlatQMatrix"/>
+    </state>
+
+    <distribution id="posterior" spec="util.CompoundDistribution">
+
+      <!-- START prior -->
+      <distribution id="prior" spec="util.CompoundDistribution">
+        <distribution id="LambdaPrior" spec="beast.math.distributions.Prior" x="@Lambda">
+	  	<distr id="Exponential.Lambda" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.2"/>
+        </distribution>
+
+        <distribution id="MuPrior" spec="beast.math.distributions.Prior" x="@Mu">
+	  	<distr id="Exponential.Mu" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.05"/>
+        </distribution>
+
+        <distribution id="FlatQMatrixPrior" spec="beast.math.distributions.Prior" x="@FlatQMatrix">
+	  	<distr id="Exponential.FlatQMatrix" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.1"/>
+        </distribution>
+      </distribution>
+      <!-- END prior -->
+
+      <distribution id="likelihood" spec="util.CompoundDistribution" useThreads="true">
+	<distribution id="HiddenStateDependentSpeciationExtinctionProcess" spec="SSE.HiddenStateDependentSpeciationExtinctionProcess" incorporateCladogenesis="false" useThreads="true" threads="2">
+	  <tree id="FixedTree" spec="beast.util.TreeParser" IsLabelledNewick="true" adjustTipHeights="false" newick="((sp7:17.69971665,(sp34:2.921405715,sp35:2.921405715):14.77831094):15.46869175,(((((sp77:0.1860367355,sp78:0.1860367355):4.584657877,((sp67:0.8514863174,sp68:0.8514863174):0.8954959965,((sp64:1.077337234,(sp73:0.5016314604,sp74:0.5016314604):0.5757057734):0.1725445915,sp58:1.249881825):0.4971004886):3.023712299):7.768104514,sp25:12.53879913):6.812438184,((sp23:4.902320102,(sp55:1.527742454,((sp75:0.4873870334,sp76:0.4873870334):0.9538606252,(sp62:1.163335228,sp63:1.163335228):0.2779124303):0.08649479507):3.374577648):13.73148846,sp3:18.63380856):0.7174287518):7.688213403,(((((sp61:1.207186109,(sp71:0.6592772201,sp72:0.6592772201):0.5479088888):7.992858995,(((sp14:7.573004221,((sp31:3.946577942,((sp39:2.716827927,(sp59:1.223813007,sp60:1.223813007):1.49301492):0.2045427694,sp36:2.921370696):1.025207246):1.093651554,sp21:5.040229496):2.532774725):1.29161846,((((sp54:1.578469708,(sp69:0.6959006051,sp70:0.6959006051):0.8825691032):2.797784488,(sp56:1.512224659,sp57:1.512224659):2.864029537):0.5792204602,sp22:4.955474656):3.764087845,((sp51:2.056012337,(sp81:0.03182438438,sp82:0.03182438438):2.024187952):5.952203768,(sp38:3.212026203,sp33:3.212026203):4.796189902):0.7113463975):0.1450601792):0.0438553581,(((sp47:2.219906925,sp48:2.219906925):0.4858028937,sp40:2.705709819):4.257385058,((sp52:1.847137193,sp53:1.847137193):2.921544484,sp49:4.768681677):2.1944132):1.945383162):0.291567065):3.401238812,(sp41:2.700748896,(sp79:0.1442384287,sp80:0.1442384287):2.556510468):9.900535019):4.353908512,sp6:16.95519243):1.687331683,(((sp26:4.408240393,(sp45:2.255482777,sp46:2.255482777):2.152757616):2.8080253,sp15:7.216265693):5.259159804,((sp27:4.382339931,(sp43:2.385193162,sp44:2.385193162):1.997146769):3.208113605,((sp65:0.9805534352,sp66:0.9805534352):2.783753735,sp32:3.76430717):3.826146366):4.88497196):6.167098615):8.396926604):6.128957681):0.0;" offset="0" singlechild="false">
+
+	    <taxonset id="TaxonSet" spec="TaxonSet">
+	      <taxon id="sp3" spec="Taxon"/>
+	      <taxon id="sp6" spec="Taxon"/>
+	      <taxon id="sp7" spec="Taxon"/>
+	      <taxon id="sp14" spec="Taxon"/>
+	      <taxon id="sp15" spec="Taxon"/>
+	      <taxon id="sp21" spec="Taxon"/>
+	      <taxon id="sp22" spec="Taxon"/>
+	      <taxon id="sp23" spec="Taxon"/>
+	      <taxon id="sp25" spec="Taxon"/>
+	      <taxon id="sp26" spec="Taxon"/>
+	      <taxon id="sp27" spec="Taxon"/>
+	      <taxon id="sp31" spec="Taxon"/>
+	      <taxon id="sp32" spec="Taxon"/>
+	      <taxon id="sp33" spec="Taxon"/>
+	      <taxon id="sp34" spec="Taxon"/>
+	      <taxon id="sp35" spec="Taxon"/>
+	      <taxon id="sp36" spec="Taxon"/>
+	      <taxon id="sp38" spec="Taxon"/>
+	      <taxon id="sp39" spec="Taxon"/>
+	      <taxon id="sp40" spec="Taxon"/>
+	      <taxon id="sp41" spec="Taxon"/>
+	      <taxon id="sp43" spec="Taxon"/>
+	      <taxon id="sp44" spec="Taxon"/>
+	      <taxon id="sp45" spec="Taxon"/>
+	      <taxon id="sp46" spec="Taxon"/>
+	      <taxon id="sp47" spec="Taxon"/>
+	      <taxon id="sp48" spec="Taxon"/>
+	      <taxon id="sp49" spec="Taxon"/>
+	      <taxon id="sp51" spec="Taxon"/>
+	      <taxon id="sp52" spec="Taxon"/>
+	      <taxon id="sp53" spec="Taxon"/>
+	      <taxon id="sp54" spec="Taxon"/>
+	      <taxon id="sp55" spec="Taxon"/>
+	      <taxon id="sp56" spec="Taxon"/>
+	      <taxon id="sp57" spec="Taxon"/>
+	      <taxon id="sp58" spec="Taxon"/>
+	      <taxon id="sp59" spec="Taxon"/>
+	      <taxon id="sp60" spec="Taxon"/>
+	      <taxon id="sp61" spec="Taxon"/>
+	      <taxon id="sp62" spec="Taxon"/>
+	      <taxon id="sp63" spec="Taxon"/>
+	      <taxon id="sp64" spec="Taxon"/>
+	      <taxon id="sp65" spec="Taxon"/>
+	      <taxon id="sp66" spec="Taxon"/>
+	      <taxon id="sp67" spec="Taxon"/>
+	      <taxon id="sp68" spec="Taxon"/>
+	      <taxon id="sp69" spec="Taxon"/>
+	      <taxon id="sp70" spec="Taxon"/>
+	      <taxon id="sp71" spec="Taxon"/>
+	      <taxon id="sp72" spec="Taxon"/>
+	      <taxon id="sp73" spec="Taxon"/>
+	      <taxon id="sp74" spec="Taxon"/>
+	      <taxon id="sp75" spec="Taxon"/>
+	      <taxon id="sp76" spec="Taxon"/>
+	      <taxon id="sp77" spec="Taxon"/>
+	      <taxon id="sp78" spec="Taxon"/>
+	      <taxon id="sp79" spec="Taxon"/>
+	      <taxon id="sp80" spec="Taxon"/>
+	      <taxon id="sp81" spec="Taxon"/>
+	      <taxon id="sp82" spec="Taxon"/>
+	    </taxonset>
+	  </tree>
+
+	  <hiddenTraitStash id="HiddenTraitStash" spec="SSE.HiddenTraitStash" value="sp3=2,sp6=2,sp7=1,sp14=2,sp15=1,sp21=2,sp22=2,sp23=2,sp25=2,sp26=1,sp27=2,sp31=2,sp32=2,sp33=2,sp34=2,sp35=2,sp36=2,sp38=2,sp39=2,sp40=2,sp41=2,sp43=2,sp44=2,sp45=2,sp46=1,sp47=2,sp48=2,sp49=2,sp51=2,sp52=2,sp53=2,sp54=2,sp55=2,sp56=2,sp57=2,sp58=2,sp59=2,sp60=2,sp61=2,sp62=2,sp63=2,sp64=2,sp65=2,sp66=2,sp67=2,sp68=2,sp69=2,sp70=2,sp71=2,sp72=2,sp73=2,sp74=2,sp75=2,sp76=2,sp77=2,sp78=2,sp79=2,sp80=2,sp81=1,sp82=1" numberOfStates="2" numberOfHiddenStates="0">
+	    <taxa idref="TaxonSet"/>
+	  </hiddenTraitStash>
+
+	  <lambdaMuAssigner id="LambdaMuAssigner" spec="SSE.LambdaMuAssigner" totalNumberOfStates="2" nDistinctLambdas="2" nDistinctMus="2" lambdasToStates="0,1" musToStates="0,1">
+	    <pi id="Pi" dimension="4" spec="parameter.RealParameter">0.0 0.0 0.5 0.5</pi>
+	    <lambda id="Lambda" dimension="2" spec="parameter.RealParameter">0.112770589 0.226607995</lambda>
+	    <mu id="Mu" dimension="2" spec="parameter.RealParameter">0.13818947 0.06989352</mu>
+	  </lambdaMuAssigner>
+	  
+	  <hiddenInstantaneousRateMatrix id="HiddenInstantaneousRateMatrix" spec="SSE.HiddenInstantaneousRateMatrix" numberOfStates="2" numberOfHiddenStates="0" disallowDoubleTransitions="true" symmetrifyAcrossDiagonal="-1">
+	    <parameter id="FlatQMatrix" dimension="2" lower="0.0" name="flatQMatrix">0.05088699 0.20874289</parameter>
+	  </hiddenInstantaneousRateMatrix>
+
+	</distribution> <!-- END SSE -->
+      </distribution> <!-- END Likelihood -->
+    </distribution> <!-- END Posterior -->
+
+    <operator id="LambdaScaler" spec="ScaleOperator" parameter="@Lambda" scaleFactor="0.75" weight="3.0"/>
+    <operator id="MuScaler" spec="ScaleOperator" parameter="@Mu" scaleFactor="0.75" weight="3.0"/>
+    <operator id="FlatQMatrixScaler" spec="ScaleOperator" parameter="@FlatQMatrix" scaleFactor="0.75" weight="3.0"/>
+
+    <logger id="tracelog" fileName="BiSSE_fixed_tree_on_HiSSE_HSDSEP.log" logEvery="10000" model="@posterior" sanitiseHeaders="true" sort="smart">
+        <log idref="posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+	<log idref="Lambda"/>
+        <log idref="Mu"/>
+        <log idref="FlatQMatrix"/>
+    </logger>
+
+    <logger id="screenlog" logEvery="20000">
+        <log idref="posterior"/>
+        <log id="ESS.0" spec="util.ESS" arg="@posterior"/>
+        <log idref="likelihood"/>
+        <log idref="prior"/>
+    </logger>
+
+    <logger id="treelog.t:firsthalf" fileName="BiSSE_fixed_tree_on_HiSSE_HSDSEP.trees" logEvery="10000000" mode="tree">
+        <log id="TreeWithMetaDataLogger" spec="beast.evolution.tree.TreeWithMetaDataLogger" tree="@FixedTree"/>
+    </logger>
+  </run>
+</beast>
