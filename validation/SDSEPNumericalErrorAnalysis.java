@@ -32,7 +32,7 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import org.apache.commons.lang3.ArrayUtils;
-import src.test.TestHelper;
+import test.TestHelper;
 
 import java.io.BufferedWriter;
 import java.io.File;

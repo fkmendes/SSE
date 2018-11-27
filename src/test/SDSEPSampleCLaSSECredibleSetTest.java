@@ -5,7 +5,7 @@ For each node, we see if the true state lies in the 95% credible set
 We report how frequent the truth lies in the credible set (I call this accuracy tho it may not be the best word in context)
 Do this for many trees with Joint and Stoc. Our accuracy better be 95%. (or whatever threshold we set)
  */
-package src.test;
+package test;
 
 import SSE.CladogeneticSpeciationRateStash;
 import SSE.CladoTriplet.speciationType;

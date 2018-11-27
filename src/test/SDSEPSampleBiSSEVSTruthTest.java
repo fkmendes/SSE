@@ -5,7 +5,7 @@ Report accuracy - What proportion of the time do we sample the ground truth stat
 IMPORTANT: Make sure the div data here is TRUE STATES not POSTERIORS
  */
 
-package src.test;
+package test;
 
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;
