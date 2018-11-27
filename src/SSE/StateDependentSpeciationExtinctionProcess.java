@@ -56,18 +56,17 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	// private int numTimeSlices;
 	
 	// members used for lk computation
-	// private double[][] nodePartialScaledLksPreOde;
+	protected double integratorMinStep = 1.0e-8; // for ODE
+	protected double integratorTolerance = 1.0e-6; // for ODE
 	protected double[][] nodePartialScaledLksPostOde;
 	protected double[] scalingConstants;
-	
-	// cache used for lk computation
-	// private double[][] storedNodePartialScaledLksPreOde;
-	protected double[][] storedNodePartialScaledLksPostOde;
-	protected double[] storedScalingConstants;
-	
 	protected double finalLogLk;
 	protected double finalLk;
 	protected int rootIdx;
+	
+	// cache used for lk computation
+	protected double[][] storedNodePartialScaledLksPostOde;
+	protected double[] storedScalingConstants;
 	
 	protected boolean useThreads;
 	protected int nrOfThreads;
@@ -84,7 +83,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
     protected double[] storedBranchLengths;
 	
     /**
-     * flag to indicate the
+     * Flag to indicate the
      * // when CLEAN=0, nothing needs to be recalculated for the node
      * // when DIRTY=1 indicates a node partial needs to be recalculated
      * // when FILTHY=2 indicates the indices for the node need to be recalculated
@@ -92,30 +91,27 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
      */
     protected int hasDirt;
 
+    /* 
+     * Stochastic character mapping variables below
+     */
     // sampled ancestral states
 	public int[] startStates;
 	public int[] endStates;
 
 	protected double[][] nodeConditionalScaledLks;
 
-	// The below parameters are used for drawStochasticCharacterMapping and mostly have to do with the activity on branches
-	protected boolean sampleCharacterHistory;
-	// above is using RevBayes name convention. I prefer sampleBranch. This is used using drawStochastic where we want to sample the state along a branch, not just at a node
-	protected ArrayList<double[]>[] branchPartialLks;  // likelihoods along the branch above a node. use Arraylist since no fixed num samples along variable length branches
+	// the paremeters below are used for drawStochasticCharacterMapping and mostly have to do with the activity on branches
+	protected boolean sampleCharacterHistory; // RB convention. This is used during drawStochastic, where we sample states along a branch (not just at internal nodes). 
+	protected ArrayList<double[]>[] branchPartialLks; // likelihoods along the branch above a node. Arraylist is used because number of samples varies depending on branch length
 	protected int numTimeSlices = 500;
 	protected double dt; // dt is calculated as a function of the number of time slices
-	public ArrayList[] nodeTransitionStates; // Tracks transitions along the branch above the node
-	public ArrayList[] nodeTransitionTimes; // Tracks how long the state was occupied before transitioning
-	public double[][] nodeTimeInState; // Total time of the node in the state
+	public ArrayList[] nodeTransitionStates; // tracks transitions along the branch above the node
+	public ArrayList[] nodeTransitionTimes; // tracks how long the state was occupied before transitioning
+	public double[][] nodeTimeInState; // total time of the node in the state
 	public int numBranchStateChanges; // TODO remove
 	public int numNodeStateChanges; // TODO remove
-	protected double[] averageSpeciationRates; // Over all states in the branch, the speciation rate
-	protected double[] averageExtinctionRates; // Over all states in the branch, the extinction rate
-
-	// Integrator parameters
-	protected double integratorMinStep = 1.0e-8;
-	protected double integratorTolerance = 1.0e-6;
-
+	protected double[] averageSpeciationRates; // over all states in the branch, the speciation rate
+	protected double[] averageExtinctionRates; // over all states in the branch, the extinction rate
 
 	@Override
 	public void initAndValidate() {		
@@ -135,28 +131,22 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 		else { lambda = lambdaInput.get().getValues(); }
 		
-		// Original version V0: fixed-step-size ode-related stuff
-		// numTimeSlices = 1;
-		// rootAge = tree.getRoot().getHeight();
-		// dt = rootAge / ((double) (numTimeSlices * 50));
-		
 		// likelihood-related
-		// nodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; // tips have initialization lks, internal nodes (and root) just after merge
 		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][myTotalNumberOfStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above)
-		scalingConstants = new double[tree.getNodeCount()]; // equivalent to diversitree's lq (but not in log-scale), these are used as denominators during the likelihood computation
-		
+		scalingConstants = new double[tree.getNodeCount()]; // equivalent to diversitree's lq (but not in log-scale), these are used as denominators during the likelihood computation		
 		Arrays.fill(scalingConstants, 1.0);		
+		
 		finalLk = 0.0;
 		finalLogLk = 0.0;
 		
-		// cache-related
-		// storedNodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; 
+		// cache-related 
 		storedNodePartialScaledLksPostOde = new double[tree.getNodeCount()][myTotalNumberOfStates*2];
 		storedScalingConstants = new double[tree.getNodeCount()]; 
 		branchLengths = new double[tree.getNodeCount()];
 		storedBranchLengths = new double[tree.getNodeCount()];
 		hasDirt = Tree.IS_FILTHY;
 
+		// thread-related
         useThreads = useThreadsInput.get() && (BeastMCMC.m_nThreads > 1);
 		nrOfThreads = useThreads ? BeastMCMC.m_nThreads : 1;
 		if (useThreads && maxNrOfThreadsInput.get() > 0) {
@@ -166,13 +156,13 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		     exec = Executors.newFixedThreadPool(nrOfThreads);
 		}
 
+		// stochastic character mapping-related
 		startStates = new int[tree.getNodeCount()];
 		endStates = new int[tree.getNodeCount()];
 		nodeConditionalScaledLks = new double[tree.getNodeCount()][myTotalNumberOfStates*2];
 
 		sampleCharacterHistory = false;
         branchPartialLks = new ArrayList[tree.getNodeCount()];
-//        dt = tree.getRoot().getHeight() / numTimeSlices * 50.0; // why we multiply by 50? following RevBayes code
 		dt = tree.getRoot().getHeight() / numTimeSlices; // why we multiply by 50? following RevBayes code
 		nodeTransitionStates = new ArrayList[tree.getNodeCount()];
 		nodeTransitionTimes = new ArrayList[tree.getNodeCount()];
@@ -183,37 +173,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		averageExtinctionRates = new double[tree.getNodeCount()];
 	}
 	
-/* Original constructor before interfacing with BEAST 2 */
-//	public StateDependentSpeciationExtinctionProcess(TreeParser tree, double[] lambda, double[] mu, double[] pi, int numStates,
-//			TraitStash traitStash, CladogeneticSpeciationRateStash clado_stash, InstantaneousRateMatrix q, double rate,
-//			boolean incorporateCladogenesis) {
-//		this.lambda = lambda;
-//		this.mu = mu;
-//		this.pi = pi;
-//		this.numStates = numStates;
-//		this.traitStash = traitStash;
-//		this.cladoStash = clado_stash;
-//		Q = q;
-//		this.rate = rate;
-//		this.incorporateCladogenesis = incorporateCladogenesis;
-//		
-//		numTimeSlices = 1;
-//		double rootAge = tree.getRoot().getHeight();
-//		dt = rootAge / ((double) (numTimeSlices * 50));
-//		// System.out.println("Root age (height): " + Double.toString(rootAge));
-//		// System.out.println("dt: " + Double.toString(dt));
-//		
-//		// initializing members for lk computation
-//		nodePartialScaledLksPreOde = new double[tree.getNodeCount()][numStates*2]; // tips have initialization lks, internal nodes (and root) just after merge
-//		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
-//		
-//		scalingConstants = new double[tree.getNodeCount()];
-//		Arrays.fill(scalingConstants, 1.0);
-//		
-//		finalLk = 0.0;
-//		finalLogLk = 0.0;
-//	}
-	
 	@Override
 	public double calculateLogP() {
 		muInput.get().getValues(mu); // every time this method is called, we need to update mu; instead of creating a new vector and assigning that to mu, we can just copy the contents of muInput into it (note that getValues is called with an argument here)
@@ -221,7 +180,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		if (!incorporateCladogenesis) { lambdaInput.get().getValues(lambda); }
 
-		// when a biogeographical parameter changes, tree is filthy, we can use threads
+		// when a macroevolutionary/biogeographical parameter changes, tree is filthy, we can use threads
 		// otherwise, caching allows us to only recompute part of the tree likelihood, and thread overhead not worth it
 		if (hasDirt == Tree.IS_FILTHY && useThreads) {
 			computeNodeLkUsingThreads();
@@ -231,11 +190,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		logP = finalLogLk;
 		return logP;
 	}
-
-	/* Original version: fixed-step size ODE solvers could have very small (~0) chunks to integrate over, creating problems */
-	// The smallest time slice that we will attempt to numerically integrate.
-	// if the lattice of dt's falls closer than this to a node, that sliver of time is ignored in the integration.
-	// private static final double VERY_SMALL_TIME_SLIVER = 1e-15;
 
     class ThreadRunner implements Runnable {
 
@@ -343,10 +297,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
         }
     }
 
-    public double[][] getNodePartialScaledLksPostOde() {
-    	return nodePartialScaledLksPostOde;
-	}
-
 	protected int computeNodeLk(Node node, boolean recurse) {
 		int myTotalNumberOfStates = getTotalNumberStates();
 		int nodeIdx = node.getNr();
@@ -362,20 +312,14 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
         double [] nodePartial = this.nodePartialScaledLksPostOde[nodeIdx];
         
+        // leaves
         if (node.isLeaf()) {
         	if (update != Tree.IS_CLEAN) {
-        		// nodePartialScaledLksPreOde[nodeIdx] = traitStash.getSpLks(node.getID());
-        		// nodePartialScaledLksPostOde[nodeIdx] = traitStash.getSpLks(node.getID()).clone();
         		initializeLeafLks(node, nodePartial);
-        		//        		System.arraycopy(traitStash.getSpLks(node.getID()), 0, nodePartial, 0, nodePartial.length);
         	}
-        	
-			// System.out.println("Leaf " + node.getID() + " has node idx: " + node.getNr());
-			// System.out.println("Leaf " + node.getID() + " scaled pre-ODE lks are: " + Arrays.toString(node_partial_normalized_lks_pre_ode[nodeIdx]));
-			// System.out.println("Leaf " + node.getID() + " scaled post-ODE lks are: " + Arrays.toString(node_partial_normalized_lks_post_ode[nodeIdx]));
 		}
 		
-		// this block initializes node_partial_lks for internal nodes
+		// internal nodes
 		else {
 			Node left = node.getChild(0);
 			Node right = node.getChild(1);
@@ -390,10 +334,11 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				update |= computeNodeLk(right, recurse); // or right child dirty, I (parent) am dirty
 			}
 			
-            if (update != Tree.IS_CLEAN || sampleCharacterHistory) {
-				// System.out.println("Recurring back to internal node " + Integer.toString(node.getNr()));
-				
-            	// note that children's partial lks are returned already scaled by computeNodeLk (differently from original version V0)
+			/*
+			 * if either daughter was dirty or if stochastic character mapping is active,
+			 * we do stuff, otherwise skip (caching being done)
+			 */
+            if (update != Tree.IS_CLEAN || sampleCharacterHistory) {			
 				final double[] leftLks = nodePartialScaledLksPostOde[leftIdx]; // at this point, left_lks has not yet been updated (scaled) for its parent merging
 				final double[] rightLks = nodePartialScaledLksPostOde[rightIdx];
 
@@ -401,8 +346,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				Double[] speciationRates = new Double[myTotalNumberOfStates];
 				if (incorporateCladogenesis) {
 					eventMap = cladoStash.getEventMap();
-					// System.out.println("Event map inside computeNodeLk");
-					// System.out.println(new PrettyPrintHashMap<int[], Double>(eventMap));
 				}
 				
 				else {
@@ -412,10 +355,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				// merge descendant lks
 				for (int i = 0; i < myTotalNumberOfStates; ++i) {
 					// E's
-					
-					/* Original version (V0) dealt w/ scaling here at merge */
-					// node_partial_unscaled_lks[nodeIdx][i] = (leftLks[i] + rightLks[i])/2; // filling out Es using avg of children
-					// nodePartialScaledLksPreOde[nodeIdx][i] = nodePartialScaledLksPostOde[nodeIdx][i]; // same for pre-ODE
 					nodePartial[i] = (leftLks[i] + rightLks[i])/2; // filling out Es using avg of children
 							
 					// merging with cladogenetic component
@@ -434,15 +373,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 								// System.out.println("States are: " + Arrays.toString(states));
 								// System.out.println("Lambda_ijk is: " + Double.toString(speciation_rate));
 								
-								// D's pre-merging steps
-								
-								/*
-								 * RevBayes version of Equation A3 (with scaling)
-								 */
-								// double likelihoods = leftLks[numStates + j] / scalingConstants[leftIdx] * 
-								// 		 rightLks[numStates + k] / scalingConstants[rightIdx];
-								// likeSum += likelihoods * speciationRate;
-								
+								// D's pre-merging steps								
 								// System.out.println("Left lk array pre-scaling: " + Arrays.toString(leftLks));
 								// System.out.println("Right lk array pre-scaling: " + Arrays.toString(rightLks));
 								// System.out.println("Left j: " + Double.toString(leftLks[numStates + j]) + "\nRight k: " + Double.toString(rightLks[numStates + k]));
@@ -454,11 +385,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 								/*
 								 * Equation A3 (original version V0 took care of scaling here -- not anymore)
 								 */
-								// double dnjDmk = (leftLks[numStates + j] / scalingConstants[leftIdx]) *
-								//     (rightLks[numStates + k] / scalingConstants[rightIdx]);
-								// double dnkDmj = (leftLks[numStates + k] / scalingConstants[leftIdx]) *
-								//     (rightLks[numStates + j] / scalingConstants[rightIdx]);
-								// double dnjDmkPlusDnkDmj = dnjDmk + dnkDmj;
 								double dnjDmk = (leftLks[myTotalNumberOfStates + j] ) * (rightLks[myTotalNumberOfStates + k]);
 								double dnkDmj = (leftLks[myTotalNumberOfStates + k] ) *	(rightLks[myTotalNumberOfStates + j]);
 								double dnjDmkPlusDnkDmj = dnjDmk + dnkDmj;
@@ -468,35 +394,17 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 								// System.out.println("Current scaled likelihood sum: " + Double.toString(likeSum));
 							}
 						}
-	
-						/* Original version V0 scaled here */
-						// nodePartialScaledLksPostOde[leftIdx][numStates + i] = leftLks[numStates + i] / scalingConstants[leftIdx];
-						// nodePartialScaledLksPostOde[rightIdx][numStates + i] = rightLks[numStates + i] / scalingConstants[rightIdx];
 						
 						// finalizing merging for state Di
 						nodePartial[myTotalNumberOfStates + i] = likeSum;
-
-						// preOde vector was not being used at all (even in original version, it was just to match diversitree's)
-						// nodePartialScaledLksPreOde[nodeIdx][numStates + i] = nodePartialScaledLksPostOde[nodeIdx][numStates + i]; // this is a double, so no deep copy necessary
-						// so preOde for internal nodes contains post-merging, but before ODE of parent kicks in
 					}
 					
 					// merging w/o cladogenetic component
 					else {		
 						// D's pre-merging steps (scaling left and right children)
-						
-						/* Original version V0 had scaling being done here */
-						// nodePartialScaledLksPostOde[leftIdx][numStates + i] = leftLks[numStates + i] /
-						//	   dLeftScalingConstant; // now we update left child lk with scaled value
-						// nodePartialScaledLksPostOde[rightIdx][numStates + i] = rightLks[numStates + i] / 
-						//     dRightScalingConstant; // now we update right child lk with scaled value
 						nodePartial[myTotalNumberOfStates + i] = leftLks[myTotalNumberOfStates + i] *
 								rightLks[myTotalNumberOfStates + i];
 						nodePartial[myTotalNumberOfStates + i] *= speciationRates[i];
-						
-						// preOde vector was not being used at all (even in original version, it was just to match diversitree's)
-						// keeping track of likelihoods right before ODE, at all nodes (so at internal nodes, it's post scaling and merging)
-						// nodePartialScaledLksPreOde[nodeIdx][numStates + i] = nodePartialScaledLksPostOde[nodeIdx][numStates + i]; // this is a double, so no deep copy necessary
 					}
 				}
 							
@@ -506,7 +414,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
             }
 		}
 		
-		// numerical integration is carried out for all branches starting at this node (if this node is not the root), up to its parent
+		/*
+		 * not root yet, so numerical integration is carried out for all branches
+		 * starting at this node up to its parent
+		 */
 		if (!node.isRoot()) {
             if (update != Tree.IS_CLEAN || sampleCharacterHistory) {
 				// we are going from present (begin) to past (end)
@@ -514,20 +425,26 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 				double endAge = node.getParent().getHeight();
 
 				boolean backwardTime = true;
-				boolean extinctionOnly = false;
+				boolean extinctionOnly = false; // "normal" backward pass
 				if (!sampleCharacterHistory) {
 					numericallyIntegrateProcess(nodePartial, beginAge, endAge, backwardTime, extinctionOnly);
-				} else {
+				}
+				
+				// if stochastic character mapping is active
+				else {
 					ArrayList<double[]> branchLks = new ArrayList<>();
 					int numSteps = 0;
 					double curDtStart, curDtEnd;
-					// Split the branch into small chunks to store likelihood at those chunks for forward pass
+					
+					// split the branch into small chunks to store partial lks at those chunks for forward pass later
 					while (numSteps * dt + beginAge < endAge) {
 						curDtStart = numSteps * dt + beginAge;
 						curDtEnd = (numSteps + 1) * dt + beginAge;
 						if (curDtEnd > endAge) {
 							curDtEnd = endAge;
 						}
+						
+						// "normal" backward pass, and now storing partial lks of each chunk
 						numericallyIntegrateProcess(nodePartial, curDtStart, curDtEnd, backwardTime, extinctionOnly);
 						double[] nodePartialCopy = new double[nodePartial.length];
 						System.arraycopy(nodePartial, 0, nodePartialCopy, 0, nodePartial.length);
@@ -537,26 +454,6 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 					// TODO Unlike node likelihoods, we do not need to scale branch likelihoods since the ratios are what matter
 					branchPartialLks[nodeIdx] = branchLks;
 				}
-
-//				// System.out.println("Initial conditions: " + Arrays.toString(node_partial_normalized_lks_post_ode[node_idx]));
-//				int currentDt = 0; // counter used to multiply dt
-//				while ((currentDt * dt) + beginAge < endAge) {
-//					double currentDtStart = (currentDt * dt) + beginAge;
-//					double currentDtEnd = ((currentDt + 1) * dt) + beginAge;
-//					
-//					if (currentDtEnd > endAge) {
-//						currentDtEnd = endAge;
-//					}
-//	
-//					double timeslice = currentDtEnd - currentDtStart;
-//					if (timeslice >= VERY_SMALL_TIME_SLIVER) {
-//						numericallyIntegrateProcess(nodePartial, currentDtStart, currentDtEnd);
-//					} else {
-//						// DO NOTHING BECAUSE TOO LITTLE TIME HAS PAST AND nodePartialScaledLksPostOde[nodeIdx] will be unaffected
-//					}
-//					
-//		            currentDt++;
-//				}
 				
 				// scaling is done not at time of merging as original V0 version, but prior to returning when recurring
 				double dScalingConstant = sum(nodePartial, myTotalNumberOfStates, nodePartial.length, -1, false); // -1 means don't ignore any item
@@ -568,31 +465,17 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
             }
 		}
 		
-		// if we reach root, no more numerical integration, children have already been joined above,
-		// now multiply by prior, populate final_prob
+		// root (no more numerical integration, children have already been joined above, now multiply by log)
 		else {
-			rootIdx = nodeIdx;
-			
-			// for (int i = 0; i < nodePartialScaledLksPreOde.length; ++i) {
-			//     System.out.println("Pre-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPreOde[i]));
-			// }
-			// for (int i = 0; i < nodePartialScaledLksPostOde.length; ++i) {
-			//     System.out.println("Post-ODE lks for node = " + Integer.toString(i) + ": " + Arrays.toString(nodePartialScaledLksPostOde[i]));
-			// }
-			
+			rootIdx = nodeIdx;			
 			double prob = 0.0;
+			
 			for (int i = 0; i < myTotalNumberOfStates; ++i) {
 				prob += pi[myTotalNumberOfStates + i] * nodePartial[myTotalNumberOfStates + i];
 			}
 			
 			boolean takeLog = true;
 			finalLogLk = Math.log(prob) + sum(scalingConstants, 0, scalingConstants.length, rootIdx, takeLog);
-			
-			// System.out.println("Root node state = " + Double.toString(nodeIdx));
-			// System.out.println("(Sum over states) Pi * lk of state = " + Double.toString(prob));
-			// System.out.println("Normalizing constants = " + Arrays.toString(scalingConstants));
-			// System.out.println("Lk: " + Double.toString(finalLk));
-			// System.out.println("LnLk: " + Double.toString(finalLogLk));
 		}
 		
 		return update; // this is the reason why computeNodeLk isn't void() as in the original V0 version (we need update to carry out caching)
@@ -610,7 +493,12 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	protected int getTotalNumberStates() {
 		return numObsStates;
 	}
-
+	
+	// used by unit tests
+    public double[][] getNodePartialScaledLksPostOde() {
+    	return nodePartialScaledLksPostOde;
+	}
+    
 	protected void initializeLeafLks(Node aNode, double[] aNodePartial) {
 		System.arraycopy(traitStash.getSpLks(aNode.getID()), 0, aNodePartial, 0, aNodePartial.length);
 

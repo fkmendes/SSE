@@ -22,7 +22,7 @@ Results
 
 
 
-package src.test;
+package test;
 
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;

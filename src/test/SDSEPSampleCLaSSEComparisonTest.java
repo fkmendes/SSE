@@ -2,7 +2,7 @@
 /*
 Compare posterior probabilities at all internal nodes for drawJoint and drawStochastic
  */
-package src.test;
+package test;
 
 import SSE.CladoTriplet;
 import SSE.InstantaneousRateMatrix;

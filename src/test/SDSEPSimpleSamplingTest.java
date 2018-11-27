@@ -3,7 +3,7 @@ Sample the tree with both drawJointConditionalAncestralState and drawStochasticC
 Write the posteriors to csv's
  */
 
-package src.test;
+package test;
 
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;

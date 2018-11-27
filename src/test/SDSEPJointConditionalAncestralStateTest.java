@@ -3,7 +3,7 @@ Under BiSSE model, sample the tree many times with drawJointConditionalAncestral
 Then, check that the posterior probability of a node being in state 0 matches that given by diversitree for all nodes
  */
 
-package src.test;
+package test;
 
 import org.junit.Assert;
 import org.junit.Before;
