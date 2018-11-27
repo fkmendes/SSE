@@ -133,4 +133,8 @@ public class TraitStash extends TraitSet {
 			System.out.println(spname + " initial lks = " + Arrays.toString(lks));
 		}
 	}
+
+	public int getNodeState(Node node) {
+	   return (int) values[node.getNr()];
+    }
 }

@@ -33,7 +33,7 @@ public class SSEODETestDriver {
 		FirstOrderIntegrator dp853 = new 
 				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
 		
-		SSEODE ode = new SSEODE(mu, irm, 1.0, false); // incorporateCladogenesis = false (BiSSE, or MuSSE)
+		SSEODE ode = new SSEODE(mu, irm, 1.0, false, true, false); // incorporateCladogenesis = false (BiSSE, or MuSSE), backwardTime = true, extinctionOnly = false
 		ode.setSpeciationRates(lambda);
 		
 		// running

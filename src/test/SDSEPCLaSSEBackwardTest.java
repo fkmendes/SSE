@@ -1,3 +1,10 @@
+/*
+Given a tree of 4 tips and a CLaSSE model, we check
+1. The backwards pass has a final tree likelihood matching diversitree
+2. The backwards pass has a final tree likelihood matching diversitree while sampling in the branches
+3. After the backwards pass, each node has the same likelihood with and without sampling in the branches
+ */
+
 package test;
 
 import org.junit.Assert;
@@ -22,7 +29,7 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 
-public class SDSEPCLaSSETest {
+public class SDSEPCLaSSEBackwardTest {
 	final static double EPSILON = 1e-10;
 	private StateDependentSpeciationExtinctionProcess sdsep;
 
@@ -152,10 +159,46 @@ public class SDSEPCLaSSETest {
         System.out.println(sdsep.calculateLogP());
 	}
 
+	private void assert2DArrayEquals(double[][] arr1, double[][] arr2) {
+		Assert.assertEquals(arr1.length, arr2.length);
+
+		for (int i = 0; i < arr1.length; i++) {
+			for (int j = 0; j < arr1[i].length; j++) {
+				Assert.assertEquals(arr1[i][j], arr2[i][j], 1e-7);
+			}
+		}
+	}
+
+	private double[][] deep2DArrayCopy(double[][] arr) {
+		double[][] ret = new double[arr.length][arr[0].length];
+
+		for (int i = 0; i < arr.length; i++) {
+			System.arraycopy(arr[i], 0, ret[i], 0, arr[i].length);
+		}
+		return ret;
+	}
+
 	@Test
 	public void test() {
 		// Assert.assertEquals(-10.59346884351, sdsep.calculateLogP(), EPSILON); // Used in original version with fixed-step size ODE solver
 		Assert.assertEquals(-10.59346882658, sdsep.calculateLogP(), EPSILON);
-	}
+		double[][] nodePartialsNoCharHist = deep2DArrayCopy(sdsep.getNodePartialScaledLksPostOde());
+		System.out.println("Passed likelihood test!");
 
+		sdsep.setSampleCharacterHistory(true);
+		Assert.assertEquals(-10.59346882658, sdsep.calculateLogP(), 1e-6);
+		double[][] nodePartialsWCharHist = sdsep.getNodePartialScaledLksPostOde();
+		System.out.println("Passed likelihood with sample character history test!");
+
+		assert2DArrayEquals(nodePartialsNoCharHist, nodePartialsWCharHist);
+		System.out.println("Passed matching likelihood test!");
+
+		int[] jointNodes = sdsep.drawJointConditionalAncestralStates();
+		int[] stocNodes = sdsep.drawStochasticCharacterMap();
+		System.out.println(Arrays.toString(jointNodes));
+		System.out.println(Arrays.toString(stocNodes));
+
+		double[][] post = sdsep.sampleAndSummarizeCLaSSE(100, false);
+
+	}
 }

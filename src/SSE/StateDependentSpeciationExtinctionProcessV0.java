@@ -280,7 +280,7 @@ public class StateDependentSpeciationExtinctionProcessV0 extends Distribution {
 
 				double timeslice = currentDtEnd - currentDtStart;
 				if (timeslice >= VERY_SMALL_TIME_SLIVER) {
-					numericallyIntegrateProcess(nodePartialScaledLksPostOde[nodeIdx], currentDtStart, currentDtEnd);
+					numericallyIntegrateProcess(nodePartialScaledLksPostOde[nodeIdx], currentDtStart, currentDtEnd, false, false);
 				} else {
 					// DO NOTHING BECAUSE TOO LITTLE TIME HAS PAST AND nodePartialScaledLksPostOde[nodeIdx] will be unaffected
 				}
@@ -316,12 +316,14 @@ public class StateDependentSpeciationExtinctionProcessV0 extends Distribution {
 			// System.out.println("LnLk: " + Double.toString(finalLogLk));
 		}
 	}
-	
-	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge) {
-		FirstOrderIntegrator dp853 = new 
-				DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
-		SSEODE ode = new SSEODE(mu, q, rate, incorporateCladogenesis);
-		
+
+	private void numericallyIntegrateProcess(double[] likelihoods, double beginAge, double endAge, boolean backwardTime, boolean extinctionOnly) {
+		if (beginAge > endAge) {
+			throw new IllegalArgumentException("Improper integration. beginAge is greater than endAge");
+		}
+		FirstOrderIntegrator dp853 = new DormandPrince853Integrator(1.0e-8, 100.0, 1.0e-10, 1.0e-10);
+		SSE.SSEODE ode = new SSE.SSEODE(mu, q, rate, incorporateCladogenesis, backwardTime, extinctionOnly);
+
 		if (incorporateCladogenesis) {
 			HashMap<int[], Double> eventMap = cladoStash.getEventMap();
 //			System.out.println("Event map inside ODE");
