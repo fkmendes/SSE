@@ -99,13 +99,13 @@ print("Tree log likeyhood")
 print(tree.lik[1])
 
 # Calculate ancestral MLE
-asr.marginal = asr.marginal(lik, pars)
+anc.states = asr.marginal(lik, pars)
 
 
 # Compare truth tips and MLE tips for accuracy
 node.marginal = vector("list", phy$Nnode)
 for (i in 1:phy$Nnode) {
-    if (asr.marginal[1,i] > asr.marginal[2,i]) {
+    if (anc.states[1,i] > anc.states[2,i]) {
         node.marginal[i] = 1 - 1
     } else {
         node.marginal[i] = 2 - 1
@@ -131,11 +131,16 @@ cat("Recent accuracy: ", acc.recent, "\n")
 
 # Write the results out... merge the marginal calculates with their labels
 print("asr marginal likelyhoods")
-asr.marginal.labeled = rbind(phy$node.label, asr.marginal)
-print(asr.marginal.labeled)
+anc.states.labeled = rbind(phy$node.label, anc.states)
+print(anc.states.labeled)
 asr.file.name = paste0(dir, exp.name, "-div_anc_states.csv")
-write.table(asr.marginal.labeled, file = asr.file.name, row.names=FALSE, col.names=FALSE, sep=",", quote=FALSE)
+write.table(anc.states.labeled, file = asr.file.name, row.names=FALSE, col.names=FALSE, sep=",", quote=FALSE)
 
+pie.name = paste0(dir, exp.name, "-diversitree_ancestral_states.pdf")
+pdf(pie.name)
+plot(phy, cex=.5, label.offset=0.2)
+col = c("#004165", "#eaab00")
+nodelabels(pie=t(anc.states), piecol=col, cex=.5)
 
 #attributes(phy)
 #print(phy$edge)
