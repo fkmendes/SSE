@@ -190,7 +190,6 @@ public class SDSEPSamplingRunsCLaSSE {
 	}
 
 	public void runUserInput(String testFile, String expName) throws Exception {
-		// TODO not tested
 		String treeSuffix = ".tree";
 		String spAttrSuffix = "-beast_str.txt";
 		String tipSuffix = "-tips.csv";
