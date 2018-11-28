@@ -19,7 +19,7 @@ if (!dir.exists(asr.full.path)) {
 }
 
 # set parameter values
-pars = c(0.2, 0.4, 0.01, 0.1, 0.1, 0.4)
+pars = c(0.2, 0.4, 0.001, 0.1, 0.1, 0.4)
 names(pars) = c("l0", "l1", "m0", "m1", "q01", "q10")
 n.taxa = 22
 
