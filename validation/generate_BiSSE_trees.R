@@ -136,6 +136,7 @@ print(anc.states.labeled)
 asr.file.name = paste0(dir, exp.name, "-div_anc_states.csv")
 write.table(anc.states.labeled, file = asr.file.name, row.names=FALSE, col.names=FALSE, sep=",", quote=FALSE)
 
+# Code to visualize the tree with the pie chart at each node with state distribution
 pie.name = paste0(dir, exp.name, "-diversitree_ancestral_states.pdf")
 pdf(pie.name)
 plot(phy, cex=.5, label.offset=0.2)
