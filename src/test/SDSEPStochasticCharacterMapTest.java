@@ -78,15 +78,15 @@ public class SDSEPStochasticCharacterMapTest {
 		// Sample many times with drawStochasticChar and calculate the posterior
 		sdsep.setNumTimeSlices(numTimeSlices);
 		double[] posteriorStoc = sdsep.sampleAndSummarizeBiSSE(numTrials, false);
-		double[] posteriorJ = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
+//		double[] posteriorJ = sdsep.sampleAndSummarizeBiSSE(numTrials, true);
 
 		// Write only the ancestral states to csv
-		TestHelper.prepareAndWriteToCSV(posteriorStoc, expName + "-stoc", sdsep);
-		TestHelper.prepareAndWriteToCSV(posteriorJ, expName + "-joint", sdsep);
+//		TestHelper.prepareAndWriteToCSV(posteriorStoc, expName + "-stoc", sdsep);
+//		TestHelper.prepareAndWriteToCSV(posteriorJ, expName + "-joint", sdsep);
 
 		HashMap<String, Double> divMap = TestHelper.getDivMap(divLbls, divStates);
 		String[] idxLabelMapper = sdsep.getNodeIndexNameMapper();
-		TestHelper.compareDivPosterior(divMap, idxLabelMapper, posteriorJ);
+		TestHelper.compareDivPosterior(divMap, idxLabelMapper, posteriorStoc);
 	}
 
 	@Before

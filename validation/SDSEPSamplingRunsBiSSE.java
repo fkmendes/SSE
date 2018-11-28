@@ -13,14 +13,12 @@ import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.Assert;
 import test.TestHelper;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SDSEPSamplingRuns {
+public class SDSEPSamplingRunsBiSSE {
 	final static double EPSILON = 1e-2;
 	final static int numTrials = 10000;
 	int numTimeSlices = 100;
@@ -162,12 +160,12 @@ public class SDSEPSamplingRuns {
 		String tips = TestHelper.readFirstLine(testFile + tipSuffix);
 		String[] spNames = tips.split(",");
 
-		runExperiment(treeStr, spAttr, spNames, expName, lambdas, mus, q, numTimeSlices);
+		runExperiment(treeStr, spAttr, spNames, "beast_results/" + expName, lambdas, mus, q, numTimeSlices);
 	}
 
 	public static void main(String[] args) throws Exception {
-		SDSEPSamplingRuns runs = new SDSEPSamplingRuns();
-		runs.runUserInput("validation/diversitree_data/rb", "beast_results/user_input");
+		SDSEPSamplingRunsBiSSE runs = new SDSEPSamplingRunsBiSSE();
+		runs.runUserInput("validation/diversitree_data/rb", "user_input");
 	}
 
 }
