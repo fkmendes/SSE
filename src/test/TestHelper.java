@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Arrays;
 
 import SSE.StateDependentSpeciationExtinctionProcess;
 
@@ -148,6 +149,24 @@ public class TestHelper {
             Assert.assertEquals(postDiv, postBeast, 1e-1);
         }
     }
+
+    /**
+     *
+     * @param divLabelMapper: See above divMap
+     * @param beastLabelMapper: See above idxLabelMapper
+     * @return mapping from diversitree indices to beast indices
+     */
+    public static Integer[] getIndexMapping(String[] divLabelMapper, String[] beastLabelMapper) {
+        Integer[] divBeastMapper = new Integer[divLabelMapper.length];
+
+        for (int i = 0; i < divLabelMapper.length; i++) {
+            String divLabel = divLabelMapper[i];
+            int beastLabelIdx = Arrays.asList(beastLabelMapper).indexOf(divLabel);
+            divBeastMapper[i] = beastLabelIdx;
+        }
+        return divBeastMapper;
+    }
+
 
     // Verifies that the arrays have the same values for the first arr1.length elements
     public static void compareArr(double[] arr1, double[] arr2) {
