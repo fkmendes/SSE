@@ -157,21 +157,21 @@ public class SDSEPSampleCLaSSEComparisonTest {
 		double[][] posteriorStoc = sdsep.sampleAndSummarizeCLaSSE(numTrials, false);
 		double[][] posteriorJoint = sdsep.sampleAndSummarizeCLaSSE(numTrials, true);
 
-		double[] posteriorStoc1D = new double[numNodes];
-		double[] posteriorJoint1D = new double[numNodes];
+//		double[] posteriorStoc1D = new double[numNodes];
+//		double[] posteriorJoint1D = new double[numNodes];
 
 		for (int i = 0; i < numNodes; i++) {
 			System.out.println("Stoch for node " + i + Arrays.toString(posteriorStoc[i]));
 			System.out.println("Joint for node " + i + Arrays.toString(posteriorJoint[i]));
 
-			posteriorStoc1D[i] = posteriorStoc[i][0];
-			posteriorJoint1D[i] = posteriorJoint[i][0];
+//			posteriorStoc1D[i] = posteriorStoc[i][0];
+//			posteriorJoint1D[i] = posteriorJoint[i][0];
 		}
 
 		TestHelper.compareNestedArr(posteriorJoint, posteriorStoc);
 
-		TestHelper.prepareAndWriteToCSV(posteriorStoc1D, "beast_results/" + expName + "-stoc", sdsep);
-		TestHelper.prepareAndWriteToCSV(posteriorJoint1D, "beast_results/" + expName + "-joint", sdsep);
+//		TestHelper.prepareAndWriteToCSV(posteriorStoc1D, "beast_results/" + expName + "-stoc", sdsep);
+//		TestHelper.prepareAndWriteToCSV(posteriorJoint1D, "beast_results/" + expName + "-joint", sdsep);
 	}
 
 	@Before
