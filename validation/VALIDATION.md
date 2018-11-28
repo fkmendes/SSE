@@ -12,7 +12,7 @@ We compare our implementation to diversitree's like they do (and produce the sam
 
 ### Preparing input for stochastic character mapping (tree, tip data, internal node data, diversitree reconstructions) in R
 
-The following command will simulate a tree and tip states given parameters $\lambda_0$=0.2, $\lambda_1$=0.4, $\mu_0$=0.01, $\mu_1$=0.1, $q_{01}$=0.1, $q_{10}$=0.4 (we use a fixed seed to obtain the same graph in Freyman and H&ouml;hna, 2017). The R script this command executes also performs ancestral state reconstruction using diversitree.
+The following command will simulate a tree and tip states given parameters \lambda0=0.2, \lambda1=0.4, \mu0=0.01, \mu1=0.1, q01=0.1, q10=0.4 (we use a fixed seed to obtain the same graph in Freyman and H&ouml;hna, 2017). The R script this command executes also performs ancestral state reconstruction using diversitree.
 
 Below, "/path/to/validation" should be replaced with your local path to the validation folder that comes with this git repository.
 
