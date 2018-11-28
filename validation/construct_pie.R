@@ -1,4 +1,5 @@
 # NOTE: THIS DOES NOT MATCH THE NODES PROPERLY
+# Rscript construct_pie.R diversitree_data/rb-div_anc_states.csv diversitree_data/rb.tree diversitree_data/rb-pie.pdf
 library(ape)
 
 args = commandArgs(TRUE)
