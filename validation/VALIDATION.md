@@ -29,3 +29,11 @@ Below, "/path/to/SSE.jar" should be replaced with the full path to the SSE.jar f
 ```
 java -cp /path/to/SSE.jar validation.SDSEPValidationBiSSEASR asr/
 ```
+
+### Plotting diversitree's ancestral state reconstruction vs. SSE packages's
+Now we show that our ancestral state reconstructions matches diversitree's for BiSSE. The R script we call below produces two graphs in the specified output folder (the graph file names are prefixed by "bisse_joint" and "bisse_stochastic").
+
+```
+Rscript /path/to/validation/r_scripts/plot_diversitree_vs_SSEjoint.R /path/to/diversitree_ancestral_states.txt /path/to/SSE_asr_joint.csv /path/to/output/folder/ bisse_joint
+Rscript /path/to/validation/r_scripts/plot_diversitree_vs_SSEjoint.R /path/to/diversitree_ancestral_states.txt /path/to/SSE_asr_stoc.csv /path/to/output/folder/ bisse_stoc
+```
