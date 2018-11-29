@@ -41,6 +41,7 @@ public class SDSEPBiSSETest {
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
 
+		// trait stash
 		TraitStash traitStash = new TraitStash();
 		traitStash.initByName("numberOfStates", numberOfStates, "taxa", taxonSet, "value", "sp6=1,sp10=1,sp11=1,sp12=1,sp14=2,sp15=1,sp16=2,sp17=2,sp18=1,sp19=1,sp21=1,sp22=1,sp23=1,sp24=1,sp25=1,sp26=2,sp27=2,sp28=1,sp29=2,sp30=2,sp31=2,sp32=2,sp33=2,sp34=2,sp35=1,sp36=1,sp37=2,sp38=2,sp39=1,sp40=1,sp41=1,sp42=2,sp43=2,sp44=2,sp45=2,sp46=2,sp47=2,sp48=2,sp49=1,sp50=1,sp51=2,sp52=2,sp53=1,sp54=1,sp55=2,sp56=2,sp57=1,sp58=1,sp59=1,sp60=1");
 		// traitStash.printLksMap();

@@ -21,3 +21,11 @@ Rscript /path/to/validation/r_scripts/prepare_BiSSE_ASR_input.R /path/to/validat
 ```
 
 A few files will be produced and put into folder /asr, and some information will be printed on the screen (and used in the following validation steps).
+
+### Running stochastic character mapping (both only on internal nodes and along branches as well) in Java
+
+Below, "/path/to/SSE.jar" should be replaced with the full path to the SSE.jar file.
+
+```
+java -cp /path/to/SSE.jar validation.SDSEPValidationBiSSEASR asr/
+```

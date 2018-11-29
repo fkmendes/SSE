@@ -99,6 +99,8 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public int[] endStates;
 
 	protected double[][] nodeConditionalScaledLks;
+	// (exclusive to forward pass, is initialized to 0's and 1's depending on
+	// sampling results, and then acts as the "pi" every time we sample 
 
 	// the paremeters below are used for drawStochasticCharacterMapping and mostly have to do with the activity on branches
 	protected boolean sampleCharacterHistory; // RB convention. This is used during drawStochastic, where we sample states along a branch (not just at internal nodes). 
@@ -108,7 +110,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	public ArrayList[] nodeTransitionStates; // tracks transitions along the branch above the node
 	public ArrayList[] nodeTransitionTimes; // tracks how long the state was occupied before transitioning
 	public double[][] nodeTimeInState; // total time of the node in the state
-	public int numBranchStateChanges; // TODO remove
+	// public int numBranchStateChanges; // TODO remove
 	public int numNodeStateChanges; // TODO remove
 	protected double[] averageSpeciationRates; // over all states in the branch, the speciation rate
 	protected double[] averageExtinctionRates; // over all states in the branch, the extinction rate
@@ -168,7 +170,7 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		nodeTransitionTimes = new ArrayList[tree.getNodeCount()];
 		nodeTimeInState = new double[tree.getNodeCount()][myTotalNumberOfStates];
 		numNodeStateChanges = 0;
-		numBranchStateChanges = 0;
+		// numBranchStateChanges = 0;
 		averageSpeciationRates = new double[tree.getNodeCount()];
 		averageExtinctionRates = new double[tree.getNodeCount()];
 	}
@@ -528,14 +530,15 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		}
 	}
 
-	public int [] drawStochasticCharacterMap() {
-	    /*
-	    When sampling the tree, we do not scale our likelihoods because we do not have any issues with underflow.
-	    Also, since we are sampling, we are only interested in the ratio of the probabilities.
+	public int [] drawStochasticAncestralStateAtRoot() {
+		/*
+	     * Scaling is done in the backward pass every time we cross an internal node (because computeNodeLikelihood 
+	     * scales right before returning). This means that the partial lks that we store at internal nodes for the
+	     * forward pass won't suffer from underflow. No need to scale. In addition, only the ratio of state partial
+	     * likelihoods matter for the sampling that is carried out during stochastic character mapping.
 	     */
-
-		numNodeStateChanges = 0;
-		numBranchStateChanges = 0;
+		// numNodeStateChanges = 0;
+		// numBranchStateChanges = 0;
 
 		// set flag for backwards pass to store likelihoods for all branch segments
         boolean sampleCharacterHistoryStashed = sampleCharacterHistory;
@@ -550,41 +553,47 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		Node right = node.getChild(1);
 		int leftIdx = left.getNr();
 		int rightIdx = right.getNr();
-		double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray();
-		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piUnboxed);
+		double[] piPrimitive = Stream.of(pi).mapToDouble(Double::doubleValue).toArray(); // just making Double[] into double[]
+		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piPrimitive);
 
 		// RevBayes only tracks endStates (and call it character_histories) but I do not see why we shouldn't
-		// use the paradigm in drawJointConditionalAncestralState
-		endStates[rootIdx] = sampledStates[0];
+		// use the paradigm in drawJointAncestralStateAtRoot
+		endStates[rootIdx] = sampledStates[0]; // important one (sampled parent state, i.e., at internal node)
 		startStates[leftIdx] = sampledStates[1];
 		startStates[rightIdx] = sampledStates[2];
 
-        recursivelyDrawStochasticCharacterMap(left);
-        recursivelyDrawStochasticCharacterMap(right);
+        recursivelyDrawStochasticAncestralState(left);
+        recursivelyDrawStochasticAncestralState(right);
 
 		// reset backward pass storing flag back to original
 		sampleCharacterHistory = sampleCharacterHistoryStashed;
 		return endStates;
 	}
 
-	private void recursivelyDrawStochasticCharacterMap(Node node) {
+	private void recursivelyDrawStochasticAncestralState(Node node) {
         int nodeIdx = node.getNr();
 
         // Zero out E and condition D
         int startState = startStates[node.getNr()];
-		initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
+		
+        // zero E's and condition D, then run blind backward ODE to calculate E
+        initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
 
-		// set up the extinction likelihoods (blind looking forward, so integrate time but not the resulting clade)
-		double parentAge = node.getParent().getHeight();
+        /*
+		 * in RB, not sure why don't store the E's from the regular backward pass... maybe
+		 * this procedure is cheap enough that we can afford to do it... investigate
+		 * later
+		 */
+        double parentAge = node.getParent().getHeight();
         numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
 		// set up sampling variables
 		int numSteps = 0;
 		double curDtStart, curDtEnd;
 		int newState;
-		int curState = startStates[nodeIdx];
+		int curState = startStates[nodeIdx]; // last sample 
 		double branchLength = node.getLength();
-		double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx];
+		double[] nodeConditionalLk = nodeConditionalScaledLks[nodeIdx]; // "pi" for next step
 		int numChunksInBranch = branchPartialLks[nodeIdx].size();
 
 		// TODO check this variables are done correctly
@@ -604,35 +613,37 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		the other chunks). Instead of integrating over this small time interval (interval that is smaller than dt), they
 		get the state for that chunk of time from the speciation event or tip state. They do not integrate over it either.
 		We noticed that if we skip this <dt chunk of time, our posteriors get undesirable behaviors.
-		Specifically, if the dt is too big, then the posteriors to not match. However, if we reduce the size of dt,
+		Specifically, if the dt is too big, then the posteriors do not match. However, if we reduce the size of dt,
 		we get matching posteriors. We do not want to have code performance dependent on this argument, thus in our
 		code, we integrate over the last dt as well and handle the speciation event or tip state without sampling and
 		conditioning the last chunk.
 		 */
-		// Integrate/ODE, Sample, and Condition up to the last chunk
+		
+		// going down a branch and sampling at every chunk
 		while ((numSteps+1) * dt < branchLength) {
 		    // Run a small forward pass
 			curDtStart = numSteps * dt;
 			curDtEnd = (numSteps + 1) * dt;
-			numericallyIntegrateProcess(nodeConditionalLk, curDtStart, curDtEnd, false, false);
+			numericallyIntegrateProcess(nodeConditionalLk, curDtStart, curDtEnd, false, false); // now forward pass up to the end of this chunk
 
-			// Sample with freshly-calculated conditional and partial from backward pass
-            int downpass = numChunksInBranch - 1 - numSteps; // since we are going opposite direction now
-			double[] branchPartialLk = branchPartialLks[nodeIdx].get(downpass);
-            double[] branchPosterior = mergeArrays(branchPartialLk, nodeConditionalLk);
-            newState = sampleLksArray(branchPosterior) + 1; // sampleArray will give index but our states are index by 1
+			// sample with freshly-calculated conditional and partial from backward pass
+            int idxOfChunkWhosePartialToUse = numChunksInBranch - numSteps - 1; // since we are going opposite direction now (-1 is offset)
+			double[] branchPartialLk = branchPartialLks[nodeIdx].get(idxOfChunkWhosePartialToUse);
+            double[] branchPosterior = mergeArrays(branchPartialLk, nodeConditionalLk); // partial likelihood * "pi"
+            // branchPosterior is what we will sample from (along a branch so no speciation rates involved)
+            newState = sampleLksArray(branchPosterior) + 1; // +1 to correct for offset
 
-            // Log any transitions
+            // log any transitions (not messing around with these variables anyway)
             if (newState != curState) {
                 transitionStates.add(newState);
                 double pastTransitionTimesSum = sum(transitionTimes);
 				double transitionTime = curDtEnd - pastTransitionTimesSum;
                 transitionTimes.add(transitionTime);
 				curState = newState;
-				numBranchStateChanges++;
+				// numBranchStateChanges++;
 			}
 
-			// Log general information
+			// Log general information (not messing around with these variables anyway)
 			timeInState[curState - 1] += dt;
             totalSpeciationRate += calculateEffectiveLambda(curState);
             totalExtinctionRate += mu[curState - 1];
@@ -641,15 +652,17 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			initializeED(nodeConditionalLk, curState, true);
             numSteps += 1;
 		}
+
 		// We integrate over the last chunk (then sample). This way the stochasticity of the event at the node is more pronounced
-		// It seems this line is not used in other libraries.
+		// This bit is not in RB and seems to make a difference
 		numericallyIntegrateProcess(nodeConditionalLk, numSteps * dt, branchLength, false, false);
 
+		// we have gone down (up) a branch, and now reached a tip
 		if (node.isLeaf()) {
-			// Last chunk will be observation
+			// last chunk will be observation
 			newState = traitStash.getNodeState(node);
 
-			// No observation, use curState for last chunk
+			// no observation, use curState for last chunk
 			if (newState - 1 == -1) {
 				newState = curState;
 			}
@@ -676,7 +689,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 			// Set the final state
 			endStates[nodeIdx] = curState;
-		} else {
+		}
+		
+		// we have gone down (up) a branch, and now reached an internal node
+		else {
 		    // Last chunk will be sampled
 			Node left = node.getChild(0);
 			Node right = node.getChild(1);
@@ -713,18 +729,20 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			endStates[nodeIdx] = curState;
 			startStates[leftIdx] = sampledStates[1];
 			startStates[rightIdx] = sampledStates[2];
-			recursivelyDrawStochasticCharacterMap(left);
-			recursivelyDrawStochasticCharacterMap(right);
+			recursivelyDrawStochasticAncestralState(left);
+			recursivelyDrawStochasticAncestralState(right);
 		}
 	}
 
-	public int[] drawJointConditionalAncestralStates() {
+	public int[] drawJointAncestralStatesAtRoot() {
 	    /*
-	    When sampling the tree, we do not scale our likelihoods because we do not have any issues with underflow.
-	    Also, since we are sampling, we are only interested in the ratio of the probailities.
+	     * Scaling is done in the backward pass every time we cross an internal node (because computeNodeLikelihood 
+	     * scales right before returning). This means that the partial lks that we store at internal nodes for the
+	     * forward pass won't suffer from underflow. No need to scale. In addition, only the ratio of state partial
+	     * likelihoods matter for the sampling that is carried out during stochastic character mapping.
 	     */
-		numNodeStateChanges = 0;
-		numBranchStateChanges = 0;
+		// numNodeStateChanges = 0;
+		// numBranchStateChanges = 0;
 
 		// backward pass
     	this.calculateLogP();
@@ -736,44 +754,56 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		int rightIdx = right.getNr();
 
 		// sample root
-        double[] piUnboxed = Stream.of(pi).mapToDouble(Double::doubleValue).toArray();
-		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piUnboxed);
-		endStates[rootIdx] = sampledStates[0];
+        double[] piPrimitive = Stream.of(pi).mapToDouble(Double::doubleValue).toArray(); // just making Double[] into double[]
+		int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], piPrimitive); // sample triplet
+		endStates[rootIdx] = sampledStates[0]; // important one (sampled parent state, i.e., at internal node)
 		startStates[leftIdx] = sampledStates[1];
 		startStates[rightIdx] = sampledStates[2];
 
-		recursivelyDrawJointConditionalAncestralStates(left);
-		recursivelyDrawJointConditionalAncestralStates(right);
+		recursivelyDrawJointAncestralStates(left);
+		recursivelyDrawJointAncestralStates(right);
 
-		return endStates;
+		return endStates; // returning internal node sampled states (with tips too)
 	}
 
-	private void recursivelyDrawJointConditionalAncestralStates(Node node) {
+	private void recursivelyDrawJointAncestralStates(Node node) {
     	if (node.isLeaf()) {
     	    int state = traitStash.getNodeState(node);
 
     	    // known tip states/observation
             if (state - 1 != -1) {
                 endStates[node.getNr()] = state;
-			} else {
+			}
+            
+            // should we not know the tip state (unobserved), it is -1, and so we actually sample it
+            else {
 				int nodeIdx = node.getNr();
 				double parentAge = node.getParent().getHeight();
 				double nodeAge = node.getHeight();
 
 				int startState = startStates[node.getNr()];
 
-				// zero Es and condition D, then run blind backward ODE to calculate E
+				// zero E's and condition D, then run blind backward ODE to calculate E
 				initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
+				
+				/*
+				 * in RB, not sure why don't store the E's from the regular backward pass... maybe
+				 * this procedure is cheap enough that we can afford to do it... investigate
+				 * later
+				 */
 				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
-				// run forward
+				// now run forward to the tip
 				numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], nodeAge, parentAge, false, false);
 
 				// sample from the likelihoods for tip
 				state = sampleLksArray(nodeConditionalScaledLks[nodeIdx]) + 1;
 				endStates[nodeIdx] = state;
 			}
-		} else {
+		}
+    	
+    	// if internal node
+    	else {
 			int nodeIdx = node.getNr();
 			Node left = node.getChild(0);
 			Node right = node.getChild(1);
@@ -785,23 +815,34 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 			// zero Es and condition D, then run blind backward ODE to calculate E
 			int startState = startStates[node.getNr()];
 			initializeED(nodeConditionalScaledLks[nodeIdx], startState, false);
+			
+			/*
+			 * in RB, not sure why don't store the E's from the regular backward pass... maybe
+			 * this procedure is cheap enough that we can afford to do it... investigate
+			 * later
+			 */
 			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], 0, parentAge, true, true);
 
-			// run forward
+			// now run forward to the more recent internal node descending directly from current node
 			numericallyIntegrateProcess(nodeConditionalScaledLks[nodeIdx], nodeAge, parentAge, false, false);
 
-			// sample with freshly-calculated conditional likelihood and partial likelihoods from backwards pass
-			// We sample from speciation_rate * right_partial * left_partial * node_conditional,
-			// which is equivalent to node_partial * node_conditional
+			/*
+			 *  sample with freshly-calculated conditional likelihood and partial likelihoods from backwards pass;
+			 *  We sample proportionally to a speciation rate * partial lks of left * partial lks of right * pi (nodeConditionalScaledLks)
+			 *  This proportionality is dealt with by sampleAncestralState and differently for BiSSE/ClaSSE
+			 */
 			int[] sampledStates = sampleAncestralState(nodePartialScaledLksPostOde[leftIdx], nodePartialScaledLksPostOde[rightIdx], nodeConditionalScaledLks[nodeIdx]);
-			endStates[nodeIdx] = sampledStates[0];
+			endStates[nodeIdx] = sampledStates[0]; // important one (sampled parent state, i.e., at internal node)
 			startStates[leftIdx] = sampledStates[1];
 			startStates[rightIdx] = sampledStates[2];
-			if (startState != endStates[nodeIdx]) {
-			    numNodeStateChanges++;
-			}
-			recursivelyDrawJointConditionalAncestralStates(left);
-			recursivelyDrawJointConditionalAncestralStates(right);
+
+			// Maybe useful at some point...
+			//			if (startState != endStates[nodeIdx]) {
+			//			    numNodeStateChanges++;
+			//			}
+			
+			recursivelyDrawJointAncestralStates(left);
+			recursivelyDrawJointAncestralStates(right);
 		}
 	}
 
@@ -916,75 +957,109 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
     }
 
     /*
-    helper
-    This sampling will return a triplet in which each element is a number in {1, 2, ..., numStates}
-    Since our states are indexed by 1
-    Used for node sampling
-     */
+    * Used by all ASR methods for sampling states!
+    * drawJointAncestralStatesAtRoot()
+    * recursivelyDrawJointAncestralStates()
+    * drawStochasticAncestralStatesAtRoot()
+    * recursivelyDrawStochasticAncestralState()
+    
+    * This sampling will return a triplet in which each element is a number in {1, 2, ..., numStates}
+    * since our states are indexed by 1
+    */
     private int[] sampleAncestralState(double[] leftLks, double[] rightLks, double[] D) {
-        // Pick cladogenetic or anagentic events
+        // pick cladogenetic or anagenetic events
 		int myTotalNumberOfStates = getTotalNumberStates();
 		HashMap<int[], Double> eventMap = new HashMap<int[], Double>();
 		Double[] speciationRates = new Double[myTotalNumberOfStates];
 		if (incorporateCladogenesis) {
 			eventMap = cladoStash.getEventMap();
-		} else {
+		}
+		else {
 			speciationRates = lambda;
 		}
 
-		// Set up the event probabilities with event <-> probability mapping
+		/*
+		 * Set up the event probabilities with event <-> probability mapping
+		 * where probability mapping is = speciation rate * partial lks left * partial lks right * pi (nodeConditionalScaledLks)
+		 */
 		HashMap<int[], Double> eventProb = new HashMap<>();
 		double totalProb = 0;
-        if (incorporateCladogenesis) {
+        
+		if (incorporateCladogenesis) {
 			for (HashMap.Entry<int[], Double> entry: eventMap.entrySet()) {
 				int[] states = entry.getKey();
-				int i = states[0] - 1;
+				
+				// correcting for offset (-1)
+				int i = states[0] - 1; // parent state
 				int j = states[1] - 1;
 				int k = states[2] - 1;
-				double speciationRate = entry.getValue();
+				double speciationRate = entry.getValue(); // speciation rate associated to this particular kind of event
+				
+				// partial lks left * partial lks right * "pi"
 				double lks = leftLks[myTotalNumberOfStates + j] * rightLks[myTotalNumberOfStates + k] * D[myTotalNumberOfStates + i];
+				
+				// now * speciation rate
 				double prob = lks * speciationRate;
-				// TODO Do I need to handle left[k] and right[j]
+
+				// TODO: Do I need to handle left[k] and right[j]
 
 				eventProb.put(states, prob);
-				totalProb += prob;
-			}
-		} else {
-            for (int i = 0; i < myTotalNumberOfStates; i++) {
-            	double lks = leftLks[myTotalNumberOfStates + i] * rightLks[myTotalNumberOfStates + i] * D[myTotalNumberOfStates + i];
-            	double prob = 2 * lks * speciationRates[i];
-            	int[] states = new int[]{i + 1, i + 1, i + 1};
-
-				eventProb.put(states, prob);
-				totalProb += prob;
+				totalProb += prob; // used in sampling
 			}
 		}
+        
+		// just anagenetic
+        else {
+            for (int i = 0; i < myTotalNumberOfStates; i++) {
+            	// partial lks left * partial lks right * "pi"
+            	double lks = leftLks[myTotalNumberOfStates + i] * rightLks[myTotalNumberOfStates + i] * D[myTotalNumberOfStates + i];
+            	
+            	// now * speciation rate
+            	double prob = 2 * lks * speciationRates[i]; // * 2 because there are we can flip left<->right
+            	// (doesn't make a different to double the prob here, because all events get doubled)
+            	int[] states = new int[]{i + 1, i + 1, i + 1}; // parent and children all have the same state (+1 for offset)s
+
+				eventProb.put(states, prob);
+				totalProb += prob; // used in sampling
+			}
+		} // finished building the event <-> probability map; we now use it to sample below
 
 		// Sample from the events
-		int[] triplet = new int[]{-1, -1, -1};
-        if (totalProb <= 1e-8) {
+		int[] triplet = new int[] { -1, -1, -1 };
+        
+		// RB: possibly dealing with underflow since they don't seem to scale
+		if (totalProb <= 1e-8) {
         	// If we reach this point of the code, it is possible we need to scale our erronous code
             System.out.println("SAMPLING UNIFORMLY SINCE PROBABILITIES ARE SO SMALL EVEN THO IT MAY NOT BE RIGHT");
 			int numEvents = eventProb.size();
-			double randNum = Math.random();
+			double randNum = Math.random(); // [0,1]
+			
+			// iterate over possible events
 			for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
 				triplet = entry.getKey();
 				randNum -= 1.0 / numEvents;
+				
 				if (randNum < 0) {
 					break;
 				}
 			}
-		} else {
-			double randNum = Math.random() * totalProb;
+		}
+        
+		// hopefully always enter here
+        else {
+			double randNum = Math.random() * totalProb; // Math.random() E [0,1]
+			
 			for (HashMap.Entry<int[], Double> entry: eventProb.entrySet()) {
 				triplet = entry.getKey();
 				double prob = entry.getValue();
 				randNum -= prob;
+				
 				if (randNum < 0) {
 					break;
 				}
 			}
 		}
+		
 		return triplet;
 	}
 
@@ -1058,17 +1133,21 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	 */
 	private double[] initializeED(double[] lks, int state, boolean ignoreE) {
 		int myTotalNumberOfStates = getTotalNumberStates();
+		
 		for (int i = 0; i < myTotalNumberOfStates; i++) {
 			if (!ignoreE)  {
-				lks[i] = 0.0;
+				lks[i] = 0.0; // everyone is 0 but the sampled D
 			}
+			
 			if (i + 1 == state) {
-				lks[myTotalNumberOfStates + i] = 1.0;
-			} else {
-				lks[myTotalNumberOfStates + i] = 0.0;
-
+				lks[myTotalNumberOfStates + i] = 1.0; // sampled D
+			}
+			
+			else {
+				lks[myTotalNumberOfStates + i] = 0.0; // D's that were not sampled
 			}
 		}
+		
 		return lks;
 	}
 
@@ -1094,9 +1173,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		for (int i = 0; i < numTrials; i++) {
 			int[] drawnAncestralEnd;
 			if (joint) {
-				drawnAncestralEnd = drawJointConditionalAncestralStates();
+				drawnAncestralEnd = drawJointAncestralStatesAtRoot();
 			} else {
-				drawnAncestralEnd = drawStochasticCharacterMap();
+				drawnAncestralEnd = drawStochasticAncestralStateAtRoot();
 			}
 			System.arraycopy(drawnAncestralEnd, 0, samples[i], 0, numNodes);
 		}
