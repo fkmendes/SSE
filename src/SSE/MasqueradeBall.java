@@ -12,6 +12,7 @@ import beast.core.parameter.RealParameter;
 
 public class MasqueradeBall extends CalculationNode {
 	final public Input<RealParameter> modelMaskInput = new Input<>("modelMask", "Series of integers that collectively determine what (sub)model to use.");
+	final public Input<HiddenTraitStash> hiddenTraitStashInput = new Input<>("hiddenTraitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
 	final public Input<HiddenInstantaneousRateMatrix> hirmInput = new Input<>("hiddenInstantaneousRateMatrix", "HiddenInstantaneousRateMatrix object containing anagenenetic rates for both observed and hidden states.", Validate.REQUIRED);
 	final public Input<LambdaMuAssigner> lambdaMuAssignerInput = new Input<>("lambdaMuAssigner", "LambdaMuAssigner object that assigns distinct parameters to each state.", Validate.REQUIRED);
 
@@ -21,6 +22,8 @@ public class MasqueradeBall extends CalculationNode {
 	private int numberOfStates; // number of observed states
 	private int numberOfHiddenStatesInMask; // number of observed states
 	private int totalNumberOfStates;
+	
+	private HiddenTraitStash hiddenTraitStash;
 	
 	private Double[] matrixContent;
 	private int[] hiddenToObsAssignment;
@@ -39,6 +42,7 @@ public class MasqueradeBall extends CalculationNode {
 	
 	@Override
 	public void initAndValidate() {
+		hiddenTraitStash = hiddenTraitStashInput.get(); // initialized once, then updated every time apply mask is called
 		hirm = hirmInput.get(); // this will be done again every time apply mask is called
 		numberOfStates = hirm.getNumObsStates(); // numberOfStates never changes, so done only once (same below)
 		hiddenToObsAssignment = new int[numberOfStates];
@@ -116,10 +120,20 @@ public class MasqueradeBall extends CalculationNode {
 		muAssignmentArray = new int[totalNumberOfStates];
 		updateLambdaMuAssigner();
 		
+		// trait stash stuff
+		hiddenTraitStash.setHiddenStateAssignment(hiddenToObsAssignment);
+		updateTraitStash();
+		
 		masqueradeBallDirty = false;
 	}
 	
 	// apply mask steps
+	private void updateTraitStash() {
+		hiddenTraitStash.populateSpLksMap(totalNumberOfStates, numberOfStates, numberOfHiddenStatesInMask);
+		// System.out.println("New trait stash below");
+		hiddenTraitStash.printLksMap();
+	}
+	
 	private void updateHIRM() {
 		matrixContent = hirm.getMatrixContent();
 		int newMatrixContentLength = (int) (Math.pow(numberOfStates, 2) - numberOfStates + // top-left
@@ -221,6 +235,13 @@ public class MasqueradeBall extends CalculationNode {
 		return lambdaMuAssigner.getLambdas();
 	}
 	
+	public CladogeneticSpeciationRateStash getCladoStash() {
+		if (masqueradeBallDirty) {
+			applyMask();
+		}
+		return lambdaMuAssigner.getCladoStash();
+	}
+	
 	public Double[] getMus() {
 		// if mus were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
@@ -234,6 +255,13 @@ public class MasqueradeBall extends CalculationNode {
 			applyMask();
 		}
 		return hirm;
+	}
+	
+	public HiddenTraitStash getHTS() {
+		if (masqueradeBallDirty) {
+			applyMask();
+		}
+		return hiddenTraitStash;
 	}
 	
 	// for testing (actual likelihood calls getHIRM)

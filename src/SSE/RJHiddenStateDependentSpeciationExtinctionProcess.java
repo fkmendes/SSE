@@ -26,9 +26,25 @@ public class RJHiddenStateDependentSpeciationExtinctionProcess extends HiddenSta
 		hiddenTraitStash = hiddenTraitStashInput.get();
 		incorporateCladogenesis = cladoFlagInput.get();
 		
+		if (incorporateCladogenesis) {
+			cladoStash = masqueradeBall.getCladoStash();
+		}
+		else { 
+			lambda = masqueradeBall.getLambdas();
+		}
+		
 		pi = masqueradeBall.getPis();
 		mu = masqueradeBall.getMus();
 		q = masqueradeBall.getHIRM();
+		
+		numObsStates = q.getNumObsStates();
+		numHiddenStates = q.getNumHiddenStates();
+		numStates = numObsStates + numHiddenStates;
+		rate = 1.0;
+		
+		System.out.println("numObsStates=" + numObsStates + 
+				" numHiddenStates=" + numHiddenStates +
+				" numStates=" + numStates);
 		
 		// likelihood-related
 		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
@@ -60,6 +76,17 @@ public class RJHiddenStateDependentSpeciationExtinctionProcess extends HiddenSta
 		mu = masqueradeBall.getMus();
 		q = masqueradeBall.getHIRM();
 
+		// no support for cladogenetic changes yet
+		if (!incorporateCladogenesis) {
+			lambda = masqueradeBall.getLambdas();
+		}
+		
+		System.out.println("Pis in rjhdsep: " + Arrays.toString(pi));
+		System.out.println("Lambdas in rjhdsep: " + Arrays.toString(lambda));
+		System.out.println("Mus in rjhdsep: " + Arrays.toString(mu));
+		System.out.println("Q in rjhdsep");
+		q.printMatrix();
+		
 		// when a character state parameter changes, tree is filthy, we can use threads
 		// otherwise, caching allows us to only recompute part of the tree likelihood, and thread overhead not worth it
 		if (hasDirt == Tree.IS_FILTHY && useThreads) {

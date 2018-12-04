@@ -1,20 +1,28 @@
 package test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import SSE.HiddenInstantaneousRateMatrix;
 import SSE.HiddenObservedStateMapper;
+import SSE.HiddenTraitStash;
 import SSE.LambdaMuAssigner;
 import SSE.MasqueradeBall;
 import beast.core.parameter.RealParameter;
+import beast.evolution.alignment.Taxon;
+import beast.evolution.alignment.TaxonSet;
 
 public class MasqueradeBallTest {
 	
 	private MasqueradeBall maskBall;
-
+	private TaxonSet taxonSet;
+	
 	String hiddenStatesString;
 	String flatQMatrixString;
 	String lambdasToStatesString;
@@ -24,6 +32,8 @@ public class MasqueradeBallTest {
 	RealParameter pi;
 	boolean disallowDoubleTransitions;
 	int symmetrifyAcrossDiagonal;
+	int numberOfStates;
+	int numberOfHiddenStates;
 	
 	RealParameter mask1;
 	RealParameter mask2;
@@ -40,6 +50,12 @@ public class MasqueradeBallTest {
 	ArrayList<RealParameter> masks;
 	
 	public interface Instance {
+		Double[] getSp1Lk();
+		
+		Double[] getSp2Lk();
+		
+		Double[] getSp3Lk();
+		
 		Double[] getPis();
 		
 		Double[] getLambdas();
@@ -50,6 +66,21 @@ public class MasqueradeBallTest {
     }
 	
 	Instance test1 = new Instance() {
+		@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+		
 		@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0 };
@@ -77,6 +108,21 @@ public class MasqueradeBallTest {
     };
     
     Instance test2 = new Instance() {
+    	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 };
+		}
+		
     	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -106,6 +152,21 @@ public class MasqueradeBallTest {
     };
     
     Instance test3 = new Instance() {
+    	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+		}
+    	
     	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
@@ -137,6 +198,21 @@ public class MasqueradeBallTest {
     
     Instance test4 = new Instance() {
     	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0 };
+		}
+		
+    	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 					1.0/7.0, 1.0/7.0, 1.0/7.0, 1.0/7.0, 1.0/7.0, 1.0/7.0, 1.0/7.0 };
@@ -167,6 +243,21 @@ public class MasqueradeBallTest {
     };
     
     Instance test5 = new Instance() {
+    	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+		
     	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -200,6 +291,21 @@ public class MasqueradeBallTest {
     
     Instance test6 = new Instance() {
     	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+    	
+    	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 					1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0, 1.0/8.0 };
@@ -232,6 +338,21 @@ public class MasqueradeBallTest {
     
     Instance test7 = new Instance() {
     	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0 };
+		}
+    	
+    	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0,
 					1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0, 1.0/5.0 };
@@ -260,6 +381,21 @@ public class MasqueradeBallTest {
     };
     
     Instance test8 = new Instance() {
+    	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0 };
+		}
+		
     	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
@@ -291,6 +427,21 @@ public class MasqueradeBallTest {
     
     Instance test9 = new Instance() {
     	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0 };
+		}
+    	
+    	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
 					1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0, 1.0/6.0 };
@@ -320,6 +471,21 @@ public class MasqueradeBallTest {
     };
     
     Instance test10 = new Instance() {
+    	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0 };
+		}
+    	
     	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
@@ -351,6 +517,21 @@ public class MasqueradeBallTest {
     
     Instance test11 = new Instance() {
     	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+    	
+    	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 1.0/4.0, 1.0/4.0, 1.0/4.0, 1.0/4.0 };
 		}
@@ -377,6 +558,21 @@ public class MasqueradeBallTest {
     };
     
     Instance test12 = new Instance() {
+    	@Override
+		public Double[] getSp1Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp2Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0 };
+		}
+		
+		@Override
+		public Double[] getSp3Lk() {
+			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0 };
+		}
+    	
     	@Override
 		public Double[] getPis() {
 			return new Double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -409,8 +605,11 @@ public class MasqueradeBallTest {
     };
     
 	@Before
-	public void setUp() throws Exception {
-				
+	public void setUp() throws Exception {		
+		String[] spNames = new String[] { "sp1", "sp2", "sp3" };
+		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
+		taxonSet = new TaxonSet(taxaList);
+		
 		hiddenStatesString = "0,1,2,3";
 				
 		lambdasToStatesString = "0,1,2,3,4,5,6,7";
@@ -509,20 +708,31 @@ public class MasqueradeBallTest {
 			
 			LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
 			lambdaMuAssigner.initByName("totalNumberOfStates", 8, "nDistinctLambdas", 8, "nDistinctMus", 8, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu, "pi", pi);
-			
+
 			HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper();
 			stateMapper.initByName("hiddenStates", hiddenStatesString);
 			
 			HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
 			hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 4, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, "hiddenObsStateMapper", stateMapper);
 			
+			HiddenTraitStash hts = new HiddenTraitStash();
+			hts.initByName("numberOfStates", 4, "numberOfHiddenStates", 4, "taxa", taxonSet, "hiddenObsStateMapper", stateMapper, "value", "sp1=2,sp2=1,sp3=2");
+
 			maskBall = new MasqueradeBall();
-			maskBall.initByName("modelMask", masks.get(i), "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
-	
+			maskBall.initByName("modelMask", masks.get(i), 
+					"hiddenInstantaneousRateMatrix", hirm, 
+					"lambdaMuAssigner", lambdaMuAssigner,
+					"hiddenTraitStash", hts);
+			
+			hts = maskBall.getHTS();
+			
 			Assert.assertArrayEquals(test.getPis(), maskBall.getPis());
 			Assert.assertArrayEquals(test.getLambdas(), maskBall.getLambdas());
 			Assert.assertArrayEquals(test.getMus(), maskBall.getMus());
 			Assert.assertArrayEquals(test.getQ(), maskBall.getQs());
+			Assert.assertArrayEquals(test.getSp1Lk(), ArrayUtils.toObject(hts.getSpLks("sp1")));
+			Assert.assertArrayEquals(test.getSp2Lk(), ArrayUtils.toObject(hts.getSpLks("sp2")));
+			Assert.assertArrayEquals(test.getSp3Lk(), ArrayUtils.toObject(hts.getSpLks("sp3")));
 
 			++i;
 		}

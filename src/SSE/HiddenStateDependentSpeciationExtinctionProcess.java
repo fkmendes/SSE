@@ -93,7 +93,7 @@ public class HiddenStateDependentSpeciationExtinctionProcess extends StateDepend
 		nodeTransitionTimes = new ArrayList[tree.getNodeCount()];
 		nodeTimeInState = new double[tree.getNodeCount()][numStates];
 		numNodeStateChanges = 0;
-		numBranchStateChanges = 0;
+		// numBranchStateChanges = 0;
 		averageSpeciationRates = new double[tree.getNodeCount()];
 		averageExtinctionRates = new double[tree.getNodeCount()];
 	}

@@ -33,7 +33,7 @@ public class TraitStash extends TraitSet {
 		// checking
         check();
         
-        // populating spname_lks_map
+        // populating spNameLksMap
         for (Entry<String, Integer> entry : map.entrySet()) {
         	double[] lks = new double[numberOfObsStates*2];
 			String sp_name = entry.getKey();
@@ -116,6 +116,7 @@ public class TraitStash extends TraitSet {
         }
         
 	}
+	
 	// getters and setters
 	public double[] getSpLks(String spname) {
 		return spNameLksMap.get(spname);

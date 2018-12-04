@@ -1,16 +1,29 @@
 package SSE;
 
 import java.util.Arrays;
+import java.util.List;
 
 import beast.core.parameter.RealParameter;
+import beast.evolution.alignment.Taxon;
+import beast.evolution.alignment.TaxonSet;
 
 public class MasqueradeBallTestDriver {
 
 	public static void main(String[] args) {
+		int numberOfStates = 4;
+		int numberOfHiddenStates = 4;
+		
+		String[] spNames = new String[] { "sp1", "sp2", "sp3" };
+		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
+		TaxonSet taxonSet = new TaxonSet(taxaList);
+		
 		String hiddenStatesString = "0,1,2,3";
 		HiddenObservedStateMapper stateMapper = new HiddenObservedStateMapper();
 		stateMapper.initByName("hiddenStates", hiddenStatesString);
-				
+
+		HiddenTraitStash hiddenTraitStash = new HiddenTraitStash();
+		hiddenTraitStash.initByName("numberOfStates", numberOfStates, "numberOfHiddenStates", numberOfHiddenStates, "taxa", taxonSet, "hiddenObsStateMapper", stateMapper, "value", "sp1=2,sp2=1,sp3=2");
+		
 		String lambdasToStatesString = "0,1,2,3,4,5,6,7";
 		Double lambda1 = 0.1; // 0A
 		Double lambda2 = 0.15; // 1A
@@ -41,7 +54,14 @@ public class MasqueradeBallTestDriver {
 		RealParameter pi = new RealParameter(pis);
 		
 		LambdaMuAssigner lambdaMuAssigner = new LambdaMuAssigner();
-		lambdaMuAssigner.initByName("totalNumberOfStates", 8, "nDistinctLambdas", 8, "nDistinctMus", 8, "lambdasToStates", lambdasToStatesString, "lambda", lambda, "musToStates", musToStatesString, "mu", mu, "pi", pi);
+		lambdaMuAssigner.initByName("totalNumberOfStates", 8, 
+				"nDistinctLambdas", 8, 
+				"nDistinctMus", 8, 
+				"lambdasToStates", lambdasToStatesString, 
+				"lambda", lambda, 
+				"musToStates", musToStatesString, 
+				"mu", mu, 
+				"pi", pi);
 		System.out.println("Lambdas: " + Arrays.toString(lambdaMuAssigner.getLambdas()));
 		System.out.println("Mus: " + Arrays.toString(lambdaMuAssigner.getMus()));
 		System.out.println("Pis: " + Arrays.toString(lambdaMuAssigner.getPis()));
@@ -50,7 +70,12 @@ public class MasqueradeBallTestDriver {
 		int symmetrifyAcrossDiagonal = -1;
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
 		String flatQMatrixString = "0.1 0.2 0.3 0.4 1.0 1.2 1.3 1.5 2.0 2.1 2.3 2.6 3.0 3.1 3.2 3.7 4.0 4.5 4.6 4.7 5.1 5.4 5.6 5.7 6.2 6.4 6.5 6.7 7.3 7.4 7.5 7.6";
-		hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 4, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, "hiddenObsStateMapper", stateMapper); // MuSSE
+		hirm.initByName("numberOfStates", 4, 
+				"numberOfHiddenStates", 4, 
+				"flatQMatrix", flatQMatrixString, 
+				"disallowDoubleTransitions", disallowDoubleTransitions, 
+				"symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, 
+				"hiddenObsStateMapper", stateMapper); // MuSSE
 		
 		Double[] mask1Array = { 0.0, 0.0, 0.0, 0.0, 0.0 }; // first four states, then CID/Not-CID	
 		RealParameter mask1 = new RealParameter(mask1Array);
@@ -82,10 +107,19 @@ public class MasqueradeBallTestDriver {
 		RealParameter mask12 = new RealParameter(mask12Array);
 		
 		MasqueradeBall maskBall = new MasqueradeBall();
-		maskBall.initByName("modelMask", mask3, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
+		maskBall.initByName("modelMask", mask1, 
+				"hiddenInstantaneousRateMatrix", hirm, 
+				"lambdaMuAssigner", lambdaMuAssigner,
+				"hiddenTraitStash", hiddenTraitStash);
 		System.out.println(Arrays.toString(maskBall.getLambdas()));
 		System.out.println(Arrays.toString(maskBall.getMus()));
 		System.out.println(Arrays.toString(maskBall.getPis()));
+		
+		HiddenTraitStash hts = maskBall.getHTS();
+		System.out.println("Hidden trait stash after applying mask:");
+		System.out.println(Arrays.toString(hts.getSpLks("sp1")));
+		System.out.println(Arrays.toString(hts.getSpLks("sp2")));
+		System.out.println(Arrays.toString(hts.getSpLks("sp3")));
 		
 //		maskBall.initByName("modelMask", mask6, "hiddenInstantaneousRateMatrix", hirm, "lambdaMuAssigner", lambdaMuAssigner);
 //		System.out.println(Arrays.toString(maskBall.getLambdas()));

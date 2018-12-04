@@ -1164,66 +1164,91 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 		return ret;
 	}
 
-	// Run the sampling of a tree many times (either drawJoint or drawStoc)
+	/*
+	 * Used in validation and unit tests
+	 * Method for calling ASR many (numTrials) times
+	 */
 	public int[][] sampleStatesForTree(int numTrials, boolean joint) {
 		int numNodes = tree.getNodeCount();
 		int[][] samples = new int[numTrials][numNodes];
 
-		// Sample tree numTrial times
+		// aample tree numTrial times
 		for (int i = 0; i < numTrials; i++) {
 			int[] drawnAncestralEnd;
+		
 			if (joint) {
 				drawnAncestralEnd = drawJointAncestralStatesAtRoot();
-			} else {
+			}
+			
+			else {
 				drawnAncestralEnd = drawStochasticAncestralStateAtRoot();
 			}
+			
 			System.arraycopy(drawnAncestralEnd, 0, samples[i], 0, numNodes);
 		}
 
 		return samples;
 	}
 
-	// Calculate the posterior probabilities by counting the frequency the node is in state one
+	/*
+	 * Used in BiSSE validation and unit tests
+	 * Method for summarizing an array of samples (numTrials samples)
+	 * Each sample has one sample state per node
+	 * This function computes the frequency at which state 1 was sampled for all nodes across numTrials samples
+	 */
 	public double[] summarizeBiSSE(int[][] samples, int numTrials) {
 		int numNodes = tree.getNodeCount();
 		double[] posterior = new double[numNodes];
 		int stateOneCount;
-		for (int nIdx = 0; nIdx < numNodes; nIdx++) {
+		
+		for (int nodeIdx = 0; nodeIdx < numNodes; nodeIdx++) {
 			stateOneCount = 0;
+			
 			for (int nTrial = 0; nTrial < numTrials; nTrial++) {
-				if (samples[nTrial][nIdx] == 1) {
+				if (samples[nTrial][nodeIdx] == 1) {
 					stateOneCount++;
 				}
 			}
-			posterior[nIdx] = 1.0 * stateOneCount / numTrials;
+			
+			posterior[nodeIdx] = 1.0 * stateOneCount / numTrials;
 		}
+		
 		return posterior;
 	}
 
-	// Calculate the posterior probabilities by counting the frequency the node is in state one
+	/*
+	 * Used in ClaSSE validation and unit tests
+	 * Method for summarizing an array of samples (numTrials samples)
+	 * Each sample has one sample state per node
+	 * This function computes the frequency at which all state were sampled for all nodes across numTrials samples
+	 */
 	public double[][] summarizeCLaSSE(int[][] samples, int numTrials) {
 		int myTotalNumberOfStates = getTotalNumberStates();
 		int numNodes = tree.getNodeCount();
 		double[][] posterior = new double[numNodes][myTotalNumberOfStates];
-		for (int nIdx = 0; nIdx < numNodes; nIdx++) {
+		
+		for (int nodeIdx = 0; nodeIdx < numNodes; nodeIdx++) {
 			for (int nTrial = 0; nTrial < numTrials; nTrial++) {
-				int state = samples[nTrial][nIdx];
-				posterior[nIdx][state - 1] ++;
+				int state = samples[nTrial][nodeIdx];
+				posterior[nodeIdx][state - 1] ++;
 			}
 		}
+		
 		for (int i = 0; i < numNodes; i++) {
 			for (int j = 0; j < myTotalNumberOfStates; j++) {
 				posterior[i][j] *= 1.0 / numTrials;
 			}
 		}
+		
 		return posterior;
 	}
 
 	/*
-	Used in BiSSE unit tests
-	Run the sampling many times (either drawJoint or drawStoc)
-	Returns a summary (posteriors) of the sampling for all tips and internal nodes
-	Important: tips and internal nodes!
+	 * Used in BiSSE validation and unit tests
+	 * Run the sampling many times (either drawJoint or drawStoc)
+	 * Returns posterior probability of state 1 (the frequency state 1 was sampled in numTrials samples)
+	 * of the sampling for all tips and internal nodes
+	 * Important: tips and internal nodes!
 	 */
 	public double[] sampleAndSummarizeBiSSE(int numTrials, boolean joint) {
 	    int[][] samples = sampleStatesForTree(numTrials, joint);
@@ -1231,7 +1256,9 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 
 		if (joint) {
 			System.out.println("Joint: Posterior probability of state 0: " + Arrays.toString(posterior));
-		} else {
+		}
+		
+		else {
 			System.out.println("Stoc: Posterior probability of state 0: " + Arrays.toString(posterior));
 		}
 
@@ -1239,7 +1266,10 @@ public class StateDependentSpeciationExtinctionProcess extends Distribution {
 	}
 
 	/*
-	posterior[nIdx][state] is proportion of the time the node nIdx is in state
+	 * Used in ClaSSE validation and unit tests
+	 * Run the sampling many times (either drawJoint or drawStoc)
+	 * Returns posterior probability of each state (the frequency each state was sampled in numTrials samples)
+	 * Important: tips and internal nodes!
 	 */
 	public double[][] sampleAndSummarizeCLaSSE(int numTrials, boolean joint) {
 		int[][] samples = sampleStatesForTree(numTrials, joint);

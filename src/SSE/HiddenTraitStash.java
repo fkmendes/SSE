@@ -34,14 +34,20 @@ public class HiddenTraitStash extends TraitStash {
 		
         check();
         
-        // populating spNameLksMap
-        int hiddenIdx;
+        populateSpLksMap(numberOfStates, numberOfObsStates, numberOfHiddenStates);
+	}
+	
+	public void populateSpLksMap(int aNumberOfStates, int aNumberOfObsStates, int aNumberOfHiddenStates) {
+        numberOfStates = aNumberOfStates;
+        numberOfObsStates = aNumberOfObsStates;
+        numberOfHiddenStates = aNumberOfHiddenStates;
+        
+		int hiddenIdx;
         for (Entry<String, Integer> entry : map.entrySet()) {
         	double[] lks = new double[numberOfStates*2];
 			String spName = entry.getKey();
 			int spIdx = entry.getValue();
 			spNameLksMap.put(spName, lks);
-			// System.out.println(taxonValues[sp_idx]);
 			spNameLksMap.get(spName)[numberOfStates - 1 + Integer.parseInt(taxonValues[spIdx])] = 1.0;
 			
 			if (numberOfHiddenStates > 0) {
@@ -52,7 +58,10 @@ public class HiddenTraitStash extends TraitStash {
 					spNameLksMap.get(spName)[numberOfStates + numberOfObsStates + hiddenIdx] = 1.0;
 				}
 			} // hidden states match observed states according to hiddenObsStateMapper
-        }        
+        } 
 	}
 	
+	public void setHiddenStateAssignment(int[] aHiddenObsStateAssignment) {
+		hiddenObsStateMapper.setHiddenStateStrings(aHiddenObsStateAssignment);
+	}
 }
