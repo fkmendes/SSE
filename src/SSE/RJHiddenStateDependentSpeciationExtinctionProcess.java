@@ -42,10 +42,6 @@ public class RJHiddenStateDependentSpeciationExtinctionProcess extends HiddenSta
 		numStates = numObsStates + numHiddenStates;
 		rate = 1.0;
 		
-		System.out.println("numObsStates=" + numObsStates + 
-				" numHiddenStates=" + numHiddenStates +
-				" numStates=" + numStates);
-		
 		// likelihood-related
 		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
 		scalingConstants = new double[tree.getNodeCount()]; // equivalent to diversitree's lq (but not in log-scale), these are used as denominators during the likelihood computation
@@ -81,6 +77,14 @@ public class RJHiddenStateDependentSpeciationExtinctionProcess extends HiddenSta
 			lambda = masqueradeBall.getLambdas();
 		}
 		
+		// making sure we updated total number of states and of hidden states
+		numStates = masqueradeBall.getNumStates(); // obs + hidden
+		numHiddenStates = masqueradeBall.getNumHiddenStatesInMask();
+		
+  		// need to resize partial likelihood vectors
+		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
+		storedNodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2];  
+		
 		System.out.println("Pis in rjhdsep: " + Arrays.toString(pi));
 		System.out.println("Lambdas in rjhdsep: " + Arrays.toString(lambda));
 		System.out.println("Mus in rjhdsep: " + Arrays.toString(mu));
@@ -99,4 +103,8 @@ public class RJHiddenStateDependentSpeciationExtinctionProcess extends HiddenSta
 		return logP;
 	}
 	
+	// used for testing
+	public void setMask(Double[] aMask) {
+		masqueradeBall.setMask(aMask);
+	}
 }

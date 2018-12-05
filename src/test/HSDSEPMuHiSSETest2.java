@@ -79,6 +79,7 @@ public class HSDSEPMuHiSSETest2 {
 		int symmetrifyAcrossDiagonal = -1;
 		HiddenInstantaneousRateMatrix hirm = new HiddenInstantaneousRateMatrix();
 		String flatQMatrixString = "0.05 0.05 0.05 0.0 0.0 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.0 0.0 0.05 0.05 0.05 0.05 0.0 0.05 0.0 0.0 0.0 0.0 0.05 0.0";
+
 		hirm.initByName("numberOfStates", 4, "numberOfHiddenStates", 2, "flatQMatrix", flatQMatrixString, "disallowDoubleTransitions", disallowDoubleTransitions, "symmetrifyAcrossDiagonal", symmetrifyAcrossDiagonal, "hiddenObsStateMapper", stateMapper); // MuSSE
 		
 		System.out.println("Qs:");

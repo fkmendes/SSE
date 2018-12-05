@@ -47,15 +47,15 @@ public class MasqueradeBall extends CalculationNode {
 		numberOfStates = hirm.getNumObsStates(); // numberOfStates never changes, so done only once (same below)
 		hiddenToObsAssignment = new int[numberOfStates];
 		obsStatesToSymmetrify = new int[numberOfStates];
-		mask = new Double[numberOfStates + 1];
+		mask = modelMaskInput.get().getValues();
 		
-		applyMask();
+		applyMask(mask);
 	}
 	
-	public void applyMask() {
+	public void applyMask(Double[] aMask) {
 		
 		// mask
-		modelMaskInput.get().getValues(mask);
+		mask = aMask;
 				
 		/*
 		 * preparing inputs to set associate hidden and observed states;
@@ -69,7 +69,7 @@ public class MasqueradeBall extends CalculationNode {
 			// no hidden state for this particular observed state
 			if (maskItem == 0.0) {
 				obsStatesToSymmetrify[i] = -1;
-				System.out.println("Not symmetrifying state " + i);
+				// System.out.println("Not symmetrifying state " + i);
 				hiddenToObsAssignment[i] = -1;
 				hiddenStateIdxToIgnore.add(numberOfStates + i); // used to update both hirm and lambdaMuAssigner
 			}
@@ -77,23 +77,22 @@ public class MasqueradeBall extends CalculationNode {
 			// add hidden state for this particular observed state, but transition from and to are symmetrical
 			if (maskItem == 1.0) {
 				obsStatesToSymmetrify[i] = i;
-				System.out.println("Symmetrifying state " + i);
-				// hirm.symmetrifyAcrossDiagonal(obsStateToSymmetrifyIdx);
+				// System.out.println("Symmetrifying state " + i);
 				hiddenToObsAssignment[i] = hiddenStateIdx;
 				hiddenStateIdx++;
 			};
 								
 			// add hidden state for this particular observed state, with different transition rates
 			if (maskItem == 2.0) {
-				System.out.println("Not symmetrifying state (with mask value 2.0) " + i);
+				// System.out.println("Not symmetrifying state (with mask value 2.0) " + i);
 				obsStatesToSymmetrify[i] = -1;
 				hiddenToObsAssignment[i] = hiddenStateIdx;
 				hiddenStateIdx++;				
 			}
 		}
 										
-		System.out.println("Hidden state indexes to ignore: " + Arrays.toString(hiddenStateIdxToIgnore.toArray()));
-		System.out.println("Hidden to Obs map: " + Arrays.toString(hiddenToObsAssignment));
+		// System.out.println("Hidden state indexes to ignore: " + Arrays.toString(hiddenStateIdxToIgnore.toArray()));
+		// System.out.println("Hidden to Obs map: " + Arrays.toString(hiddenToObsAssignment));
 		
 		numberOfHiddenStatesInMask = 0;
 		for (int i=0; i<numberOfStates; ++i) {
@@ -130,7 +129,7 @@ public class MasqueradeBall extends CalculationNode {
 	// apply mask steps
 	private void updateTraitStash() {
 		hiddenTraitStash.populateSpLksMap(totalNumberOfStates, numberOfStates, numberOfHiddenStatesInMask);
-		// System.out.println("New trait stash below");
+		System.out.println("New trait stash below");
 		hiddenTraitStash.printLksMap();
 	}
 	
@@ -151,18 +150,16 @@ public class MasqueradeBall extends CalculationNode {
 		int j = 0;
 		for (int i=0; i<matrixContent.length; ++i) {
 			int[] qCell = realParameterToQCell.get(i); // for each of the RealParameters, get the cell they occupy in Q matrix
-//			System.out.println("qCell = " + Arrays.toString(qCell));
 			
 			// now see if either row or column of that cell has a hidden state that is inactive; if active, include that (ith) RealParameter in the newMatrixContent
 			if ( !(hiddenStateIdxToIgnore.contains(qCell[0]) || hiddenStateIdxToIgnore.contains(qCell[1])) ) {  
 				newMatrixContent[j] = matrixContent[i];
-//				System.out.println("Putting " + i + "th RealParameter of transition rates into newMatrixContent. Its qCell was " + Arrays.toString(qCell));
 				j++;
 			}
 		}
 		
-		System.out.println("matrixContent: " + Arrays.toString(matrixContent));
-		System.out.println("newMatrixContent: " + Arrays.toString(newMatrixContent));
+		// System.out.println("matrixContent: " + Arrays.toString(matrixContent));
+		// System.out.println("newMatrixContent: " + Arrays.toString(newMatrixContent));
 		
 		hirm.populateIRM(true, true, -1, numberOfStates, numberOfHiddenStatesInMask, newMatrixContent);
 	}
@@ -219,10 +216,29 @@ public class MasqueradeBall extends CalculationNode {
 	}
 	
 	// getters
+	public int getNumStates() {
+		// if lambdas were operated on, things are dirty, we need to update
+		if (masqueradeBallDirty) {
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
+		}
+		return totalNumberOfStates;
+	}
+	
+	public int getNumHiddenStatesInMask() {
+		// if lambdas were operated on, things are dirty, we need to update
+		if (masqueradeBallDirty) {
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
+		}
+		return numberOfHiddenStatesInMask;
+	}
+	
 	public Double[] getPis() {		
 		// if lambdas were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			applyMask();
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
 		}
 		return lambdaMuAssigner.getPis();
 	}
@@ -230,14 +246,16 @@ public class MasqueradeBall extends CalculationNode {
 	public Double[] getLambdas() {		
 		// if lambdas were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			applyMask();
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
 		}
 		return lambdaMuAssigner.getLambdas();
 	}
 	
 	public CladogeneticSpeciationRateStash getCladoStash() {
 		if (masqueradeBallDirty) {
-			applyMask();
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
 		}
 		return lambdaMuAssigner.getCladoStash();
 	}
@@ -245,21 +263,24 @@ public class MasqueradeBall extends CalculationNode {
 	public Double[] getMus() {
 		// if mus were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			applyMask();
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
 		}
 		return lambdaMuAssigner.getMus();
 	}
 	
 	public HiddenInstantaneousRateMatrix getHIRM() {
 		if (masqueradeBallDirty) {
-			applyMask();
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
 		}
 		return hirm;
 	}
 	
 	public HiddenTraitStash getHTS() {
 		if (masqueradeBallDirty) {
-			applyMask();
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
 		}
 		return hiddenTraitStash;
 	}
@@ -268,9 +289,17 @@ public class MasqueradeBall extends CalculationNode {
 	public Double[][] getQs() {
 		// if qs were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			applyMask();
+			modelMaskInput.get().getValues(mask);
+			applyMask(mask);
 		}
 		return hirm.getQ();
+	}
+	
+	// setters
+	// for testing
+	public void setMask(Double[] aMask) {
+		mask = aMask;
+		applyMask(mask);
 	}
 	
 	protected boolean requiresRecalculation() {
@@ -279,7 +308,8 @@ public class MasqueradeBall extends CalculationNode {
 	}
 
 	protected void restore() {
-		applyMask();
+		modelMaskInput.get().getValues(mask);
+		applyMask(mask);
 		super.restore();
 	}
 }

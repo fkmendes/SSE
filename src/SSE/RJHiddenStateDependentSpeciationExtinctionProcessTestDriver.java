@@ -11,7 +11,6 @@ import beast.util.TreeParser;
 public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver {
 
 	public static void main(String[] args) {
-		
 		int numberOfStates = 2;
 		int numberOfHiddenStates = 2; // this is equivalent to fig. 1 in HiSSE paper (just one hidden state, linked to one of the observed states)
 		
@@ -72,7 +71,7 @@ public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver {
 		System.out.println();
 		
 		// Up to this point, we have initialized everything to two hidden and two observed states
-		// Below, we apply a mask and force just one hidden state -- it should matche HSDSEPHiSSETest2
+		// Below, we apply a mask and force just one hidden state -- it should match HSDSEPHiSSETest2
 		
 		Double[] mask1 = new Double[] { 0.0, 2.0, 0.0 }; // last one means CID is off
 		RealParameter modelMask1 = new RealParameter(mask1);

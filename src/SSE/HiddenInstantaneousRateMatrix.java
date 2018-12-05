@@ -55,7 +55,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		}
 
 		symmetrifyAcrossDiagonalStateIdx = SymmetrifyAcrossDiagonalInput.get(); // if -1, no symmetrifying done
-		System.out.println("My symmetrifyAcrossDiagonalStateIdx is " + symmetrifyAcrossDiagonalStateIdx);
+		// System.out.println("My symmetrifyAcrossDiagonalStateIdx is " + symmetrifyAcrossDiagonalStateIdx);
 		realParameterToQCell = new HashMap<>();
 
 		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();

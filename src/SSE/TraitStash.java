@@ -131,7 +131,7 @@ public class TraitStash extends TraitSet {
 		for (HashMap.Entry<String, double[]> entry : spNameLksMap.entrySet()) {	
 			String spname = entry.getKey();
 			double[] lks = entry.getValue();
-			System.out.println(spname + " initial lks = " + Arrays.toString(lks));
+			// System.out.println(spname + " initial lks = " + Arrays.toString(lks));
 		}
 	}
 
