@@ -4,14 +4,14 @@ import java.util.Arrays;
 
 import SSE.MaskOperator;
 import beast.core.State;
-import beast.core.parameter.RealParameter;
+import beast.core.parameter.IntegerParameter;
 
 public class MaskOperatorTestDriver {
 
 	public static void main(String[] args) {
-		Double[] init = new Double[3];
-        Arrays.fill(init, 0.0);
-        RealParameter mask = new RealParameter(init);
+		Integer[] init = new Integer[3];
+        Arrays.fill(init, 0);
+        IntegerParameter mask = new IntegerParameter(init);
         
 		State state = new State();
 		state.initByName("stateNode", mask);
@@ -24,7 +24,7 @@ public class MaskOperatorTestDriver {
         
 		for (int i = 0; i < 1000000; i++) {
 			operator.proposal();
-            Double[] aMask = mask.getValues();
+            Integer[] aMask = mask.getValues();
             
             for (int pos = 0; pos < aMask.length-1; pos++) {
                 double j = (double) aMask[pos];

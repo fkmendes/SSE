@@ -14,6 +14,7 @@ import SSE.HiddenObservedStateMapper;
 import SSE.HiddenTraitStash;
 import SSE.LambdaMuAssigner;
 import SSE.MasqueradeBall;
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
@@ -35,6 +36,33 @@ public class MasqueradeBallTest {
 	int numberOfStates;
 	int numberOfHiddenStates;
 	
+	IntegerParameter stateMask1;
+	IntegerParameter cidMask1;
+	IntegerParameter stateMask2;
+	IntegerParameter cidMask2;
+	IntegerParameter stateMask3;
+	IntegerParameter cidMask3;
+	IntegerParameter stateMask4;
+	IntegerParameter cidMask4;
+	IntegerParameter stateMask5;
+	IntegerParameter cidMask5;
+	IntegerParameter stateMask6;
+	IntegerParameter cidMask6;
+	IntegerParameter stateMask7;
+	IntegerParameter cidMask7;
+	IntegerParameter stateMask8;
+	IntegerParameter cidMask8;
+	IntegerParameter stateMask9;
+	IntegerParameter cidMask9;
+	IntegerParameter stateMask10;
+	IntegerParameter cidMask10;
+	IntegerParameter stateMask11;
+	IntegerParameter cidMask11;
+	IntegerParameter stateMask12;
+	IntegerParameter cidMask12;
+	ArrayList<IntegerParameter> stateMasks;
+	ArrayList<IntegerParameter> cidMasks;
+
 	RealParameter mask1;
 	RealParameter mask2;
 	RealParameter mask3;
@@ -643,55 +671,131 @@ public class MasqueradeBallTest {
 		symmetrifyAcrossDiagonal = -1;
 		flatQMatrixString = "0.1 0.2 0.3 0.4 1.0 1.2 1.3 1.5 2.0 2.1 2.3 2.6 3.0 3.1 3.2 3.7 4.0 4.5 4.6 4.7 5.1 5.4 5.6 5.7 6.2 6.4 6.5 6.7 7.3 7.4 7.5 7.6";
 		
-		Double[] mask1Array = { 0.0, 0.0, 0.0, 0.0, 0.0 }; // first four states, then CID/Not-CID	
-		mask1 = new RealParameter(mask1Array);
+//		Double[] mask1Array = { 0.0, 0.0, 0.0, 0.0, 0.0 }; // first four states, then CID/Not-CID	
+//		mask1 = new RealParameter(mask1Array);
+		Integer[] statesMask1Array = { 0, 0, 0, 0 };
+		Integer[] cidMask1Array = { 0 };
+		stateMask1 = new IntegerParameter(statesMask1Array);
+		cidMask1 = new IntegerParameter(cidMask1Array);
 		
-		Double[] mask2Array = { 1.0, 0.0, 0.0, 0.0, 0.0 };
-		mask2 = new RealParameter(mask2Array);
+//		Double[] mask2Array = { 1.0, 0.0, 0.0, 0.0, 0.0 };
+//		mask2 = new RealParameter(mask2Array);
+		Integer[] statesMask2Array = { 1, 0, 0, 0 };
+		Integer[] cidMask2Array = { 0 };
+		stateMask2 = new IntegerParameter(statesMask2Array);
+		cidMask2 = new IntegerParameter(cidMask2Array);
 		
-		Double[] mask3Array = { 1.0, 1.0, 0.0, 0.0, 0.0 };
-		mask3 = new RealParameter(mask3Array);
+//		Double[] mask3Array = { 1.0, 1.0, 0.0, 0.0, 0.0 };
+//		mask3 = new RealParameter(mask3Array);
+		Integer[] statesMask3Array = { 1, 1, 0, 0 };
+		Integer[] cidMask3Array = { 0 };
+		stateMask3 = new IntegerParameter(statesMask3Array);
+		cidMask3 = new IntegerParameter(cidMask3Array);
 		
-		Double[] mask4Array = { 1.0, 1.0, 1.0, 0.0, 0.0 };
-		mask4 = new RealParameter(mask4Array);
+//		Double[] mask4Array = { 1.0, 1.0, 1.0, 0.0, 0.0 };
+//		mask4 = new RealParameter(mask4Array);
+		Integer[] statesMask4Array = { 1, 1, 1, 0 };
+		Integer[] cidMask4Array = { 0 };
+		stateMask4 = new IntegerParameter(statesMask4Array);
+		cidMask4 = new IntegerParameter(cidMask4Array);
 		
-		Double[] mask5Array = { 1.0, 1.0, 1.0, 1.0, 0.0 };
-		mask5 = new RealParameter(mask5Array);
+//		Double[] mask5Array = { 1.0, 1.0, 1.0, 1.0, 0.0 };
+//		mask5 = new RealParameter(mask5Array);
+		Integer[] statesMask5Array = { 1, 1, 1, 1 };
+		Integer[] cidMask5Array = { 0 };
+		stateMask5 = new IntegerParameter(statesMask5Array);
+		cidMask5 = new IntegerParameter(cidMask5Array);
 		
-		Double[] mask6Array = { 1.0, 1.0, 1.0, 1.0, 1.0 };
-		mask6 = new RealParameter(mask6Array);
+//		Double[] mask6Array = { 1.0, 1.0, 1.0, 1.0, 1.0 };
+//		mask6 = new RealParameter(mask6Array);
+		Integer[] statesMask6Array = { 1, 1, 1, 1 };
+		Integer[] cidMask6Array = { 1 };
+		stateMask6 = new IntegerParameter(statesMask6Array);
+		cidMask6 = new IntegerParameter(cidMask6Array);
 		
-		Double[] mask7Array = { 0.0, 2.0, 0.0, 0.0, 0.0 };
-		mask7 = new RealParameter(mask7Array);
+//		Double[] mask7Array = { 0.0, 2.0, 0.0, 0.0, 0.0 };
+//		mask7 = new RealParameter(mask7Array);
+		Integer[] statesMask7Array = { 0, 2, 0, 0 };
+		Integer[] cidMask7Array = { 0 };
+		stateMask7 = new IntegerParameter(statesMask7Array);
+		cidMask7 = new IntegerParameter(cidMask7Array);
 		
-		Double[] mask8Array = { 1.0, 2.0, 0.0, 0.0, 0.0 };
-		mask8 = new RealParameter(mask8Array);
+//		Double[] mask8Array = { 1.0, 2.0, 0.0, 0.0, 0.0 };
+//		mask8 = new RealParameter(mask8Array);
+		Integer[] statesMask8Array = { 1, 2, 0, 0 };
+		Integer[] cidMask8Array = { 0 };
+		stateMask8 = new IntegerParameter(statesMask8Array);
+		cidMask8 = new IntegerParameter(cidMask8Array);
 		
-		Double[] mask9Array = { 0.0, 2.0, 0.0, 1.0, 1.0 };
-		mask9 = new RealParameter(mask9Array);
+//		Double[] mask9Array = { 0.0, 2.0, 0.0, 1.0, 1.0 };
+//		mask9 = new RealParameter(mask9Array);
+		Integer[] statesMask9Array = { 0, 2, 0, 1 };
+		Integer[] cidMask9Array = { 1 };
+		stateMask9 = new IntegerParameter(statesMask9Array);
+		cidMask9 = new IntegerParameter(cidMask9Array);
 		
-		Double[] mask10Array = { 0.0, 2.0, 0.0, 2.0, 1.0 };
-		mask10 = new RealParameter(mask10Array);
+//		Double[] mask10Array = { 0.0, 2.0, 0.0, 2.0, 1.0 };
+//		mask10 = new RealParameter(mask10Array);
+		Integer[] statesMask10Array = { 0, 2, 0, 2 };
+		Integer[] cidMask10Array = { 1 };
+		stateMask10 = new IntegerParameter(statesMask10Array);
+		cidMask10 = new IntegerParameter(cidMask10Array);
 		
-		Double[] mask11Array = { 0.0, 0.0, 0.0, 0.0, 1.0 };
-		mask11 = new RealParameter(mask11Array);
+//		Double[] mask11Array = { 0.0, 0.0, 0.0, 0.0, 1.0 };
+//		mask11 = new RealParameter(mask11Array);
+		Integer[] statesMask11Array = { 0, 0, 0, 0 };
+		Integer[] cidMask11Array = { 1 };
+		stateMask11 = new IntegerParameter(statesMask11Array);
+		cidMask11 = new IntegerParameter(cidMask11Array);
 		
-		Double[] mask12Array = { 2.0, 2.0, 2.0, 2.0, 1.0 };
-		mask12 = new RealParameter(mask12Array);
+//		Double[] mask12Array = { 2.0, 2.0, 2.0, 2.0, 1.0 };
+//		mask12 = new RealParameter(mask12Array);
+		Integer[] statesMask12Array = { 2, 2, 2, 2 };
+		Integer[] cidMask12Array = { 1 };
+		stateMask12 = new IntegerParameter(statesMask12Array);
+		cidMask12 = new IntegerParameter(cidMask12Array);
 		
-		masks = new ArrayList<RealParameter>();
-		masks.add(mask1);
-		masks.add(mask2);
-		masks.add(mask3);
-		masks.add(mask4);
-		masks.add(mask5);
-		masks.add(mask6);
-		masks.add(mask7);
-		masks.add(mask8);
-		masks.add(mask9);
-		masks.add(mask10);
-		masks.add(mask11);
-		masks.add(mask12);
+//		masks = new ArrayList<RealParameter>();
+//		masks.add(mask1);
+//		masks.add(mask2);
+//		masks.add(mask3);
+//		masks.add(mask4);
+//		masks.add(mask5);
+//		masks.add(mask6);
+//		masks.add(mask7);
+//		masks.add(mask8);
+//		masks.add(mask9);
+//		masks.add(mask10);
+//		masks.add(mask11);
+//		masks.add(mask12);
+		
+		stateMasks = new ArrayList<IntegerParameter>();
+		stateMasks.add(stateMask1);
+		stateMasks.add(stateMask2);
+		stateMasks.add(stateMask3);
+		stateMasks.add(stateMask4);
+		stateMasks.add(stateMask5);
+		stateMasks.add(stateMask6);
+		stateMasks.add(stateMask7);
+		stateMasks.add(stateMask8);
+		stateMasks.add(stateMask9);
+		stateMasks.add(stateMask10);
+		stateMasks.add(stateMask11);
+		stateMasks.add(stateMask12);
+		
+		cidMasks = new ArrayList<IntegerParameter>();
+		cidMasks.add(cidMask1);
+		cidMasks.add(cidMask2);
+		cidMasks.add(cidMask3);
+		cidMasks.add(cidMask4);
+		cidMasks.add(cidMask5);
+		cidMasks.add(cidMask6);
+		cidMasks.add(cidMask7);
+		cidMasks.add(cidMask8);
+		cidMasks.add(cidMask9);
+		cidMasks.add(cidMask10);
+		cidMasks.add(cidMask11);
+		cidMasks.add(cidMask12);
 	}
 
 	Instance[] all = { test1, test2, test3, test4, test5, test6, test7, test8, test9, test10, test11, test12 };
@@ -719,7 +823,9 @@ public class MasqueradeBallTest {
 			hts.initByName("numberOfStates", 4, "numberOfHiddenStates", 4, "taxa", taxonSet, "hiddenObsStateMapper", stateMapper, "value", "sp1=2,sp2=1,sp3=2");
 
 			maskBall = new MasqueradeBall();
-			maskBall.initByName("modelMask", masks.get(i), 
+			maskBall.initByName(
+					"stateMask", stateMasks.get(i),
+					"cidMask", cidMasks.get(i),
 					"hiddenInstantaneousRateMatrix", hirm, 
 					"lambdaMuAssigner", lambdaMuAssigner,
 					"hiddenTraitStash", hts);

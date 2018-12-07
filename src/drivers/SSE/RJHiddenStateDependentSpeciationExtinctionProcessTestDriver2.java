@@ -12,6 +12,7 @@ import SSE.HiddenTraitStash;
 import SSE.LambdaMuAssigner;
 import SSE.MasqueradeBall;
 import SSE.RJHiddenStateDependentSpeciationExtinctionProcess;
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
@@ -115,11 +116,18 @@ public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver2 {
 		// System.out.println("hirm2 Qs:");
 		// hirm2.printMatrix();
 				
-		Double[] mask1 = new Double[] { 2.0, 2.0, 2.0, 2.0, 0.0 }; // last one means CID is off
-		RealParameter modelMask1 = new RealParameter(mask1);
+//		Double[] mask1 = new Double[] { 2.0, 2.0, 2.0, 2.0, 0.0 }; // last one means CID is off
+//		RealParameter modelMask1 = new RealParameter(mask1);
+		
+		Integer[] aStatesMaskPart = new Integer[] { 2, 2, 2, 2 };
+		IntegerParameter stateMask1 = new IntegerParameter(aStatesMaskPart);
+		Integer[] aCIDMaskPart = new Integer[] { 0 };
+		IntegerParameter cidMask1 = new IntegerParameter(aCIDMaskPart);
 		
 		MasqueradeBall masqueradeBall = new MasqueradeBall();
-		masqueradeBall.initByName("modelMask", modelMask1, 
+		masqueradeBall.initByName(
+				"stateMask", stateMask1,
+				"cidMask", cidMask1,
 				"hiddenTraitStash", hiddenTraitStash1,
 				"hiddenInstantaneousRateMatrix", hirm1, 
 				"lambdaMuAssigner", lambdaMuAssigner1);
@@ -164,8 +172,10 @@ public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver2 {
     	double negLnl3 = rjhsdsep.calculateLogP();
     	System.out.println(negLnl3); // -122.88014179920914
     	
-    	Double[] mask2 = new Double[] { 0.0, 2.0, 0.0, 2.0, 0.0 }; // applying new mask
-		rjhsdsep.setMask(mask2);
+//    	Double[] mask2 = new Double[] { 0.0, 2.0, 0.0, 2.0, 0.0 }; // applying new mask
+    	Integer[] aStatesMaskPart2 = new Integer[] { 0, 2, 0, 2 };
+		Integer[] aCIDMaskPart2 = new Integer[] { 0 };
+    	rjhsdsep.setMask(aStatesMaskPart2, aCIDMaskPart2);
 		double negLnl4 = rjhsdsep.calculateLogP();
     	System.out.println("rjhsdsep: " + negLnl4); // -122.84037671593603
 	}

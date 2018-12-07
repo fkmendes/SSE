@@ -104,7 +104,7 @@ public class RJHiddenStateDependentSpeciationExtinctionProcess extends HiddenSta
 	}
 	
 	// used for testing
-	public void setMask(Double[] aMask) {
-		masqueradeBall.setMask(aMask);
+	public void setMask(Integer[] aStatesMaskPart, Integer[] aCIDMaskPart) {
+		masqueradeBall.setMask(aStatesMaskPart, aCIDMaskPart);
 	}
 }

@@ -4,18 +4,24 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 
 public class MasqueradeBall extends CalculationNode {
-	final public Input<RealParameter> modelMaskInput = new Input<>("modelMask", "Series of integers that collectively determine what (sub)model to use.");
+	final public Input<IntegerParameter> statesMaskFlagInput = new Input<>("stateMask", "Series of integers that collectively determine what observed states have a hidden state.");
+	final public Input<IntegerParameter> cidMaskFlagInput = new Input<>("cidMask", "Integers that turns CID on (1) and off(0).");
 	final public Input<HiddenTraitStash> hiddenTraitStashInput = new Input<>("hiddenTraitStash", "TraitStash object containing the observed character state for each species.", Validate.REQUIRED);
 	final public Input<HiddenInstantaneousRateMatrix> hirmInput = new Input<>("hiddenInstantaneousRateMatrix", "HiddenInstantaneousRateMatrix object containing anagenenetic rates for both observed and hidden states.", Validate.REQUIRED);
 	final public Input<LambdaMuAssigner> lambdaMuAssignerInput = new Input<>("lambdaMuAssigner", "LambdaMuAssigner object that assigns distinct parameters to each state.", Validate.REQUIRED);
 
-	private Double[] mask;
+	private Integer[] statesMaskPart;
+	private Integer[] cidMaskPart;
+	private Integer[] mask;
 	private boolean masqueradeBallDirty = true;
 
 	private int numberOfStates; // number of observed states
@@ -46,15 +52,16 @@ public class MasqueradeBall extends CalculationNode {
 		numberOfStates = hirm.getNumObsStates(); // numberOfStates never changes, so done only once (same below)
 		hiddenToObsAssignment = new int[numberOfStates];
 		obsStatesToSymmetrify = new int[numberOfStates];
-		mask = modelMaskInput.get().getValues();
+		statesMaskPart = statesMaskFlagInput.get().getValues();
+		cidMaskPart = cidMaskFlagInput.get().getValues();
 		
-		applyMask(mask);
+		applyMask(statesMaskPart, cidMaskPart);
 	}
 	
-	public void applyMask(Double[] aMask) {
+	public void applyMask(Integer[] aStatesMaskPart, Integer[] aCIDFlag) {
 		
 		// mask
-		mask = aMask;
+		mask = ArrayUtils.addAll(aStatesMaskPart, aCIDFlag);
 				
 		/*
 		 * preparing inputs to set associate hidden and observed states;
@@ -180,10 +187,10 @@ public class MasqueradeBall extends CalculationNode {
 		}
 		
 		// dealing with lambda and mus
-		Double cidIndicator = mask[mask.length-1];
+		Integer cidIndicator = mask[mask.length-1];
 		// System.out.println("CID indicator=" + cidIndicator);
 		// CID
-		if (cidIndicator == 1.0) {
+		if (cidIndicator == 1) {
 			for (int i=0; i<totalNumberOfStates; ++i) {
 				if (i < numberOfStates) {
 					lambdaAssignmentArray[i] = 0;
@@ -218,8 +225,9 @@ public class MasqueradeBall extends CalculationNode {
 	public int getNumStates() {
 		// if lambdas were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return totalNumberOfStates;
 	}
@@ -227,8 +235,9 @@ public class MasqueradeBall extends CalculationNode {
 	public int getNumHiddenStatesInMask() {
 		// if lambdas were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return numberOfHiddenStatesInMask;
 	}
@@ -236,8 +245,9 @@ public class MasqueradeBall extends CalculationNode {
 	public Double[] getPis() {		
 		// if lambdas were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return lambdaMuAssigner.getPis();
 	}
@@ -245,16 +255,18 @@ public class MasqueradeBall extends CalculationNode {
 	public Double[] getLambdas() {		
 		// if lambdas were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return lambdaMuAssigner.getLambdas();
 	}
 	
 	public CladogeneticSpeciationRateStash getCladoStash() {
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return lambdaMuAssigner.getCladoStash();
 	}
@@ -262,24 +274,27 @@ public class MasqueradeBall extends CalculationNode {
 	public Double[] getMus() {
 		// if mus were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return lambdaMuAssigner.getMus();
 	}
 	
 	public HiddenInstantaneousRateMatrix getHIRM() {
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return hirm;
 	}
 	
 	public HiddenTraitStash getHTS() {
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return hiddenTraitStash;
 	}
@@ -288,17 +303,17 @@ public class MasqueradeBall extends CalculationNode {
 	public Double[][] getQs() {
 		// if qs were operated on, things are dirty, we need to update
 		if (masqueradeBallDirty) {
-			modelMaskInput.get().getValues(mask);
-			applyMask(mask);
+			statesMaskFlagInput.get().getValues(statesMaskPart);
+			cidMaskFlagInput.get().getValues();
+			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return hirm.getQ();
 	}
 	
 	// setters
 	// for testing
-	public void setMask(Double[] aMask) {
-		mask = aMask;
-		applyMask(mask);
+	public void setMask(Integer[] aStatesMaskPart, Integer[] aCIDMaskPart) {
+		applyMask(aStatesMaskPart, aCIDMaskPart);
 	}
 	
 	protected boolean requiresRecalculation() {
@@ -307,8 +322,9 @@ public class MasqueradeBall extends CalculationNode {
 	}
 
 	protected void restore() {
-		modelMaskInput.get().getValues(mask);
-		applyMask(mask);
+		statesMaskFlagInput.get().getValues(statesMaskPart);
+		cidMaskPart = cidMaskFlagInput.get().getValues();
+		applyMask(statesMaskPart, cidMaskPart);
 		super.restore();
 	}
 }
