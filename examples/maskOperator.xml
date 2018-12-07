@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beast namespace="beast.core:beast.evolution.alignment:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood" required="BEAST v2.5.0" version="2.5">
+
+  <run id="mcmc" spec="MCMC" chainLength="1000000">
+    <state id="state" storeEvery="1">
+      <stateNode idref="StateMask"/>
+    </state>
+
+    <distribution id="posterior" spec="util.CompoundDistribution" sampleFromPrior="true">   
+      
+      <!-- START prior -->
+      <distribution id="prior" spec="util.CompoundDistribution">
+        
+        <!--  Not sure if this Uniform even makes sense, since I pick position at random  -->
+        <distribution id="StateMaskPrior" spec="beast.math.distributions.Prior" x="@StateMask">        
+          <distr id="Unif.StateMask" spec="beast.math.distributions.Uniform" lower="0.0" upper="2.0">
+           <!--  STUFF? -->
+          </distr>
+        </distribution>
+      <!-- END prior -->
+
+    </distribution> <!-- END Posterior -->
+
+    <operator id="MaskSlider" spec="MaskOperator" parameter="@StateMask" weight="1.0"/>
+
+    <logger id="tracelog" fileName="mask_operator.log" logEvery="1" model="@posterior" sanitiseHeaders="true" sort="smart">
+        <log idref="StateMask"/>
+    </logger>
+
+  </run>
+</beast>
