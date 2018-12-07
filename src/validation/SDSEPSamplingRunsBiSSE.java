@@ -14,8 +14,9 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
+import test.SSE.TestHelper;
+
 import org.apache.commons.lang3.ArrayUtils;
-import test.TestHelper;
 
 import java.util.Arrays;
 import java.util.List;

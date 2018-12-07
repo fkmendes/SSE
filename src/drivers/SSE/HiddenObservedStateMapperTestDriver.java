@@ -1,4 +1,6 @@
-package SSE;
+package drivers.SSE;
+
+import SSE.HiddenObservedStateMapper;
 
 public class HiddenObservedStateMapperTestDriver {
 

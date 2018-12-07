@@ -1,7 +1,9 @@
-package SSE;
+package drivers.SSE;
 
 import org.apache.commons.math3.ode.*;
 import org.apache.commons.math3.ode.nonstiff.*;
+
+import SSE.TestODE;
 
 public class TestODETestDriver {
 

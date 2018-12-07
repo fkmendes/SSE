@@ -1,9 +1,8 @@
-package drivers.SSE;
+package test.SSE;
 
-import java.util.Arrays;
-import java.util.List;
-
-import org.apache.commons.lang3.ArrayUtils;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import SSE.HiddenInstantaneousRateMatrix;
 import SSE.HiddenObservedStateMapper;
@@ -12,14 +11,22 @@ import SSE.HiddenTraitStash;
 import SSE.LambdaMuAssigner;
 import SSE.MasqueradeBall;
 import SSE.RJHiddenStateDependentSpeciationExtinctionProcess;
+
+import java.util.Arrays;
+import java.util.List;
+import org.apache.commons.lang3.ArrayUtils;
+
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
 
-public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver2 {
+public class RJHSDSEPMuHiSSETest {
+	final static double EPSILON = 1E-4;
+	private double negLnl1, negLnl2, negLnl3, negLnl4;
 
-	public static void main(String[] args) {
+	@Before
+	public void setUp() throws Exception {
 		String[] spNames = new String[] { "sp4", "sp6", "sp10", "sp11", "sp12", "sp15", "sp16", "sp17", "sp18", "sp20", "sp21", "sp23", "sp24", "sp25", "sp26", "sp27", "sp28", "sp30", "sp31", "sp32", "sp33", "sp34", "sp35", "sp36", "sp37", "sp38", "sp39", "sp40", "sp41", "sp42" };
 		List<Taxon> taxaList = Taxon.createTaxonList(Arrays.asList(spNames));
 		TaxonSet taxonSet = new TaxonSet(taxaList);
@@ -155,18 +162,28 @@ public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver2 {
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
     	
-    	double negLnl1 = hsdsep1.calculateLogP();
+    	negLnl1 = hsdsep1.calculateLogP();
     	System.out.println("hsdsep1: " + negLnl1); // -122.88014179920914
     	
-    	double negLnl2 = hsdsep2.calculateLogP();
+    	negLnl2 = hsdsep2.calculateLogP();
     	System.out.println("hsdsep2: " + negLnl2); // -122.84037671593603
     	
-    	double negLnl3 = rjhsdsep.calculateLogP();
+    	negLnl3 = rjhsdsep.calculateLogP();
     	System.out.println(negLnl3); // -122.88014179920914
     	
     	Double[] mask2 = new Double[] { 0.0, 2.0, 0.0, 2.0, 0.0 }; // applying new mask
 		rjhsdsep.setMask(mask2);
-		double negLnl4 = rjhsdsep.calculateLogP();
+		negLnl4 = rjhsdsep.calculateLogP();
     	System.out.println("rjhsdsep: " + negLnl4); // -122.84037671593603
+	}
+
+	@Test
+	public void hsdsepVsRJhsdsepAllHiddenStates() {
+		Assert.assertEquals(negLnl1, negLnl3, EPSILON); 
+	}
+	
+	@Test
+	public void hsdsepVsRJhsdsepTwoAlternatedHiddenStates() {
+		Assert.assertEquals(negLnl2, negLnl4, EPSILON); 
 	}
 }

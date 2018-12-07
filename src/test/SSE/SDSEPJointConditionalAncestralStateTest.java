@@ -3,7 +3,7 @@ Under BiSSE model, sample the tree many times with drawJointConditionalAncestral
 Then, check that the posterior probability of a node being in state 0 matches that given by diversitree for all nodes
  */
 
-package test;
+package test.SSE;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -12,7 +12,6 @@ import org.junit.Test;
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;
 import SSE.TraitStash;
-import test.TestHelper;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -23,6 +22,7 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 import beast.util.TreeParser;
+import test.SSE.TestHelper;
 
 public class SDSEPJointConditionalAncestralStateTest {
 	final static double EPSILON = 1e-5;

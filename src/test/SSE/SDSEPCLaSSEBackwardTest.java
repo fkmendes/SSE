@@ -5,7 +5,7 @@ Given a tree of 4 tips and a CLaSSE model, we check
 3. After the backwards pass, each node has the same likelihood with and without sampling in the branches
  */
 
-package test;
+package test.SSE;
 
 import org.junit.Assert;
 import org.junit.Before;

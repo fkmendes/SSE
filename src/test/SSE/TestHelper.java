@@ -1,4 +1,4 @@
-package test;
+package test.SSE;
 
 import org.junit.Assert;
 

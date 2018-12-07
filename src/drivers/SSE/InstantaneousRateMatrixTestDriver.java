@@ -1,4 +1,6 @@
-package SSE;
+package drivers.SSE;
+
+import SSE.InstantaneousRateMatrix;
 
 public class InstantaneousRateMatrixTestDriver {
 

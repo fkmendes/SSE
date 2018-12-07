@@ -1,4 +1,7 @@
-package SSE;
+package drivers.SSE;
+
+import SSE.HiddenInstantaneousRateMatrix;
+import SSE.HiddenObservedStateMapper;
 
 public class HiddenInstantaneousRateMatrixTestDriver {
 

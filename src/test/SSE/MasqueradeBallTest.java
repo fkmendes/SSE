@@ -1,4 +1,4 @@
-package test;
+package test.SSE;
 
 import java.util.ArrayList;
 import java.util.Arrays;

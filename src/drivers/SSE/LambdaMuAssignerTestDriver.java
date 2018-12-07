@@ -1,7 +1,8 @@
-package SSE;
+package drivers.SSE;
 
 import java.util.Arrays;
 
+import SSE.LambdaMuAssigner;
 import beast.core.parameter.RealParameter;
 
 public class LambdaMuAssignerTestDriver {

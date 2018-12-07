@@ -1,4 +1,4 @@
-package SSE;
+package drivers.SSE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +12,11 @@ import beast.util.TreeParser;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import SSE.CladoTriplet;
+import SSE.CladogeneticSpeciationRateStash;
+import SSE.InstantaneousRateMatrix;
+import SSE.StateDependentSpeciationExtinctionProcess;
+import SSE.TraitStash;
 import SSE.CladoTriplet.speciationType;
 
 public class StateDependentSpeciationExtinctionProcessCLaSSETestDriver {

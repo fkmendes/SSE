@@ -2,7 +2,7 @@
 Under BiSSE model, sample the tree many times with drawStochasticCharacerMapping.
 Then, check that the posterior probability of a node being in state 0 matches that given by diversitree for all nodes
  */
-package test;
+package test.SSE;
 
 import SSE.InstantaneousRateMatrix;
 import SSE.StateDependentSpeciationExtinctionProcess;

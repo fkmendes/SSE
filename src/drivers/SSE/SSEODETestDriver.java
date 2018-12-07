@@ -1,4 +1,4 @@
-package SSE;
+package drivers.SSE;
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,6 +6,9 @@ import java.util.List;
 import org.apache.commons.math3.ode.*;
 import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
 
+import SSE.InstantaneousRateMatrix;
+import SSE.SSEODE;
+import SSE.TraitStash;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
 

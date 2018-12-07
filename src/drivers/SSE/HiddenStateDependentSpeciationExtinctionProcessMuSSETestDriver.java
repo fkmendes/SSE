@@ -1,10 +1,15 @@
-package SSE;
+package drivers.SSE;
 
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import SSE.HiddenInstantaneousRateMatrix;
+import SSE.HiddenObservedStateMapper;
+import SSE.HiddenStateDependentSpeciationExtinctionProcess;
+import SSE.HiddenTraitStash;
+import SSE.LambdaMuAssigner;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
