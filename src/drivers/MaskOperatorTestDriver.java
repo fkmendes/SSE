@@ -2,7 +2,7 @@ package drivers;
 
 import java.util.Arrays;
 
-import SSE.MaskOperator;
+import SSE.StateMaskOperator;
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
 
@@ -17,7 +17,7 @@ public class MaskOperatorTestDriver {
 		state.initByName("stateNode", mask);
 		state.initialise();
 		
-		MaskOperator operator = new MaskOperator();
+		StateMaskOperator operator = new StateMaskOperator();
         operator.initByName("mask", mask, "weight", 1.0);
         
         int[][] count = new int[2][3]; // two obs/hidden states, each 0.0/1.0/2.0

@@ -6,22 +6,28 @@
       <stateNode idref="StateMask"/>
     </state>
 
-    <distribution id="posterior" spec="util.CompoundDistribution" sampleFromPrior="true">   
+    <distribution id="posterior" spec="util.CompoundDistribution">   
       
       <!-- START prior -->
       <distribution id="prior" spec="util.CompoundDistribution">
-        
-        <!--  Not sure if this Uniform even makes sense, since I pick position at random  -->
-        <distribution id="StateMaskPrior" spec="beast.math.distributions.Prior" x="@StateMask">        
-          <distr id="Unif.StateMask" spec="beast.math.distributions.Uniform" lower="0.0" upper="2.0">
-           <!--  STUFF? -->
+        <distribution id="DummyPrior" spec="beast.math.distributions.Prior" x="@StateMask">
+          <distr id="DummyPriorStateMask" spec="beast.math.distributions.Uniform" lower="0" upper="2">
           </distr>
         </distribution>
+      </distribution>
       <!-- END prior -->
+      
+      <!-- START likelihood -->
+      <distribution id="likelihood" spec="util.CompoundDistribution">
+	    <distribution id="MaskOperatorDist" spec="SSE.MaskOperatorDist">        
+	  	  <stateMask id="StateMask" dimension="3" spec="parameter.IntegerParameter">0 0 0</stateMask>
+        </distribution>
+      </distribution>
+      <!-- END likelihood -->
 
     </distribution> <!-- END Posterior -->
 
-    <operator id="MaskSlider" spec="MaskOperator" parameter="@StateMask" weight="1.0"/>
+    <operator id="MaskSlider" spec="SSE.StateMaskOperator" mask="@StateMask" weight="1.0"/>
 
     <logger id="tracelog" fileName="mask_operator.log" logEvery="1" model="@posterior" sanitiseHeaders="true" sort="smart">
         <log idref="StateMask"/>
