@@ -62,6 +62,7 @@ public class MasqueradeBall extends CalculationNode {
 		
 		// mask
 		mask = ArrayUtils.addAll(aStatesMaskPart, aCIDFlag);
+//		System.out.println("My mask is = " + Arrays.toString(mask));
 				
 		/*
 		 * preparing inputs to set associate hidden and observed states;
@@ -73,7 +74,7 @@ public class MasqueradeBall extends CalculationNode {
 			double maskItem = mask[i];
 			
 			// no hidden state for this particular observed state
-			if (maskItem == 0.0) {
+			if (maskItem == 0) {
 				obsStatesToSymmetrify[i] = -1;
 				// System.out.println("Not symmetrifying state " + i);
 				hiddenToObsAssignment[i] = -1;
@@ -81,7 +82,7 @@ public class MasqueradeBall extends CalculationNode {
 			}
 								
 			// add hidden state for this particular observed state, but transition from and to are symmetrical
-			if (maskItem == 1.0) {
+			if (maskItem == 1) {
 				obsStatesToSymmetrify[i] = i;
 				// System.out.println("Symmetrifying state " + i);
 				hiddenToObsAssignment[i] = hiddenStateIdx;
@@ -89,7 +90,7 @@ public class MasqueradeBall extends CalculationNode {
 			};
 								
 			// add hidden state for this particular observed state, with different transition rates
-			if (maskItem == 2.0) {
+			if (maskItem == 2) {
 				// System.out.println("Not symmetrifying state (with mask value 2.0) " + i);
 				obsStatesToSymmetrify[i] = -1;
 				hiddenToObsAssignment[i] = hiddenStateIdx;
@@ -117,7 +118,7 @@ public class MasqueradeBall extends CalculationNode {
 				hirm.symmetrifyAcrossDiagonal(obsStateIdx);
 			}
 		}
-		hirm.printMatrix();
+		// hirm.printMatrix();
 		
 		// lambda and mu stuff
 		lambdaMuAssigner = lambdaMuAssignerInput.get();
@@ -130,28 +131,29 @@ public class MasqueradeBall extends CalculationNode {
 		updateTraitStash();
 		
 		masqueradeBallDirty = false;
-	}
+	} // end apply mask
 	
 	// apply mask steps
 	private void updateTraitStash() {
 		hiddenTraitStash.populateSpLksMap(totalNumberOfStates, numberOfStates, numberOfHiddenStatesInMask);
-		System.out.println("New trait stash below");
+		// System.out.println("New trait stash below");
 		hiddenTraitStash.printLksMap();
 	}
 	
 	private void updateHIRM() {
-		matrixContent = hirm.getMatrixContent();
+//		matrixContent = hirm.getMatrixContent();
+		matrixContent = hirm.getQRealParameter().getValues();
 		int newMatrixContentLength = (int) (Math.pow(numberOfStates, 2) - numberOfStates + // top-left
 				numberOfHiddenStatesInMask*2 + // upper-right and bottom-left
 				(Math.pow(numberOfHiddenStatesInMask, 2) - numberOfHiddenStatesInMask)); // bottom-right
 		Double[] newMatrixContent = new Double[newMatrixContentLength];
 		realParameterToQCell = hirm.getRealParameterToQCellMap();	
 		
-		System.out.println("Number of observed states = " + numberOfStates);
-		System.out.println("Number of hidden states = " + numberOfHiddenStatesInMask);
-		System.out.println("Total number of states = " + totalNumberOfStates);
-		System.out.println("Size of matrix content = " + matrixContent.length);
-		System.out.println("Size of new matrix content = " + newMatrixContentLength);
+//		System.out.println("Number of observed states = " + numberOfStates);
+//		System.out.println("Number of hidden states = " + numberOfHiddenStatesInMask);
+//		System.out.println("Total number of states = " + totalNumberOfStates);
+//		System.out.println("Size of matrix content = " + matrixContent.length);
+//		System.out.println("Size of new matrix content = " + newMatrixContentLength);
 		
 		int j = 0;
 		for (int i=0; i<matrixContent.length; ++i) {
@@ -262,6 +264,10 @@ public class MasqueradeBall extends CalculationNode {
 		return lambdaMuAssigner.getLambdas();
 	}
 	
+	public RealParameter getLambdasRealParameter() {
+		return lambdaMuAssigner.getLambdasRealParameter();
+	}
+	
 	public CladogeneticSpeciationRateStash getCladoStash() {
 		if (masqueradeBallDirty) {
 			statesMaskFlagInput.get().getValues(statesMaskPart);
@@ -281,6 +287,14 @@ public class MasqueradeBall extends CalculationNode {
 		return lambdaMuAssigner.getMus();
 	}
 	
+	public RealParameter getMusRealParameter() {
+		return lambdaMuAssigner.getMusRealParameter();
+	}
+	
+	public RealParameter getPisRealParameter() {
+		return lambdaMuAssigner.getPisRealParameter();
+	}
+	
 	public HiddenInstantaneousRateMatrix getHIRM() {
 		if (masqueradeBallDirty) {
 			statesMaskFlagInput.get().getValues(statesMaskPart);
@@ -288,6 +302,10 @@ public class MasqueradeBall extends CalculationNode {
 			applyMask(statesMaskPart, cidMaskPart);
 		}
 		return hirm;
+	}
+	
+	public RealParameter getQRealParameter() {
+		return hirm.getQRealParameter();
 	}
 	
 	public HiddenTraitStash getHTS() {

@@ -53,25 +53,9 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		if (numberOfHiddenStates > 0 && disallowDoubleTransitions) {
 			hiddenObsStateMapper = HiddenObservedStateMapperInput.get();
 		}
-
-		symmetrifyAcrossDiagonalStateIdx = SymmetrifyAcrossDiagonalInput.get(); // if -1, no symmetrifying done
-		// System.out.println("My symmetrifyAcrossDiagonalStateIdx is " + symmetrifyAcrossDiagonalStateIdx);
-		realParameterToQCell = new HashMap<>();
-
-		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
-
-		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfObsStates, numberOfHiddenStates, someMatrixContent);
-	}
-
-	public void populateIRM(boolean ignoreDiagonal, boolean disallowDoubleTransitions, int symmetrifyAcrossDiagonal, int nObsStates, int nHiddenStates, Double[] someMatrixContent) {
-		matrixContent = someMatrixContent;
-		numberOfHiddenStates = nHiddenStates;
-		numberOfStates = nObsStates + nHiddenStates; // this will also change as a result
-		q = new Double[numberOfStates][numberOfStates]; // and so we need to vary the size of q
-		int numberOfInputElements = FlatQmatrixInput.get().getDimension();
-		int diagEntry = 0;
-
+		
 		// Making sure the right number of transition parameters was provided
+		int numberOfInputElements = FlatQmatrixInput.get().getDimension();		
 		if (ignoreDiagonal) {
 			if (!disallowDoubleTransitions) {
 				String errorMsg = "Tried to fill transition matrix Q (ignoring diagonal elements, but not double transitions), but was given ";
@@ -91,6 +75,26 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 				}
 			}
 		}
+				
+		symmetrifyAcrossDiagonalStateIdx = SymmetrifyAcrossDiagonalInput.get(); // if -1, no symmetrifying done
+		// System.out.println("My symmetrifyAcrossDiagonalStateIdx is " + symmetrifyAcrossDiagonalStateIdx);
+		realParameterToQCell = new HashMap<>();
+
+		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
+
+		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfObsStates, numberOfHiddenStates, someMatrixContent);
+	}
+
+	public void populateIRM(boolean ignoreDiagonal, boolean disallowDoubleTransitions, int symmetrifyAcrossDiagonal, int nObsStates, int nHiddenStates, Double[] someMatrixContent) {
+		matrixContent = someMatrixContent;
+		numberOfHiddenStates = nHiddenStates;
+		numberOfStates = nObsStates + nHiddenStates; // this will also change as a result
+		q = new Double[numberOfStates][numberOfStates]; // and so we need to vary the size of q
+		int diagEntry = 0;
+
+//		System.out.println("Populating Q. Number of q values to be inserted = " + matrixContent.length);
+//		System.out.println("# OBS states = " + nObsStates + " # Hidden states = " + numberOfHiddenStates);
+//		System.out.println("Resized q to be " + numberOfStates + " by " + numberOfStates);
 
 		// grabbing cells with double transitions (populating doubleTransitionIRMCellsMap), which will be ignored when populating IRM and remain 0's
 		if (numberOfHiddenStates > 0 && disallowDoubleTransitions) {
@@ -119,6 +123,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 					}
 				} // ignore double transitions (make it zero)
 
+//				System.out.println("i=" + i + " j=" + j + " realParameterIdx=" + realParameterIdx + " taken from " + Arrays.toString(someMatrixContent));
 				setCell(i, j, someMatrixContent[realParameterIdx]); // after setting zeros (above), we finally set the matrix cells
 
 				/*
@@ -201,9 +206,7 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 
 	/* necessary for the intermediate step in rjMCMC */
 	public void symmetrifyAcrossDiagonal(int obsStateToSymmIdx) {
-
-		System.out.println("Symmetrifying observed/hidden state " + obsStateToSymmIdx);
-
+		// System.out.println("Symmetrifying observed/hidden state " + obsStateToSymmIdx);
 		for (int col = numberOfObsStates; col < numberOfStates; ++col) {
 			if (q[obsStateToSymmIdx][col] > 0.0) {
 				setCell(col, obsStateToSymmIdx, q[obsStateToSymmIdx][col]);
@@ -267,6 +270,10 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		return q;
 	}
 
+	public RealParameter getQRealParameter() {
+		return FlatQmatrixInput.get();
+	}
+	
 	// helper
 	public void printMatrix() {
 		for (int i = 0; i < numberOfStates; ++i) {

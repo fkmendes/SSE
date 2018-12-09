@@ -4,6 +4,7 @@
   <run id="mcmc" spec="MCMC" chainLength="1000000">
     <state id="state" storeEvery="1">
       <stateNode idref="StateMask"/>
+      <stateNode idref="CIDMask"/>
     </state>
 
     <distribution id="posterior" spec="util.CompoundDistribution">   
@@ -14,6 +15,11 @@
           <distr id="DummyPriorStateMask" spec="beast.math.distributions.Uniform" lower="0" upper="2">
           </distr>
         </distribution>
+        
+        <distribution id="DummyPrior2" spec="beast.math.distributions.Prior" x="@CIDMask">
+          <distr id="DummyPriorCIDMask" spec="beast.math.distributions.Uniform" lower="0" upper="1">
+          </distr>
+        </distribution>
       </distribution>
       <!-- END prior -->
       
@@ -21,16 +27,19 @@
       <distribution id="likelihood" spec="util.CompoundDistribution">
 	    <distribution id="MaskOperatorDist" spec="SSE.MaskOperatorDist">        
 	  	  <stateMask id="StateMask" dimension="3" spec="parameter.IntegerParameter">0 0 0</stateMask>
+	  	  <cidMask id="CIDMask" dimension="1" spec="parameter.IntegerParameter">0</cidMask>
         </distribution>
       </distribution>
       <!-- END likelihood -->
 
     </distribution> <!-- END Posterior -->
 
-    <operator id="MaskSlider" spec="SSE.StateMaskOperator" mask="@StateMask" weight="1.0"/>
+    <operator id="StateMaskOperator" spec="SSE.StateMaskOperator" mask="@StateMask" weight="1.0"/>
+    <operator id="CIDMaskOperator" spec="SSE.CIDMaskOperator" mask="@CIDMask" weight="1.0"/>
 
     <logger id="tracelog" fileName="mask_operator.log" logEvery="1" model="@posterior" sanitiseHeaders="true" sort="smart">
         <log idref="StateMask"/>
+        <log idref="CIDMask"/>
     </logger>
 
   </run>

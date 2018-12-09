@@ -85,11 +85,11 @@ public class RJHiddenStateDependentSpeciationExtinctionProcess extends HiddenSta
 		nodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2]; // tips and internal nodes have lks after the ODE went down their ancestral branches (root is special case, where it's just after merge, so the same as above) 
 		storedNodePartialScaledLksPostOde = new double[tree.getNodeCount()][numStates*2];  
 		
-		System.out.println("Pis in rjhdsep: " + Arrays.toString(pi));
-		System.out.println("Lambdas in rjhdsep: " + Arrays.toString(lambda));
-		System.out.println("Mus in rjhdsep: " + Arrays.toString(mu));
-		System.out.println("Q in rjhdsep");
-		q.printMatrix();
+//		System.out.println("Pis in rjhdsep: " + Arrays.toString(pi));
+//		System.out.println("Lambdas in rjhdsep: " + Arrays.toString(lambda));
+//		System.out.println("Mus in rjhdsep: " + Arrays.toString(mu));
+//		System.out.println("Q in rjhdsep");
+//		q.printMatrix();
 		
 		// when a character state parameter changes, tree is filthy, we can use threads
 		// otherwise, caching allows us to only recompute part of the tree likelihood, and thread overhead not worth it
@@ -106,5 +106,22 @@ public class RJHiddenStateDependentSpeciationExtinctionProcess extends HiddenSta
 	// used for testing
 	public void setMask(Integer[] aStatesMaskPart, Integer[] aCIDMaskPart) {
 		masqueradeBall.setMask(aStatesMaskPart, aCIDMaskPart);
+	}
+	
+	@Override
+	protected boolean requiresRecalculation() {
+        hasDirt = Tree.IS_CLEAN;
+        
+        if ( (masqueradeBallInput.get().isDirtyCalculation()) ||
+        	 (masqueradeBall.getQRealParameter() != null && masqueradeBall.getQRealParameter().somethingIsDirty()) ||
+        	 (masqueradeBall.getLambdasRealParameter() != null && masqueradeBall.getLambdasRealParameter().somethingIsDirty()) ||
+        	 (masqueradeBall.getMusRealParameter() != null && masqueradeBall.getMusRealParameter().somethingIsDirty()) ||
+        	 (masqueradeBall.getPisRealParameter().somethingIsDirty())
+           ) 
+		{
+			hasDirt = Tree.IS_FILTHY;
+			return true;
+		}
+        return treeInput.get().somethingIsDirty();
 	}
 }

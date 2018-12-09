@@ -36,17 +36,16 @@ public class HiddenObservedStateMapper extends BEASTObject {
 		hidden2ObsMap = HashMultimap.create();
 		
 		for (int i=0; i<hiddenStateAssignments.length; i++) {
-//			obs2HiddenMap.put(i, Integer.parseInt(hiddenStateStrings[i]));
 			obs2HiddenMap.put(i, hiddenStateAssignments[i]);
 		}
 		
-		printObs2HiddenMap(); // for debugging
+		// printObs2HiddenMap(); // for debugging
 		
 		for (Entry<Integer, Integer> entry: obs2HiddenMap.entrySet()) {
 			hidden2ObsMap.put(entry.getValue(), entry.getKey());
 		}
 		
-		printHidden2ObsMap(); // for debugging
+		// printHidden2ObsMap(); // for debugging
 
 	}
 	
@@ -62,7 +61,7 @@ public class HiddenObservedStateMapper extends BEASTObject {
 	// setters
 	public void setHiddenStateStrings(int[] aHiddenStateArray) {
 		hiddenStateAssignments = aHiddenStateArray;
-		System.out.println("Updated hiddenStateAssignments to " + Arrays.toString(hiddenStateAssignments));
+		// System.out.println("Updated hiddenStateAssignments to " + Arrays.toString(hiddenStateAssignments));
 		makeMaps();
 	}
 	
@@ -71,7 +70,7 @@ public class HiddenObservedStateMapper extends BEASTObject {
 		for (Integer obs: obs2HiddenMap.keySet()) {
 			String obsString = Integer.toString(obs);
 			String hiddenString = obs2HiddenMap.get(obs).toString();
-			System.out.println("Obs=" + obsString + " hidden=" + hiddenString);
+			// System.out.println("Obs=" + obsString + " hidden=" + hiddenString);
 		}
 	}
 	
