@@ -1,5 +1,6 @@
 package SSE;
 
+import java.util.Arrays;
 import java.util.regex.Pattern;
 import beast.core.CalculationNode;
 import beast.core.Input;
@@ -34,20 +35,52 @@ public class LambdaMuAssigner extends CalculationNode {
 	private boolean assignerDirty = true;
 	Pattern comma;
 		
-	// MCMC
-//	private int storedTotalNumberOfStates;
-//	private int storedNumberOfDistinctLambdas;
-//	private int storedNumberOfDistinctMus;
-//	private Double[] storedLambdasContent;
-//	private Double[] storedMusContent;
-//	private int[] storedLambdaAssignments;
-//	private int[] storedMuAssignments;
+	// mcmc
+	private int storedTotalNumberOfStates;
+	private int storedNumberOfDistinctLambdas;
+	private int storedNumberOfDistinctMus;
+	private Double[] storedPi;
+	private Double[] storedLambda;
+	private Double[] storedMu;
+	private Double[] storedLambdasContent;
+	private Double[] storedMusContent;
+	private int[] storedLambdaAssignments;
+	private int[] storedMuAssignments;
 	
 	@Override
 	public void initAndValidate() {
 		comma = Pattern.compile(",");
 
-		populateAssigner();
+		/* new stuff */
+		if (cladoStashInput.get() == null) {
+			lambdaToStatesString = lambdasToStatesAssignerStringInput.get();
+			lambdaAssignments = comma.splitAsStream(lambdaToStatesString).mapToInt(Integer::parseInt).toArray(); // comma-separated string comes from xml (done only once)
+		}
+		
+		muToStatesString = musToStatesAssignerStringInput.get();
+		muAssignments = comma.splitAsStream(muToStatesString).mapToInt(Integer::parseInt).toArray();
+		
+		totalNumberOfStates = totalNstatesInput.get();
+		
+		// updating lambdas (no incorporate cladogenesis support for now)
+		if (cladoStashInput.get() == null) {
+			numberOfDistinctLambdas = nDistinctLambdasInput.get();
+			lambdasContent = lambdaInput.get().getValues();
+		}
+		
+		numberOfDistinctMus = nDistinctMusInput.get();
+		musContent = muInput.get().getValues();
+		
+		// mcmc
+		storedLambdasContent = new Double[lambdasContent.length];
+		storedMusContent = new Double[musContent.length];
+		storedLambdaAssignments = new int[lambdaAssignments.length];
+		storedMuAssignments = new int[muAssignments.length];
+		
+		populateAssigner(totalNumberOfStates, numberOfDistinctLambdas, numberOfDistinctMus, lambdasContent, musContent, lambdaAssignments, muAssignments);
+		/* end new stuff */
+		
+		// populateAssigner(); // original
 	}
 	
 	/*
@@ -57,12 +90,10 @@ public class LambdaMuAssigner extends CalculationNode {
 		if (cladoStashInput.get() == null) {
 			lambdaToStatesString = lambdasToStatesAssignerStringInput.get();
 			lambdaAssignments = comma.splitAsStream(lambdaToStatesString).mapToInt(Integer::parseInt).toArray(); // comma-separated string comes from xml (done only once)
-			// storedLambdaAssignments = new int[lambdaAssignments.length]; // for mcmc
 		}
 		
 		muToStatesString = musToStatesAssignerStringInput.get();
 		muAssignments = comma.splitAsStream(muToStatesString).mapToInt(Integer::parseInt).toArray();
-		// storedMuAssignments = new int[muAssignments.length]; // for mcmc
 		
 		totalNumberOfStates = totalNstatesInput.get();
 		
@@ -75,7 +106,6 @@ public class LambdaMuAssigner extends CalculationNode {
 		if (cladoStashInput.get() == null) {
 			numberOfDistinctLambdas = nDistinctLambdasInput.get();
 			lambdasContent = lambdaInput.get().getValues();
-			// storedLambdasContent = new Double[lambdasContent.length]; // for mcmc
 			lambda = new Double[totalNumberOfStates];
 			updateLambdasNoClado(lambdasContent);
 		}
@@ -84,7 +114,6 @@ public class LambdaMuAssigner extends CalculationNode {
 		mu = new Double[totalNumberOfStates];
 		numberOfDistinctMus = nDistinctMusInput.get();
 		musContent = muInput.get().getValues();
-		// storedMusContent = new Double[musContent.length]; // for mcmc
 		updateMus(musContent);
 		
 		assignerDirty = false; // we got the new values, not dirty anymore
@@ -94,9 +123,6 @@ public class LambdaMuAssigner extends CalculationNode {
 	 * called by masquerade ball when applying mask (and updating assigner)
 	 */
 	public void populateAssigner(int totalNStates, int nDistinctLambdas, int nDistinctMus, Double[] aLambdaContent, Double[] aMuContent, int[] aLambdaAssignment, int[] aMuAssignment) {
-		// storedLambdasContent = new Double[aLambdaContent.length]; // for mcmc
-		// storedMusContent = new Double[aMuContent.length]; // for mcmc
-		
 		totalNumberOfStates = totalNStates;
 		numberOfDistinctLambdas = nDistinctLambdas;
 		numberOfDistinctMus = nDistinctMus;
@@ -228,41 +254,28 @@ public class LambdaMuAssigner extends CalculationNode {
 		return super.requiresRecalculation();
 	}
 
-//	@Override
-//	protected void store() {
-//		System.arraycopy(lambdasContent, 0, storedLambdasContent, 0, lambdasContent.length);
-//		System.arraycopy(musContent, 0, storedMusContent, 0, musContent.length);
-//		storedTotalNumberOfStates = totalNumberOfStates;
-//		storedNumberOfDistinctLambdas = numberOfDistinctLambdas;
-//		storedNumberOfDistinctMus = numberOfDistinctMus;
-//		super.store();
-//	}
-	
 	@Override
-	protected void restore() {
-		populateAssigner();
-		super.restore();
+	protected void store() {
+		System.arraycopy(lambdasContent, 0, storedLambdasContent, 0, lambdasContent.length);
+		System.arraycopy(musContent, 0, storedMusContent, 0, musContent.length);
+		System.arraycopy(lambdaAssignments, 0, storedLambdaAssignments, 0, lambdaAssignments.length);
+		System.arraycopy(muAssignments, 0, storedMuAssignments, 0, muAssignments.length);
+		storedTotalNumberOfStates = totalNumberOfStates;
+		storedNumberOfDistinctLambdas = numberOfDistinctLambdas;
+		storedNumberOfDistinctMus = numberOfDistinctMus;
+		super.store();
 	}
 	
+	// original, when working (no store necessary when using this restore)
 //	@Override
 //	protected void restore() {
-//		int[] tmp = storedLambdaAssignments;
-//		storedLambdaAssignments = lambdaAssignments;
-//    	lambdaAssignments = tmp;
-//    	
-//    	tmp = storedMuAssignments;
-//		storedMuAssignments = muAssignments;
-//    	muAssignments = tmp;
-//    	
-//    	Double[] tmp2 = storedLambdasContent;
-//    	storedLambdasContent = lambdasContent;
-//    	lambdasContent = tmp2;
-//    	
-//    	tmp2 = storedMusContent;
-//    	storedMusContent = musContent;
-//    	musContent = tmp2;
-//    	
-//		populateAssigner(storedTotalNumberOfStates, storedNumberOfDistinctLambdas, storedNumberOfDistinctMus, lambdasContent, musContent, lambdaAssignments, muAssignments);
+//		populateAssigner();
 //		super.restore();
 //	}
+	
+//	@Override
+	protected void restore() {    	
+		populateAssigner(storedTotalNumberOfStates, storedNumberOfDistinctLambdas, storedNumberOfDistinctMus, storedLambdasContent, storedMusContent, storedLambdaAssignments, storedMuAssignments);
+		super.restore();
+	}
 }

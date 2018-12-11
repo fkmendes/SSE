@@ -5,7 +5,7 @@ import java.util.Map.Entry;
 
 import beast.core.Input;
 
-public class HiddenTraitStash extends TraitStash {
+public class HiddenTraitStash extends TraitStash implements Cloneable {
 
 	final public Input<Integer> nHiddenStatesInput = new Input<>("numberOfHiddenStates", "How many hidden states or geographical ranges can affect speciation and extinction.");
 	final public Input<HiddenObservedStateMapper> HiddenObservedStateMapperInput = new Input<>("hiddenObsStateMapper", "Maps hidden states onto observed states and vice-versa.");

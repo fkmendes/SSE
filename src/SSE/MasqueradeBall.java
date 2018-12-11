@@ -1,5 +1,6 @@
 package SSE;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -45,16 +46,30 @@ public class MasqueradeBall extends CalculationNode {
 	private Double[] muContent;
 	private LambdaMuAssigner lambdaMuAssigner;
 	
+	// mcmc
+	private Integer[] storedStatesMaskPart;
+	private Integer[] storedCidMaskPart;
+	int[] storedHiddenToObsAssignment;
+	int[] storedObsStatesToSymmetrify;
+	int storedNumberOfStates;
+	
 	@Override
 	public void initAndValidate() {
+		statesMaskPart = statesMaskFlagInput.get().getValues();
+		cidMaskPart = cidMaskFlagInput.get().getValues();
 		hiddenTraitStash = hiddenTraitStashInput.get(); // initialized once, then updated every time apply mask is called
 		hirm = hirmInput.get(); // this will be done again every time apply mask is called
 		numberOfStates = hirm.getNumObsStates(); // numberOfStates never changes, so done only once (same below)
+		lambdaMuAssigner = lambdaMuAssignerInput.get();
 		hiddenToObsAssignment = new int[numberOfStates];
 		obsStatesToSymmetrify = new int[numberOfStates];
-		statesMaskPart = statesMaskFlagInput.get().getValues();
-		cidMaskPart = cidMaskFlagInput.get().getValues();
 		
+		// mcmc
+		storedStatesMaskPart = new Integer[statesMaskPart.length];
+		storedCidMaskPart = new Integer[cidMaskPart.length];
+		storedHiddenToObsAssignment = new int[hiddenToObsAssignment.length];
+		storedObsStatesToSymmetrify = new int[obsStatesToSymmetrify.length];
+				
 		applyMask(statesMaskPart, cidMaskPart);
 	}
 	
@@ -62,7 +77,7 @@ public class MasqueradeBall extends CalculationNode {
 		
 		// mask
 		mask = ArrayUtils.addAll(aStatesMaskPart, aCIDFlag);
-//		System.out.println("My mask is = " + Arrays.toString(mask));
+		// System.out.println("My mask is = " + Arrays.toString(mask));
 				
 		/*
 		 * preparing inputs to set associate hidden and observed states;
@@ -121,7 +136,7 @@ public class MasqueradeBall extends CalculationNode {
 		// hirm.printMatrix();
 		
 		// lambda and mu stuff
-		lambdaMuAssigner = lambdaMuAssignerInput.get();
+		// lambdaMuAssigner = lambdaMuAssignerInput.get();
 		lambdaAssignmentArray = new int[totalNumberOfStates];
 		muAssignmentArray = new int[totalNumberOfStates];
 		updateLambdaMuAssigner();
@@ -339,9 +354,40 @@ public class MasqueradeBall extends CalculationNode {
 		return super.requiresRecalculation();
 	}
 
+	@Override
+	protected void store() {
+		// below all should be deep copies!
+		System.arraycopy(statesMaskPart, 0, storedStatesMaskPart, 0, statesMaskPart.length);
+		System.arraycopy(cidMaskPart, 0, storedCidMaskPart, 0, cidMaskPart.length);	
+		System.arraycopy(hiddenToObsAssignment, 0, storedHiddenToObsAssignment, 0, hiddenToObsAssignment.length);
+		System.arraycopy(obsStatesToSymmetrify, 0, storedObsStatesToSymmetrify, 0, obsStatesToSymmetrify.length);
+		storedNumberOfStates = numberOfStates;
+	}
+	
+	@Override
 	protected void restore() {
-		statesMaskFlagInput.get().getValues(statesMaskPart);
-		cidMaskPart = cidMaskFlagInput.get().getValues();
+		int[] tmp = storedHiddenToObsAssignment;
+		storedHiddenToObsAssignment = hiddenToObsAssignment;
+		hiddenToObsAssignment = tmp;
+		
+		tmp = storedObsStatesToSymmetrify;
+		storedObsStatesToSymmetrify = obsStatesToSymmetrify;
+		obsStatesToSymmetrify = tmp;
+		
+		Integer[] tmp2 = storedStatesMaskPart;
+		storedStatesMaskPart = statesMaskPart;
+		statesMaskPart = tmp2;
+		
+		tmp2 = storedCidMaskPart;
+		storedCidMaskPart = cidMaskPart;
+		cidMaskPart = tmp2;
+		
+		numberOfStates = storedNumberOfStates; // obs states
+		
+//		System.out.println("Restoring statesMaskPart: " + Arrays.toString(statesMaskPart));
+//		System.out.println("Restoring cidMaskPart: " + Arrays.toString(cidMaskPart));
+//		System.out.println("Restoring numberOfStates: " + numberOfStates);
+
 		applyMask(statesMaskPart, cidMaskPart);
 		super.restore();
 	}

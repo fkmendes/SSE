@@ -39,6 +39,15 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 	private Double[][] q;
 	private Map<Integer, int[]> realParameterToQCell;
 
+	// mcmc
+	int storedNHiddenStates;
+	int storedSymmetrifyAcrossDiagonal;
+	int storedNObsStates;
+	private Map<Integer, List<Integer>> storedDoubleTransitionIRMCellsMap;
+	Double[] storedMatrixContent;
+	private Double[][] storedQ;
+	private Map<Integer, int[]> storedRealParameterToQCell;
+	
 	@Override
 	public void initAndValidate() {
 		numberOfObsStates = NstatesInput.get();
@@ -81,7 +90,13 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		realParameterToQCell = new HashMap<>();
 
 		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
-
+		
+		// mcmc
+		storedMatrixContent = new Double[someMatrixContent.length];
+		storedQ = new Double[numberOfStates][numberOfStates];
+		storedDoubleTransitionIRMCellsMap = new HashMap<Integer, List<Integer>>();
+		storedRealParameterToQCell = new HashMap<Integer, int[]>();
+		
 		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfObsStates, numberOfHiddenStates, someMatrixContent);
 	}
 
@@ -147,6 +162,9 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 			symmetrifyAcrossDiagonal(symmetrifyAcrossDiagonal);
 		}
 
+		// mcmc
+		// storedMatrixContent = new Double[matrixContent.length];
+		
 		irmDirty = false; // after re-population of IRM, things are clean
 	}
 
@@ -306,9 +324,25 @@ public class HiddenInstantaneousRateMatrix extends CalculationNode {
 		return super.requiresRecalculation();
 	}
 
-	protected void restore() {
-		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
-		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfObsStates, numberOfHiddenStates, someMatrixContent);
+	@Override
+	protected void store() {
+		storedSymmetrifyAcrossDiagonal = symmetrifyAcrossDiagonalStateIdx;
+		storedNObsStates = numberOfObsStates;
+		storedNHiddenStates = numberOfHiddenStates;
+		System.arraycopy(matrixContent, 0, storedMatrixContent, 0, matrixContent.length);
+		super.store();
+	}
+	
+	@Override
+	protected void restore() {	
+		populateIRM(ignoreDiagonal, disallowDoubleTransitions, storedSymmetrifyAcrossDiagonal, storedNObsStates, storedNHiddenStates, storedMatrixContent);
 		super.restore();
 	}
+
+	// original, working (no store needed with this restore)
+//	protected void restore() {
+//		Double[] someMatrixContent = FlatQmatrixInput.get().getValues();
+//		populateIRM(ignoreDiagonal, disallowDoubleTransitions, symmetrifyAcrossDiagonalStateIdx, numberOfObsStates, numberOfHiddenStates, someMatrixContent);
+//		super.restore();
+//	}
 }
