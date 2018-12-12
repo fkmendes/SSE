@@ -2,9 +2,9 @@ package drivers;
 
 import java.util.Arrays;
 
-import SSE.StateMaskOperator;
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
+import operators.StateMaskOperator;
 
 public class MaskOperatorTestDriver {
 

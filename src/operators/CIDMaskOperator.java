@@ -1,4 +1,4 @@
-package SSE;
+package operators;
 
 import beast.core.Input;
 import beast.core.Operator;

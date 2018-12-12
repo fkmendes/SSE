@@ -216,3 +216,87 @@ pp <- hisse(phy, sim.dat, f=c(1,1), hidden.states=TRUE, turnover.anc=turnover.an
 ## (1A) 0.4509993         NA    0 0.1355034
 ## (0B) 0.0000000 0.00000000   NA 0.0000000
 ## (1B) 0.0000000 0.01983649    0        NA
+
+# ----- BiSSE_fixed_tree_SCMfigure ----- #
+## This is to make a figure examplifying SCM for the paper
+pars <- c(.15, .3, .1, .1, .5, .5) # lambdas, mus, qs
+set.seed(12345)
+phy <- tree.bisse(pars, max.taxa=60, include.extinct=FALSE, x0=NA)
+lik <- make.bisse(tree=phy, states=phy$tip.state, sampling.f=sampling.f, strict=FALSE)
+anc.states <- asr.marginal(lik, pars)
+
+## pal <- brewer.pal(8, "Set1")
+## pal <- colorRampPalette(pal)(8)
+## plot(phy, cex=.5, label.offset=0.2)
+## nodelabels(pie=t(anc.states), cex=.5, piecol=c(pal[2],pal[6]))
+
+write.tree(phy)
+
+## "((sp29:18.53229859,(((sp53:3.131863819,sp60:3.131863819)nd38:10.94119267,(((((sp62:2.736899551,(sp73:1.874225183,(sp81:1.234108569,((sp91:0.808816581,(sp99:0.406087657,sp100:0.406087657)nd108:0.402728924)nd105:0.1366564909,sp86:0.9454730719)nd102:0.2886354976)nd92:0.6401166138)nd88:0.8626743675)nd83:0.1506048431,sp58:2.887504394)nd76:0.8497262898,(sp48:3.174400175,sp57:3.174400175)nd77:0.5628305084)nd69:2.831344081,(sp79:1.393112347,(sp82:1.178926953,(sp89:0.8338665622,sp90:0.8338665622)nd101:0.3450603904)nd96:0.2141853946)nd62:5.175462417)nd48:7.19199465,(sp41:8.826594412,(sp69:1.975074761,(sp70:1.956061282,(sp92:0.8075128508,sp93:0.8075128508)nd91:1.148548431)nd90:0.01901347888)nd57:6.851519651)nd35:4.933975002)nd33:0.3124870762)nd30:0.5213106024,(sp34:7.87385972,((sp102:0.3740821844,sp103:0.3740821844)nd66:5.227817761,(sp49:3.150298263,sp50:3.150298263)nd67:2.451601682)nd51:2.271959775)nd31:6.720507373)nd28:3.937931496)nd22:5.204457113,(((sp35:8.073085941,sp33:8.073085941)nd42:1.255836934,(((((sp94:0.787559482,(sp95:0.5938730482,sp96:0.5938730482)nd109:0.1936864338)nd107:0.06896461609,sp88:0.8565240981)nd93:1.952544229,sp59:2.809068327)nd78:0.4897100518,sp47:3.298778379)nd59:6.009321169,((sp68:2.163515355,(sp75:1.748864555,((sp97:0.4288077436,sp98:0.4288077436)nd103:0.5829152753,(sp106:0.2962868061,sp107:0.2962868061)nd104:0.7154362128)nd94:0.7371415358)nd89:0.4146508)nd65:5.622556397,(sp71:2.934221879,(sp104:0.2997879176,sp105:0.2997879176)nd82:2.634433962)nd53:4.851849872)nd45:1.522027797)nd43:0.02082332726)nd40:3.656198034,(((sp77:1.536978969,sp78:1.536978969)nd73:5.656794732,(((sp63:2.682789569,(sp76:1.740360696,((sp108:0.09727986203,sp109:0.09727986203)nd97:1.171891386,(((sp110:0.07842885097,sp111:0.07842885097)nd110:0.3134123023,sp101:0.3918411532)nd106:0.5508915421,sp87:0.9427326953)nd98:0.3264385523)nd95:0.4711894488)nd86:0.9424288723)nd74:1.091864496,(sp64:2.636433526,sp65:2.636433526)nd75:1.138220539)nd70:1.048060761,((sp84:1.002228203,sp85:1.002228203)nd99:0.2405533436,sp80:1.242781547)nd71:3.579933279)nd56:2.371058875)nd49:1.352103408,sp32:8.545877109)nd41:4.4392438)nd29:10.75163479)nd12:0.0;"
+
+cat(paste0("<taxon id=\"", phy$tip.label, "\" spec=\"Taxon\"/>"), sep="\n")
+
+## <taxon id="sp29" spec="Taxon"/>
+## <taxon id="sp32" spec="Taxon"/>
+## <taxon id="sp33" spec="Taxon"/>
+## <taxon id="sp34" spec="Taxon"/>
+## <taxon id="sp35" spec="Taxon"/>
+## <taxon id="sp41" spec="Taxon"/>
+## <taxon id="sp47" spec="Taxon"/>
+## <taxon id="sp48" spec="Taxon"/>
+## <taxon id="sp49" spec="Taxon"/>
+## <taxon id="sp50" spec="Taxon"/>
+## <taxon id="sp53" spec="Taxon"/>
+## <taxon id="sp57" spec="Taxon"/>
+## <taxon id="sp58" spec="Taxon"/>
+## <taxon id="sp59" spec="Taxon"/>
+## <taxon id="sp60" spec="Taxon"/>
+## <taxon id="sp62" spec="Taxon"/>
+## <taxon id="sp63" spec="Taxon"/>
+## <taxon id="sp64" spec="Taxon"/>
+## <taxon id="sp65" spec="Taxon"/>
+## <taxon id="sp68" spec="Taxon"/>
+## <taxon id="sp69" spec="Taxon"/>
+## <taxon id="sp70" spec="Taxon"/>
+## <taxon id="sp71" spec="Taxon"/>
+## <taxon id="sp73" spec="Taxon"/>
+## <taxon id="sp75" spec="Taxon"/>
+## <taxon id="sp76" spec="Taxon"/>
+## <taxon id="sp77" spec="Taxon"/>
+## <taxon id="sp78" spec="Taxon"/>
+## <taxon id="sp79" spec="Taxon"/>
+## <taxon id="sp80" spec="Taxon"/>
+## <taxon id="sp81" spec="Taxon"/>
+## <taxon id="sp82" spec="Taxon"/>
+## <taxon id="sp84" spec="Taxon"/>
+## <taxon id="sp85" spec="Taxon"/>
+## <taxon id="sp86" spec="Taxon"/>
+## <taxon id="sp87" spec="Taxon"/>
+## <taxon id="sp88" spec="Taxon"/>
+## <taxon id="sp89" spec="Taxon"/>
+## <taxon id="sp90" spec="Taxon"/>
+## <taxon id="sp91" spec="Taxon"/>
+## <taxon id="sp92" spec="Taxon"/>
+## <taxon id="sp93" spec="Taxon"/>
+## <taxon id="sp94" spec="Taxon"/>
+## <taxon id="sp95" spec="Taxon"/>
+## <taxon id="sp96" spec="Taxon"/>
+## <taxon id="sp97" spec="Taxon"/>
+## <taxon id="sp98" spec="Taxon"/>
+## <taxon id="sp99" spec="Taxon"/>
+## <taxon id="sp100" spec="Taxon"/>
+## <taxon id="sp101" spec="Taxon"/>
+## <taxon id="sp102" spec="Taxon"/>
+## <taxon id="sp103" spec="Taxon"/>
+## <taxon id="sp104" spec="Taxon"/>
+## <taxon id="sp105" spec="Taxon"/>
+## <taxon id="sp106" spec="Taxon"/>
+## <taxon id="sp107" spec="Taxon"/>
+## <taxon id="sp108" spec="Taxon"/>
+## <taxon id="sp109" spec="Taxon"/>
+## <taxon id="sp110" spec="Taxon"/>
+## <taxon id="sp111" spec="Taxon"/>
+
+paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
+
+## "sp29=1,sp32=2,sp33=1,sp34=2,sp35=2,sp41=1,sp47=2,sp48=2,sp49=2,sp50=1,sp53=1,sp57=2,sp58=2,sp59=1,sp60=2,sp62=2,sp63=1,sp64=2,sp65=1,sp68=1,sp69=1,sp70=2,sp71=1,sp73=2,sp75=2,sp76=1,sp77=2,sp78=1,sp79=2,sp80=2,sp81=1,sp82=1,sp84=2,sp85=2,sp86=1,sp87=2,sp88=2,sp89=2,sp90=2,sp91=1,sp92=2,sp93=2,sp94=2,sp95=2,sp96=2,sp97=2,sp98=2,sp99=1,sp100=1,sp101=2,sp102=2,sp103=2,sp104=2,sp105=2,sp106=1,sp107=1,sp108=2,sp109=2,sp110=2,sp111=2"

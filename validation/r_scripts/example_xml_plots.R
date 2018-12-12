@@ -214,3 +214,41 @@ grid.arrange(l0.plot, l1.plot, l2.plot,
              m0.plot, m1.plot, m2.plot,
              q01.plot, q10.plot, q12.plot, q21.plot)
 dev.off()
+
+# ----- Plotting BiSSE_fixed_tree_SDSEP_SCM ----- #
+log.df <- read.table("../BiSSE_fixed_tree_SDSEP_SCM_parsed.txt", header=FALSE, fill=TRUE)
+names(log.df) <- c("ndname", "s0", "s1")
+log.df$"s1"[is.na(log.df$"s1")] <- 0
+rs <- rowSums(log.df[,c(2,3)])
+log.df$"p0" <- log.df$"s0"/rs
+log.df$"p1" <- log.df$"s1"/rs
+log.df$"ndname" <- as.character(log.df$"ndname")
+log.df$"p0" <- as.numeric(as.character(log.df$"p0"))
+log.df$"p1" <- as.numeric(as.character(log.df$"p1")
+scm.df <- unname(as.matrix(log.df[order(match(log.df$ndname, phy$node.label)),c("p0", "p1")]))
+
+# (below) if we want to compare it to diversitree... we see results are very close
+# note that the difference is due to the fact that l0 and l1 share a prior in SSE that has
+# its mean=.2, that is, in between the true value of l0(=.15) and l1(=.3),
+# while diversitree's SCM in this case uses the true values
+pars <- c(.15, .3, .1, .1, .1, .1) # lambdas, mus, qs
+set.seed(12345)
+phy <- tree.bisse(pars, max.taxa=60, include.extinct=FALSE, x0=NA)
+## node.truth.df <- as.data.frame(cbind(phy$node.label, phy$node.state))
+## names(node.truth.df) <- c("ndname", "truestate")
+## sampling.f <- c(1,1)
+## lik <- make.bisse(tree=phy, states=phy$tip.state, sampling.f=sampling.f, strict=FALSE)
+## anc.states <- asr.marginal(lik, pars)
+## anc.states <- as.data.frame(t(rbind(phy$node.label, anc.states)))
+## names(anc.states) <- c("ndname", "p0", "p1")
+## anc.states$"ndname" <- as.character(anc.states$"ndname")
+## anc.states$"p0" <- as.numeric(as.character(anc.states$"p0"))
+## anc.states$"p1" <- as.numeric(as.character(anc.states$"p1"))
+## merged.df <- merge(log.df, anc.states, by="ndname")
+## merged.df <- merge(merged.df, node.truth.df, by="ndname")
+## plot(p1.y~p1.x, data=merged.df)
+
+cols <- c("red", "white"); names(cols)<-c(0,1)
+plot(phy, cex=.5, label.offset=0.2)
+nodelabels(pie=scm.df, cex=.4, piecol=cols)
+tiplabels(phy$tip.state, frame="none", adj=c(-3))
