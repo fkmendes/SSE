@@ -52,6 +52,7 @@ public class MasqueradeBall extends CalculationNode {
 	int[] storedHiddenToObsAssignment;
 	int[] storedObsStatesToSymmetrify;
 	int storedNumberOfStates;
+	// private Set<Integer> storedHiddenStateIdxToIgnore;
 	
 	@Override
 	public void initAndValidate() {
@@ -69,6 +70,7 @@ public class MasqueradeBall extends CalculationNode {
 		storedCidMaskPart = new Integer[cidMaskPart.length];
 		storedHiddenToObsAssignment = new int[hiddenToObsAssignment.length];
 		storedObsStatesToSymmetrify = new int[obsStatesToSymmetrify.length];
+		// storedHiddenStateIdxToIgnore = new HashSet<Integer>();
 				
 		applyMask(statesMaskPart, cidMaskPart);
 	}
@@ -235,7 +237,7 @@ public class MasqueradeBall extends CalculationNode {
 			nDistinctMus = nDistinctLambdas;
 		}
 
-		 lambdaMuAssigner.populateAssigner(totalNumberOfStates, nDistinctLambdas, nDistinctMus, newLambdaContent, newMuContent, lambdaAssignmentArray, muAssignmentArray);
+		lambdaMuAssigner.populateAssigner(totalNumberOfStates, nDistinctLambdas, nDistinctMus, newLambdaContent, newMuContent, lambdaAssignmentArray, muAssignmentArray);
 	}
 	
 	// getters
@@ -362,6 +364,7 @@ public class MasqueradeBall extends CalculationNode {
 		System.arraycopy(hiddenToObsAssignment, 0, storedHiddenToObsAssignment, 0, hiddenToObsAssignment.length);
 		System.arraycopy(obsStatesToSymmetrify, 0, storedObsStatesToSymmetrify, 0, obsStatesToSymmetrify.length);
 		storedNumberOfStates = numberOfStates;
+//		storedHiddenStateIdxToIgnore = hiddenStateIdxToIgnore;
 	}
 	
 	@Override
@@ -383,6 +386,10 @@ public class MasqueradeBall extends CalculationNode {
 		cidMaskPart = tmp2;
 		
 		numberOfStates = storedNumberOfStates; // obs states
+		
+//		Set<Integer> tmpHashSet = new HashSet<Integer>(storedHiddenStateIdxToIgnore);
+//		storedHiddenStateIdxToIgnore = hiddenStateIdxToIgnore;
+//		hiddenStateIdxToIgnore = tmpHashSet;
 		
 //		System.out.println("Restoring statesMaskPart: " + Arrays.toString(statesMaskPart));
 //		System.out.println("Restoring cidMaskPart: " + Arrays.toString(cidMaskPart));

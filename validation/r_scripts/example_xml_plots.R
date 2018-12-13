@@ -224,7 +224,7 @@ log.df$"p0" <- log.df$"s0"/rs
 log.df$"p1" <- log.df$"s1"/rs
 log.df$"ndname" <- as.character(log.df$"ndname")
 log.df$"p0" <- as.numeric(as.character(log.df$"p0"))
-log.df$"p1" <- as.numeric(as.character(log.df$"p1")
+log.df$"p1" <- as.numeric(as.character(log.df$"p1"))
 scm.df <- unname(as.matrix(log.df[order(match(log.df$ndname, phy$node.label)),c("p0", "p1")]))
 
 # (below) if we want to compare it to diversitree... we see results are very close
@@ -248,7 +248,30 @@ phy <- tree.bisse(pars, max.taxa=60, include.extinct=FALSE, x0=NA)
 ## merged.df <- merge(merged.df, node.truth.df, by="ndname")
 ## plot(p1.y~p1.x, data=merged.df)
 
-cols <- c("red", "white"); names(cols)<-c(0,1)
+pal <- brewer.pal(8, "Set1")
+pal <- colorRampPalette(pal)(8)
 plot(phy, cex=.5, label.offset=0.2)
-nodelabels(pie=scm.df, cex=.4, piecol=cols)
+## nodelabels(pie=t(anc.states), cex=.5, piecol=c(pal[2],pal[6])) # from example_xml_input
+nodelabels(pie=scm.df, cex=.5, piecol=c(pal[2],pal[6]))
 tiplabels(phy$tip.state, frame="none", adj=c(-3))
+
+##
+tmp <- read.table("../tmp.log")
+names(tmp) <- c("Sample","posterior","likelihood","prior","Lambda1","Lambda2","Lambda3","Lambda4","Mu1","Mu2","Mu3","Mu4","FlatQMatrix1","FlatQMatrix2","FlatQMatrix3","FlatQMatrix4","FlatQMatrix5","FlatQMatrix6","FlatQMatrix7","FlatQMatrix8","StateMask1","StateMask2","CIDMask")
+
+mean(tmp[,"Lambda2"])
+
+mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==0,"Lambda1"])
+mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==0,"Lambda2"])
+
+mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==2,"Lambda1"])
+mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==2,"Lambda2"])
+mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==2,"Lambda3"])
+
+mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==0,"Lambda1"])
+mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==0,"Lambda2"])
+mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==0,"Lambda3"])
+
+mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==2,"Lambda1"])
+mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==2,"Lambda2"])
+mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==2,"Lambda4"])

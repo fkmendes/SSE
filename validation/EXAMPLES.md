@@ -87,3 +87,9 @@ We will just call the script and let it do all the work.
 ```
 Rscript example_xml_plots.R /path/to/SSE/validation
 ```
+
+### Stochastic character mapping on 120-sp tree under BiSSE
+
+```
+python scripts/parse_asm_treesfile.py ../examples/BiSSE_fixed_tree_SDSEP_SCM.trees 101 BiSSE_fixed_tree_SDSEP_SCM_parsed.txt
+```

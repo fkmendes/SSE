@@ -39,9 +39,6 @@ public class LambdaMuAssigner extends CalculationNode {
 	private int storedTotalNumberOfStates;
 	private int storedNumberOfDistinctLambdas;
 	private int storedNumberOfDistinctMus;
-	private Double[] storedPi;
-	private Double[] storedLambda;
-	private Double[] storedMu;
 	private Double[] storedLambdasContent;
 	private Double[] storedMusContent;
 	private int[] storedLambdaAssignments;
@@ -149,11 +146,13 @@ public class LambdaMuAssigner extends CalculationNode {
 		// updating lambdas (no incorporate cladogenesis support for now)
 		if (cladoStashInput.get() == null) {
 			lambda = new Double[totalNumberOfStates];
+			lambdasContent = aLambdaContent;
 			updateLambdasNoClado(aLambdaContent);
 		}
 		
 		// updating mus
 		mu = new Double[totalNumberOfStates];
+		musContent = aMuContent;
 		updateMus(aMuContent);
 		
 		assignerDirty = false; // we got the new values, not dirty anymore
@@ -212,7 +211,8 @@ public class LambdaMuAssigner extends CalculationNode {
 	
 	// returns what was obtained from Input (always the same number of lambdas)
 	public Double[] getLambdaContent() {
-		return lambdasContent;
+//		return lambdasContent; // original, working
+		return lambdaInput.get().getValues();
 	}
 	
 	// for (H)SDSEP requiresRecalculation()
@@ -232,7 +232,8 @@ public class LambdaMuAssigner extends CalculationNode {
 	
 	// returns what was obtained from Input (always the same number of mus)
 	public Double[] getMuContent() {
-		return musContent;
+		// return musContent; // original, working
+		return muInput.get().getValues();
 	}
 	
 	public CladogeneticSpeciationRateStash getCladoStash() {
@@ -273,7 +274,7 @@ public class LambdaMuAssigner extends CalculationNode {
 //		super.restore();
 //	}
 	
-//	@Override
+	@Override
 	protected void restore() {    	
 		populateAssigner(storedTotalNumberOfStates, storedNumberOfDistinctLambdas, storedNumberOfDistinctMus, storedLambdasContent, storedMusContent, storedLambdaAssignments, storedMuAssignments);
 		super.restore();

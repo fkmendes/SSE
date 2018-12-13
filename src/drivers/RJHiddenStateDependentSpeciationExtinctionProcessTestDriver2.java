@@ -170,13 +170,13 @@ public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver2 {
     	System.out.println("hsdsep2: " + negLnl2); // -122.84037671593603
     	
     	double negLnl3 = rjhsdsep.calculateLogP();
-    	System.out.println(negLnl3); // -122.88014179920914
+    	System.out.println("rjhsdsep1: " + negLnl3); // -122.88014179920914
     	
 //    	Double[] mask2 = new Double[] { 0.0, 2.0, 0.0, 2.0, 0.0 }; // applying new mask
     	Integer[] aStatesMaskPart2 = new Integer[] { 0, 2, 0, 2 };
 		Integer[] aCIDMaskPart2 = new Integer[] { 0 };
     	rjhsdsep.setMask(aStatesMaskPart2, aCIDMaskPart2);
 		double negLnl4 = rjhsdsep.calculateLogP();
-    	System.out.println("rjhsdsep: " + negLnl4); // -122.84037671593603
+    	System.out.println("rjhsdsep2: " + negLnl4); // -122.84037671593603
 	}
 }

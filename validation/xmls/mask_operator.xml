@@ -34,8 +34,8 @@
 
     </distribution> <!-- END Posterior -->
 
-    <operator id="StateMaskOperator" spec="SSE.StateMaskOperator" mask="@StateMask" weight="1.0"/>
-    <operator id="CIDMaskOperator" spec="SSE.CIDMaskOperator" mask="@CIDMask" weight="1.0"/>
+    <operator id="StateMaskOperator" spec="operators.StateMaskOperator" mask="@StateMask" weight="1.0"/>
+    <operator id="CIDMaskOperator" spec="operators.CIDMaskOperator" mask="@CIDMask" weight="1.0"/>
 
     <logger id="tracelog" fileName="mask_operator.log" logEvery="1" model="@posterior" sanitiseHeaders="true" sort="smart">
         <log idref="StateMask"/>
