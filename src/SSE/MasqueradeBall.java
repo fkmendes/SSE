@@ -52,7 +52,6 @@ public class MasqueradeBall extends CalculationNode {
 	int[] storedHiddenToObsAssignment;
 	int[] storedObsStatesToSymmetrify;
 	int storedNumberOfStates;
-	// private Set<Integer> storedHiddenStateIdxToIgnore;
 	
 	@Override
 	public void initAndValidate() {
@@ -70,7 +69,6 @@ public class MasqueradeBall extends CalculationNode {
 		storedCidMaskPart = new Integer[cidMaskPart.length];
 		storedHiddenToObsAssignment = new int[hiddenToObsAssignment.length];
 		storedObsStatesToSymmetrify = new int[obsStatesToSymmetrify.length];
-		// storedHiddenStateIdxToIgnore = new HashSet<Integer>();
 				
 		applyMask(statesMaskPart, cidMaskPart);
 	}
@@ -79,7 +77,6 @@ public class MasqueradeBall extends CalculationNode {
 		
 		// mask
 		mask = ArrayUtils.addAll(aStatesMaskPart, aCIDFlag);
-		// System.out.println("My mask is = " + Arrays.toString(mask));
 				
 		/*
 		 * preparing inputs to set associate hidden and observed states;
@@ -93,7 +90,6 @@ public class MasqueradeBall extends CalculationNode {
 			// no hidden state for this particular observed state
 			if (maskItem == 0) {
 				obsStatesToSymmetrify[i] = -1;
-				// System.out.println("Not symmetrifying state " + i);
 				hiddenToObsAssignment[i] = -1;
 				hiddenStateIdxToIgnore.add(numberOfStates + i); // used to update both hirm and lambdaMuAssigner
 			}
@@ -101,22 +97,17 @@ public class MasqueradeBall extends CalculationNode {
 			// add hidden state for this particular observed state, but transition from and to are symmetrical
 			if (maskItem == 1) {
 				obsStatesToSymmetrify[i] = i;
-				// System.out.println("Symmetrifying state " + i);
 				hiddenToObsAssignment[i] = hiddenStateIdx;
 				hiddenStateIdx++;
 			};
 								
 			// add hidden state for this particular observed state, with different transition rates
 			if (maskItem == 2) {
-				// System.out.println("Not symmetrifying state (with mask value 2.0) " + i);
 				obsStatesToSymmetrify[i] = -1;
 				hiddenToObsAssignment[i] = hiddenStateIdx;
 				hiddenStateIdx++;				
 			}
 		}
-										
-		// System.out.println("Hidden state indexes to ignore: " + Arrays.toString(hiddenStateIdxToIgnore.toArray()));
-		// System.out.println("Hidden to Obs map: " + Arrays.toString(hiddenToObsAssignment));
 		
 		numberOfHiddenStatesInMask = 0;
 		for (int i=0; i<numberOfStates; ++i) {
@@ -135,10 +126,8 @@ public class MasqueradeBall extends CalculationNode {
 				hirm.symmetrifyAcrossDiagonal(obsStateIdx);
 			}
 		}
-		// hirm.printMatrix();
 		
 		// lambda and mu stuff
-		// lambdaMuAssigner = lambdaMuAssignerInput.get();
 		lambdaAssignmentArray = new int[totalNumberOfStates];
 		muAssignmentArray = new int[totalNumberOfStates];
 		updateLambdaMuAssigner();
@@ -153,12 +142,10 @@ public class MasqueradeBall extends CalculationNode {
 	// apply mask steps
 	private void updateTraitStash() {
 		hiddenTraitStash.populateSpLksMap(totalNumberOfStates, numberOfStates, numberOfHiddenStatesInMask);
-		// System.out.println("New trait stash below");
 		hiddenTraitStash.printLksMap();
 	}
 	
 	private void updateHIRM() {
-//		matrixContent = hirm.getMatrixContent();
 		matrixContent = hirm.getQRealParameter().getValues();
 		int newMatrixContentLength = (int) (Math.pow(numberOfStates, 2) - numberOfStates + // top-left
 				numberOfHiddenStatesInMask*2 + // upper-right and bottom-left
@@ -182,9 +169,6 @@ public class MasqueradeBall extends CalculationNode {
 				j++;
 			}
 		}
-		
-		// System.out.println("matrixContent: " + Arrays.toString(matrixContent));
-		// System.out.println("newMatrixContent: " + Arrays.toString(newMatrixContent));
 		
 		hirm.populateIRM(true, true, -1, numberOfStates, numberOfHiddenStatesInMask, newMatrixContent);
 	}
@@ -216,8 +200,6 @@ public class MasqueradeBall extends CalculationNode {
 					muAssignmentArray[i] = 0;
 				}
 				else {
-//					lambdaAssignmentArray[i] = 1;
-//					muAssignmentArray[i] = 1;
 					lambdaAssignmentArray[i] = numberOfStates; // we give the first hidden state lambda to all hidden states
 					muAssignmentArray[i] = numberOfStates;
 				}
@@ -364,7 +346,6 @@ public class MasqueradeBall extends CalculationNode {
 		System.arraycopy(hiddenToObsAssignment, 0, storedHiddenToObsAssignment, 0, hiddenToObsAssignment.length);
 		System.arraycopy(obsStatesToSymmetrify, 0, storedObsStatesToSymmetrify, 0, obsStatesToSymmetrify.length);
 		storedNumberOfStates = numberOfStates;
-//		storedHiddenStateIdxToIgnore = hiddenStateIdxToIgnore;
 	}
 	
 	@Override
@@ -386,14 +367,6 @@ public class MasqueradeBall extends CalculationNode {
 		cidMaskPart = tmp2;
 		
 		numberOfStates = storedNumberOfStates; // obs states
-		
-//		Set<Integer> tmpHashSet = new HashSet<Integer>(storedHiddenStateIdxToIgnore);
-//		storedHiddenStateIdxToIgnore = hiddenStateIdxToIgnore;
-//		hiddenStateIdxToIgnore = tmpHashSet;
-		
-//		System.out.println("Restoring statesMaskPart: " + Arrays.toString(statesMaskPart));
-//		System.out.println("Restoring cidMaskPart: " + Arrays.toString(cidMaskPart));
-//		System.out.println("Restoring numberOfStates: " + numberOfStates);
 
 		applyMask(statesMaskPart, cidMaskPart);
 		super.restore();

@@ -256,22 +256,35 @@ nodelabels(pie=scm.df, cex=.5, piecol=c(pal[2],pal[6]))
 tiplabels(phy$tip.state, frame="none", adj=c(-3))
 
 ##
-tmp <- read.table("../tmp.log")
-names(tmp) <- c("Sample","posterior","likelihood","prior","Lambda1","Lambda2","Lambda3","Lambda4","Mu1","Mu2","Mu3","Mu4","FlatQMatrix1","FlatQMatrix2","FlatQMatrix3","FlatQMatrix4","FlatQMatrix5","FlatQMatrix6","FlatQMatrix7","FlatQMatrix8","StateMask1","StateMask2","CIDMask")
+tmp <- read.table("../examples/FullMask_fixed_tree_on_HiSSE_RJHSDSEP_5x_noheader.log", header=TRUE)
+names(tmp) <- c("Sample","posterior","likelihood","prior","Lambda1","Lambda2","Lambda3","Lambda4","Mu1","Mu2","Mu3","Mu4","FlatQMatrix1","FlatQMatrix2","FlatQMatrix3","FlatQMatrix4","FlatQMatrix5","FlatQMatrix6","FlatQMatrix7","FlatQMatrix8","StateMask1","StateMask2")
 
-mean(tmp[,"Lambda2"])
+tmp$Lambda1 <- as.numeric(as.character(tmp$Lambda1))
+tmp$Lambda2 <- as.numeric(as.character(tmp$Lambda2))
+tmp$Lambda3 <- as.numeric(as.character(tmp$Lambda3))
+tmp$Lambda4 <- as.numeric(as.character(tmp$Lambda4))
+tmp$StateMask1 <- as.numeric(as.character(tmp$StateMask1))
+tmp$StateMask2 <- as.numeric(as.character(tmp$StateMask2))
 
-mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==0,"Lambda1"])
-mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==0,"Lambda2"])
+mean(tmp[tmp$StateMask1==0 & tmp$StateMask2==0,"Lambda1"])
+mean(tmp[tmp$StateMask1==0 & tmp$StateMask2==0,"Lambda2"])
 
-mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==2,"Lambda1"])
-mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==2,"Lambda2"])
-mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==2,"Lambda3"])
+mean(tmp[tmp$StateMask1==0 & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda1"])
+mean(tmp[tmp$StateMask1==0 & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda2"])
+mean(tmp[tmp$StateMask1==0 & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda3"])
+mean(tmp[tmp$StateMask1==0 & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda4"])
 
-mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==0,"Lambda1"])
-mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==0,"Lambda2"])
-mean(tmp[tmp$"StateMask1"==2 & tmp$"StateMask2"==0,"Lambda3"])
+mean(tmp[(tmp$StateMask1==1 | tmp$StateMask1==2) & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda1"])
+mean(tmp[(tmp$StateMask1==1 | tmp$StateMask1==2) & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda2"])
+mean(tmp[(tmp$StateMask1==1 | tmp$StateMask1==2) & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda3"])
+mean(tmp[(tmp$StateMask1==1 | tmp$StateMask1==2) & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda4"])
 
-mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==2,"Lambda1"])
-mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==2,"Lambda2"])
-mean(tmp[tmp$"StateMask1"==0 & tmp$"StateMask2"==2,"Lambda4"])
+### average below!
+mean(tmp$Lambda1)
+mean(tmp$Lambda2)
+mean(tmp$Lambda3)
+mean(tmp$Lambda4)
+
+### how often in each model
+table(tmp$StateMask1)
+table(tmp$StateMask2)

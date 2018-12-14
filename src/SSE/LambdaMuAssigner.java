@@ -1,6 +1,5 @@
 package SSE;
 
-import java.util.Arrays;
 import java.util.regex.Pattern;
 import beast.core.CalculationNode;
 import beast.core.Input;

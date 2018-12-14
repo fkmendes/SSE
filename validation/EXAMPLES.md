@@ -22,13 +22,13 @@ pars <- c(.15, .3, .1, .1, .1, .1) # lambdas, mus, qs
 set.seed(12345)
 phy <- tree.bisse(pars, max.taxa=60, include.extinct=FALSE, x0=NA)
 
-# tree
+# tree (for .xml)
 write.tree(phy) # see tree
 
-# taxa
+# taxa (for .xml)
 cat(paste0("<taxon id=\"", phy$tip.label, "\" spec=\"Taxon\"/>"), sep="\n")
 
-# tip data
+# tip data (for .xml)
 paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
 
 # find MLE
@@ -52,13 +52,13 @@ phy <- tree.musse(pars, max.taxa=60, include.extinct=FALSE, x0=1)
 phy$tip.state[phy$tip.state==3] <- 2 # hiding states
 phy$tip.state <- phy$tip.state - 1
 
-# tree
-write.tree(phy)
+# tree (for .xml)
+write.tree(phy) # see tree
 
-# taxa
+# taxa (for .xml)
 cat(paste0("<taxon id=\"", phy$tip.label, "\" spec=\"Taxon\"/>"), sep="\n")
 
-# tip data
+# tip data (for .xml)
 paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
 
 # finding MLE under BiSSE
@@ -79,6 +79,34 @@ sim.dat <- data.frame(names(phy$tip.state), phy$tip.state)
 pp <- hisse(phy, sim.dat, f=c(1,1), hidden.states=TRUE, turnover.anc=turnover.anc, eps.anc=eps.anc, trans.rate=trans.rates.nodual.no0B, output.type="raw", root.type="equal", condition.on.survival=FALSE, root.p=NULL)
 ```
 
+### ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.xml
+Conducting simulations with hidden trait (one hidden trait with one hidden state just like *_on_HiSSE_HSDSEP.xml examples above).    
+
+```
+pars <- c(.1,  .1,  .5, .05, .05, .05, .1, 0.0, .1, .1, 0.0, .1) # pars above are equivalent to Fig. 1 in HiSSE paper
+
+set.seed(10000)
+phy <- tree.musse(pars, max.taxa=120, include.extinct=FALSE, x0=1)
+phy$tip.state[phy$tip.state==3] <- 2 # hiding states
+phy$tip.state <- phy$tip.state - 1
+
+# tree (for .xml)
+write.tree(phy)
+
+# taxa (for .xml)
+cat(paste0("<taxon id=\"", phy$tip.label, "\" spec=\"Taxon\"/>"), sep="\n")
+
+# tip data (for .xml)
+paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
+```
+
+### Stochastic character mapping on 120-sp tree under BiSSE
+
+```
+cd validation/
+python scripts/parse_asm_treesfile.py ../examples/BiSSE_fixed_tree_SDSEP_SCM.trees 101 BiSSE_fixed_tree_SDSEP_SCM_parsed.txt
+```
+
 ## Plotting all graphs in R (see examples_xml_plots.R)    
 
 You can find all the code to plot the posterior distributions (of all parameters of all .xmls we produced in the steps above) in examples_xml_plots.R.
@@ -88,8 +116,3 @@ We will just call the script and let it do all the work.
 Rscript example_xml_plots.R /path/to/SSE/validation
 ```
 
-### Stochastic character mapping on 120-sp tree under BiSSE
-
-```
-python scripts/parse_asm_treesfile.py ../examples/BiSSE_fixed_tree_SDSEP_SCM.trees 101 BiSSE_fixed_tree_SDSEP_SCM_parsed.txt
-```

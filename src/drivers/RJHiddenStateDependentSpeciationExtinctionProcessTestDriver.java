@@ -8,7 +8,7 @@ import SSE.HiddenObservedStateMapper;
 import SSE.HiddenTraitStash;
 import SSE.LambdaMuAssigner;
 import SSE.MasqueradeBall;
-import SSE.RJHiddenStateDependentSpeciationExtinctionProcess;
+import SSE.BSSVSStateDependentSpeciationExtinctionProcess;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
 import beast.evolution.alignment.TaxonSet;
@@ -93,7 +93,7 @@ public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver {
 		
 		boolean incorporateCladogenesis = false;
 		
-		RJHiddenStateDependentSpeciationExtinctionProcess rjhsdsep = new RJHiddenStateDependentSpeciationExtinctionProcess();
+		BSSVSStateDependentSpeciationExtinctionProcess rjhsdsep = new BSSVSStateDependentSpeciationExtinctionProcess();
         rjhsdsep.initByName(
         		"tree", myTree,
         		"hiddenTraitStash", hiddenTraitStash,

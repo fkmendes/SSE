@@ -10,7 +10,7 @@ import SSE.HiddenStateDependentSpeciationExtinctionProcess;
 import SSE.HiddenTraitStash;
 import SSE.LambdaMuAssigner;
 import SSE.MasqueradeBall;
-import SSE.RJHiddenStateDependentSpeciationExtinctionProcess;
+import SSE.BSSVSStateDependentSpeciationExtinctionProcess;
 
 import java.util.Arrays;
 import java.util.List;
@@ -161,7 +161,7 @@ public class RJHSDSEPMuHiSSETest {
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
         
-        RJHiddenStateDependentSpeciationExtinctionProcess rjhsdsep = new RJHiddenStateDependentSpeciationExtinctionProcess();
+        BSSVSStateDependentSpeciationExtinctionProcess rjhsdsep = new BSSVSStateDependentSpeciationExtinctionProcess();
         rjhsdsep.initByName(
         		"tree", myTree,
         		"hiddenTraitStash", hiddenTraitStash1,

@@ -11,7 +11,7 @@ import SSE.HiddenStateDependentSpeciationExtinctionProcess;
 import SSE.HiddenTraitStash;
 import SSE.LambdaMuAssigner;
 import SSE.MasqueradeBall;
-import SSE.RJHiddenStateDependentSpeciationExtinctionProcess;
+import SSE.BSSVSStateDependentSpeciationExtinctionProcess;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Taxon;
@@ -155,7 +155,7 @@ public class RJHiddenStateDependentSpeciationExtinctionProcessTestDriver2 {
         		"incorporateCladogenesis", incorporateCladogenesis
         		);
         
-        RJHiddenStateDependentSpeciationExtinctionProcess rjhsdsep = new RJHiddenStateDependentSpeciationExtinctionProcess();
+        BSSVSStateDependentSpeciationExtinctionProcess rjhsdsep = new BSSVSStateDependentSpeciationExtinctionProcess();
         rjhsdsep.initByName(
         		"tree", myTree,
         		"hiddenTraitStash", hiddenTraitStash1,
