@@ -1,6 +1,7 @@
 library(ggplot2)
 library(gridExtra)
 library(RColorBrewer)
+library(diversitree)
 
 lighten <- function(color, factor=1.4){
     col <- col2rgb(color)
@@ -40,7 +41,34 @@ make.post.plot <- function(a.df, var.col, param.name, x.min.max.vec, a.color.fil
     return(post.samples.plot)
 }
 
+make.post.dens.plot <- function(a.df, param.name, param.xlab, some.colors, some.means, a.truth) {
+    the.plot = ggplot(a.df, aes(x=a.df[,param.name], fill=Model)) + geom_density(alpha=.25, color=NA) +
+        xlab(param.xlab) + ylab("Density") +
+        annotate("point", y=0, x=some.means[1], color=some.colors[1], size=3) +
+        annotate("point", y=0, x=some.means[2], color=some.colors[2], size=3) +
+        annotate("point", y=0, x=some.means[3], color=some.colors[3], size=3) +
+        annotate("point", y=0, x=some.means[4], color=some.colors[4], size=3) +
+        annotate("point", y=0, x=some.means[5], color=some.colors[5], size=3) +
+        geom_vline(xintercept=a.truth, lty="dashed") +
 
+    theme(
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        plot.background = element_blank(),
+        plot.title = element_text(),
+        axis.line = element_line(),
+        axis.ticks = element_line(color="black"),
+        axis.text.x = element_text(color="black", size=10),
+        axis.text.y = element_text(color="black", size=10),
+        axis.title.x = element_text(size=12),
+        axis.title.y = element_text(size=12)
+    ) +
+    scale_fill_manual(values=pal[1:5])
+
+    return(the.plot)
+}
+    
 # ----- Plotting BiSSE_fixed_tree_SDSEP and BiSSE_fixed_tree_HSDSEP ----- #
 pal <- colorRampPalette(pal)(7)
 
@@ -216,7 +244,7 @@ grid.arrange(l0.plot, l1.plot, l2.plot,
 dev.off()
 
 # ----- Plotting BiSSE_fixed_tree_SDSEP_SCM ----- #
-log.df <- read.table("../BiSSE_fixed_tree_SDSEP_SCM_parsed.txt", header=FALSE, fill=TRUE)
+log.df <- read.table("BiSSE_fixed_tree_SDSEP_SCM_parsed.txt", header=FALSE, fill=TRUE)
 names(log.df) <- c("ndname", "s0", "s1")
 log.df$"s1"[is.na(log.df$"s1")] <- 0
 rs <- rowSums(log.df[,c(2,3)])
@@ -255,36 +283,52 @@ plot(phy, cex=.5, label.offset=0.2)
 nodelabels(pie=scm.df, cex=.5, piecol=c(pal[2],pal[6]))
 tiplabels(phy$tip.state, frame="none", adj=c(-3))
 
-##
-tmp <- read.table("../examples/FullMask_fixed_tree_on_HiSSE_RJHSDSEP_5x_noheader.log", header=TRUE)
-names(tmp) <- c("Sample","posterior","likelihood","prior","Lambda1","Lambda2","Lambda3","Lambda4","Mu1","Mu2","Mu3","Mu4","FlatQMatrix1","FlatQMatrix2","FlatQMatrix3","FlatQMatrix4","FlatQMatrix5","FlatQMatrix6","FlatQMatrix7","FlatQMatrix8","StateMask1","StateMask2")
+# ----- Plotting ModelAveraging_fixed_tree_BSVSSSDSEP ----- #
+mod.avg.log <- read.table("../examples/ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.log", header=TRUE)
 
-tmp$Lambda1 <- as.numeric(as.character(tmp$Lambda1))
-tmp$Lambda2 <- as.numeric(as.character(tmp$Lambda2))
-tmp$Lambda3 <- as.numeric(as.character(tmp$Lambda3))
-tmp$Lambda4 <- as.numeric(as.character(tmp$Lambda4))
-tmp$StateMask1 <- as.numeric(as.character(tmp$StateMask1))
-tmp$StateMask2 <- as.numeric(as.character(tmp$StateMask2))
+bisse <- mod.avg.log[mod.avg.log$StateMask1==0 & mod.avg.log$StateMask2==0,]
+bisse$Model <- "BiSSE"
 
-mean(tmp[tmp$StateMask1==0 & tmp$StateMask2==0,"Lambda1"])
-mean(tmp[tmp$StateMask1==0 & tmp$StateMask2==0,"Lambda2"])
+hisse1 <- mod.avg.log[mod.avg.log$StateMask1==0 & (mod.avg.log$StateMask2==1 | mod.avg.log$StateMask2==2),]
+hisse1$Model <- "HiSSE 1 (truth)"
 
-mean(tmp[tmp$StateMask1==0 & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda1"])
-mean(tmp[tmp$StateMask1==0 & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda2"])
-mean(tmp[tmp$StateMask1==0 & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda3"])
-mean(tmp[tmp$StateMask1==0 & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda4"])
+hisse2 <- mod.avg.log[mod.avg.log$StateMask2==0 & (mod.avg.log$StateMask1==1 | mod.avg.log$StateMask1==2),]
+hisse2$Model <- "HiSSE 1 (wrong)"
 
-mean(tmp[(tmp$StateMask1==1 | tmp$StateMask1==2) & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda1"])
-mean(tmp[(tmp$StateMask1==1 | tmp$StateMask1==2) & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda2"])
-mean(tmp[(tmp$StateMask1==1 | tmp$StateMask1==2) & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda3"])
-mean(tmp[(tmp$StateMask1==1 | tmp$StateMask1==2) & (tmp$StateMask2==1 | tmp$StateMask2==2),"Lambda4"])
+hisse3 <- mod.avg.log[(mod.avg.log$StateMask1==1 | mod.avg.log$StateMask1==2) & (mod.avg.log$StateMask2==1 | mod.avg.log$StateMask2==2),]
+hisse3$Model <- "HiSSE 2"
 
-### average below!
-mean(tmp$Lambda1)
-mean(tmp$Lambda2)
-mean(tmp$Lambda3)
-mean(tmp$Lambda4)
+avg.model <- mod.avg.log
+avg.model$Model <- "Mean"
 
-### how often in each model
-table(tmp$StateMask1)
-table(tmp$StateMask2)
+density.df <- rbind(bisse,hisse1,hisse2,hisse3,avg.model)
+
+pal <- brewer.pal(8, "Set1")
+pal <- colorRampPalette(pal)(8)
+
+l0.density <- make.post.dens.plot(density.df, "Lambda1", expression(lambda[0]), pal, c(mean(density.df[density.df$Model=="BiSSE","Lambda1"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 1 (truth)","Lambda1"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 1 (wrong)","Lambda1"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 2","Lambda1"]),                                                                                       mean(density.df[density.df$Model=="Mean","Lambda1"])), 0.1)
+l0.density
+
+l1.density <- make.post.dens.plot(density.df, "Lambda2", expression(lambda[1]), pal, c(mean(density.df[density.df$Model=="BiSSE","Lambda2"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 1 (truth)","Lambda2"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 1 (wrong)","Lambda2"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 2","Lambda2"]),
+                                                                                       mean(density.df[density.df$Model=="Mean","Lambda2"])), 0.1)
+l1.density
+
+l0h.density <- make.post.dens.plot(density.df, "Lambda3", expression(lambda[0][H]), pal, c(mean(density.df[density.df$Model=="BiSSE","Lambda3"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 1 (truth)","Lambda3"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 1 (wrong)","Lambda3"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 2","Lambda3"]),
+                                                                                       mean(density.df[density.df$Model=="Mean","Lambda3"])), 0.1)
+l0h.density
+
+l1h.density <- make.post.dens.plot(density.df, "Lambda4", expression(lambda[1][H]), pal, c(mean(density.df[density.df$Model=="BiSSE","Lambda4"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 1 (truth)","Lambda4"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 1 (wrong)","Lambda4"]),
+                                                                                       mean(density.df[density.df$Model=="HiSSE 2","Lambda4"]),
+                                                                                       mean(density.df[density.df$Model=="Mean","Lambda4"])), 0.5)
+l1h.density

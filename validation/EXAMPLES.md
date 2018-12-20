@@ -100,6 +100,8 @@ cat(paste0("<taxon id=\"", phy$tip.label, "\" spec=\"Taxon\"/>"), sep="\n")
 paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
 ```
 
+After running .xml, remove header lines (starting with '#') from .log file, and save new file as 'ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP_noheader.log'.
+
 ### Stochastic character mapping on 120-sp tree under BiSSE
 
 ```

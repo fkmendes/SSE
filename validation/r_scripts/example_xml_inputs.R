@@ -221,6 +221,7 @@ pp <- hisse(phy, sim.dat, f=c(1,1), hidden.states=TRUE, turnover.anc=turnover.an
 ## This is to make a figure examplifying SCM for the paper
 pars <- c(.15, .3, .1, .1, .5, .5) # lambdas, mus, qs
 set.seed(12345)
+sampling.f<-c(1,1)
 phy <- tree.bisse(pars, max.taxa=60, include.extinct=FALSE, x0=NA)
 lik <- make.bisse(tree=phy, states=phy$tip.state, sampling.f=sampling.f, strict=FALSE)
 anc.states <- asr.marginal(lik, pars)
