@@ -40,15 +40,15 @@ fit <- find.mle(lik, pars)
 Conducting simulations with hidden trait (one hidden state), and computing MLEs.    
 
 ```
-pars <- c(.1,  .1,  .3,  # lambda 1, 2, 3
-.05, .05, .05, # mu 1, 2, 3
-.1, 0.0, # q12, q13
-.1, .1, # q21, q23
-0.0, .1 # q31, q32
+pars <- c(.1,  .1,  .5,  # lambda 0, 1, 2
+.05, .05, .05, # mu 0, 1, 2
+.1, 0.0, # q01, q02
+.1, .1, # q10, q12
+0.0, .1 # q20, q21
 ) # pars above are equivalent to Fig. 1 in HiSSE paper
 
 set.seed(10000)
-phy <- tree.musse(pars, max.taxa=60, include.extinct=FALSE, x0=1)
+phy <- tree.musse(pars, max.taxa=120, include.extinct=FALSE, x0=1)
 phy$tip.state[phy$tip.state==3] <- 2 # hiding states
 phy$tip.state <- phy$tip.state - 1
 
@@ -102,7 +102,7 @@ paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
 
 After running .xml, remove header lines (starting with '#') from .log file, and save new file as 'ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP_noheader.log'.
 
-### Stochastic character mapping on 120-sp tree under BiSSE
+### Stochastic character mapping on 60-sp tree under BiSSE
 
 ```
 cd validation/
