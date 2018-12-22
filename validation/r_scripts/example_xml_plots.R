@@ -21,9 +21,9 @@ make.post.plot <- function(a.df, var.col, param.name, x.min.max.vec, a.color.fil
     post.samples.plot = ggplot(a.df, aes(x=a.df[,var.col])) +
         geom_histogram(aes(y=stat(density)), color=a.color.line, fill=a.color.fill, alpha=.01, bins=40, size=2) +
         geom_histogram(aes(y=stat(density)), fill=a.color.fill, bins=40) +
-        annotate("point", y=0, x=a.truth, size=3) +
-        geom_vline(xintercept=a.mle, color="red") +
-        geom_vline(xintercept=a.mean) +
+        annotate("point", y=0, x=a.mean, size=3) +
+        annotate("point", y=0, x=a.mle, size=3, color="red") +
+        geom_vline(xintercept=a.truth, lty="dashed") +
         xlab(param.name) + ylab("Density") + 
         theme(
             panel.grid.minor = element_blank(),
@@ -136,105 +136,138 @@ grid.arrange(l0.plot, l1.plot,
 dev.off()
 
 # ----- Plotting BiSSE_fixed_tree_on_HiSSE_HSDSEP ----- #
+log.df <- read.table("../examples/BiSSE_fixed_tree_on_HiSSE_HSDSEP.log", header=TRUE)
+log.df <- log.df[12:nrow(log.df),] # removing burnin and extra generations
+
 ## -- MLE from diversitree -- ##
 ##      lambda0      lambda1          mu0          mu1          q01          q10 
-## 8.304052e-02 2.523848e-01 4.159926e-01 1.141193e-01 2.025083e-06 4.690631e-02 
+## 5.490635e-02 5.094458e-01 1.254943e-06 1.949697e-01 4.718035e-02 5.817885e-03 
 
 l0.truth <- 0.1
-l0.mle <- 8.304052e-02
+l0.mle <- 5.490635e-02
 l0.mean <- mean(log.df$Lambda1)
 l0.min.max <- range(log.df$Lambda1)
 
 l1.truth <- 0.1
-l1.mle <- 2.523848e-01
+l1.mle <- 5.094458e-01
 l1.mean <- mean(log.df$Lambda2)
 l1.min.max <- range(log.df$Lambda2)
 
 m0.truth <- 0.05
-m0.mle <- 4.159926e-01
+m0.mle <- 1.254943e-06
 m0.mean <- mean(log.df$Mu1)
 m0.min.max <- range(log.df$Mu1)
 
 m1.truth <- 0.05
-m1.mle <- 1.141193e-01
+m1.mle <- 1.949697e-01
 m1.mean <- mean(log.df$Mu2)
 m1.min.max <- range(log.df$Mu2)
 
 q01.truth <- 0.1
-q01.mle <- 2.025083e-06
+q01.mle <- 4.718035e-02
 q01.mean <- mean(log.df$FlatQMatrix1)
 q01.min.max <- range(log.df$FlatQMatrix1)
 
 q10.truth <- 0.1
-q10.mle <- 4.690631e-02 
+q10.mle <- 5.817885e-03
 q10.mean <- mean(log.df$FlatQMatrix2)
 q10.min.max <- range(log.df$FlatQMatrix2)
+
+fill.color = lighten(pal[1], 1.3)
+l0.plot <- make.post.plot(log.df, 5, expression(lambda[0]), l0.min.max, fill.color, pal[1], l0.truth, l0.mle, l0.mean)
+## l0.plot
+
+fill.color = lighten(pal[2], 1.3)
+l1.plot <- make.post.plot(log.df, 6, expression(lambda[1]), l1.min.max, fill.color, pal[2], l1.truth, l1.mle, l1.mean)
+## l1.plot
+
+fill.color = lighten(pal[3], 1.3)
+m0.plot <- make.post.plot(log.df, 7, expression(mu[0]), m0.min.max, fill.color, pal[3], m0.truth, m0.mle, m0.mean)
+## m0.plot
+
+fill.color = lighten(pal[4], 1.2)
+m1.plot <- make.post.plot(log.df, 8, expression(mu[1]), m1.min.max, fill.color, pal[4], m1.truth, m1.mle, m1.mean)
+## m1.plot 
+
+fill.color = lighten(pal[5], 1.4)
+q01.plot <- make.post.plot(log.df, 9, expression(q[0][1]), q01.min.max, fill.color, pal[5], q01.truth, q01.mle, q01.mean)
+## q01.plot
+
+fill.color = lighten(pal[6], 1.3)
+q10.plot <- make.post.plot(log.df, 10, expression(q[1][0]), q10.min.max, fill.color, pal[6], q10.truth, q10.mle, q10.mean)
+## q10.plot
+
+pdf("BiSSE_fixed_tree_on_HiSSE_HSDSEP_posteriors_120spp.pdf", width=9, height=9)
+grid.arrange(l0.plot, l1.plot,
+             m0.plot, m1.plot,
+             q01.plot, q10.plot)
+dev.off()
 
 # ----- Plotting HiSSE_fixed_tree_on_HiSSE_HSDSEP  ----- #
 log.df <- read.table("../examples/HiSSE_fixed_tree_on_HiSSE_HSDSEP.log", header=TRUE)
 log.df <- log.df[12:nrow(log.df),] # removing burnin and extra generations
 
 ## -- MLE from hisse -- ##
+
 ##                       lambda         mu
-## rate0A             0.1594821 0.08712492
-## rate1A             0.09142577 0.07480436
-## rate0B                  0  0
-## rate1B             0.2472443 0.1383931
+## rate0A             0.02913626 0.005376561
+## rate1A             0.0636953 1.312858e-10
+## rate1B             0.6093937 0.2787272
 
 ## Transition Rates
-##           (0A)       (1A) (0B)      (1B)
-## (0A)        NA 0.29523936    0 0.0000000
-## (1A) 0.4509993         NA    0 0.1355034
-## (0B) 0.0000000 0.00000000   NA 0.0000000
-## (1B) 0.0000000 0.01983649    0        NA
+##            (0A)       (1A) (0B)       (1B)
+## (0A)         NA 0.05197767    0 0.00000000
+## (1A) 0.07369927         NA    0 0.03730514
+## (0B) 0.00000000 0.00000000   NA 0.00000000
+## (1B) 0.00000000 0.04861138    0         NA
 
 l0.truth <- 0.1
-l0.mle <- 0.1594821
+l0.mle <- 0.02913626
 l0.mean <- mean(log.df$Lambda1)
 l0.min.max <- range(log.df$Lambda1)
 
 l1.truth <- 0.1
-l1.mle <- 0.09142577
+l1.mle <- 0.0636953
 l1.mean <- mean(log.df$Lambda2)
 l1.min.max <- range(log.df$Lambda2)
 
-l2.truth <- 0.3
-l2.mle <- 0.2472443
+l2.truth <- 0.5
+l2.mle <- 0.6093937
 l2.mean <- mean(log.df$Lambda3)
 l2.min.max <- range(log.df$Lambda3)
 
 m0.truth <- 0.05
-m0.mle <- 0.08712492
+m0.mle <- 0.005376561
 m0.mean <- mean(log.df$Mu1)
 m0.min.max <- range(log.df$Mu1)
 
 m1.truth <- 0.05
-m1.mle <- 0.07480436
+m1.mle <- 1.312858e-10
 m1.mean <- mean(log.df$Mu2)
 m1.min.max <- range(log.df$Mu2)
 
 m2.truth <- 0.05
-m2.mle <- 0.1383931
+m2.mle <- 0.2787272
 m2.mean <- mean(log.df$Mu3)
 m2.min.max <- range(log.df$Mu3)
 
 q01.truth <- 0.1
-q01.mle <- 0.29523936
+q01.mle <- 0.05197767
 q01.mean <- mean(log.df$FlatQMatrix1)
 q01.min.max <- range(log.df$FlatQMatrix1)
 
 q10.truth <- 0.1
-q10.mle <- 0.4509993
+q10.mle <- 0.07369927
 q10.mean <- mean(log.df$FlatQMatrix2)
 q10.min.max <- range(log.df$FlatQMatrix2)
 
 q12.truth <- 0.1
-q12.mle <- 0.1355034
+q12.mle <- 0.03730514
 q12.mean <- mean(log.df$FlatQMatrix3)
 q12.min.max <- range(log.df$FlatQMatrix3)
 
 q21.truth <- 0.1
-q21.mle <- 0.01983649
+q21.mle <- 0.04861138
 q21.mean <- mean(log.df$FlatQMatrix4)
 q21.min.max <- range(log.df$FlatQMatrix4)
 
@@ -278,7 +311,7 @@ fill.color = lighten(pal[10], 1.6)
 q21.plot <- make.post.plot(log.df, 14, expression(q[2][1]), q21.min.max, fill.color, pal[10], q21.truth, q21.mle, q21.mean)
 ## q21.plot
 
-pdf("posts_HiSSE_on_HiSSE_HSDSEP_60spp.pdf", width=9, height=9)
+pdf("HiSSE_fixed_tree_on_HiSSE_HSDSEP_posteriors_120spp.pdf", width=9, height=9)
 grid.arrange(l0.plot, l1.plot, l2.plot,
              m0.plot, m1.plot, m2.plot,
              q01.plot, q10.plot,
