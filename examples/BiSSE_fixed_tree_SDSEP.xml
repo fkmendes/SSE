@@ -13,64 +13,84 @@
       <!-- START prior -->
       <distribution id="prior" spec="util.CompoundDistribution">
         <distribution id="LambdaPrior" spec="beast.math.distributions.Prior" x="@Lambda">
-	  	<distr id="Exponential.Lambda" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.2"/>
+	  <distr id="Exponential.Lambda" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.2"/>
         </distribution>
 
         <distribution id="MuPrior" spec="beast.math.distributions.Prior" x="@Mu">
-	  	<distr id="Exponential.Mu" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.1"/>
+	  <distr id="Exponential.Mu" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.05"/>
         </distribution>
 
         <distribution id="FlatQMatrixPrior" spec="beast.math.distributions.Prior" x="@FlatQMatrix">
-	  	<distr id="Exponential.FlatQMatrix" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.1"/>
+	  <distr id="Exponential.FlatQMatrix" spec="beast.math.distributions.Exponential" offset="0.0" mean="0.1"/>
         </distribution>
       </distribution>
       <!-- END prior -->
 
       <distribution id="likelihood" spec="util.CompoundDistribution" useThreads="true">
-	<distribution id="StateDependentSpeciationExtinctionProcess" spec="SSE.StateDependentSpeciationExtinctionProcess" incorporateCladogenesis="false">
-	  <tree id="FixedTree" spec="beast.util.TreeParser" IsLabelledNewick="true" adjustTipHeights="false" newick="(((sp93:0.2356622822,(sp94:0.2154739279,sp95:0.2154739279):0.02018835424):12.9847595,((((sp57:2.815062535,sp43:2.815062535):1.780249256,(sp36:4.449415911,((((sp99:0.06034332881,sp100:0.06034332881):0.4473268161,sp88:0.5076701449):1.726055497,sp56:2.233725641):1.371042764,((sp72:1.31183414,sp73:1.31183414):1.545878271,sp42:2.857712411):0.7470559947):0.8446475052):0.1458958804):3.207493326,(((sp27:5.033762494,(((((sp71:1.391331894,((sp86:0.5759627483,sp87:0.5759627483):0.7866153889,(sp89:0.4023765821,sp90:0.4023765821):0.9602015551):0.02875375666):1.595833121,(sp77:0.9006605643,sp78:0.9006605643):2.086504451):0.1392348633,sp41:3.126399879):0.8899363982,(((sp48:2.589801526,sp49:2.589801526):0.1590377796,sp46:2.748839306):0.6512535555,(sp60:2.03018895,((sp79:0.8625209504,(sp101:0.007232857647,sp102:0.007232857647):0.8552880928):0.6584553534,sp69:1.520976304):0.5092126459):1.369903912):0.6162434155):0.07444131832,sp34:4.090777595):0.9429848988):0.6018834209,sp25:5.635645915):0.003042611101,((sp59:2.160114586,(sp70:1.408818523,sp81:1.408818523):0.7512960633):2.006513375,(sp50:2.459826639,sp51:2.459826639):1.706801322):1.472060565):2.164116591):1.673667032,(((sp91:0.321558177,sp92:0.321558177):0.6062021719,sp76:0.9277603489):2.437759666,(sp47:2.651955001,(sp54:2.307131853,sp55:2.307131853):0.3448231482):0.7135650134):6.110952134):3.74394963):2.502755808,(sp15:15.70472892,(((sp37:3.930561202,(sp61:1.91883471,sp62:1.91883471):2.011726492):1.624114024,sp24:5.554675226):7.421080767,(((((sp84:0.6179056665,sp85:0.6179056665):0.2681327966,(sp82:0.8310677522,sp83:0.8310677522):0.05497071083):0.6598028498,sp68:1.545841313):3.050734938,sp29:4.596576251):2.433125762,(((sp96:0.1813892509,(sp97:0.1346470644,sp98:0.1346470644):0.04674218648):1.607626581,sp63:1.789015832):1.762305454,(sp39:3.456648649,sp40:3.456648649):0.0946726372):3.478380726):5.946053981):2.728972922):0.01844867133):0.0;" offset="0" singlechild="false">
+	<distribution id="StateDependentSpeciationExtinctionProcess" spec="SSE.StateDependentSpeciationExtinctionProcess" incorporateCladogenesis="false" useThreads="true" threads="8">
+	  <tree id="FixedTree" spec="beast.util.TreeParser" IsLabelledNewick="true" adjustTipHeights="false" newick="((((((((sp88:0.7305723081,(sp110:0.3517943596,sp111:0.3517943596)nd133:0.3787779485)nd131:0.6126032115,((sp96:0.5196890137,sp97:0.5196890137)nd129:0.2622894529,sp78:0.7819784666)nd112:0.5611970529)nd75:0.8713987922,(sp57:1.455773138,((sp71:1.053741021,sp72:1.053741021)nd108:0.3540956393,((sp94:0.5321167068,sp95:0.5321167068)nd120:0.6052849744,(sp91:0.6118373316,sp92:0.6118373316)nd121:0.5255643496)nd109:0.2704349788)nd106:0.04793647802)nd76:0.7588011737)nd59:0.6454348926,(sp47:1.61994309,(sp50:1.532705744,(sp58:1.451997302,sp59:1.451997302)nd103:0.08070844236)nd98:0.08723734603)nd61:1.240066114)nd36:1.676965932,sp11:4.536975137)nd15:1.687950675,(((sp103:0.448272968,(sp138:0.08613692804,sp139:0.08613692804)nd138:0.36213604)nd137:0.009032491825,sp102:0.4573054599)nd35:4.399496701,sp6:4.856802161)nd26:1.368123651)nd5:1.152208972,((((sp33:2.24956865,sp35:2.24956865)nd46:1.426209219,((sp60:1.423855733,((sp104:0.4119903825,sp105:0.4119903825)nd139:0.02091855576,(sp134:0.1207488148,sp135:0.1207488148)nd140:0.3121601234)nd107:0.9909467946)nd96:0.2125091791,(((sp126:0.1645053988,sp127:0.1645053988)nd141:0.1835490384,sp112:0.3480544372)nd115:0.8698891337,(sp83:0.7454841432,sp84:0.7454841432)nd116:0.4724594277)nd97:0.418421341)nd66:2.039412957)nd9:3.023544015,(sp24:2.826445972,sp25:2.826445972)nd10:3.872875912)nd7:0.3077405585,((sp31:5.618597105,((sp119:0.2359467532,sp120:0.2359467532)nd82:1.904951537,sp46:2.14089829)nd28:3.477698814)nd11:0.7595809025,((sp53:1.485104655,sp54:1.485104655)nd93:0.2720998801,(sp115:0.285166619,sp116:0.285166619)nd94:1.472037916)nd12:4.620973472)nd8:0.6288844355)nd6:0.3700723412)nd2:0.8374129689,((sp42:1.88729009,sp43:1.88729009)nd16:4.224565776,((sp8:4.718334396,(((sp38:1.994098579,((sp85:0.7378233244,sp86:0.7378233244)nd118:0.4081087706,(sp87:0.7362545146,(sp130:0.1466536726,sp131:0.1466536726)nd132:0.5896008419)nd119:0.4096775804)nd87:0.8481664838)nd67:0.4437676967,((sp40:1.903126684,sp41:1.903126684)nd79:0.2787574296,sp34:2.181884113)nd68:0.2559821621)nd38:1.862291226,sp13:4.300157502)nd31:0.4181768941)nd30:0.8352288292,((((sp89:0.6569545471,(sp106:0.3787632156,sp107:0.3787632156)nd134:0.2781913315)nd48:2.975192865,sp19:3.632147412)nd45:0.1065481866,sp16:3.738695599)nd42:1.704978876,((((((sp140:0.05836369487,sp141:0.05836369487)nd110:1.315537159,sp63:1.373900854)nd91:0.4023286986,(sp44:1.712330625,(sp52:1.516571587,(sp113:0.3106816087,sp114:0.3106816087)nd105:1.205889978)nd95:0.1957590378)nd92:0.06389892751)nd77:0.4292478629,(sp66:1.177035351,sp67:1.177035351)nd78:1.028442064)nd51:1.221442003,(((sp22:2.858834248,sp23:2.858834248)nd57:0.162846485,((sp61:1.375699062,sp62:1.375699062)nd80:0.7656067357,(sp79:0.7762161959,sp80:0.7762161959)nd81:1.365089602)nd58:0.8803749348)nd55:0.1459512122,(sp69:1.06535337,sp70:1.06535337)nd56:2.102278575)nd52:0.2592874735)nd24:2.004495132,((sp142:0.02334854771,sp143:0.02334854771)nd39:4.244813798,(((sp27:2.611980347,(sp55:1.475452664,sp56:1.475452664)nd62:1.136527683)nd54:0.8918730549,((sp124:0.1853556377,sp125:0.1853556377)nd88:1.785377075,((sp48:1.561254771,(sp93:0.5806118125,(sp98:0.515688473,sp99:0.515688473)nd136:0.06492333946)nd101:0.9806429585)nd90:0.367401214,sp39:1.928655985)nd89:0.04207672764)nd50:1.53312069)nd43:0.2424696936,(sp20:3.244922908,((((sp51:1.51799645,((sp117:0.2761079111,sp118:0.2761079111)nd113:0.9590689502,((sp121:0.2176049823,sp122:0.2176049823)nd128:0.6643475616,sp77:0.8819525439)nd114:0.3532243174)nd104:0.2828195883)nd102:0.02918913232,sp49:1.547185582)nd73:0.7836372225,sp30:2.330822804)nd63:0.1182251958,(((sp65:2.106734091,(((sp75:0.9809616922,sp76:0.9809616922)nd122:0.01325772014,((sp132:0.1433480369,sp133:0.1433480369)nd142:0.0458249845,sp123:0.1891730214)nd123:0.8050463909)nd99:0.6120074427,((sp73:1.002219298,sp74:1.002219298)nd117:0.1558727881,sp68:1.158092086)nd100:0.4481347689)nd86:0.5005072356)nd71:0.2583449008,(sp37:2.112752022,((sp100:0.4954967354,sp101:0.4954967354)nd124:0.4618677482,((sp108:0.3550398,sp109:0.3550398)nd126:0.5564805588,((sp128:0.1587819134,sp129:0.1587819134)nd135:0.6047606251,sp81:0.7635425385)nd127:0.1479778203)nd125:0.04584412474)nd84:1.155387539)nd72:0.2523269692)nd69:0.01135267077,(sp136:0.09035357432,sp137:0.09035357432)nd70:2.286078088)nd64:0.07261633811)nd53:0.7958749077)nd44:0.5014001877)nd40:0.5218392502)nd25:1.163252205)nd23:0.01225992355)nd21:0.1098887506)nd17:0.5582926407)nd4:2.102691887):0.0;" offset="0" singlechild="false">
 
 	    <taxonset id="TaxonSet" spec="TaxonSet">
-	      <taxon id="sp15" spec="Taxon"/>
+	      <taxon id="sp6" spec="Taxon"/>
+	      <taxon id="sp8" spec="Taxon"/>
+	      <taxon id="sp11" spec="Taxon"/>
+	      <taxon id="sp13" spec="Taxon"/>
+	      <taxon id="sp16" spec="Taxon"/>
+	      <taxon id="sp19" spec="Taxon"/>
+	      <taxon id="sp20" spec="Taxon"/>
+	      <taxon id="sp22" spec="Taxon"/>
+	      <taxon id="sp23" spec="Taxon"/>
 	      <taxon id="sp24" spec="Taxon"/>
 	      <taxon id="sp25" spec="Taxon"/>
 	      <taxon id="sp27" spec="Taxon"/>
-	      <taxon id="sp29" spec="Taxon"/>
+	      <taxon id="sp30" spec="Taxon"/>
+	      <taxon id="sp31" spec="Taxon"/>
+	      <taxon id="sp33" spec="Taxon"/>
 	      <taxon id="sp34" spec="Taxon"/>
-	      <taxon id="sp36" spec="Taxon"/>
+	      <taxon id="sp35" spec="Taxon"/>
 	      <taxon id="sp37" spec="Taxon"/>
+	      <taxon id="sp38" spec="Taxon"/>
 	      <taxon id="sp39" spec="Taxon"/>
 	      <taxon id="sp40" spec="Taxon"/>
 	      <taxon id="sp41" spec="Taxon"/>
 	      <taxon id="sp42" spec="Taxon"/>
 	      <taxon id="sp43" spec="Taxon"/>
+	      <taxon id="sp44" spec="Taxon"/>
 	      <taxon id="sp46" spec="Taxon"/>
 	      <taxon id="sp47" spec="Taxon"/>
 	      <taxon id="sp48" spec="Taxon"/>
 	      <taxon id="sp49" spec="Taxon"/>
 	      <taxon id="sp50" spec="Taxon"/>
 	      <taxon id="sp51" spec="Taxon"/>
+	      <taxon id="sp52" spec="Taxon"/>
+	      <taxon id="sp53" spec="Taxon"/>
 	      <taxon id="sp54" spec="Taxon"/>
 	      <taxon id="sp55" spec="Taxon"/>
 	      <taxon id="sp56" spec="Taxon"/>
 	      <taxon id="sp57" spec="Taxon"/>
+	      <taxon id="sp58" spec="Taxon"/>
 	      <taxon id="sp59" spec="Taxon"/>
 	      <taxon id="sp60" spec="Taxon"/>
 	      <taxon id="sp61" spec="Taxon"/>
 	      <taxon id="sp62" spec="Taxon"/>
 	      <taxon id="sp63" spec="Taxon"/>
+	      <taxon id="sp65" spec="Taxon"/>
+	      <taxon id="sp66" spec="Taxon"/>
+	      <taxon id="sp67" spec="Taxon"/>
 	      <taxon id="sp68" spec="Taxon"/>
 	      <taxon id="sp69" spec="Taxon"/>
 	      <taxon id="sp70" spec="Taxon"/>
 	      <taxon id="sp71" spec="Taxon"/>
 	      <taxon id="sp72" spec="Taxon"/>
 	      <taxon id="sp73" spec="Taxon"/>
+	      <taxon id="sp74" spec="Taxon"/>
+	      <taxon id="sp75" spec="Taxon"/>
 	      <taxon id="sp76" spec="Taxon"/>
 	      <taxon id="sp77" spec="Taxon"/>
 	      <taxon id="sp78" spec="Taxon"/>
 	      <taxon id="sp79" spec="Taxon"/>
+	      <taxon id="sp80" spec="Taxon"/>
 	      <taxon id="sp81" spec="Taxon"/>
-	      <taxon id="sp82" spec="Taxon"/>
 	      <taxon id="sp83" spec="Taxon"/>
 	      <taxon id="sp84" spec="Taxon"/>
 	      <taxon id="sp85" spec="Taxon"/>
@@ -78,7 +98,6 @@
 	      <taxon id="sp87" spec="Taxon"/>
 	      <taxon id="sp88" spec="Taxon"/>
 	      <taxon id="sp89" spec="Taxon"/>
-	      <taxon id="sp90" spec="Taxon"/>
 	      <taxon id="sp91" spec="Taxon"/>
 	      <taxon id="sp92" spec="Taxon"/>
 	      <taxon id="sp93" spec="Taxon"/>
@@ -91,19 +110,60 @@
 	      <taxon id="sp100" spec="Taxon"/>
 	      <taxon id="sp101" spec="Taxon"/>
 	      <taxon id="sp102" spec="Taxon"/>
+	      <taxon id="sp103" spec="Taxon"/>
+	      <taxon id="sp104" spec="Taxon"/>
+	      <taxon id="sp105" spec="Taxon"/>
+	      <taxon id="sp106" spec="Taxon"/>
+	      <taxon id="sp107" spec="Taxon"/>
+	      <taxon id="sp108" spec="Taxon"/>
+	      <taxon id="sp109" spec="Taxon"/>
+	      <taxon id="sp110" spec="Taxon"/>
+	      <taxon id="sp111" spec="Taxon"/>
+	      <taxon id="sp112" spec="Taxon"/>
+	      <taxon id="sp113" spec="Taxon"/>
+	      <taxon id="sp114" spec="Taxon"/>
+	      <taxon id="sp115" spec="Taxon"/>
+	      <taxon id="sp116" spec="Taxon"/>
+	      <taxon id="sp117" spec="Taxon"/>
+	      <taxon id="sp118" spec="Taxon"/>
+	      <taxon id="sp119" spec="Taxon"/>
+	      <taxon id="sp120" spec="Taxon"/>
+	      <taxon id="sp121" spec="Taxon"/>
+	      <taxon id="sp122" spec="Taxon"/>
+	      <taxon id="sp123" spec="Taxon"/>
+	      <taxon id="sp124" spec="Taxon"/>
+	      <taxon id="sp125" spec="Taxon"/>
+	      <taxon id="sp126" spec="Taxon"/>
+	      <taxon id="sp127" spec="Taxon"/>
+	      <taxon id="sp128" spec="Taxon"/>
+	      <taxon id="sp129" spec="Taxon"/>
+	      <taxon id="sp130" spec="Taxon"/>
+	      <taxon id="sp131" spec="Taxon"/>
+	      <taxon id="sp132" spec="Taxon"/>
+	      <taxon id="sp133" spec="Taxon"/>
+	      <taxon id="sp134" spec="Taxon"/>
+	      <taxon id="sp135" spec="Taxon"/>
+	      <taxon id="sp136" spec="Taxon"/>
+	      <taxon id="sp137" spec="Taxon"/>
+	      <taxon id="sp138" spec="Taxon"/>
+	      <taxon id="sp139" spec="Taxon"/>
+	      <taxon id="sp140" spec="Taxon"/>
+	      <taxon id="sp141" spec="Taxon"/>
+	      <taxon id="sp142" spec="Taxon"/>
+	      <taxon id="sp143" spec="Taxon"/>
 	    </taxonset>
 	  </tree>
 
-	  <traitStash id="TraitStash" spec="SSE.TraitStash" value="sp15=2,sp24=2,sp25=1,sp27=1,sp29=2,sp34=2,sp36=2,sp37=2,sp39=2,sp40=2,sp41=2,sp42=1,sp43=2,sp46=2,sp47=2,sp48=1,sp49=2,sp50=2,sp51=2,sp54=1,sp55=1,sp56=2,sp57=2,sp59=2,sp60=2,sp61=2,sp62=2,sp63=2,sp68=2,sp69=2,sp70=2,sp71=1,sp72=2,sp73=2,sp76=2,sp77=2,sp78=2,sp79=1,sp81=2,sp82=2,sp83=2,sp84=2,sp85=2,sp86=2,sp87=2,sp88=1,sp89=2,sp90=2,sp91=2,sp92=2,sp93=2,sp94=2,sp95=2,sp96=2,sp97=2,sp98=2,sp99=2,sp100=2,sp101=2,sp102=2" numberOfStates="2">
+	  <traitStash id="TraitStash" spec="SSE.TraitStash" value="sp6=1,sp8=1,sp11=2,sp13=2,sp16=2,sp19=2,sp20=2,sp22=2,sp23=2,sp24=2,sp25=1,sp27=2,sp30=2,sp31=1,sp33=1,sp34=2,sp35=2,sp37=2,sp38=2,sp39=2,sp40=2,sp41=2,sp42=2,sp43=2,sp44=2,sp46=1,sp47=2,sp48=2,sp49=2,sp50=2,sp51=2,sp52=2,sp53=2,sp54=2,sp55=2,sp56=2,sp57=2,sp58=2,sp59=2,sp60=1,sp61=2,sp62=2,sp63=2,sp65=2,sp66=2,sp67=2,sp68=1,sp69=2,sp70=2,sp71=1,sp72=2,sp73=1,sp74=2,sp75=2,sp76=2,sp77=2,sp78=1,sp79=2,sp80=2,sp81=2,sp83=2,sp84=2,sp85=2,sp86=2,sp87=2,sp88=2,sp89=2,sp91=2,sp92=2,sp93=2,sp94=2,sp95=2,sp96=2,sp97=2,sp98=2,sp99=2,sp100=2,sp101=2,sp102=2,sp103=2,sp104=2,sp105=2,sp106=2,sp107=2,sp108=2,sp109=2,sp110=2,sp111=1,sp112=2,sp113=1,sp114=1,sp115=2,sp116=2,sp117=2,sp118=2,sp119=2,sp120=2,sp121=2,sp122=2,sp123=2,sp124=2,sp125=2,sp126=2,sp127=2,sp128=2,sp129=2,sp130=2,sp131=2,sp132=2,sp133=2,sp134=2,sp135=2,sp136=2,sp137=2,sp138=2,sp139=2,sp140=2,sp141=2,sp142=2,sp143=2" numberOfStates="2">
 	    <taxa idref="TaxonSet"/>
 	  </traitStash>
 
-	  <lambda id="Lambda" dimension="2" spec="parameter.RealParameter">0.09345285 0.1784429</lambda>
+	  <lambda id="Lambda" dimension="2" spec="parameter.RealParameter">0.2587538 0.1287855</lambda>
 	    
-	  <mu id="Mu" dimension="2" spec="parameter.RealParameter">0.02256041 0.001453006</mu>
+	  <mu id="Mu" dimension="2" spec="parameter.RealParameter">0.07988842 0.06205894</mu>
 
 	  <instantaneousRateMatrix id="InstantaneousRateMatrix" spec="SSE.InstantaneousRateMatrix" numberOfStates="2">
-	    <parameter id="FlatQMatrix" dimension="2" lower="0.0" name="flatQMatrix">0.02256041 0.001453006</parameter>
+	    <parameter id="FlatQMatrix" dimension="2" lower="0.0" name="flatQMatrix">0.09447556 0.06448523</parameter>
 	  </instantaneousRateMatrix>
 
 	  <pi id="Pi" dimension="4" spec="parameter.RealParameter">0.0 0.0 0.5 0.5</pi>

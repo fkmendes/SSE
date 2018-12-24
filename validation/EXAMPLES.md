@@ -6,6 +6,9 @@ You are going to need the following R packages:
 * ape
 * diversitree
 * hisse
+* ggplot2
+* gridExtra
+* RColorBrewer
 
 ## Running simulations in R (see examples_xml_inputs.R)    
 ### BiSSE_fixed_tree_SDSEP.xml and BiSSE_fixed_tree_HSDSEP.xml    
@@ -17,10 +20,10 @@ library(ape)
 library(diversitree)
 library(hisse)
 
-pars <- c(.15, .3, .1, .1, .1, .1) # lambdas, mus, qs
+pars <- c(.1, .5, .05, .05, .1, .1) # lambdas, mus, qs
 
 set.seed(12345)
-phy <- tree.bisse(pars, max.taxa=60, include.extinct=FALSE, x0=NA)
+phy <- tree.bisse(pars, max.taxa=120, include.extinct=FALSE, x0=NA)
 
 # tree (for .xml)
 write.tree(phy) # see tree
@@ -110,11 +113,18 @@ python scripts/parse_asm_treesfile.py ../examples/BiSSE_fixed_tree_SDSEP_SCM.tre
 ```
 
 ## Plotting all graphs in R (see examples_xml_plots.R)    
+If you executed the previous steps (and ran BEAST), you will have produced
 
-You can find all the code to plot the posterior distributions (of all parameters of all .xmls we produced in the steps above) in examples_xml_plots.R.
+examples/BiSSE_fixed_tree_SDSEP.log
+examples/BiSSE_fixed_tree_on_HiSSE_HSDSEP.log
+examples/HiSSE_fixed_tree_on_HiSSE_HSDSEP.log
+examples/ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.log
+
+You can find all the code to plot the posterior distributions and other graphs in examples_xml_plots.R.
 We will just call the script and let it do all the work.    
 
 ```
-Rscript example_xml_plots.R /path/to/SSE/validation
+mkdir /path/to/SSE/validation/plots
+Rscript r_scripts/example_xml_plots.R /path/to/SSE/validation
 ```
 
