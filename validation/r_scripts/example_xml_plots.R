@@ -45,6 +45,29 @@ make.post.plot <- function(a.df, var.col, param.name, x.min.max.vec, a.color.fil
     return(post.samples.plot)
 }
 
+make.post.plot.no.mle <- function(a.df, var.col, param.name, x.min.max.vec, a.color.fill, a.color.line, a.truth, a.mean) {
+    post.samples.plot = ggplot(a.df, aes(x=a.df[,var.col])) +
+        geom_histogram(aes(y=stat(density)), color=a.color.line, fill=a.color.fill, alpha=.01, bins=40, size=2) +
+        geom_histogram(aes(y=stat(density)), fill=a.color.fill, bins=40) +
+        annotate("point", y=0, x=a.mean, size=3) +
+        geom_vline(xintercept=a.truth, lty="dashed") +
+        xlab(param.name) + ylab("Density") + 
+        theme(
+            panel.grid.minor = element_blank(),
+            panel.border = element_blank(),
+            panel.background = element_blank(),
+            plot.background = element_blank(),
+            plot.title = element_text(hjust=0.5),
+            axis.line = element_line(),
+            axis.ticks = element_line(color="black"),
+            axis.text.x = element_text(color="black", size=10),
+            axis.text.y = element_text(color="black", size=10),
+            axis.title.x = element_text(size=12),
+            axis.title.y = element_text(size=12)
+        ) 
+    return(post.samples.plot)
+}
+
 make.post.dens.plot <- function(a.df, param.name, param.xlab, some.colors, some.means, a.truth) {
     the.plot = ggplot(a.df, aes(x=a.df[,param.name], fill=Model)) + geom_density(alpha=.25, color=NA) +
         xlab(param.xlab) + ylab("Density") +
@@ -77,8 +100,8 @@ make.post.dens.plot <- function(a.df, param.name, param.xlab, some.colors, some.
 pal <- brewer.pal(8, "Accent")
 pal <- colorRampPalette(pal)(11)
 
-log.df <- read.table("../examples/BiSSE_fixed_tree_HSDSEP.log", header=TRUE)
-log.df <- log.df[12:nrow(log.df),] # removing burnin and extra generations
+log.df <- read.table("../examples/BiSSE_fixed_tree_SDSEP.log", header=TRUE)
+log.df <- log.df[102:nrow(log.df),] # removing burnin and extra generations
 
 ## -- MLE from diversitree -- ##
 ##      lambda0      lambda1          mu0          mu1          q01          q10 
@@ -133,15 +156,71 @@ fill.color = lighten(pal[6], 1.3)
 q10.plot <- make.post.plot(log.df, 10, expression(q[1][0]), q10.min.max, fill.color, pal[6], q10.truth, q10.mle, q10.mean)
 ## q10.plot
 
-pdf("plots/posts_BiSSE_HSDSEP_60spp.pdf", width=6, height=6)
+pdf("plots/BiSSE_fixed_tree_SDSEP_posteriors_120spp.pdf", width=6, height=5)
 grid.arrange(l0.plot, l1.plot,
              m0.plot, m1.plot,
              q01.plot, q10.plot)
 dev.off()
 
+# ----- Plotting ClaSSE_fixed_tree_SDSEP ----- #
+log.df <- read.table("../examples/ClaSSE_fixed_tree_SDSEP.log", header=TRUE)
+log.df <- log.df[102:nrow(log.df),] # removing burnin and extra generations
+
+l.s.truth <- 0.1
+l.s.mean <- mean(log.df$SympatricRate)
+l.s.min.max <- range(log.df$SympatricRate)
+
+l.ss.truth <- 0.3
+l.ss.mean <- mean(log.df$SubsympatricRate)
+l.ss.min.max <- range(log.df$SubsympatricRate)
+
+l.v.truth <- 0.5
+l.v.mean <- mean(log.df$VicariantRate)
+l.v.min.max <- range(log.df$VicariantRate)
+
+m0.truth <- 0.05
+m0.mean <- mean(log.df$Mu1)
+m0.min.max <- range(log.df$Mu1)
+
+m1.truth <- 0.05
+m1.mean <- mean(log.df$Mu2)
+m1.min.max <- range(log.df$Mu2)
+
+m2.truth <- 0.05
+m2.mean <- mean(log.df$Mu3)
+m2.min.max <- range(log.df$Mu3)
+
+q01.truth <- 0.1
+q01.mean <- mean(log.df$FlatQMatrix1)
+q01.min.max <- range(log.df$FlatQMatrix1)
+
+q02.truth <- 0.1
+q02.mean <- mean(log.df$FlatQMatrix2)
+q02.min.max <- range(log.df$FlatQMatrix2)
+
+q11.truth <- 0.1
+q11.mean <- mean(log.df$FlatQMatrix3)
+q11.min.max <- range(log.df$FlatQMatrix3)
+
+q12.truth <- 0.1
+q12.mean <- mean(log.df$FlatQMatrix4)
+q12.min.max <- range(log.df$FlatQMatrix4)
+
+q20.truth <- 0.1
+q20.mean <- mean(log.df$FlatQMatrix5)
+q20.min.max <- range(log.df$FlatQMatrix5)
+
+q21.truth <- 0.1
+q21.mean <- mean(log.df$FlatQMatrix6)
+q21.min.max <- range(log.df$FlatQMatrix6)
+
+fill.color = lighten(pal[1], 1.3)
+l.s.plot <- make.post.plot.no.mle(log.df, 5, expression(lambda[sym]), l.s.min.max, fill.color, pal[1], l.s.truth, l.s.mean)
+l.s.plot
+
 # ----- Plotting BiSSE_fixed_tree_on_HiSSE_HSDSEP ----- #
 log.df <- read.table("../examples/BiSSE_fixed_tree_on_HiSSE_HSDSEP.log", header=TRUE)
-log.df <- log.df[12:nrow(log.df),] # removing burnin and extra generations
+log.df <- log.df[102:nrow(log.df),] # removing burnin and extra generations
 
 ## -- MLE from diversitree -- ##
 ##      lambda0      lambda1          mu0          mu1          q01          q10 
@@ -191,11 +270,11 @@ fill.color = lighten(pal[3], 1.3)
 m0.plot <- make.post.plot(log.df, 7, expression(mu[0]), m0.min.max, fill.color, pal[3], m0.truth, m0.mle, m0.mean)
 ## m0.plot
 
-fill.color = lighten(pal[4], 1.2)
+fill.color = lighten(pal[4], 1.1)
 m1.plot <- make.post.plot(log.df, 8, expression(mu[1]), m1.min.max, fill.color, pal[4], m1.truth, m1.mle, m1.mean)
 ## m1.plot 
 
-fill.color = lighten(pal[5], 1.4)
+fill.color = lighten(pal[5], 1.3)
 q01.plot <- make.post.plot(log.df, 9, expression(q[0][1]), q01.min.max, fill.color, pal[5], q01.truth, q01.mle, q01.mean)
 ## q01.plot
 
@@ -211,7 +290,7 @@ dev.off()
 
 # ----- Plotting HiSSE_fixed_tree_on_HiSSE_HSDSEP  ----- #
 log.df <- read.table("../examples/HiSSE_fixed_tree_on_HiSSE_HSDSEP.log", header=TRUE)
-log.df <- log.df[12:nrow(log.df),] # removing burnin and extra generations
+log.df <- log.df[102:nrow(log.df),] # removing burnin and extra generations
 
 ## -- MLE from hisse -- ##
 
@@ -368,11 +447,11 @@ scm.df <- unname(as.matrix(log.df[order(match(log.df$ndname, phy$node.label)),c(
 pal <- brewer.pal(8, "Set1")
 pal <- colorRampPalette(pal)(8)
 
-pdf("plots/BiSSE_SDSEP_60spp_SCM.pdf", width=6, height=5.8)
-plot(phy, cex=.5, label.offset=0.2)
+pdf("plots/BiSSE_SDSEP_60spp_SCM.pdf", width=5, height=5)
+plot(phy, show.tip.label=FALSE, type="fan")
 ## nodelabels(pie=t(anc.states), cex=.5, piecol=c(pal[2],pal[6])) # from example_xml_input
 nodelabels(pie=scm.df, cex=.5, piecol=c(pal[2],pal[6]))
-tiplabels(phy$tip.state, frame="none", cex=.5, adj=c(-7))
+tiplabels(phy$tip.state, frame="none", cex=.6, offset=1)
 dev.off()
 
 # ----- Plotting ModelAveraging_fixed_tree_BSVSSSDSEP ----- #

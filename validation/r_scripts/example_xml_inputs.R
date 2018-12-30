@@ -150,6 +150,163 @@ fit <- find.mle(lik, pars)
 ##      lambda0      lambda1          mu0          mu1          q01          q10 
 ## 9.148731e-02 5.415631e-01 2.056091e-05 3.561561e-05 2.588266e-01 8.936368e-02 
 
+# ----- ClaSSE_fixed_tree_SDSEP ----- #
+argnames(make.classe(tree=phy, states=phy$tip.state+1, k=3, strict=FALSE)) # just to show order of parameters in classe object
+
+##  [1] "lambda111" "lambda112" "lambda113" "lambda122" "lambda123" "lambda133"
+##  [7] "lambda211" "lambda212" "lambda213" "lambda222" "lambda223" "lambda233"
+## [13] "lambda311" "lambda312" "lambda313" "lambda322" "lambda323" "lambda333"
+## [19] "mu1"       "mu2"       "mu3"       "q12"       "q13"       "q21"      
+## [25] "q23"       "q31"       "q32"      
+
+pars <- c(.1, 0.0, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, .1, 0.0, 0.0,
+          0.0, .5, .3, 0.0, .3, .1,
+          .05, .05, .05, # mu1, mu2, mu3
+          .1, .1, .1, # q12, q13, q21
+          .1, .1, .1) # q23, q31, q32
+
+set.seed(12345)
+phy <- tree.classe(pars, max.taxa=120, x0=NA, include.extinct=FALSE)
+
+# tree
+write.tree(phy)
+
+## "(((((((((sp151:0.2970300337,sp152:0.2970300337)nd161:0.416343853,sp142:0.7133738867)nd141:1.804695261,(sp92:2.407271845,sp93:2.407271845)nd142:0.110797303)nd90:3.136343939,sp41:5.654413087)nd53:2.295765957,((sp48:4.576332638,(sp50:4.480962459,((sp85:2.723247063,sp86:2.723247063)nd130:0.1364736545,(((sp145:0.5740892223,sp146:0.5740892223)nd153:0.5542578105,(sp129:1.102984711,sp130:1.102984711)nd154:0.02536232178)nd139:1.43897632,((sp101:2.207608979,sp102:2.207608979)nd145:0.188695966,sp94:2.396304945)nd140:0.1710184084)nd131:0.292397364)nd127:1.621241742)nd105:0.09537017956)nd55:3.344812061,sp28:7.921144699)nd54:0.0290343454)nd35:4.429668755,((sp117:1.460243154,sp118:1.460243154)nd108:5.913408404,(((sp126:1.176640433,sp127:1.176640433)nd109:3.27806327,((sp88:2.560187181,sp89:2.560187181)nd126:0.5030674068,sp71:3.063254588)nd110:1.391449115)nd63:2.675610383,(((sp155:0.22788305,sp156:0.22788305)nd163:0.1092294583,sp150:0.3371125083)nd158:0.6660442865,sp135:1.003156795)nd64:6.127157291)nd58:0.2433374723)nd36:5.006196242)nd34:0.1151394143,sp13:12.49498721)nd32:0.2806127433,(((sp36:6.07558979,(sp44:5.085275745,sp45:5.085275745)nd81:0.9903140443)nd47:3.555030305,sp20:9.630620094)nd44:0.8724231347,sp15:10.50304323)nd33:2.272556729)nd6:8.155879882,(((((((sp147:0.3650293315,(sp153:0.2845390462,sp154:0.2845390462)nd162:0.08049028529)nd147:1.305616776,(sp119:1.453329243,sp120:1.453329243)nd148:0.2173168652)nd124:1.452874128,sp69:3.123520236)nd99:3.328471099,(sp99:2.302653954,sp100:2.302653954)nd77:4.149337381)nd66:0.4252644714,((sp95:2.385849382,sp96:2.385849382)nd72:4.170162852,(((sp70:3.109966528,(sp82:2.741991085,sp83:2.741991085)nd125:0.3679754429)nd95:2.368968331,sp42:5.478934859)nd74:0.9882773095,((sp91:2.442187647,sp106:2.442187647)nd82:3.63321654,(sp157:0.2256171162,sp158:0.2256171162)nd83:5.849787071)nd80:0.3918079813)nd73:0.08880006541)nd67:0.3212435719)nd65:9.776438968,(((sp43:5.252015624,(sp79:2.803705655,(sp84:2.740623361,(sp113:1.562108161,(sp143:0.6598910829,sp144:0.6598910829)nd150:0.9022170779)nd135:1.1785152)nd132:0.06308229412)nd98:2.448309969)nd85:0.4993754086,(sp63:3.502885955,sp64:3.502885955)nd86:2.248505078)nd48:10.36466989,(sp51:4.46637739,sp52:4.46637739)nd106:11.64968353)nd18:0.5376338492)nd11:2.954773167,(((sp39:7.383926366,sp31:7.383926366)nd30:6.158442949,sp11:13.54236931)nd13:5.268821698,((sp18:16.58582574,(sp32:7.352791203,((sp121:1.434447698,(sp124:1.180741457,sp125:1.180741457)nd152:0.2537062412)nd146:5.377508553,(((sp138:0.8387875379,(sp140:0.8103231383,sp141:0.8103231383)nd159:0.02846439957)nd96:4.555656845,(sp90:2.497880285,((sp148:0.3590958059,sp149:0.3590958059)nd156:0.6825832171,(sp161:0.1209850427,sp162:0.1209850427)nd157:0.9206939803)nd143:1.456201262)nd97:2.896564098)nd70:1.269311365,(((sp115:1.488286205,sp116:1.488286205)nd89:4.18436034,sp40:5.672646545)nd87:0.04506981977,((sp133:1.031500626,sp134:1.031500626)nd133:1.750199466,((sp131:1.10123198,sp132:1.10123198)nd136:1.572715306,(sp128:1.127079621,(sp136:0.9794983809,sp137:0.9794983809)nd155:0.1475812398)nd149:1.546867665)nd134:0.1077528064)nd119:2.936016273)nd71:0.9460393827)nd69:0.1482005039)nd59:0.5408349518)nd22:9.233034535)nd15:1.849852712,(((((sp57:3.920283848,((sp107:1.813907675,sp108:1.813907675)nd117:1.913958592,(sp139:0.8344412231,(sp163:0.0357731472,sp164:0.0357731472)nd160:0.7986680759)nd123:2.893425044)nd114:0.1924175807)nd101:1.0115441,((sp60:3.578325358,(sp103:2.115068739,sp104:2.115068739)nd138:1.463256619)nd103:1.340745351,sp65:4.919070709)nd102:0.01275723948)nd49:6.19690397,(((sp97:5.497329113,(sp114:1.513451635,(sp122:1.362934701,sp123:1.362934701)nd151:0.1505169334)nd94:3.983877479)nd60:1.738287931,(((sp73:2.996910825,sp78:2.996910825)nd115:0.7421721701,(sp80:2.752739442,sp81:2.752739442)nd116:0.9863435536)nd91:1.813672423,(sp110:1.731646589,sp111:1.731646589)nd111:3.821108829)nd84:1.682861625)nd42:3.474648558,(sp46:4.714759442,sp47:4.714759442)nd51:5.99550616)nd41:0.4184663164)nd31:3.858130051,(((sp56:3.943140603,(sp159:0.1212999078,sp160:0.1212999078)nd113:3.821840695)nd78:2.192987178,(sp54:4.092328803,sp55:4.092328803)nd79:2.043798978)nd50:4.672985872,(sp29:7.566981444,sp30:7.566981444)nd40:3.242132208)nd29:4.177748316)nd25:0.9196375993,(sp26:8.607195636,sp27:8.607195636)nd27:7.299303933)nd16:2.529178882)nd14:0.3755125623)nd12:0.797276928)nd10:1.323011899):0.0;"
+
+# taxa
+cat(paste0("<taxon id=\"", phy$tip.label, "\" spec=\"Taxon\"/>"), sep="\n")
+
+## <taxon id="sp11" spec="Taxon"/>
+## <taxon id="sp13" spec="Taxon"/>
+## <taxon id="sp15" spec="Taxon"/>
+## <taxon id="sp18" spec="Taxon"/>
+## <taxon id="sp20" spec="Taxon"/>
+## <taxon id="sp26" spec="Taxon"/>
+## <taxon id="sp27" spec="Taxon"/>
+## <taxon id="sp28" spec="Taxon"/>
+## <taxon id="sp29" spec="Taxon"/>
+## <taxon id="sp30" spec="Taxon"/>
+## <taxon id="sp31" spec="Taxon"/>
+## <taxon id="sp32" spec="Taxon"/>
+## <taxon id="sp36" spec="Taxon"/>
+## <taxon id="sp39" spec="Taxon"/>
+## <taxon id="sp40" spec="Taxon"/>
+## <taxon id="sp41" spec="Taxon"/>
+## <taxon id="sp42" spec="Taxon"/>
+## <taxon id="sp43" spec="Taxon"/>
+## <taxon id="sp44" spec="Taxon"/>
+## <taxon id="sp45" spec="Taxon"/>
+## <taxon id="sp46" spec="Taxon"/>
+## <taxon id="sp47" spec="Taxon"/>
+## <taxon id="sp48" spec="Taxon"/>
+## <taxon id="sp50" spec="Taxon"/>
+## <taxon id="sp51" spec="Taxon"/>
+## <taxon id="sp52" spec="Taxon"/>
+## <taxon id="sp54" spec="Taxon"/>
+## <taxon id="sp55" spec="Taxon"/>
+## <taxon id="sp56" spec="Taxon"/>
+## <taxon id="sp57" spec="Taxon"/>
+## <taxon id="sp60" spec="Taxon"/>
+## <taxon id="sp63" spec="Taxon"/>
+## <taxon id="sp64" spec="Taxon"/>
+## <taxon id="sp65" spec="Taxon"/>
+## <taxon id="sp69" spec="Taxon"/>
+## <taxon id="sp70" spec="Taxon"/>
+## <taxon id="sp71" spec="Taxon"/>
+## <taxon id="sp73" spec="Taxon"/>
+## <taxon id="sp78" spec="Taxon"/>
+## <taxon id="sp79" spec="Taxon"/>
+## <taxon id="sp80" spec="Taxon"/>
+## <taxon id="sp81" spec="Taxon"/>
+## <taxon id="sp82" spec="Taxon"/>
+## <taxon id="sp83" spec="Taxon"/>
+## <taxon id="sp84" spec="Taxon"/>
+## <taxon id="sp85" spec="Taxon"/>
+## <taxon id="sp86" spec="Taxon"/>
+## <taxon id="sp88" spec="Taxon"/>
+## <taxon id="sp89" spec="Taxon"/>
+## <taxon id="sp90" spec="Taxon"/>
+## <taxon id="sp91" spec="Taxon"/>
+## <taxon id="sp92" spec="Taxon"/>
+## <taxon id="sp93" spec="Taxon"/>
+## <taxon id="sp94" spec="Taxon"/>
+## <taxon id="sp95" spec="Taxon"/>
+## <taxon id="sp96" spec="Taxon"/>
+## <taxon id="sp97" spec="Taxon"/>
+## <taxon id="sp99" spec="Taxon"/>
+## <taxon id="sp100" spec="Taxon"/>
+## <taxon id="sp101" spec="Taxon"/>
+## <taxon id="sp102" spec="Taxon"/>
+## <taxon id="sp103" spec="Taxon"/>
+## <taxon id="sp104" spec="Taxon"/>
+## <taxon id="sp106" spec="Taxon"/>
+## <taxon id="sp107" spec="Taxon"/>
+## <taxon id="sp108" spec="Taxon"/>
+## <taxon id="sp110" spec="Taxon"/>
+## <taxon id="sp111" spec="Taxon"/>
+## <taxon id="sp113" spec="Taxon"/>
+## <taxon id="sp114" spec="Taxon"/>
+## <taxon id="sp115" spec="Taxon"/>
+## <taxon id="sp116" spec="Taxon"/>
+## <taxon id="sp117" spec="Taxon"/>
+## <taxon id="sp118" spec="Taxon"/>
+## <taxon id="sp119" spec="Taxon"/>
+## <taxon id="sp120" spec="Taxon"/>
+## <taxon id="sp121" spec="Taxon"/>
+## <taxon id="sp122" spec="Taxon"/>
+## <taxon id="sp123" spec="Taxon"/>
+## <taxon id="sp124" spec="Taxon"/>
+## <taxon id="sp125" spec="Taxon"/>
+## <taxon id="sp126" spec="Taxon"/>
+## <taxon id="sp127" spec="Taxon"/>
+## <taxon id="sp128" spec="Taxon"/>
+## <taxon id="sp129" spec="Taxon"/>
+## <taxon id="sp130" spec="Taxon"/>
+## <taxon id="sp131" spec="Taxon"/>
+## <taxon id="sp132" spec="Taxon"/>
+## <taxon id="sp133" spec="Taxon"/>
+## <taxon id="sp134" spec="Taxon"/>
+## <taxon id="sp135" spec="Taxon"/>
+## <taxon id="sp136" spec="Taxon"/>
+## <taxon id="sp137" spec="Taxon"/>
+## <taxon id="sp138" spec="Taxon"/>
+## <taxon id="sp139" spec="Taxon"/>
+## <taxon id="sp140" spec="Taxon"/>
+## <taxon id="sp141" spec="Taxon"/>
+## <taxon id="sp142" spec="Taxon"/>
+## <taxon id="sp143" spec="Taxon"/>
+## <taxon id="sp144" spec="Taxon"/>
+## <taxon id="sp145" spec="Taxon"/>
+## <taxon id="sp146" spec="Taxon"/>
+## <taxon id="sp147" spec="Taxon"/>
+## <taxon id="sp148" spec="Taxon"/>
+## <taxon id="sp149" spec="Taxon"/>
+## <taxon id="sp150" spec="Taxon"/>
+## <taxon id="sp151" spec="Taxon"/>
+## <taxon id="sp152" spec="Taxon"/>
+## <taxon id="sp153" spec="Taxon"/>
+## <taxon id="sp154" spec="Taxon"/>
+## <taxon id="sp155" spec="Taxon"/>
+## <taxon id="sp156" spec="Taxon"/>
+## <taxon id="sp157" spec="Taxon"/>
+## <taxon id="sp158" spec="Taxon"/>
+## <taxon id="sp159" spec="Taxon"/>
+## <taxon id="sp160" spec="Taxon"/>
+## <taxon id="sp161" spec="Taxon"/>
+## <taxon id="sp162" spec="Taxon"/>
+## <taxon id="sp163" spec="Taxon"/>
+## <taxon id="sp164" spec="Taxon"/>
+
+# tip data
+paste(paste(phy$tip.label, (phy$tip.state), sep="="), collapse=",")
+
+## "sp11=2,sp13=1,sp15=1,sp18=1,sp20=3,sp26=3,sp27=2,sp28=2,sp29=1,sp30=2,sp31=2,sp32=2,sp36=2,sp39=3,sp40=2,sp41=1,sp42=1,sp43=2,sp44=2,sp45=2,sp46=3,sp47=1,sp48=3,sp50=2,sp51=1,sp52=2,sp54=2,sp55=2,sp56=2,sp57=1,sp60=2,sp63=1,sp64=3,sp65=2,sp69=3,sp70=1,sp71=2,sp73=2,sp78=3,sp79=2,sp80=1,sp81=1,sp82=1,sp83=2,sp84=1,sp85=1,sp86=2,sp88=3,sp89=1,sp90=1,sp91=2,sp92=1,sp93=2,sp94=3,sp95=1,sp96=1,sp97=3,sp99=1,sp100=2,sp101=1,sp102=1,sp103=2,sp104=2,sp106=2,sp107=1,sp108=1,sp110=2,sp111=2,sp113=2,sp114=2,sp115=2,sp116=2,sp117=2,sp118=2,sp119=1,sp120=2,sp121=1,sp122=1,sp123=2,sp124=1,sp125=1,sp126=2,sp127=3,sp128=2,sp129=1,sp130=2,sp131=1,sp132=1,sp133=1,sp134=1,sp135=2,sp136=3,sp137=3,sp138=2,sp139=1,sp140=1,sp141=2,sp142=3,sp143=2,sp144=3,sp145=1,sp146=3,sp147=2,sp148=1,sp149=1,sp150=1,sp151=1,sp152=2,sp153=1,sp154=2,sp155=1,sp156=1,sp157=1,sp158=2,sp159=2,sp160=2,sp161=2,sp162=2,sp163=1,sp164=3"
+
+# finding mle
+lik <- make.classe(phy, phy$tip.state, k=3)
+fit <- find.mle(lik, pars) # bombs!
+
 # ----- BiSSE_fixed_tree_on_HiSSE_dataset.xml ----- #
 pars <- c(.1,  .1,  .5,  # lambda 0, 1, 2
 .05, .05, .05, # mu 0, 1, 2
