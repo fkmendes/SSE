@@ -10,8 +10,19 @@ You are going to need the following R packages:
 * gridExtra
 * RColorBrewer
 
-## Running simulations in R (see examples_xml_inputs.R)    
-### BiSSE_fixed_tree_SDSEP.xml and BiSSE_fixed_tree_HSDSEP.xml    
+After completing step (1), you will have the following files:
+
+* examples/BiSSE_fixed_tree_SDSEP.log
+* examples/ClaSSE_fixed_tree_SDSEP.log
+* examples/BiSSE_fixed_tree_on_HiSSE_HSDSEP.log
+* examples/HiSSE_fixed_tree_on_HiSSE_HSDSEP.log
+* examples/ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.log
+
+You can skip step (1) and go straight to plotting the posteriors and the ancestral state reconstructions in step (2).
+In this case, you will use the files listed above that I also provide (inside the examples/ folder).
+
+## (1) Running simulations in R (see examples_xml_inputs.R)    
+### (1.1) BiSSE_fixed_tree_SDSEP.xml and BiSSE_fixed_tree_HSDSEP.xml    
 SDSEP and HSDSEP amount to the same analysis, we're doing them just to show the more general Java class with hidden states reduces to the original one.
 Simulating and computing MLEs below.    
 
@@ -39,7 +50,7 @@ lik <- make.bisse(phy, phy$tip.state)
 fit <- find.mle(lik, pars)
 ```
 
-### HiSSE_fixed_tree_on_HiSSE_HSDSEP.xml and BiSSE_fixed_tree_on_HiSSE_HSDSEP.xml    
+### (1.2) HiSSE_fixed_tree_on_HiSSE_HSDSEP.xml and BiSSE_fixed_tree_on_HiSSE_HSDSEP.xml    
 Conducting simulations with hidden trait (one hidden state), and computing MLEs.    
 
 ```
@@ -82,7 +93,7 @@ sim.dat <- data.frame(names(phy$tip.state), phy$tip.state)
 pp <- hisse(phy, sim.dat, f=c(1,1), hidden.states=TRUE, turnover.anc=turnover.anc, eps.anc=eps.anc, trans.rate=trans.rates.nodual.no0B, output.type="raw", root.type="equal", condition.on.survival=FALSE, root.p=NULL)
 ```
 
-### ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.xml
+### (1.3) ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.xml
 Conducting simulations with hidden trait (one hidden trait with one hidden state just like *_on_HiSSE_HSDSEP.xml examples above).    
 
 ```
@@ -105,14 +116,14 @@ paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
 
 After running .xml, remove header lines (starting with '#') from .log file, and save new file as 'ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP_noheader.log'.
 
-### Stochastic character mapping on 60-sp tree under BiSSE
+### (1.4) Stochastic character mapping on 60-sp tree under BiSSE
 
 ```
 cd validation/
 python scripts/parse_asm_treesfile.py ../examples/BiSSE_fixed_tree_SDSEP_SCM.trees 101 BiSSE_fixed_tree_SDSEP_SCM_parsed.txt
 ```
 
-## Plotting all graphs in R (see examples_xml_plots.R)    
+## (2) Plotting all graphs in R (see examples_xml_plots.R)    
 If you executed the previous steps (and ran BEAST), you will have produced
 
 examples/BiSSE_fixed_tree_SDSEP.log
