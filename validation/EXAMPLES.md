@@ -116,7 +116,7 @@ paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
 
 After running .xml, remove header lines (starting with '#') from .log file, and save new file as 'ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP_noheader.log'.
 
-### (1.4) Stochastic character mapping on 60-sp tree under BiSSE
+### (1.4) BiSSE_fixed_tree_SDSEP_SCM.log (stochastic character mapping on 60-sp tree under BiSSE)
 
 ```
 cd validation/
@@ -124,12 +124,6 @@ python scripts/parse_asm_treesfile.py ../examples/BiSSE_fixed_tree_SDSEP_SCM.tre
 ```
 
 ## (2) Plotting all graphs in R (see examples_xml_plots.R)    
-If you executed the previous steps (and ran BEAST), you will have produced
-
-examples/BiSSE_fixed_tree_SDSEP.log
-examples/BiSSE_fixed_tree_on_HiSSE_HSDSEP.log
-examples/HiSSE_fixed_tree_on_HiSSE_HSDSEP.log
-examples/ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.log
 
 You can find all the code to plot the posterior distributions and other graphs in examples_xml_plots.R.
 We will just call the script and let it do all the work.    
