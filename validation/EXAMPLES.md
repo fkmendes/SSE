@@ -124,11 +124,11 @@ sim.dat <- data.frame(names(phy$tip.state), phy$tip.state)
 pp <- hisse(phy, sim.dat, f=c(1,1), hidden.states=TRUE, turnover.anc=turnover.anc, eps.anc=eps.anc, trans.rate=trans.rates.nodual.no0B, output.type="raw", root.type="equal", condition.on.survival=FALSE, root.p=NULL)
 ```
 
-### (1.3) ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.xml
+### (1.4) ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.xml
 Same simulation of (1.2).
 After running .xml, remove header lines (starting with '#') from .log file, and save new file as 'ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP_noheader.log'.
 
-### (1.4) BiSSE_fixed_tree_SDSEP_SCM.trees (stochastic character mapping on 60-sp tree under BiSSE)
+### (1.5) BiSSE_fixed_tree_SDSEP_SCM.trees (stochastic character mapping on 60-sp tree under BiSSE)
 
 ```
 cd validation/
