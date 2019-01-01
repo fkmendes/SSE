@@ -10,7 +10,7 @@ You are going to need the following R packages:
 * gridExtra
 * RColorBrewer
 
-As you complete step (1), you will produce the .xmls named in the headers and should run the BEAST (the SSE package) on them.
+As you complete step (1), you will produce the .xmls named in the headers and should run BEAST (the SSE package) on them.
 In the end, you will have the following files:
 
 * examples/BiSSE_fixed_tree_SDSEP.log
