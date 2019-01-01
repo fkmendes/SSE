@@ -1,6 +1,6 @@
-# Generating input of example .xmls    
+# Generating input, runnning and parsing example .xml's    
 
-This will guide you through the preparation of input for the .xmls in the examples/ folder.
+This will guide you through the preparation of input for the .xml's in the examples/ folder.
 You are going to need the following R packages:
 
 * ape
@@ -10,7 +10,7 @@ You are going to need the following R packages:
 * gridExtra
 * RColorBrewer
 
-As you complete step (1), you will produce the .xmls named in the headers and should run BEAST (the SSE package) on them.
+As you complete step (1), you will produce the .xml's named in the headers and should run BEAST (the SSE package) on them.
 In the end, you will have the following files:
 
 * examples/BiSSE_fixed_tree_SDSEP.log
@@ -21,7 +21,7 @@ In the end, you will have the following files:
 * validation/BiSSE_fixed_tree_SDSEP_SCM_parsed.txt
 
 You can skip step (1) and go straight to plotting the posteriors and the ancestral state reconstructions in step (2).
-In this case, you will need to use the provided files (inside the examples/ and validation/ folder).
+In this case, you will need to use the provided files (inside the examples/ and validation/ folders).
 
 ## (1) Running simulations in R (see examples_xml_inputs.R)    
 ### (1.1) BiSSE_fixed_tree_SDSEP.xml    
@@ -138,6 +138,7 @@ python scripts/parse_asm_treesfile.py ../examples/BiSSE_fixed_tree_SDSEP_SCM.tre
 ## (2) Plotting all graphs in R (see examples_xml_plots.R)    
 
 You can find all the code to plot the posterior distributions and other graphs in examples_xml_plots.R.
+Below, "/path/to/SSE/validation" should be replaced with your local path to the validation folder that comes with this git repository.
 We will just call the script and let it do all the work.    
 
 ```
