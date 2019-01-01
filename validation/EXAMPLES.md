@@ -22,9 +22,8 @@ You can skip step (1) and go straight to plotting the posteriors and the ancestr
 In this case, you will use the files listed above that I also provide (inside the examples/ folder).
 
 ## (1) Running simulations in R (see examples_xml_inputs.R)    
-### (1.1) BiSSE_fixed_tree_SDSEP.xml and BiSSE_fixed_tree_HSDSEP.xml    
-SDSEP and HSDSEP amount to the same analysis, we're doing them just to show the more general Java class with hidden states reduces to the original one.
-Simulating and computing MLEs below.    
+### (1.1) BiSSE_fixed_tree_SDSEP.xml    
+Simulating and computing under BiSSE.    
 
 ```
 library(ape)
@@ -51,6 +50,7 @@ fit <- find.mle(lik, pars)
 ```
 
 ### (1.2) ClaSSE_fixed_tree_SDSEP.xml
+Simulating under ClaSSE (computing MLE with diversitree bombs).    
 
 ```
 argnames(make.classe(tree=phy, states=phy$tip.state+1, k=3, strict=FALSE)) # just to show order of parameters in classe object
@@ -80,7 +80,7 @@ fit <- find.mle(lik, pars) # bombs!
 ```
 
 ### (1.3) HiSSE_fixed_tree_on_HiSSE_HSDSEP.xml and BiSSE_fixed_tree_on_HiSSE_HSDSEP.xml    
-Conducting simulations with hidden trait (one hidden state), and computing MLEs.    
+Simulating with hidden trait (one hidden state; 0 <-> 1 <-> 1H), and computing MLEs.    
 
 ```
 pars <- c(.1,  .1,  .5,  # lambda 0, 1, 2
@@ -123,26 +123,7 @@ pp <- hisse(phy, sim.dat, f=c(1,1), hidden.states=TRUE, turnover.anc=turnover.an
 ```
 
 ### (1.3) ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP.xml
-Conducting simulations with hidden trait (one hidden trait with one hidden state just like *_on_HiSSE_HSDSEP.xml examples above).    
-
-```
-pars <- c(.1,  .1,  .5, .05, .05, .05, .1, 0.0, .1, .1, 0.0, .1) # pars above are equivalent to Fig. 1 in HiSSE paper
-
-set.seed(10000)
-phy <- tree.musse(pars, max.taxa=120, include.extinct=FALSE, x0=1)
-phy$tip.state[phy$tip.state==3] <- 2 # hiding states
-phy$tip.state <- phy$tip.state - 1
-
-# tree (for .xml)
-write.tree(phy)
-
-# taxa (for .xml)
-cat(paste0("<taxon id=\"", phy$tip.label, "\" spec=\"Taxon\"/>"), sep="\n")
-
-# tip data (for .xml)
-paste(paste(phy$tip.label, (phy$tip.state + 1), sep="="), collapse=",")
-```
-
+Same simulation of (1.2).
 After running .xml, remove header lines (starting with '#') from .log file, and save new file as 'ModelAveraging_fixed_tree_on_HiSSE_BSSVSSDSEP_noheader.log'.
 
 ### (1.4) BiSSE_fixed_tree_SDSEP_SCM.log (stochastic character mapping on 60-sp tree under BiSSE)
