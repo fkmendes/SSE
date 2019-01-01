@@ -10,7 +10,8 @@ You are going to need the following R packages:
 * gridExtra
 * RColorBrewer
 
-After completing step (1), you will have the following files:
+As you complete step (1), you will produce the .xmls named in the headers and should run the BEAST (the SSE package) on them.
+In the end, you will have the following files:
 
 * examples/BiSSE_fixed_tree_SDSEP.log
 * examples/ClaSSE_fixed_tree_SDSEP.log
@@ -20,7 +21,7 @@ After completing step (1), you will have the following files:
 * validation/BiSSE_fixed_tree_SDSEP_SCM_parsed.txt
 
 You can skip step (1) and go straight to plotting the posteriors and the ancestral state reconstructions in step (2).
-In this case, you will use the files listed above that I also provide (inside the examples/ folder).
+In this case, you will need to use the provided files (inside the examples/ and validation/ folder).
 
 ## (1) Running simulations in R (see examples_xml_inputs.R)    
 ### (1.1) BiSSE_fixed_tree_SDSEP.xml    
