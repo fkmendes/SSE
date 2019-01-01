@@ -50,7 +50,36 @@ lik <- make.bisse(phy, phy$tip.state)
 fit <- find.mle(lik, pars)
 ```
 
-### (1.2) HiSSE_fixed_tree_on_HiSSE_HSDSEP.xml and BiSSE_fixed_tree_on_HiSSE_HSDSEP.xml    
+### (1.2) ClaSSE_fixed_tree_SDSEP.xml
+
+```
+argnames(make.classe(tree=phy, states=phy$tip.state+1, k=3, strict=FALSE)) # just to show order of parameters in classe object
+
+pars <- c(.1, 0.0, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.0, 0.0, .1, 0.0, 0.0,
+          0.0, .5, .3, 0.0, .3, .1,
+          .05, .05, .05, # mu1, mu2, mu3
+          .1, .1, .1, # q12, q13, q21
+          .1, .1, .1) # q23, q31, q32
+
+set.seed(12345)
+phy <- tree.classe(pars, max.taxa=120, x0=NA, include.extinct=FALSE)
+
+# tree
+write.tree(phy)
+
+# taxa
+cat(paste0("<taxon id=\"", phy$tip.label, "\" spec=\"Taxon\"/>"), sep="\n")
+
+# tip data
+paste(paste(phy$tip.label, (phy$tip.state), sep="="), collapse=",")
+
+# finding mle
+lik <- make.classe(phy, phy$tip.state, k=3)
+fit <- find.mle(lik, pars) # bombs!
+```
+
+### (1.3) HiSSE_fixed_tree_on_HiSSE_HSDSEP.xml and BiSSE_fixed_tree_on_HiSSE_HSDSEP.xml    
 Conducting simulations with hidden trait (one hidden state), and computing MLEs.    
 
 ```

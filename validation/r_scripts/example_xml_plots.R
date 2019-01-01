@@ -98,7 +98,7 @@ make.post.dens.plot <- function(a.df, param.name, param.xlab, some.colors, some.
     
 # ----- Plotting BiSSE_fixed_tree_SDSEP ----- #
 pal <- brewer.pal(8, "Accent")
-pal <- colorRampPalette(pal)(11)
+pal <- colorRampPalette(pal)(14)
 
 log.df <- read.table("../examples/BiSSE_fixed_tree_SDSEP.log", header=TRUE)
 log.df <- log.df[102:nrow(log.df),] # removing burnin and extra generations
@@ -198,9 +198,9 @@ q02.truth <- 0.1
 q02.mean <- mean(log.df$FlatQMatrix2)
 q02.min.max <- range(log.df$FlatQMatrix2)
 
-q11.truth <- 0.1
-q11.mean <- mean(log.df$FlatQMatrix3)
-q11.min.max <- range(log.df$FlatQMatrix3)
+q10.truth <- 0.1
+q10.mean <- mean(log.df$FlatQMatrix3)
+q10.min.max <- range(log.df$FlatQMatrix3)
 
 q12.truth <- 0.1
 q12.mean <- mean(log.df$FlatQMatrix4)
@@ -217,6 +217,57 @@ q21.min.max <- range(log.df$FlatQMatrix6)
 fill.color = lighten(pal[1], 1.3)
 l.s.plot <- make.post.plot.no.mle(log.df, 5, expression(lambda[sym]), l.s.min.max, fill.color, pal[1], l.s.truth, l.s.mean)
 l.s.plot
+
+fill.color = lighten(pal[2], 1.3)
+l.ss.plot <- make.post.plot.no.mle(log.df, 6, expression(lambda[subsym]), l.ss.min.max, fill.color, pal[2], l.ss.truth, l.ss.mean)
+l.ss.plot
+
+fill.color = lighten(pal[3], 1.3)
+l.v.plot <- make.post.plot.no.mle(log.df, 7, expression(lambda[vic]), l.v.min.max, fill.color, pal[3], l.v.truth, l.v.mean)
+l.v.plot
+
+fill.color = lighten(pal[4], 1.1)
+m0.plot <- make.post.plot.no.mle(log.df, 8, expression(mu[0]), m0.min.max, fill.color, pal[4], m0.truth, m0.mean)
+m0.plot
+
+fill.color = lighten(pal[5], 1.1)
+m1.plot <- make.post.plot.no.mle(log.df, 9, expression(mu[1]), m1.min.max, fill.color, pal[5], m1.truth, m1.mean)
+m1.plot
+
+fill.color = lighten(pal[6], 1.3)
+m2.plot <- make.post.plot.no.mle(log.df, 10, expression(mu[3]), m2.min.max, fill.color, pal[6], m2.truth, m2.mean)
+m2.plot
+
+fill.color = lighten(pal[7], 1.3)
+q01.plot <- make.post.plot.no.mle(log.df, 11, expression(q[0][1]), q01.min.max, fill.color, pal[7], q01.truth, q01.mean)
+q01.plot
+
+fill.color = lighten(pal[8], 1.3)
+q02.plot <- make.post.plot.no.mle(log.df, 12, expression(q[0][2]), q02.min.max, fill.color, pal[8], q02.truth, q02.mean)
+q02.plot
+
+fill.color = lighten(pal[9], 2.0)
+q10.plot <- make.post.plot.no.mle(log.df, 13, expression(q[1][0]), q10.min.max, fill.color, pal[9], q10.truth, q10.mean)
+q10.plot
+
+fill.color = lighten(pal[10], 1.6)
+q12.plot <- make.post.plot.no.mle(log.df, 14, expression(q[1][2]), q12.min.max, fill.color, pal[10], q12.truth, q12.mean)
+q12.plot
+
+fill.color = lighten(pal[11], 2.2)
+q20.plot <- make.post.plot.no.mle(log.df, 15, expression(q[2][0]), q20.min.max, fill.color, pal[11], q20.truth, q20.mean)
+q20.plot
+
+fill.color = lighten(pal[12], 1.3)
+q21.plot <- make.post.plot.no.mle(log.df, 16, expression(q[2][1]), q21.min.max, fill.color, pal[12], q21.truth, q21.mean)
+q21.plot
+
+pdf("plots/ClaSSE_fixed_tree_SDSEP_posteriors_120spp.pdf", width=9, height=7.5)
+grid.arrange(l.s.plot, l.ss.plot, l.v.plot,
+             m0.plot, m1.plot, m2.plot,
+             q01.plot, q02.plot, q10.plot,
+             q12.plot, q20.plot, q21.plot)
+dev.off()
 
 # ----- Plotting BiSSE_fixed_tree_on_HiSSE_HSDSEP ----- #
 log.df <- read.table("../examples/BiSSE_fixed_tree_on_HiSSE_HSDSEP.log", header=TRUE)
@@ -383,11 +434,11 @@ fill.color = lighten(pal[6], 1.4)
 m2.plot <- make.post.plot(log.df, 10, expression(mu[2]), m2.min.max, fill.color, pal[6], m2.truth, m2.mle, m2.mean)
 ## m2.plot 
 
-fill.color = lighten(pal[7], 2.0)
+fill.color = lighten(pal[7], 1.3)
 q01.plot <- make.post.plot(log.df, 11, expression(q[0][1]), q01.min.max, fill.color, pal[7], q01.truth, q01.mle, q01.mean)
 ## q01.plot
 
-fill.color = lighten(pal[8], 10.0)
+fill.color = lighten(pal[8], 1.3)
 q10.plot <- make.post.plot(log.df, 12, expression(q[1][0]), q10.min.max, fill.color, pal[8], q10.truth, q10.mle, q10.mean)
 ## q10.plot
 
@@ -407,7 +458,7 @@ grid.arrange(l0.plot, l1.plot, l2.plot,
 dev.off()
 
 lay <- rbind(c(1,2,NA),c(4,5,6))
-pdf("plots/BiSSE_HiSSE_lambdas_120spp.pdf", width=8, height=4)
+pdf("plots/BiSSE_HiSSE_lambdas_fixed_tree_120spp.pdf", width=8, height=4)
 grid.arrange(l0.plot.bisse, l1.plot.bisse, l0.plot.hisse, l1.plot.hisse, l2.plot.hisse, ncol=3, layout_matrix=lay)
 dev.off()
 
@@ -447,7 +498,7 @@ scm.df <- unname(as.matrix(log.df[order(match(log.df$ndname, phy$node.label)),c(
 pal <- brewer.pal(8, "Set1")
 pal <- colorRampPalette(pal)(8)
 
-pdf("plots/BiSSE_SDSEP_60spp_SCM.pdf", width=5, height=5)
+pdf("plots/BiSSE_SDSEP_fixed_tree_60spp_SCM.pdf", width=5, height=5)
 plot(phy, show.tip.label=FALSE, type="fan")
 ## nodelabels(pie=t(anc.states), cex=.5, piecol=c(pal[2],pal[6])) # from example_xml_input
 nodelabels(pie=scm.df, cex=.5, piecol=c(pal[2],pal[6]))
@@ -504,6 +555,6 @@ l1h.density <- make.post.dens.plot(density.df, "Lambda4", expression(lambda[1][H
                                                                                                       mean(density.df[density.df$Model=="Mean","Lambda4"])), 0.5)
 ## l1h.density
 
-pdf("plots/model_avg_120spp.pdf", width=6, height=7)
+pdf("plots/BSSVS_fixed_tree_120spp.pdf", width=6, height=7)
 grid.arrange(l0.density, l1.density, l1h.density)
 dev.off()
