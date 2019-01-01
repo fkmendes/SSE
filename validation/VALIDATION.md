@@ -18,7 +18,7 @@ The R script this command executes also performs ancestral state reconstruction 
 Below, "/path/to/SSE/validation" should be replaced with your local path to the validation folder that comes with this git repository.
 
 ```
-Rscript /path/to/SSE/validation/r_scripts/prepare_BiSSE_ASR_input.R /path/to/validation/ asr
+Rscript /path/to/SSE/validation/r_scripts/prepare_BiSSE_ASR_input.R /path/to/SSE/validation/ asr
 ```
 
 The following files will be produced:
@@ -31,10 +31,10 @@ The following files will be produced:
 
 ### (2.2) Running stochastic character mapping (both only on internal nodes and along branches as well) in Java
 
-Below, "/path/to/SSE.jar" should be replaced with the full path to the SSE.jar file.
+Below, "/path/to/SSE/SSE.jar" should be replaced with the full path to the SSE.jar file.
 
 ```
-java -cp /path/to/SSE.jar validation.SDSEPValidationBiSSEASR asr/
+java -cp /path/to/SSE/SSE.jar validation.SDSEPValidationBiSSEASR asr/
 ```
 
 The following files will be produced:
@@ -50,7 +50,7 @@ Rscript /path/to/SSE/validation/r_scripts/plot_diversitree_vs_SSEjoint.R /path/t
 Rscript /path/to/SSE/validation/r_scripts/plot_diversitree_vs_SSEjoint.R /path/to/SSE/validation/asr/diversitree_ancestral_states.txt /path/to/SSE/validation/asr/SSE_asr_stoc.csv /path/to/SSE/validation/plots/ bisse_stoc
 ```
 
-The R script below will produce two graph in the "plots/" folder:
+The R script above will produce two graph in the "plots/" folder:
 
 * plots/bisse_joint_sse_vs_diversitree_asr.pdf
 * plots/bisse_stoc_sse_vs_diversitree_asr.pdf
