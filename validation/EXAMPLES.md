@@ -1,4 +1,4 @@
-# Generating input, runnning and parsing example .xml's    
+# Generating input, running and parsing example .xml's    
 
 This will guide you through the preparation of input for the .xml's in the examples/ folder.
 You are going to need the following R packages:

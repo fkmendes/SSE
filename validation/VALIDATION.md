@@ -5,6 +5,35 @@ You are going to need the following R packages:
 
 * ape
 * diversitree
+* HDInterval
+* sjPlot
+* gridExtra
+* ggplot2
+
+## (1) Calibrated validation of BiSSE and ClaSSE    
+
+We will simulate 2000 trees ("-n 2000"; some will not be considered for being too small or too large) with a simulation stop time of 50 ("-st 50") in step (1.1).
+Simulation parameters will come from the specified priors and their respective parameters (e.g., "-pt 'exp,exp,exp,exp,exp,exp'" and "-pp '20;20;80;80;20;20'").
+In step (1.2) we then parse the results.
+
+Simulations require BiSSE and ClaSSE templates, which we provide and pass in with "-xt bisse_beast_template.xml".
+We also specify a working directory with "-pd /path/to/working/directory/", an R script directory with "-rd /path/to/rscripts/directory", and an output directory with "-od /path/to/output/directory".
+
+### (1.1) BiSSE (note that the value after "-n" will affect the results, even if setting the seed in R)
+
+``python /path/to/SSE/validation/scripts/simulate_prep4beast.py -rd /path/to/SSE/validation/r_scripts/ -od /path/to/SSE/validation/calibrated/ -pt 'exp,exp,exp,exp,exp,exp' -pp '20;20;80;80;20;20' -pn l0,l1,m0,m1,q01,q10 -p bisse -xd bisse_xmls/ -xt /path/to/SSE/validation/bisse_beast_template.xml -n 2000 -pd /path/to/SSE/validation/ -st 50 -b``
+
+It should be necessary to ignore 10 too-large simulations, and have a n-tip median of 10; if you don't get this, something went wrong with the seeding and your beast_outputs won't match.
+
+### (1.1.1) Add "_bisse" to all files inside "/path/to/SSE/validation/calibrated/" to diferentiate them from the ClaSSE files produced below.
+
+### (1.2) After running all .xml files on the cluster, we need to parse the .log files
+
+``python /path/to/SSE/validation/scripts/parse_beast_logs.py -bd /path/to/SSE/validation/bisse_beast_outputs/ -rd /path/to/SSE/validation/r_scripts/ -cd /path/to/SSE/validation/calibrated/ -b 500000 -n 100 -n1 l0,l1,m0,m1,q01,q10 -n2 Lambda1,Lambda2,Mu1,Mu2,FlatQMatrix1,FlatQMatrix2``
+
+### (1.3) Plotting calibrated validation graphs
+
+``Rscript /path/to/SSE/validation/r_scripts/calibrated_validation.R /path/to/SSE/validation/ /path/to/SSE/validation/calibrated/``
 
 ## (2) Ancestral state reconstruction via stochastic character mapping    
 In the SSE package, we implement the same stochastic character mapping approach proposed in Freyman and H&ouml;hna (2017).
