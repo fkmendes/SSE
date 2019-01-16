@@ -4,6 +4,8 @@ library(RColorBrewer)
 library(stats)
 library(gridExtra)
 
+options(digits=2)
+
 args = commandArgs(trailingOnly=TRUE)
 
 setwd(args[1])
@@ -32,7 +34,7 @@ make.regression.plot <- function(true.param.name, beast.param.mean, beast.param.
     reg.df = data.frame(cbind(x,y,lower,upper))
     print(reg.df)
 
-    plot = ggplot() + geom_point(data=reg.df, mapping=aes(x=x, y=y), shape=20) + xlim(min.x,max.y) + coord_cartesian(ylim=c(min.y, max.y)) +
+    plot = ggplot() + geom_point(data=reg.df, mapping=aes(x=x, y=y), shape=20) + coord_cartesian(ylim=c(min.y, max.y)) +
         xlab(param.label) + ylab("Posterior mean") + geom_abline(slope=1, linetype="dotted") +
     theme(
         panel.grid.minor = element_blank(),
@@ -46,7 +48,7 @@ make.regression.plot <- function(true.param.name, beast.param.mean, beast.param.
         axis.text.y = element_text(color="black", size=10),
         axis.title.x = element_text(size=12),
         axis.title.y = element_text(size=12)
-    )
+    ) + scale_x_continuous(labels = function(x) round(as.numeric(x), digits=3), limits=c(min.x,max.y)) 
 
     if (hpd) { plot = plot + geom_linerange(data=reg.df, mapping=aes(x=x, ymax=upper, ymin=lower), color="lightgray", alpha=.4) }
     return(plot)
@@ -111,8 +113,8 @@ all.plots <- vector("list", nrow(name.df))
 for (r in 1:nrow(name.df)) {
     all.plots[[r]] = make.regression.plot(name.df$true.names[r], name.df$beast.names[r], name.df$beast.lower[r], name.df$beast.upper[r], true.df, df, hpd=TRUE, param.labels[r])
 }
-## plot_grid(all.plots)
+plot_grid(all.plots)
 
-pdf("plots/ClaSSE_calibrated_validation_200+spp.pdf", width=9, height=10)
+pdf("plots/ClaSSE_calibrated_validation_200+spp.pdf", width=9.5, height=10.5)
 plot_grid(all.plots)
 dev.off()
