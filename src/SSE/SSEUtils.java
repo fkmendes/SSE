@@ -16,6 +16,8 @@ package SSE;
 
 public class SSEUtils {
 
+    private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
+
     /*
      * Propagates E's and D's, leaving the result in esDs.
      * Equivalent to Fitzjohn's fftR.propagate.t (R/model-quasse-fftR.R) and propagate_t (src/quasse-eqs-fftC.c)
@@ -64,5 +66,53 @@ public class SSEUtils {
                 else esDs[dIdx] *= scratch[j]; // Ask Xia: why no dimensions here for scratch?
             }
         }
+    }
+
+    public static void makeNormalKernelInPlace(double[] yValues, double drift, double diffusion, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx, double dt) {
+        double total = 0.0;
+        double mean = -dt * drift;
+        double sd = Math.sqrt(dt * diffusion);
+
+        double x = 0.0;
+        for (int i=0; i <= nRightFlankBins; i++) {
+            yValues[i] = getNormalDensity(x, mean, sd); // in diversitree's C code, this is further multiplied by dx (might need to do this when fft-ing?)
+            total += yValues[i];
+            x += dx;
+        }
+
+        for (int i=nRightFlankBins+1; i < nXbins - nLeftFlankBins; i++) yValues[i] = 0;
+
+        x = -nLeftFlankBins * dx;
+        for (int i=nXbins - nLeftFlankBins; i < nXbins; i++) {
+            yValues[i] = getNormalDensity(x, mean, sd);
+            total += yValues[i];
+            x += dx;
+        }
+
+        // System.out.println("Unormalized fY = " + Arrays.toString(yValues));
+        // System.out.println("Total=" + total);
+
+        for (int i=0; i <= nRightFlankBins; i++) yValues[i] /= total;
+        for (int i = (nXbins - nLeftFlankBins); i < nXbins; i++) yValues[i] /= total;
+    }
+
+    /*
+     * Not necessary (will be done in makeNormalKernelInPlace)
+     */
+    public static void normalizeArray(double[] doubleArray) {
+        double theSum = 0.0;
+        for (int i=0; i<doubleArray.length; i++) {
+            theSum += doubleArray[i];
+        }
+
+        for (int i=0; i<doubleArray.length; i++) {
+            doubleArray[i] = doubleArray[i] / theSum;
+        }
+    }
+
+
+    public static double getNormalDensity(double x, double mean, double sd) {
+        double x0 = x - mean;
+        return Math.exp(-x0 * x0 / (2 * sd * sd)) / (sd * SQRT2PI);
     }
 }
