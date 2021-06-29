@@ -67,16 +67,17 @@ public class SSEUtils {
         /* Updating D's */
         // iterating over dimensions in plan to transform (total # = nd = number of equations for D, say, 4 if A C G and T)
         // one quantitative ch: nd = 2 for QuaSSE (one eq for E, one for D), nd=5 for MoSSE (4 eqs for D, one for E)
+        // ithDim starts at 1 because we skip the E's
         for (int ithDim = 1; ithDim < nDimensionsD; ithDim++) {
             // int ithDimStartIdx = nUsefulTraitBins * ithDim; // skipping E's
 
             // iterating over bins of this dimension
             for (int j = 0; j < nUsefulTraitBins; j++) {
                 // int dIdx = ithDimStartIdx + j;
-                int dIdx = ithDim + j;
+                // int dIdx = ithDim + j;
 
-                if (esDs[1][dIdx] < 0) esDs[1][dIdx] = 0;
-                else esDs[1][dIdx] *= scratch[j]; // Ask Xia: why no dimensions here for scratch?
+                if (esDs[ithDim][j] < 0) esDs[ithDim][j] = 0;
+                else esDs[ithDim][j] *= scratch[j]; // Ask Xia: why no dimensions here for scratch?
             }
         }
     }
@@ -119,29 +120,22 @@ public class SSEUtils {
         for (int i = (nXbins - nLeftFlankBins); i < nXbins; i++) yValues[i] /= total;
     }
 
-    public static void convolve(double[] esDs, double[] scratch, double[] fY, int nXbins, int nDimensions, DoubleFFT_1D fft) {
-        fft.realForwardFull(esDs);
+    public static void convolve(double[][] esDs, double[][] scratch, double[] fY, int nXbins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+        double oneOverNXbins = 1.0 / nXbins;
+        fft.realForwardFull(fY); // first FFT the Normal kernel
 
-        for (int i = 0; i < nDimensions; i++) {
-            int k = 0;
+        // doing E's and D's
+        for (int ithDim = 1; ithDim < (nDimensionsE+nDimensionsD); ithDim++) {
+            fft.realForwardFull(scratch[ithDim]); // FFT for each E and D dimension
 
-            for (int j = 0; j < esDs.length; j += 2) {
-                if (k >= fY.length) k = 0;
-
-                scratch[k] = esDs[j] * fY[k];
-                k += 2;
+            for (int i=0; i < fY.length; i += 2) {
+                scratch[ithDim][i] *= fY[i]; // real part
+                scratch[ithDim][i+1] *= fY[i]; // complex part
             }
-        } // here, we care about odd-indexed elements in scratch
 
-        // for (int i=0; i<nXbins; i++) System.out.println(scratch[i]);
+            fft.complexInverse(scratch[ithDim], false); // inverse FFT for each E and D dimension
 
-        fft.complexInverse(scratch, false);
-
-        // how we take odd-indexed elements and make them the 1st half of esDs
-        int j = 0;
-        for (int i = 0; i < scratch.length; i += 2) {
-            esDs[j] = scratch[i];
-            j++;
+            everyOtherInPlace(scratch[ithDim], esDs[ithDim], true, oneOverNXbins); // grabbing real part and scaling by 1/nXbins
         }
     }
 
