@@ -44,7 +44,7 @@ public class PropagatesQuaSSETest {
         propagateEandDinTQuaLike(esDs, scratch, birthRate, deathRate, dt, nUsefulTraitBins, nDimensionsD);
 
         // System.out.println(Arrays.toString(esDs[0]));
-        System.out.println(Arrays.toString(esDs[1]));
+        // System.out.println(Arrays.toString(esDs[1]));
 
         double[] expectedEs = new double[] { 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285 };
         double[] expectedDs = new double[] { 8.383508, 9.953882, 8.954895, 11.671936, 8.386246, 9.769374, 8.817404, 9.168019, 10.913191, 10.604198 };
@@ -103,6 +103,9 @@ public class PropagatesQuaSSETest {
         assertArrayEquals(expectedIfftFY, Arrays.copyOfRange(realIfftFy, 0, 10), EPSILON);
     }
 
+    /*
+     * Makes Normal kernel, FFTs it, then convolves with E's and D's.
+     */
     @Test
     public void testConvolve() {
 
@@ -140,15 +143,5 @@ public class PropagatesQuaSSETest {
         double[] expectedDs = new double[] { 9.73417583936596, 9.63964952722219, 9.58033651944056, 9.61334237373252, 9.70572479120779, 9.84274608587003, 9.93195677948007, 10.0416517201315, 10.14467157742, 10.4371836973515 };
         assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0], 0, 10), EPSILON);
         assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, 10), EPSILON);
-    }
-
-    @Test
-    public void testPropagateXOneChQuaSSETest() {
-
-        nXbins = 100;
-        nLeftFlankBins = 10;
-        nRightFlankBins = 10;
-        drift = 0.0;
-        diffusion = 1.0;
     }
 }
