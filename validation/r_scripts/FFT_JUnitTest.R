@@ -19,10 +19,10 @@ fftR.propagate.t <- function(vars, lambda, mu, dt, ndat) {
   vars[i,1] <- (mu + z*(e0 - 1)*mu - lambda*e0) /
     (mu + z*(e0 - 1)*lambda - lambda*e0)
   dd <- (z * r * r)/(z * lambda - mu + (1-z)*lambda*e0)^2
-  print(paste("numerator", (z * r * r)))
-  print(paste("denominator", (z * lambda - mu + (1-z)*lambda*e0)))
-  print(paste("numerator/denominator", dd))
-  vars[i,-1] <- dd * d0
+  ##print(paste("numerator", (z * r * r)))
+  ##print(paste("denominator", (z * lambda - mu + (1-z)*lambda*e0)))
+  ##print(paste("numerator/denominator", dd))
+  ##vars[i,-1] <- dd * d0
   vars
 }
 

@@ -37,6 +37,7 @@ public class SSEUtils {
     /*
      * Propagates E's and D's, leaving the result in esDs.
      * Equivalent to Fitzjohn's fftR.propagate.t (R/model-quasse-fftR.R) and propagate_t (src/quasse-eqs-fftC.c)
+     * Note: only the first nUsefulTraitBins elements in each row of esDs are used (and in birthRate and deathRate);
      *
      * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
      * @param   scratch 2D-array for storing/restoring flanking values and other math terms
