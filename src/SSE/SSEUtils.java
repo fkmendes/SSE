@@ -30,6 +30,8 @@ package SSE;
 
 import org.jtransforms.fft.DoubleFFT_1D;
 
+import java.util.Arrays;
+
 public class SSEUtils {
 
     private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
@@ -48,7 +50,7 @@ public class SSEUtils {
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @return  no return, leaves result in 'esDs' and 'scratch'
      */
-    public static void propagateEandDinTQuaLike(double[][] esDs, double[][] scratch, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
+    public static void propagateEandDinTQuaSSE(double[][] esDs, double[][] scratch, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
 
         // iterating over all continuous character bins (total # = nx), to update E and D for each of those bins
         for (int i = 0; i < nUsefulTraitBins; ++i) {
@@ -90,6 +92,67 @@ public class SSEUtils {
                 else esDs[ithDim][j] *= scratch[ithDim][j];
             }
         }
+    }
+
+    public static void propagateEandDinXQuaLike(double[][] esDs, double[][] scratch, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+
+        // We FFT fY, then FFT scratch, inverse-FFT scratch, result is left in scratch
+        convolveInPlace(scratch, fY, nXbins, nDimensionsE, nDimensionsD, fft);
+
+        int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
+        // System.out.println("nItems2Copy=" + nItems2Copy);
+        double scaleBy = 1.0 / nXbins;
+
+        // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            everyOtherInPlace(scratch[ithDim], esDs[ithDim], true, nLeftFlankBins, nItems2Copy, scaleBy); // grabbing real part and scaling by 1/nXbins
+
+            for (int i=0; i<nXbins; ++i) {
+                // if negative value, set to 0.0
+                // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
+                if (esDs[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDs[ithDim][i] = 0.0;
+            }
+        }
+    }
+
+    /*
+     * Carry out two FFTs, one on the Normal kernel, another on the 2D-array containing the E's and D's.
+     * Then carry out inverse FFT on the resulting 2D-array, re-ordering elements so that all real elements occupy the first half.
+     * Note: the input of FFT uses just the first half of all elements; the output interdigitates real and complex numbers;
+     * the input of inverse-FFT is then the interdigitated array, and the output of inverse-FFT remains interdigitated.
+     *
+     * Function leaves results in scratch (after moving all real elements to the first half of each row of esDs)
+     *
+     * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
+     * @param   scratch 2D-array for storing/restoring flanking values and other math terms
+     * @param   fY  Normal kernel giving the density for changes in value of the quantitative trait
+     * @param   nXbins  total number of bins resulting from discretizing normal kernel (fY and each row of esDs will have these many nXbins
+     * @param   nDimensionsE number of E equations (dimensions in plan) to solve for each quantitative ch
+     * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
+     * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
+     */
+    public static void convolveInPlace(double[][] scratch, double[] fY, int nXbins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+        fft.realForwardFull(fY); // first FFT the Normal kernel
+
+        // doing E's and D's
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            fft.realForwardFull(scratch[ithDim]); // FFT for each E and D dimension
+
+            for (int i = 0; i < fY.length; i += 2) {
+                scratch[ithDim][i] *= fY[i]; // real part
+                scratch[ithDim][i + 1] *= fY[i]; // complex part
+            }
+
+            if (ithDim==1) System.out.println("scratch[1] after first FFTs and * fY" + Arrays.toString(scratch[1]));
+
+            fft.complexInverse(scratch[ithDim], false); // inverse FFT for each E and D dimension
+
+            if (ithDim==1) System.out.println("scratch[1] after iFFT" + Arrays.toString(scratch[1]));
+        }
+
+        // looking at things
+        // System.out.println(Arrays.toString(esDs[0]));
+        // System.out.println(Arrays.toString(esDs[1]));
     }
 
     /*
@@ -139,46 +202,6 @@ public class SSEUtils {
     }
 
     /*
-     * Carry out two FFTs, one on the Normal kernel, another on the 2D-array containing the E's and D's.
-     * Then carry out inverse FFT on the resulting 2D-array, re-ordering elements so that all real elements occupy the first half.
-     * Note: the input of FFT uses just the first half of all elements; the output interdigitates real and complex numbers;
-     * the input of inverse-FFT is then the interdigitated array, and the output of inverse-FFT remains interdigitated.
-     *
-     * Function leaves results in esDs (after moving all real elements to the first half of each row of esDs), and
-     * in scratch
-     *
-     * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
-     * @param   scratch 2D-array for storing/restoring flanking values and other math terms
-     * @param   fY  Normal kernel giving the density for changes in value of the quantitative trait
-     * @param   nXbins  total number of bins resulting from discretizing normal kernel (fY and each row of esDs will have these many nXbins
-     * @param   nDimensionsE number of E equations (dimensions in plan) to solve for each quantitative ch
-     * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
-     * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
-     */
-    public static void convolveInPlace(double[][] esDs, double[][] scratch, double[] fY, int nXbins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
-        double oneOverNXbins = 1.0 / nXbins;
-        fft.realForwardFull(fY); // first FFT the Normal kernel
-
-        // doing E's and D's
-        for (int ithDim = 0; ithDim < (nDimensionsE+nDimensionsD); ithDim++) {
-            fft.realForwardFull(scratch[ithDim]); // FFT for each E and D dimension
-
-            for (int i=0; i < fY.length; i += 2) {
-                scratch[ithDim][i] *= fY[i]; // real part
-                scratch[ithDim][i+1] *= fY[i]; // complex part
-            }
-
-            fft.complexInverse(scratch[ithDim], false); // inverse FFT for each E and D dimension
-
-            everyOtherInPlace(scratch[ithDim], esDs[ithDim], true, oneOverNXbins); // grabbing real part and scaling by 1/nXbins
-        }
-
-        // looking at things
-        // System.out.println(Arrays.toString(esDs[0]));
-        // System.out.println(Arrays.toString(esDs[1]));
-    }
-
-    /*
      * (DEPRECATED: will be done in makeNormalKernelInPlace)
      */
     public static void normalizeArray(double[] doubleArray) {
@@ -209,19 +232,35 @@ public class SSEUtils {
      * Populate outArray in place, getting every other element from
      * in Array.
      *
+     * Can only copy up to (number of input array elements / 2)!
+     *
      * @param   inArray source array
      * @param   outArray result array to receive every other element from source array
      * @param   odd boolean, if 'true', gets every other element starting from first, otherwise starts from second
      * @param   scaleBy will scale every other element by this
      */
-    public static void everyOtherInPlace(double[] inArray, double[] outArray, boolean odd, double scaleBy) {
-        int k;
-        for (int i=0, j=0; i < inArray.length; i+=2, j++) {
-            k = i;
-            if (!odd) k++;
-            if (j < outArray.length) {
-                outArray[j] = inArray[k] * scaleBy;
+    public static void everyOtherInPlace(double[] inArray, double[] outArray, boolean odd, int skipFirstN, int totalNtoCopy, double scaleBy) {
+
+        System.out.println("inArray=" + Arrays.toString(inArray));
+        System.out.println("outArray=" + Arrays.toString(outArray));
+
+        int upTo = inArray.length/2;
+        if (    (inArray.length % 2 == 0 && totalNtoCopy <= upTo) ||
+                (inArray.length % 2 != 0 && totalNtoCopy <= (upTo+1))) {
+            int k;
+            //for (int i=0, j=0; i < inArray.length; i+=2, j++) {
+            for (int i = skipFirstN * 2, j = 0; i < inArray.length; i += 2, j++) {
+                k = i;
+                if (!odd) k++;
+                if (j < outArray.length & j < (totalNtoCopy - skipFirstN - skipFirstN - 1)) {
+                    System.out.println("j=" + j);
+                    // outArray[j] = inArray[k] * scaleBy;
+                    double repl = inArray[k] * scaleBy;
+                    outArray[skipFirstN + j] = repl;
+                }
             }
+        } else {
+            throw new RuntimeException("Copying more elements than (size of input array / 2). Exiting...");
         }
     }
 }
