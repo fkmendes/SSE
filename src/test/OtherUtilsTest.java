@@ -40,45 +40,27 @@ public class OtherUtilsTest {
     public void testGetEveryOtherElement() {
 
         // input arrays
-        double[] anArray = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
-        double[] anArray2 = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0 };
-
-        double[] oddArray = new double[4];
-        double[] oddArray2 = new double[7];
-
-        double[] evenArray = new double[5];
-        double[] evenArray2 = new double[9];
-        double[] evenArray3 = new double[9];
+        double[] inArray = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
+        double[] outArray1 = new double[16];
 
         // expected arrays
-        double[] oddExpected = new double[] { 1.0, 3.0, 5.0, 7.0 };
-        double[] oddExpected2 = new double[] { 0.0, 1.0, 3.0, 5.0, 7.0, 0.0, 0.0 };
-        double[] evenExpected = new double[] { 2.0, 4.0, 6.0, 8.0, 10.0 };
-        double[] evenExpected2 = new double[] { 0.0, 0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 0.0, 0.0 };
-        double[] evenExpected3 = new double[] { 0.0, 0.0, 2.0, 4.0, 6.0, 8.0, 0.0, 0.0, 0.0 };
+        double[] outArrayExpected1 = new double[] {
+                0.0, 3.0, 5.0, 7.0, 0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 
-        SSEUtils.everyOtherInPlace(anArray, oddArray, true, 0, 4, 1.0);
-        SSEUtils.everyOtherInPlace(anArray, oddArray2, true, 1, 4, 1.0);
-        SSEUtils.everyOtherInPlace(anArray2, evenArray, false, 0, 5,1.0);
-        SSEUtils.everyOtherInPlace(anArray2, evenArray2, false, 2, 5,1.0);
-        SSEUtils.everyOtherInPlace(anArray2, evenArray3, false, 2, 4,1.0);
-
-        assertArrayEquals(oddExpected, oddArray, 0.0);
-        assertArrayEquals(oddExpected2, oddArray2, 0.0);
-        assertArrayEquals(evenExpected, evenArray, 0.0);
-        assertArrayEquals(evenExpected2, evenArray2, 0.0);
-        assertArrayEquals(evenExpected3, evenArray3, 0.0);
+        SSEUtils.everyOtherInPlace(inArray, outArray1, 8, 1, 1, 1.0);
+        assertArrayEquals(outArrayExpected1, outArray1, 0.0);
     }
 
     @Test(expected = RuntimeException.class)
     public void testCopyingTooManyElements() {
 
         // input arrays
-        double[] anArray = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0 };
+        double[] inArray = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
 
         // output arrays
-        double[] oddArray = new double[4];
+        double[] outArray = new double[16];
 
-        SSEUtils.everyOtherInPlace(anArray, oddArray, true, 0, 5, 1.0);
+        SSEUtils.everyOtherInPlace(inArray, outArray, 8, 2, 2, 1.0);
     }
 }

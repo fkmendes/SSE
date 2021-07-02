@@ -105,7 +105,7 @@ public class SSEUtils {
 
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-            everyOtherInPlace(scratch[ithDim], esDs[ithDim], true, nLeftFlankBins, nItems2Copy, scaleBy); // grabbing real part and scaling by 1/nXbins
+            everyOtherInPlace(scratch[ithDim], esDs[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, scaleBy); // grabbing real part and scaling by 1/nXbins
 
             for (int i=0; i<nXbins; ++i) {
                 // if negative value, set to 0.0
@@ -239,28 +239,17 @@ public class SSEUtils {
      * @param   odd boolean, if 'true', gets every other element starting from first, otherwise starts from second
      * @param   scaleBy will scale every other element by this
      */
-    public static void everyOtherInPlace(double[] inArray, double[] outArray, boolean odd, int skipFirstN, int totalNtoCopy, double scaleBy) {
+    public static void everyOtherInPlace(double[] inArray, double[] outArray, int nXbins, int skipFirstN, int skipLastN, double scaleBy) {
 
-        System.out.println("inArray=" + Arrays.toString(inArray));
-        System.out.println("outArray=" + Arrays.toString(outArray));
+        // move these checks to initAndValidate later
+        // if (skipFirstN == 0 || skipLastN == 0) throw new RuntimeException("Number of flanking bins on both sides must be > 0. Exiting...");
+        if (inArray.length != outArray.length) throw new RuntimeException("Arrays of different size. Exiting...");
+        if (outArray.length/nXbins != 2.0) throw new RuntimeException("Size of arrays must be double the number of quantitative ch bins. Exiting...");
+        if ((2 * nXbins) % 4 != 0.0) throw new RuntimeException("Number of quantitative character bins must be a multiple of 4. Exiting...");
+        if ((nXbins - skipLastN - (skipFirstN + skipLastN)) <= skipFirstN) throw new RuntimeException("There are no useful bins left after pushing left and right flanks to the end, on top of right flank. Exiting...");
 
-        int upTo = inArray.length/2;
-        if (    (inArray.length % 2 == 0 && totalNtoCopy <= upTo) ||
-                (inArray.length % 2 != 0 && totalNtoCopy <= (upTo+1))) {
-            int k;
-            //for (int i=0, j=0; i < inArray.length; i+=2, j++) {
-            for (int i = skipFirstN * 2, j = 0; i < inArray.length; i += 2, j++) {
-                k = i;
-                if (!odd) k++;
-                if (j < outArray.length & j < (totalNtoCopy - skipFirstN - skipFirstN - 1)) {
-                    System.out.println("j=" + j);
-                    // outArray[j] = inArray[k] * scaleBy;
-                    double repl = inArray[k] * scaleBy;
-                    outArray[skipFirstN + j] = repl;
-                }
-            }
-        } else {
-            throw new RuntimeException("Copying more elements than (size of input array / 2). Exiting...");
+        for (int i=skipFirstN * 2, j=skipFirstN; i < inArray.length; i+=2, j++) {
+            if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) outArray[j] = inArray[i] * scaleBy;
         }
     }
 }

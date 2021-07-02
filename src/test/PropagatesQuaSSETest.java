@@ -67,10 +67,10 @@ public class PropagatesQuaSSETest {
         double[] fY = new double[nXbins];
 
         double[] fftFY = new double[nXbins * 2];
-        double[] realFftFy = new double[nXbins];
+        double[] realFftFy = new double[nXbins * 2];
 
         double[] ifftFY = new double[nXbins * 2];
-        double[] realIfftFy = new double[nXbins];
+        double[] realIfftFy = new double[nXbins * 2];
 
         // prepare fY
         SSEUtils.makeNormalKernelInPlace(fY, drift, diffusion, nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
@@ -82,7 +82,7 @@ public class PropagatesQuaSSETest {
         }
         fftForKern = new DoubleFFT_1D(nXbins);
         fftForKern.realForwardFull(fftFY);
-        everyOtherInPlace(fftFY, realFftFy, true, 0, nXbins, 1.0);
+        everyOtherInPlace(fftFY, realFftFy, nXbins, 0, 0, 1.0);
         // System.out.println(Arrays.toString(realFftFy));
 
         // ifft
@@ -90,7 +90,7 @@ public class PropagatesQuaSSETest {
             ifftFY[i] = fftFY[i];
         }
         fftForKern.complexInverse(ifftFY, false);
-        everyOtherInPlace(ifftFY, realIfftFy, true, 0, nXbins,1.0);
+        everyOtherInPlace(ifftFY, realIfftFy, nXbins, 0, 0, 1.0);
         // System.out.println(Arrays.toString(realIfftFy));
 
         double[] expectedStartFy = new double[] { 0.14894618, 0.14168199, 0.12194682, 0.09497228, 0.06692583, 0.0, 0.0, 0.0, 0.0, 0.0 };
@@ -137,8 +137,8 @@ public class PropagatesQuaSSETest {
 
         SSEUtils.convolveInPlace(scratch, fY, nXbins, 1, 1, fftForEandD);
 
-        everyOtherInPlace(scratch[0], esDs[0], true, 0, nXbins, 1.0/nXbins); // grabbing real part and scaling by 1/nXbins
-        everyOtherInPlace(scratch[1], esDs[1], true, 0, nXbins, 1.0/nXbins);
+        everyOtherInPlace(scratch[0], esDs[0], nXbins, 0, 0, 1.0/nXbins); // grabbing real part and scaling by 1/nXbins
+        everyOtherInPlace(scratch[1], esDs[1], nXbins, 0, 0, 1.0/nXbins);
 
         // System.out.println(Arrays.toString(esDs[0]));
         // System.out.println(Arrays.toString(esDs[1]));

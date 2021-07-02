@@ -45,10 +45,11 @@ ifft <- function(x) fft(x, inverse=TRUE)
 
 fftR.propagate.x <- function(vars, nx, fy, nkl, nkr) {
   vars.out <- Re(apply(apply(vars, 2, fft) * fy, 2, ifft))/nx
-  ndat <- nx - (nkl + 1 + nkr)
+  ndat <- nx - (nkl + 1 + nkr) # this plus 1 here is confusing, need to ask Xia
   i.prev.l <- 1:nkl
   i.prev.r <- (ndat-nkr+1):ndat
   i.zero <- (ndat+1):nx
+  print(c(i.prev.l, i.prev.r))
   vars.out[c(i.prev.l, i.prev.r),] <- vars[c(i.prev.l, i.prev.r),]
   vars.out[i.zero,] <- 0
   vars.out[vars.out < 0] <- 0
