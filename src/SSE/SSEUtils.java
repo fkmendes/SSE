@@ -30,8 +30,6 @@ package SSE;
 
 import org.jtransforms.fft.DoubleFFT_1D;
 
-import java.util.Arrays;
-
 public class SSEUtils {
 
     private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
@@ -143,11 +141,7 @@ public class SSEUtils {
                 scratch[ithDim][i + 1] *= fY[i]; // complex part
             }
 
-            if (ithDim==1) System.out.println("scratch[1] after first FFTs and * fY" + Arrays.toString(scratch[1]));
-
             fft.complexInverse(scratch[ithDim], false); // inverse FFT for each E and D dimension
-
-            if (ithDim==1) System.out.println("scratch[1] after iFFT" + Arrays.toString(scratch[1]));
         }
 
         // looking at things

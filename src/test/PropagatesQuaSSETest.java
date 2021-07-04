@@ -177,6 +177,18 @@ public class PropagatesQuaSSETest {
 
         propagateEandDinXQuaLike(esDs, scratch, fY, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD);
 
-        System.out.println(Arrays.toString(esDs[1]));
+        double[] expectedEsFirstHalf = new double[] { 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 1e-04, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedEsSecondHalf = new double[nXbins];
+        double[] expectedDsFirstHalf = new double[] { 8.50976807665641, 10.103792974434, 9.08976088347418, 11.847721337896, 9.70572479120779, 9.84274608587003, 9.93195677948007, 10.0416517201315, 10.14467157742, 10.4371836973515, 10.4801274082435, 10.3773781820321, 10.3654783428447, 10.1701178809958, 10.0016160413878, 9.81012635281443, 9.67902839214041, 9.55810533268215, 9.52689648206184, 9.55977301973422, 9.76757793553243, 9.79454433623556, 9.92251398623884, 10.0126014859394, 10.0172029657907, 10.1066796832284, 9.90685464014484, 9.67801788862755, 9.66356740459434, 9.48033275476296, 9.40446378096838, 9.51689441708817, 9.67920291038787, 9.91972188887997, 10.0248943989667, 11.4504630996011, 10.3369599590198, 10.3149165707367, 10.3046840297378, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedDsSecondHalf = new double[nXbins];
+
+        for (int i=0; i<nXbins; i++) {
+            expectedEsSecondHalf[i] = expectedDsSecondHalf[i]  = 0.0;
+        }
+
+        assertArrayEquals(expectedEsFirstHalf, Arrays.copyOfRange(esDs[0], 0, nXbins), EPSILON);
+        assertArrayEquals(expectedEsSecondHalf, Arrays.copyOfRange(esDs[0], nXbins, 2 * nXbins), 0.0);
+        assertArrayEquals(expectedDsFirstHalf, Arrays.copyOfRange(esDs[1], 0, nXbins), EPSILON);
+        assertArrayEquals(expectedDsSecondHalf, Arrays.copyOfRange(esDs[1], nXbins, 2 * nXbins), 0.0);
     }
 }
