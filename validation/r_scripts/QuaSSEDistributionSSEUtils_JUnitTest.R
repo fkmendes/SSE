@@ -3,8 +3,9 @@
 # PropagatesQuaSSE
 # (1) testPropagateTimeOneChQuaSSETest
 # (2) testMakeNormalKernInPlaceAndFFT
-# (3) testPropagateXOneChQuaSSETest
+# (3) testConvolve
 # (4) testPropagateChOneChQuaSSETest
+# (5) testProcessBranch
 
 library(diversitree)
 
@@ -56,8 +57,65 @@ fftR.propagate.x <- function(vars, nx, fy, nkl, nkr) {
   vars.out
 }
 
+quasse.extent <- function (control, drift, diffusion)
+{
+    nx <- control$nx
+    dx <- control$dx
+    dt <- control$dt.max
+    xmid <- control$xmid
+    r <- control$r
+    w <- control$w
+    if (control$method == "mol") {
+        ndat <- nx * c(r, 1)
+        padding <- NULL
+    }
+    else {
+        mean <- drift * dt
+        sd <- sqrt(diffusion * dt)
+        nkl <- max(ceiling(-(mean - w * sd)/dx)) * c(r, 1)
+        nkr <- max(ceiling((mean + w * sd)/dx)) * c(r, 1)
+        ndat <- nx * c(r, 1) - (nkl + 1 + nkr)
+        padding <- cbind(nkl, nkr)
+        storage.mode(padding) <- "integer"
+    }
+    x0.2 <- xmid - dx * ceiling((ndat[2] - 1)/2)
+    x0.1 <- x0.2 - dx * (1 - 1/r)
+    x <- list(seq(x0.1, length.out = ndat[1], by = dx/r), seq(x0.2,
+        length.out = ndat[2], by = dx))
+    tr <- seq(r, length.out = ndat[2], by = r)
+    list(x = x, padding = padding, ndat = ndat, tr = tr, nx = c(nx *
+        r, nx))
+}
 
-## Now some input values
+expand.pars.quasse <- function (lambda, mu, args, ext, pars)
+{
+    pars.use <- vector("list", 2)
+    for (i in c(1, 2)) {
+        x <- list()
+        pars.use[[i]] <- list(x = ext$x[[i]], lambda = do.call(lambda,
+            c(ext$x[i], pars[args$lambda])), mu = do.call(mu,
+            c(ext$x[i], pars[args$mu])), drift = pars[args$drift],
+            diffusion = pars[args$diffusion], padding = ext$padding[i,
+                ], ndat = ext$ndat[i], nx = ext$nx[i])
+    }
+    names(pars.use) <- c("hi", "lo")
+    pars.use$tr <- ext$tr
+    pars.use
+}
+
+## Imports that are generally hidden.
+make.pde.quasse.fftC <- diversitree:::make.pde.quasse.fftC
+make.pde.quasse.fftR <- diversitree:::make.pde.quasse.fftR
+make.pde.quasse.mol <- diversitree:::make.pde.quasse.mol
+
+make.branches.quasse.fftC <- diversitree:::make.branches.quasse.fftC
+make.branches.quasse.fftR <- diversitree:::make.branches.quasse.fftR
+make.branches.quasse.mol <- diversitree:::make.branches.quasse.mol
+
+
+
+### (1) testPropagateTimeOneChQuaSSETest
+
 vars <- cbind(rep(0.0001,48),
               c(8.50976807665641, 10.103792974434, 9.08976088347418, 11.847721337896, 8.51254745547751, 9.91650581983555, 8.95019918832521, 9.30609468137578, 11.0775496365384, 10.7639029400606, 10.9164931483932, 9.83064984974005, 11.7045125626528, 11.3382431919839, 8.94185500956388, 7.30298759647754, 11.1167065386435, 9.76891399488789, 9.76676261926709, 9.10540040702707, 8.93655752085786, 10.2580116547857, 10.2552822093573, 8.85921172559191, 11.0314684537514, 10.8738197102994, 10.4638936963999, 9.68617874031991, 8.35885856359494, 10.8426829704597, 7.66894489549493, 8.23694434625264, 11.1384877145132, 9.40550089155345, 9.97880581995152, 11.4504630996011, 10.3369599590198, 10.3149165707367, 10.3046840297378, 8.32290274946024, 9.46368095367558, 8.81487516662079, 9.83971439912364, 11.886850507066, 11.6196319895886, 10.7171936473579, 9.00153746682918, 9.44772548737688))
 # vars <- data.frame(0.0, 1.0) # E and D
@@ -65,8 +123,6 @@ lambda <- 1.0
 mu <- 0.5
 dt <- 0.01
 ndat <- 40 # just one useful quant ch bin
-
-### (1) testPropagateTimeOneChQuaSSETest
 
 #### eAndD
 
@@ -135,7 +191,7 @@ Re(ify)
 
 
 
-### (3) testPropagateXOneChQuaSSETest
+### (3) testConvolve
 
 vars <- cbind(rep(0.0001,48),
               c(8.50976807665641, 10.103792974434, 9.08976088347418, 11.847721337896, 8.51254745547751, 9.91650581983555, 8.95019918832521, 9.30609468137578, 11.0775496365384, 10.7639029400606, 10.9164931483932, 9.83064984974005, 11.7045125626528, 11.3382431919839, 8.94185500956388, 7.30298759647754, 11.1167065386435, 9.76891399488789, 9.76676261926709, 9.10540040702707, 8.93655752085786, 10.2580116547857, 10.2552822093573, 8.85921172559191, 11.0314684537514, 10.8738197102994, 10.4638936963999, 9.68617874031991, 8.35885856359494, 10.8426829704597, 7.66894489549493, 8.23694434625264, 11.1384877145132, 9.40550089155345, 9.97880581995152, 11.4504630996011, 10.3369599590198, 10.3149165707367, 10.3046840297378, 8.32290274946024, 9.46368095367558, 8.81487516662079, 9.83971439912364, 11.886850507066, 11.6196319895886, 10.7171936473579, 9.00153746682918, 9.44772548737688))
@@ -210,3 +266,71 @@ res
 ## [46,] 0e+00  0.000000
 ## [47,] 0e+00  0.000000
 ## [48,] 0e+00  0.000000
+
+
+
+# (5) testProcessBranchNoLowRes
+
+## Basic control list.
+control.fft <- list(tc=1.3, # time point at which we go from high -> low resolution of X
+                    dt.max=1/20, # dt
+                    nx=1024, # number of X bins
+                    dx=0.01, # size of each X bin
+                    r=4L, # high res of X = nx * r
+                    xmid=0, # sp rate ~ X is a logistic regression, and xmid is the value of X at the inflection point
+                    w=5, # used to determine nkl and nkr (see quasse.extent)
+                    flags=0L, # FFT stuff below
+                    verbose=0L,
+                    atol=1e-6,
+                    rtol=1e-6,
+                    eps=1e-3,
+                    method="fftC")
+
+lambda <- sigmoid.x
+mu <- constant.x
+drift <- 0.0
+diffusion <- 0.01
+sd <- 1/20
+len <- 1 # Integrate down a branch length of 1, doesn't get to low res (@tc=1.3)
+
+args <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
+pars <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
+
+ext.fft <- quasse.extent(control.fft, drift, diffusion) # prepares X axis stuff
+
+# ext.fft
+# x[[1]]: high-res X bins
+# x[[2]]: low-res X bins
+# padding: [1,] left and right padding for high-res
+#          [2,] left and right padding for low-res
+# ndat: number of X bins actually updated by propagate X
+# tr: indices of high-res bins that become each i-th low-res bin
+# nx: total number of bins in high-res and low-res, respectively
+
+ndat <- ext.fft$ndat[2] # 999
+
+# control.mol <- modifyList(control.fft, list(nx=ndat, method="mol")) # he didn't finish implementing mol stuff
+# ext.mol <- quasse.extent(control.mol, drift, diffusion)
+
+vars.fft <- matrix(0, control.fft$nx, 2)
+
+# vars.fft
+# [,1]: E, [,2]: D
+# D comes from a normal distn, with states=dnorm(ext.fft$x[[2]], 0, sd), where sd=1/20
+vars.fft[seq_len(ndat),2] <- dnorm(ext.fft$x[[2]], 0, sd) # states are the qu character values observed at the tips
+
+pars.fft <- expand.pars.quasse(lambda, mu, args, ext.fft, pars) # adds lambda and mu vectors to ext.fft
+
+# pars.fft
+# $hi: high-res stuff
+# $hi$x: high-res X bins
+# $hi$lambda: high-res lambda values, calculated from the 'lambda' variable (sigmoid.x)
+# $hi$mu: high-res mu values, calculated from the 'mu' variable (constant.x)
+# $hi$drift, $hi$diffusion, $hi$padding, $hi$ndat, $hi$nx are self-explanatory
+# $lo: low-res stuff (counterparts of high-res)
+
+pde.fftC <- with(control.fft, make.pde.quasse.fftC(nx, dx, dt.max, 2L, flags)) # partial differential equation
+pde.fftR <- with(control.fft, make.pde.quasse.fftR(nx, dx, dt.max, 2L))
+ans.fftC <- pde.fftC(vars.fft, len, pars.fft$lo, 0) # calculates answer with C
+ans.fftR <- pde.fftR(vars.fft, len, pars.fft$lo, 0) # calculates answer with R
+

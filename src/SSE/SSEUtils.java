@@ -124,7 +124,7 @@ public class SSEUtils {
      * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
      * @param   scratch 2D-array for storing/restoring flanking values and other math terms
      * @param   fY  Normal kernel giving the density for changes in value of the quantitative trait
-     * @param   nXbins  total number of bins resulting from discretizing normal kernel (fY and each row of esDs will have these many nXbins
+     * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
      * @param   nDimensionsE number of E equations (dimensions in plan) to solve for each quantitative ch
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
@@ -159,9 +159,13 @@ public class SSEUtils {
      * with the left half being placed at the tail end of the kernel, and the right
      * half at the head of the kernel
      *
+     * 'nLeftFlankBins' and 'nRightFlankBins' are also the number of bins on the left-
+     * side (and right-side, after skipping (nLeftFlankBins + nRightFlankBins))
+     * of E and D that are not updated by 'propagateEandDinXQuaLike'
+     *
      * @param   drift   mean of Normal distribution
      * @param   diffusion   variance of Normal distribution
-     * @param   nXbins  total number of bins when discretizing normal kernel
+     * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
      * @param   nLeftFlankBins  how many bins on the right side of kernel are non-zero
      * @param   nRightFlankBins  how many bins on the left side of kernel are non-zero
      * @param   dx  size of each bin
@@ -226,11 +230,11 @@ public class SSEUtils {
      * Populate outArray in place, getting every other element from
      * in Array.
      *
-     * Can only copy up to (number of input array elements / 2)!
-     *
      * @param   inArray source array
      * @param   outArray result array to receive every other element from source array
-     * @param   odd boolean, if 'true', gets every other element starting from first, otherwise starts from second
+     * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
+     * @param   skipFirstN  number of discrete quantitative trait bins on the left-side of E and D that are not affected by 'propagateEandDinXQuaLike'
+     * @param   skipLastN  number of discrete quantitative trait bins on the right-side of E and D that are not affected by 'propagateEandDinXQuaLike'
      * @param   scaleBy will scale every other element by this
      */
     public static void everyOtherInPlace(double[] inArray, double[] outArray, int nXbins, int skipFirstN, int skipLastN, double scaleBy) {
