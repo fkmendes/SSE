@@ -295,6 +295,7 @@ len <- 1 # Integrate down a branch length of 1, doesn't get to low res (@tc=1.3)
 
 args <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
 pars <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
+# note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
 ext.fft <- quasse.extent(control.fft, drift, diffusion) # prepares X axis stuff
 
@@ -334,3 +335,24 @@ pde.fftR <- with(control.fft, make.pde.quasse.fftR(nx, dx, dt.max, 2L))
 ans.fftC <- pde.fftC(vars.fft, len, pars.fft$lo, 0) # calculates answer with C
 ans.fftR <- pde.fftR(vars.fft, len, pars.fft$lo, 0) # calculates answer with R
 
+
+
+# (6) testLogistic
+
+## See test (5) to get ext.fft done first
+
+## The following code is inside quasse.extent
+ndat.lo <- ext.fft$ndat[2]
+ndat.hi <- ext.fft$ndat[1]
+dx <- 0.01; xmid <- 0; r <- 4
+xmin.lo <- xmid - dx * ceiling((ndat.lo - 1)/2) # x.02
+xmin.hi <- xmin.lo - dx * (1 - 1/r) # x.01
+x.lo <- seq(x0.2, length.out = ndat[2], by = dx) # same as ext.fft$x[[2]]
+x.hi <- seq(xmin.hi, length.out=ndat.hi, by = dx/r) # same as ext.fft$x[[1]]
+
+ls.hi <- sigmoid.x(x.hi, 0.1, 0.2, 0.0, 2.5) # same as pars.fft$hi$lambda
+
+ls[1:10]
+ls[2500:2510]
+ls[2590:2600]
+ls[3989:3999]
