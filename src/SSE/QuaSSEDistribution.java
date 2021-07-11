@@ -64,8 +64,8 @@ public class QuaSSEDistribution extends Distribution implements QuaSSEProcess {
         nXbinsLo = nXbins;
         nXbinsHi = highScaler * nXbinsLo;
 
-        nUsefulBinsLo = nXbinsLo - (nLeftNRightFlanksLo[0] + 1.0 + nLeftNRightFlanksLo[1]);
-        nUsefulBinsHi = nXbinsHi - (nLeftNRightFlanksHi[0] + 1.0 + nLeftNRightFlanksHi[1]);
+        nUsefulBinsLo = nXbinsLo - (nLeftNRightFlanksLo[0] + 1 + nLeftNRightFlanksLo[1]);
+        nUsefulBinsHi = nXbinsHi - (nLeftNRightFlanksHi[0] + 1 + nLeftNRightFlanksHi[1]);
     }
 
     private void populateXLambdaMu() {
@@ -129,27 +129,27 @@ public class QuaSSEDistribution extends Distribution implements QuaSSEProcess {
         return nXbinsLo;
     }
 
-    public int getNUsefulBinsHi() {
+    public double getNUsefulBinsHi() {
         return nUsefulBinsHi;
     }
 
-    public int getNUsefulBinsLo() {
+    public double getNUsefulBinsLo() {
         return nUsefulBinsLo;
     }
 
-    public int getNLeftFlankHi() {
+    public double getNLeftFlankHi() {
         return nLeftNRightFlanksHi[0];
     }
 
-    public int getNRightFlankHi() {
+    public double getNRightFlankHi() {
         return nLeftNRightFlanksHi[1];
     }
 
-    public int getNLeftFlankLo() {
+    public double getNLeftFlankLo() {
         return nLeftNRightFlanksLo[0];
     }
 
-    public int getNRightFlankLo() {
+    public double getNRightFlankLo() {
         return nLeftNRightFlanksLo[1];
     }
 

@@ -16,29 +16,32 @@ public class LogisticFunction extends Distribution {
     final public Input<RealParameter> sigmoidMidpointInput = new Input<>("sigmoidMidpoint", "Midpoint of sigmoid curve.", Input.Validate.REQUIRED);
     final public Input<RealParameter> logisticGrowthRateInput = new Input<>("logisticGrowthRate", "Growth rate of logistic curve.", Input.Validate.REQUIRED);
 
-    private double x, y0, y1, x0, curveMax, r, denom;
+    private double y0, y1, x0, r, curveMax;
+    private Double[] x, y;
 
     @Override
     public void initAndValidate() {
         refreshParams();
+        y = new Double[x.length];
     }
 
     public void refreshParams() {
-        x = xInput.get().getValue();
+        x = xInput.get().getValues();
         y0 = curveMaxBaseInput.get().getValue();
         y1 = added2CurveMaxInput.get().getValue();
-        curveMax = y0 - (y1-y0); // what is sometimes referred to as "L"; numerator
         r = logisticGrowthRateInput.get().getValue();
         x0 = sigmoidMidpointInput.get().getValue();
     }
 
-    @Override
-    public double calculateLogP() {
+    public Double[] getY() {
         refreshParams();
 
-        denom = 1 + Math.exp(-r * (x - x0));
+        for (int i=0; i<x.length; i++) {
+            curveMax = y1 - y0;
+            y[i] = y0 + curveMax / (1.0 + Math.exp(r * (x0 - x[i])));
+        }
 
-        return curveMax / denom;
+        return y;
     }
 
     @Override
