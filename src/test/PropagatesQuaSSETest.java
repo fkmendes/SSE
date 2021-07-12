@@ -23,6 +23,10 @@ public class PropagatesQuaSSETest {
     double[][] esDs;
     double[][] scratch;
 
+    /*
+     * Propagates esDs in time. These are the analytical solutions
+     * for the birth-death model.
+     */
     @Test
     public void testPropagateTimeOneChQuaSSETest() {
 

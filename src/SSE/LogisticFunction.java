@@ -3,7 +3,7 @@ package SSE;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 
-public class LogisticFunction extends quant2MacroLinkFn {
+public class LogisticFunction extends Quant2MacroLinkFn {
 
     final public Input<RealParameter> curveMaxBaseInput = new Input<>("curveMaxBase", "Curve maximum base value.", Input.Validate.REQUIRED);
     final public Input<RealParameter> added2CurveMaxInput = new Input<>("added2CurveMax", "How much is added to curve max base (after subtracting curve max base from this).", Input.Validate.REQUIRED);
@@ -11,6 +11,7 @@ public class LogisticFunction extends quant2MacroLinkFn {
     final public Input<RealParameter> logisticGrowthRateInput = new Input<>("logisticGrowthRate", "Growth rate of logistic curve.", Input.Validate.REQUIRED);
 
     private double y0, y1, x0, r, curveMax;
+    private static final String LINKFUNCTION = "logistic";
 
     @Override
     public void initAndValidate() {
@@ -29,16 +30,26 @@ public class LogisticFunction extends quant2MacroLinkFn {
     }
 
     @Override
-    public Double[] getMacroParams() {
+    public Double[] getMacroParams(Double[] x) {
         refreshParams();
 
-        if (xHi == null) throw new RuntimeException("Quantitative trait ruler has not been initialized. Exiting...");
+        if (yHi == null) throw new RuntimeException("Quantitative trait ruler has not been initialized. Exiting...");
 
-        for (int i=0; i<xHi.length; i++) {
+        for (int i=0; i<x.length; i++) {
             curveMax = y1 - y0;
-            yHi[i] = y0 + curveMax / (1.0 + Math.exp(r * (x0 - xHi[i])));
+            yHi[i] = y0 + curveMax / (1.0 + Math.exp(r * (x0 - x[i])));
         }
 
         return yHi;
     }
-}
+
+    @Override
+    public String getLinkFnName() {
+        return LINKFUNCTION;
+    }
+
+    @Override
+    public double getXMid() {
+        return x0;
+    }
+    }
