@@ -92,10 +92,29 @@ public class SSEUtils {
         }
     }
 
+    /*
+     * Propagate E's and D's along the x-axis (quantitative trait).
+     *
+     * The math work (FFTs/iFFts and convolution) is done all in convolveInPlace.
+     * This function here basically reorganizes the arrays, keeping track
+     * of the flanking bins (not letting those be affected by propagate in x),
+     * squashing negative numbers back to 0.0, and setting the last
+     * (nLeftFlankBins + nRightFlankBins) to 0.0.
+     *
+     * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
+     * @param   scratch 2D-array for storing/restoring flanking values and other math terms
+     * @param   fY  Normal kernel giving the density for changes in value of the quantitative trait
+     * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
+     * @param   nLeftFlankBins  how many bins on the right side of kernel are non-zero
+     * @param   nRightFlankBins  how many bins on the left side of kernel are non-zero
+     * @param   nDimensionsE number of E equations (dimensions in plan) to solve for each quantitative ch
+     * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
+     * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
+     */
     public static void propagateEandDinXQuaLike(double[][] esDs, double[][] scratch, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
 
         // We FFT fY, then FFT scratch, inverse-FFT scratch, result is left in scratch
-        convolveInPlace(scratch, fY, nXbins, nDimensionsE, nDimensionsD, fft);
+        convolveInPlace(scratch, fY, nDimensionsE, nDimensionsD, fft);
 
         int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
         // System.out.println("nItems2Copy=" + nItems2Copy);
@@ -124,12 +143,11 @@ public class SSEUtils {
      * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
      * @param   scratch 2D-array for storing/restoring flanking values and other math terms
      * @param   fY  Normal kernel giving the density for changes in value of the quantitative trait
-     * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
      * @param   nDimensionsE number of E equations (dimensions in plan) to solve for each quantitative ch
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
      */
-    public static void convolveInPlace(double[][] scratch, double[] fY, int nXbins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+    public static void convolveInPlace(double[][] scratch, double[] fY, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
         fft.realForwardFull(fY); // first FFT the Normal kernel
 
         // doing E's and D's

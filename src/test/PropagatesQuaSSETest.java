@@ -135,7 +135,7 @@ public class PropagatesQuaSSETest {
             esDs[1][i] = scratch[1][i] = randNumbers[i];
         }
 
-        SSEUtils.convolveInPlace(scratch, fY, nXbins, 1, 1, fftForEandD);
+        SSEUtils.convolveInPlace(scratch, fY, 1, 1, fftForEandD);
 
         everyOtherInPlace(scratch[0], esDs[0], nXbins, 0, 0, 1.0/nXbins); // grabbing real part and scaling by 1/nXbins
         everyOtherInPlace(scratch[1], esDs[1], nXbins, 0, 0, 1.0/nXbins);
@@ -149,6 +149,11 @@ public class PropagatesQuaSSETest {
         assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, 10), EPSILON);
     }
 
+    /*
+     * Calls convolve function, which makes Normal kernel, FFTs it, convolves,
+     * and iFFTs it. Then reorganize all elements of esDs by bookkeeping all
+     * flanking bins, etc.
+     */
     @Test
     public void testPropagateChOneChQuaSSETest() {
 

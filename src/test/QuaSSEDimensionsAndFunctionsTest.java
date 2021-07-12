@@ -35,7 +35,7 @@ public class QuaSSEDimensionsAndFunctionsTest {
             x2Add += (dx / 4.0); // high-res : low-res
         }
 
-        RealParameter x = new RealParameter(xRuler);
+        // RealParameter x = new RealParameter(xRuler);
 
         // logistic realparameter's
         x0 = new Double[] { 0.0 };
@@ -48,7 +48,8 @@ public class QuaSSEDimensionsAndFunctionsTest {
         RealParameter rrp = new RealParameter(r);
 
         LogisticFunction lfn = new LogisticFunction();
-        lfn.initByName("x", x, "curveMaxBase", y0rp, "added2CurveMax", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
+        lfn.initByName( "curveMaxBase", y0rp, "added2CurveMax", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
+        lfn.setYSizeAndX(nUsefulBins, xRuler);
         Double[] lfnOut = lfn.getMacroParams();
 
         double[] expectedLfnOut1to10 = new double[] { 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004 };
@@ -78,14 +79,13 @@ public class QuaSSEDimensionsAndFunctionsTest {
             x2Add += (dx / 4.0); // high-res : low-res
         }
 
-        RealParameter x = new RealParameter(xRuler);
-
         // constant realparameter's
         Double[] yValue = new Double[] { 0.03 };
         RealParameter yValuerp = new RealParameter(yValue);
 
         ConstantFunction cfn = new ConstantFunction();
-        cfn.initByName("x", x, "yV", yValuerp);
+        cfn.initByName("yV", yValuerp);
+        cfn.setYSizeAndX(nUsefulBins, xRuler);
         Double[] cfnOut = cfn.getMacroParams();
 
         Double[] expectedCfn = new Double[3999];
@@ -94,5 +94,53 @@ public class QuaSSEDimensionsAndFunctionsTest {
         }
 
         assertArrayEquals(expectedCfn, cfnOut);
+    }
+
+
+    /*
+     * If we try to get the macroevolutionary parameters after applying
+     * the linking function (e.g., logistic) -- but forgetting to set
+     * the quantitative trait array (ruler) and the size of y (i.e.,
+     * the macroevol parameter array) -- we get an error.
+     *
+     * This setting is done by the QuaSSE likelihood in initialization.
+     */
+    @Test(expected = RuntimeException.class)
+    public void testQu2MacroevolFailLogistic() {
+
+        // logistic realparameter's
+        Double[] x0, y1, y0, r;
+        x0 = new Double[] { 0.0 };
+        y1 = new Double[] { 0.2 };
+        y0 = new Double[] { 0.1 };
+        r = new Double[] { 2.5 }; // logistic function parameters
+        RealParameter y0rp = new RealParameter(y0);
+        RealParameter y1rp = new RealParameter(y1);
+        RealParameter x0rp = new RealParameter(x0);
+        RealParameter rrp = new RealParameter(r);
+
+        LogisticFunction lfn = new LogisticFunction();
+        lfn.initByName( "curveMaxBase", y0rp, "added2CurveMax", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
+        Double[] lfnOut = lfn.getMacroParams();
+    }
+
+    /*
+     * If we try to get the macroevolutionary parameters after applying
+     * the linking function (e.g., constant) -- but forgetting to set
+     * the quantitative trait array (ruler) and the size of y (i.e.,
+     * the macroevol parameter array) -- we get an error.
+     *
+     * This setting is done by the QuaSSE likelihood in initialization.
+     */
+    @Test(expected = RuntimeException.class)
+    public void testQu2MacroevolFailConstant() {
+
+        // constant realparameter's
+        Double[] yValue = new Double[] { 0.03 };
+        RealParameter yValuerp = new RealParameter(yValue);
+
+        ConstantFunction cfn = new ConstantFunction();
+        cfn.initByName("yV", yValuerp);
+        cfn.getMacroParams();
     }
 }

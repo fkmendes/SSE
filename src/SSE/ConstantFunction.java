@@ -3,7 +3,7 @@ package SSE;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 
-public class ConstantFunction extends Macro2QuantLinkFn {
+public class ConstantFunction extends quant2MacroLinkFn {
 
     final public Input<RealParameter> yValueInput = new Input<>("yV", "Constant value of dependent variable (quantitative trait).", Input.Validate.REQUIRED);
 
@@ -11,22 +11,21 @@ public class ConstantFunction extends Macro2QuantLinkFn {
 
     @Override
     public void initAndValidate() {
-        super.initAndValidate();
-    }
-
-    @Override
-    protected void refreshParams() {
-        x = xInput.get().getValues();
         yValue = yValueInput.get().getValue();
     }
 
     @Override
+    protected void refreshParams() { }
+
+    @Override
     public Double[] getMacroParams() {
 
-        for (int i=0; i<x.length; i++) {
-            y[i] = yValue;
+        if (xHi == null) throw new RuntimeException("Quantitative trait ruler has not been initialized. Exiting...");
+
+        for (int i=0; i<xHi.length; i++) {
+            yHi[i] = yValue;
         }
 
-        return y;
+        return yHi;
     }
 }

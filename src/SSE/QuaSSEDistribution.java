@@ -13,8 +13,8 @@ import java.util.Random;
 public class QuaSSEDistribution extends Distribution implements QuaSSEProcess {
 
     final public Input<Tree> treeInput = new Input<>("tree", "Tree object containing tree.", Input.Validate.REQUIRED);
-    final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each quantitative trait state bin.", Input.Validate.REQUIRED);
-    final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each quantitative trait state bin.", Input.Validate.REQUIRED);
+    // final public Input<RealParameter> lambdaInput = new Input<>("lambda", "Speciation rates for each quantitative trait state bin.", Input.Validate.REQUIRED);
+    // final public Input<RealParameter> muInput = new Input<>("mu", "Death rates for each quantitative trait state bin.", Input.Validate.REQUIRED);
     final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies at root.", Input.Validate.REQUIRED);
     final public Input<RealParameter> dtInput = new Input<>("dt", "Length of time interval over which integration is carried out.", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> nXbinsInput = new Input<>("nX", "Total number of quantitative trait bins after discretization.", Input.Validate.REQUIRED);
@@ -23,7 +23,8 @@ public class QuaSSEDistribution extends Distribution implements QuaSSEProcess {
     final public Input<RealParameter> diffusionInput = new Input<>("diffusion", "Diffusion term of quantitative trait diffusion process.", Input.Validate.REQUIRED);
     final public Input<RealParameter> flankWidthScalerInput = new Input<>("flankWidthScaler", "Multiplier of normal standard deviation when determining number of flanking bins.", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> highResScalerInput = new Input<>("hiScaler", "Scale nX by this when at high resolution.", Input.Validate.REQUIRED);
-
+    final public Input<quant2MacroLinkFn> q2mLambdaInput = new Input<>("q2mLambda", "Function converting quantitative trait into lambda parameter.", Input.Validate.REQUIRED);
+    final public Input<quant2MacroLinkFn> q2mMuInput = new Input<>("q2mMu", "Function converting quantitative trait into mu parameter.", Input.Validate.REQUIRED);
 
     /*
      * changeInXNormalMean (=diversitree's drift)
@@ -36,6 +37,7 @@ public class QuaSSEDistribution extends Distribution implements QuaSSEProcess {
     private double[] xHi, lambdaHi, muHi;
     private double[] xLo, lambdaLo, muLo;
     private double[][] esDs, scratch;
+    private quant2MacroLinkFn q2mLambda, q2mMu;
 
     @Override
     public void initAndValidate() {
@@ -47,6 +49,8 @@ public class QuaSSEDistribution extends Distribution implements QuaSSEProcess {
         highScaler = highResScalerInput.get().getValue();
         changeInXNormalMean = driftInput.get().getValue() * dt;
         changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue()) * dt;
+        q2mLambda = q2mLambdaInput.get();
+        q2mMu = q2mMuInput.get();
 
         prepareDimensionsInPlace();
         populateXLambdaMu();
@@ -66,6 +70,8 @@ public class QuaSSEDistribution extends Distribution implements QuaSSEProcess {
 
         nUsefulBinsLo = nXbinsLo - (nLeftNRightFlanksLo[0] + 1 + nLeftNRightFlanksLo[1]);
         nUsefulBinsHi = nXbinsHi - (nLeftNRightFlanksHi[0] + 1 + nLeftNRightFlanksHi[1]);
+
+        // get more numbers ready for q2mLambda and q2mMu
     }
 
     private void populateXLambdaMu() {
