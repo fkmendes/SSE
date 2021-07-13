@@ -3,6 +3,11 @@ package SSE;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 
+/*
+ * Applies the same y (macroevol param) value to all x (qu trait) bins.
+ * If you put a prior on the y value, it's the same as assuming y is
+ * distributed according to that prior, and independent of x
+ */
 public class ConstantFunction extends Quant2MacroLinkFn {
 
     final public Input<RealParameter> yValueInput = new Input<>("yV", "Constant value of dependent variable (quantitative trait).", Input.Validate.REQUIRED);
@@ -19,15 +24,15 @@ public class ConstantFunction extends Quant2MacroLinkFn {
     protected void refreshParams() { }
 
     @Override
-    public Double[] getMacroParams(Double[] xHi) {
+    public double[] getMacroParams(double[] x, double[] y) {
 
-        if (yHi == null) throw new RuntimeException("Quantitative trait ruler has not been initialized. Exiting...");
+        if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
 
-        for (int i=0; i<xHi.length; i++) {
-            yHi[i] = yValue;
+        for (int i=0; i<x.length; i++) {
+            y[i] = yValue;
         }
 
-        return yHi;
+        return y;
     }
 
     @Override
@@ -35,8 +40,4 @@ public class ConstantFunction extends Quant2MacroLinkFn {
         return LINKFUNCTION;
     }
 
-    @Override
-    protected double getXMid() {
-        return 0;
-    }
 }

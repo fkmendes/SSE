@@ -30,17 +30,17 @@ public class LogisticFunction extends Quant2MacroLinkFn {
     }
 
     @Override
-    public Double[] getMacroParams(Double[] x) {
+    public double[] getMacroParams(double[] x, double[] y) {
         refreshParams();
 
-        if (yHi == null) throw new RuntimeException("Quantitative trait ruler has not been initialized. Exiting...");
+        if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
 
         for (int i=0; i<x.length; i++) {
             curveMax = y1 - y0;
-            yHi[i] = y0 + curveMax / (1.0 + Math.exp(r * (x0 - x[i])));
+            y[i] = y0 + curveMax / (1.0 + Math.exp(r * (x0 - x[i])));
         }
 
-        return yHi;
+        return y;
     }
 
     @Override
@@ -48,8 +48,4 @@ public class LogisticFunction extends Quant2MacroLinkFn {
         return LINKFUNCTION;
     }
 
-    @Override
-    public double getXMid() {
-        return x0;
-    }
-    }
+}
