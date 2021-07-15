@@ -5,6 +5,7 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
+import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
 @Description("Specifies a quantitative trait(s) state-dependent speciation and" +
@@ -32,9 +33,6 @@ public abstract class QuaSSEProcess extends Distribution {
     protected double changeInXNormalMean; // (=diversitree's drift)
     protected double changeInXNormalSd; // (=diversitree's diffusion)
 
-    // state that matters for calculateLogP
-    protected double[][] esDs, scratch;
-
     @Override
     public void initAndValidate() {
 
@@ -50,6 +48,9 @@ public abstract class QuaSSEProcess extends Distribution {
         hiLoRatio = highLowRatioInput.get().getValue();
         changeInXNormalMean = driftInput.get().getValue() * dt;
         changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dt);
+
+        prepareDimensionsInPlace(); // in parent class
+        prepareXRulers(); // in parent class
     }
 
     /*
@@ -104,6 +105,11 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
+    protected abstract void initializeEsDs(int nDimensionsFFT, int nXbins);
+
+    /*
+     *
+     */
     protected abstract void initializeTips();
 
     /*
@@ -114,7 +120,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void processBranch();
+    protected abstract void processBranch(Node node);
 
     /*
      *

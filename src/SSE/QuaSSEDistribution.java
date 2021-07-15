@@ -2,26 +2,26 @@ package SSE;
 
 import beast.core.Input;
 import beast.core.State;
+import beast.evolution.tree.Node;
 
 import java.util.List;
 import java.util.Random;
 
 public class QuaSSEDistribution extends QuaSSEProcess {
 
-    // final public Input<RealParameter> piInput = new Input<>("pi", "Equilibrium frequencies at root.", Input.Validate.REQUIRED);
     final public Input<Quant2MacroLinkFn> q2mLambdaInput = new Input<>("q2mLambda", "Function converting quantitative trait into lambda parameter.", Input.Validate.REQUIRED);
     final public Input<Quant2MacroLinkFn> q2mMuInput = new Input<>("q2mMu", "Function converting quantitative trait into mu parameter.", Input.Validate.REQUIRED);
 
     private double[] lambdaLo, muLo, lambdaHi, muHi; // macroevol parameters
     private Quant2MacroLinkFn q2mLambda, q2mMu;
 
+    // state that matters for calculateLogP
+    private double[][] esDs, scratch;
+
     @Override
     public void initAndValidate() {
 
         super.initAndValidate(); // read in all dimension-related stuff
-
-        prepareDimensionsInPlace(); // in parent class
-        prepareXRulers(); // in parent class
 
         q2mLambda = q2mLambdaInput.get();
         lambdaLo = new double[nUsefulXbinsLo];
@@ -32,6 +32,9 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         muHi = new double[nUsefulXbinsHi];
 
         populateMacroevolParams();
+
+        int nDimensionsFFT = 2;
+        initializeEsDs(nDimensionsFFT, nXbins);
     }
 
     @Override
@@ -40,6 +43,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         lambdaHi = q2mLambda.getMacroParams(xHi,lambdaHi);
         muLo = q2mMu.getMacroParams(muLo, muLo);
         muHi = q2mMu.getMacroParams(muHi, muHi);
+    }
+
+    @Override
+    public void initializeEsDs(int nDimensionsFFT, int nXbins) {
+        // do stuff with nDimensionsFFT
     }
 
     @Override
@@ -53,7 +61,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void processBranch() {
+    public void processBranch(Node node) {
 
     }
 
@@ -100,11 +108,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         if (lowRes) return muLo;
         else return muHi;
     }
-
-//    public double[] getMu(boolean lowRes) {
-//        if (lowRes) return MuLo;
-//        else return MuHi;
-//    }
 
     @Override
     public List<String> getArguments() {

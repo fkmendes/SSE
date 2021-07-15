@@ -358,6 +358,7 @@ x.lo <- seq(xmin.lo, length.out=ndat.lo, by = dx) # same as ext.fft$x[[2]]
 x.hi <- seq(xmin.hi, length.out=ndat.hi, by = dx/hi.lo.ratio) # same as ext.fft$x[[1]]
 
 ls.hi <- sigmoid.x(x.hi, y0, y1, xmid, r) # same as pars.fft$hi$lambda
+ls.lo <- sigmoid.x(x.lo, y0, y1, xmid, r) # same as pars.fft$hi$lambda
 
 paste(ls.hi[1:10], collapse=", ")
 # "0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591"
@@ -375,4 +376,6 @@ paste(ls.hi[3989:3999], collapse=", ")
 ext.fft$nx
 ndat.lo
 ndat.hi
+xmin.lo
+xmin.hi
 ext.fft$padding
