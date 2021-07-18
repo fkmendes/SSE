@@ -21,15 +21,28 @@ public class ConstantFunction extends Quant2MacroLinkFn {
     }
 
     @Override
-    protected void refreshParams() { }
+    protected boolean refreshParams() {
+
+        boolean refreshedSomething = false;
+
+        if (yValueInput.isDirty()) {
+            yValue = yValueInput.get().getValue();
+            refreshedSomething = true;
+        }
+
+        return refreshedSomething;
+    }
 
     @Override
-    public double[] getMacroParams(double[] x, double[] y) {
+    public double[] getMacroParams(double[] x, double[] y, boolean ignoreRefresh) {
+        boolean refreshedSomething = refreshParams();
 
-        if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
+        if (ignoreRefresh || refreshedSomething) {
+            if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
 
-        for (int i=0; i<x.length; i++) {
-            y[i] = yValue;
+            for (int i=0; i<x.length; i++) {
+                y[i] = yValue;
+            }
         }
 
         return y;

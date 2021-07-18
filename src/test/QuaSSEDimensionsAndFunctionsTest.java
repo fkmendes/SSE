@@ -59,7 +59,7 @@ public class QuaSSEDimensionsAndFunctionsTest {
 
         LogisticFunction lfn = new LogisticFunction();
         lfn.initByName( "curveMaxBase", y0rp, "added2CurveMax", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
-        double[] lfnOut = lfn.getMacroParams(xRuler, lambdaHi);
+        double[] lfnOut = lfn.getMacroParams(xRuler, lambdaHi, true);
 
         double[] expectedLfnOut1to10 = new double[] { 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004 };
         double[] expectedLfnOut2500to2510 = new double[] { 0.195816352937447, 0.195841335181637, 0.195866174682834, 0.195890872179954, 0.195915428409005, 0.195939844103087, 0.19596411999239, 0.195988256804195, 0.196012255262877, 0.196036116089903 };
@@ -94,7 +94,7 @@ public class QuaSSEDimensionsAndFunctionsTest {
 
         cfn = new ConstantFunction();
         cfn.initByName("yV", yValuerp);
-        double[] cfnOut = cfn.getMacroParams(xRuler, lambdaHi);
+        double[] cfnOut = cfn.getMacroParams(xRuler, lambdaHi, true);
 
         double[] expectedCfn = new double[3999];
         for (int i=0; i<expectedCfn.length; i++) {
@@ -140,7 +140,7 @@ public class QuaSSEDimensionsAndFunctionsTest {
 
         LogisticFunction lfn = new LogisticFunction();
         lfn.initByName( "curveMaxBase", y0rp, "added2CurveMax", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
-        double[] lfnOut = lfn.getMacroParams(xRuler, lambdaHi);
+        double[] lfnOut = lfn.getMacroParams(xRuler, lambdaHi, true);
     }
 
     /*
@@ -172,7 +172,7 @@ public class QuaSSEDimensionsAndFunctionsTest {
 
         ConstantFunction cfn = new ConstantFunction();
         cfn.initByName("yV", yValuerp);
-        double[] cfnOut = cfn.getMacroParams(xRuler, muHi);
+        double[] cfnOut = cfn.getMacroParams(xRuler, muHi, true);
     }
 
     /*

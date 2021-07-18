@@ -12,11 +12,13 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     final public Input<Quant2MacroLinkFn> q2mLambdaInput = new Input<>("q2mLambda", "Function converting quantitative trait into lambda parameter.", Input.Validate.REQUIRED);
     final public Input<Quant2MacroLinkFn> q2mMuInput = new Input<>("q2mMu", "Function converting quantitative trait into mu parameter.", Input.Validate.REQUIRED);
 
-    private double[] lambdaLo, muLo, lambdaHi, muHi; // macroevol parameters
+    private int nDimensions = 2; // 1 for E, 1 for D
+    protected double[] birthRatesLo, deathRatesLo, birthRatesHi, deathRatesHi; // macroevol parameters
     private Quant2MacroLinkFn q2mLambda, q2mMu;
 
     // state that matters for calculateLogP
-    private double[][] esDs, scratch;
+    private double[][][] esDs;
+    private double[][] scratch;
 
     @Override
     public void initAndValidate() {
@@ -24,25 +26,25 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         super.initAndValidate(); // read in all dimension-related stuff
 
         q2mLambda = q2mLambdaInput.get();
-        lambdaLo = new double[nUsefulXbinsLo];
-        lambdaHi = new double[nUsefulXbinsHi];
+        birthRatesLo = new double[nUsefulXbinsLo];
+        birthRatesHi = new double[nUsefulXbinsHi];
 
         q2mMu = q2mMuInput.get();
-        muLo = new double[nUsefulXbinsLo];
-        muHi = new double[nUsefulXbinsHi];
+        deathRatesLo = new double[nUsefulXbinsLo];
+        deathRatesHi = new double[nUsefulXbinsHi];
 
-        populateMacroevolParams();
+        populateMacroevolParams(true);
 
         int nDimensionsFFT = 2;
         initializeEsDs(nDimensionsFFT, nXbins);
     }
 
     @Override
-    public void populateMacroevolParams() {
-        lambdaLo = q2mLambda.getMacroParams(xLo, lambdaLo);
-        lambdaHi = q2mLambda.getMacroParams(xHi,lambdaHi);
-        muLo = q2mMu.getMacroParams(muLo, muLo);
-        muHi = q2mMu.getMacroParams(muHi, muHi);
+    public void populateMacroevolParams(boolean ignoreRefresh) {
+        birthRatesLo = q2mLambda.getMacroParams(xLo, birthRatesLo, ignoreRefresh);
+        birthRatesHi = q2mLambda.getMacroParams(xHi, birthRatesHi, ignoreRefresh);
+        deathRatesLo = q2mMu.getMacroParams(deathRatesLo, deathRatesLo, ignoreRefresh);
+        deathRatesHi = q2mMu.getMacroParams(deathRatesHi, deathRatesHi, ignoreRefresh);
     }
 
     @Override
@@ -63,6 +65,23 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     @Override
     public void processBranch(Node node) {
 
+        int nodeIdx = node.getNr();
+        double[][] esDsAtNode = esDs[nodeIdx];
+
+        boolean isFirstDt = true;
+        boolean lowRes = false;
+
+        double startTime = node.getHeight(); // we're going backwards in time, toward the root
+
+        while ((startTime + dt) <= node.getParent().getHeight()) {
+            if (startTime > tc) lowRes = true;
+
+            doIntegrate(esDsAtNode, startTime, isFirstDt, lowRes);
+
+            isFirstDt = false;
+            startTime += dt;
+        }
+
     }
 
     @Override
@@ -76,17 +95,24 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void doIntegrate() {
+    public void doIntegrate(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
 
+        // integrate over birth and death events (either at low or high resolution)
+        if (lowRes) propagateT(esDsAtNode, birthRatesLo, deathRatesLo, nUsefulXbins[0]);
+        else propagateT(esDsAtNode, birthRatesHi, deathRatesHi, nUsefulXbins[1]);
+
+        // integrate over diffusion of substitution rate
+        propagateX(lowRes);
     }
 
     @Override
-    public void propagateT() {
-
+    public void propagateT(double[][] esDsAtNode, double[] birthRate, double[] deathRate, int nUsefulTraitBins) {
+        // grab scratch, dt and nDimensions from QuaSSEDistribution state
+        SSEUtils.propagateEandDinTQuaSSE(esDsAtNode, scratch, birthRate, deathRate, dt, nUsefulTraitBins, nDimensions);
     }
 
     @Override
-    public void propagateX() {
+    public void propagateX(boolean lowRes) {
 
     }
 
@@ -95,18 +121,27 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     }
 
+    @Override
+    public double calculateLogP() {
+
+        populateMacroevolParams(false);
+
+        return 0.0;
+    }
+
+
     /*
      * Getters and setters
      */
 
     public double[] getLambda(boolean lowRes) {
-        if (lowRes) return lambdaLo;
-        else return lambdaHi;
+        if (lowRes) return birthRatesLo;
+        else return birthRatesHi;
     }
 
     public double[] getMu(boolean lowRes) {
-        if (lowRes) return muLo;
-        else return muHi;
+        if (lowRes) return deathRatesLo;
+        else return deathRatesHi;
     }
 
     @Override

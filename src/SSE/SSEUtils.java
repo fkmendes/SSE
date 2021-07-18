@@ -48,7 +48,7 @@ public class SSEUtils {
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @return  no return, leaves result in 'esDs' and 'scratch'
      */
-    public static void propagateEandDinTQuaSSE(double[][] esDs, double[][] scratch, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
+    public static void propagateEandDinTQuaSSE(double[][] esDsAtNode, double[][] scratch, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
 
         // iterating over all continuous character bins (total # = nx), to update E and D for each of those bins
         for (int i = 0; i < nUsefulTraitBins; ++i) {
@@ -56,13 +56,13 @@ public class SSEUtils {
             double ithMu = deathRate[i];
             double netDivRate = ithLambda - ithMu;
             double ithZ = Math.exp(dt * netDivRate);
-            double ithE = esDs[0][i]; // Ask Xia: note that because i starts at 0, we're grabbing E values in left-padding
+            double ithE = esDsAtNode[0][i]; // Ask Xia: note that because i starts at 0, we're grabbing E values in left-padding
 
             double tmp1 = ithMu - ithLambda * ithE;
             double tmp2 = ithZ * (ithE - 1);
 
             /* Updating E's */
-            esDs[0][i] = (tmp1 + tmp2 * ithMu) / (tmp1 + tmp2 * ithLambda);
+            esDsAtNode[0][i] = (tmp1 + tmp2 * ithMu) / (tmp1 + tmp2 * ithLambda);
 
             // Saving values for updating D below
             tmp1 = (ithLambda - ithMu) / (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE);
@@ -86,8 +86,8 @@ public class SSEUtils {
 
             // iterating over bins of this dimension
             for (int j = 0; j < nUsefulTraitBins; j++) {
-                if (esDs[ithDim][j] < 0) esDs[ithDim][j] = 0;
-                else esDs[ithDim][j] *= scratch[ithDim][j];
+                if (esDsAtNode[ithDim][j] < 0) esDsAtNode[ithDim][j] = 0;
+                else esDsAtNode[ithDim][j] *= scratch[ithDim][j];
             }
         }
     }
@@ -111,7 +111,7 @@ public class SSEUtils {
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
      */
-    public static void propagateEandDinXQuaLike(double[][] esDs, double[][] scratch, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+    public static void propagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratch, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
 
         // We FFT fY, then FFT scratch, inverse-FFT scratch, result is left in scratch
         convolveInPlace(scratch, fY, nDimensionsE, nDimensionsD, fft);
@@ -122,12 +122,12 @@ public class SSEUtils {
 
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-            everyOtherInPlace(scratch[ithDim], esDs[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, scaleBy); // grabbing real part and scaling by 1/nXbins
+            everyOtherInPlace(scratch[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, scaleBy); // grabbing real part and scaling by 1/nXbins
 
             for (int i=0; i<nXbins; ++i) {
                 // if negative value, set to 0.0
                 // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
-                if (esDs[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDs[ithDim][i] = 0.0;
+                if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
             }
         }
     }

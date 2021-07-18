@@ -22,22 +22,44 @@ public class LogisticFunction extends Quant2MacroLinkFn {
     }
 
     @Override
-    public void refreshParams() {
-        if (curveMaxBaseInput.isDirty()) y0 = curveMaxBaseInput.get().getValue();
-        if (added2CurveMaxInput.isDirty()) y1 = added2CurveMaxInput.get().getValue();
-        if (logisticGrowthRateInput.isDirty()) r = logisticGrowthRateInput.get().getValue();
-        if (sigmoidMidpointInput.isDirty()) x0 = sigmoidMidpointInput.get().getValue();
+    public boolean refreshParams() {
+
+        boolean refreshedSomething = false;
+
+        if (curveMaxBaseInput.isDirty()) {
+            y0 = curveMaxBaseInput.get().getValue();
+            refreshedSomething = true;
+        }
+
+        if (added2CurveMaxInput.isDirty()) {
+            y1 = added2CurveMaxInput.get().getValue();
+            refreshedSomething = true;
+        }
+
+        if (logisticGrowthRateInput.isDirty()) {
+            r = logisticGrowthRateInput.get().getValue();
+            refreshedSomething = true;
+        }
+
+        if (sigmoidMidpointInput.isDirty()) {
+            x0 = sigmoidMidpointInput.get().getValue();
+            refreshedSomething = true;
+        }
+
+        return refreshedSomething;
     }
 
     @Override
-    public double[] getMacroParams(double[] x, double[] y) {
-        refreshParams();
+    public double[] getMacroParams(double[] x, double[] y, boolean ignoreRefresh) {
+        boolean refreshedSomething = refreshParams(); // if something changed in deterministic function parameters, we need to repopulate macroevol arrays
 
-        if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
+        if (ignoreRefresh || refreshedSomething) {
+            if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
 
-        for (int i=0; i<x.length; i++) {
-            curveMax = y1 - y0;
-            y[i] = y0 + curveMax / (1.0 + Math.exp(r * (x0 - x[i])));
+            for (int i = 0; i < x.length; i++) {
+                curveMax = y1 - y0;
+                y[i] = y0 + curveMax / (1.0 + Math.exp(r * (x0 - x[i])));
+            }
         }
 
         return y;

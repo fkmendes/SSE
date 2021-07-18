@@ -100,7 +100,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void populateMacroevolParams();
+    protected abstract void populateMacroevolParams(boolean ignoreRefresh);
 
     /*
      *
@@ -135,17 +135,17 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void doIntegrate();
+    protected abstract void doIntegrate(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes);
 
     /*
      *
      */
-    protected abstract void propagateT();
+    protected abstract void propagateT(double[][] esDsAtNode, double[] birthRate, double[] deathRate, int nUsefulTraitBins);
 
     /*
      *
      */
-    protected abstract void propagateX();
+    protected abstract void propagateX(boolean lowRes);
 
     /*
      *
