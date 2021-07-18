@@ -97,18 +97,18 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     @Override
     public void doIntegrate(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
 
-        // integrate over birth and death events (either at low or high resolution)
-        if (lowRes) propagateT(esDsAtNode, birthRatesLo, deathRatesLo, nUsefulXbins[0]);
-        else propagateT(esDsAtNode, birthRatesHi, deathRatesHi, nUsefulXbins[1]);
+        // integrate over birth and death events (low or high resolution inside)
+        propagateT(esDsAtNode, lowRes);
 
         // integrate over diffusion of substitution rate
         propagateX(lowRes);
     }
 
     @Override
-    public void propagateT(double[][] esDsAtNode, double[] birthRate, double[] deathRate, int nUsefulTraitBins) {
+    public void propagateT(double[][] esDsAtNode, boolean lowRes) {
         // grab scratch, dt and nDimensions from QuaSSEDistribution state
-        SSEUtils.propagateEandDinTQuaSSE(esDsAtNode, scratch, birthRate, deathRate, dt, nUsefulTraitBins, nDimensions);
+        if (lowRes) SSEUtils.propagateEandDinTQuaSSE(esDsAtNode, scratch, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensions);
+        else SSEUtils.propagateEandDinTQuaSSE(esDsAtNode, scratch, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensions);
     }
 
     @Override

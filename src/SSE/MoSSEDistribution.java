@@ -84,9 +84,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     @Override
     public void doIntegrate(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
 
-        // integrate over birth and death events (either at low or high resolution)
-        if (lowRes) propagateT(esDsAtNode, birthRatesLo, deathRatesLo, nUsefulXbins[0]);
-        else propagateT(esDsAtNode, birthRatesHi, deathRatesHi, nUsefulXbins[1]);
+        // integrate over birth and death events (either at low or high resolution inside)
+        propagateT(esDsAtNode, lowRes);
 
         /*
          * For the step below, I am working on the MoSSELikelihoodCore
@@ -114,8 +113,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void propagateT(double[][] esDsAtNode, double[] birthRate, double[] deathRate, int nUsefulTraitBins) {
-
+    public void propagateT(double[][] esDsAtNode, boolean lowRes) {
+        super.propagateT(esDsAtNode, lowRes);
     }
 
     @Override

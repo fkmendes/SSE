@@ -140,7 +140,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void propagateT(double[][] esDsAtNode, double[] birthRate, double[] deathRate, int nUsefulTraitBins);
+    protected abstract void propagateT(double[][] esDsAtNode, boolean lowRes);
 
     /*
      *
