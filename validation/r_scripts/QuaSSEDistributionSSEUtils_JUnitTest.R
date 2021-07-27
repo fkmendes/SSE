@@ -6,6 +6,8 @@
 # (3) testConvolve
 # (4) testPropagateChOneChQuaSSETest
 # (5) testProcessBranch
+# (6) testLogistic
+# (7) testDimensions
 
 library(diversitree)
 
@@ -106,6 +108,42 @@ expand.pars.quasse <- function (lambda, mu, args, ext, pars)
 sigmoid.x <- function (x, y0, y1, xmid, r) {
     to.add = (y1 - y0) / (1 + exp(r * (xmid - x)))
     y0 + to.add
+}
+
+make.initial.conditions.quasse <- function(control) {
+  tc = control$tc
+  r = control$r
+  nx.lo = control$nx
+  nx.hi = nx.lo * r
+
+  ## There is the chance that we could be slightly off on the depth
+  ## by rounding error.  Because of this, I've done the testing
+  ## against the *length* of the data, and then checked that the time
+  ## is appropriate (to within eps of the correct value).  It is
+  ## possible that two different branches with different numbers of
+  ## nodes that finish right at the critical interval might have
+  ## conflicting lengths.
+  eps = 1e-8
+  function(init, pars, t, idx) {
+    if ( length(init[[1]]) != length(init[[2]]) )
+      stop("Data have incompatible length")
+
+    if ( t < tc ) {
+      nx <- nx.hi
+      lambda <- pars[[1]]$lambda
+    } else {
+      nx <- nx.lo
+      lambda <- pars[[2]]$lambda
+    }
+
+    ndat = length(lambda)
+    i = seq_len(nx)
+    j = seq.int(nx+1, nx + ndat)
+
+    c(init[[1]][i],
+      init[[1]][j] * init[[2]][j] * lambda,
+      rep.int(0.0, nx - ndat))
+  }
 }
 
 ## Imports that are generally hidden.
@@ -371,11 +409,26 @@ paste(ls.hi[3989:3999], collapse=", ")
 
 
 
-# (7) dimensions test
+# (7) testDimensions
 
-ext.fft$nx
-ndat.lo
-ndat.hi
-xmin.lo
-xmin.hi
-ext.fft$padding
+ext.fft$nx # nXbinsHi = 4096, nXbinslo = 1024
+ndat.lo # nUsefulXbinsLo = 999
+ndat.hi # nUsefulXbinsHi = 3999
+ext.fft$padding # nLeftFlanksLo = nRightFlanksLo = 12, nLeftFlanksHi = nRightFlanksHi = 48
+xmin.lo # xMinLo = -4.99
+xmin.hi # xMinHi = -4.9975
+
+paste(ext.fft$x[[2]][1:10], collapse=", ") # expectedXLoFirst10 = -4.99, -4.98, -4.97, -4.96, -4.95, -4.94, -4.93, -4.92, -4.91, -4.9
+paste(ext.fft$x[[2]][990:999], collapse=", ") # expectedXLoLast10 = 4.9, 4.91, 4.92, 4.93, 4.94, 4.95, 4.96, 4.97, 4.98, 4.99
+paste(ext.fft$x[[1]][1:10], collapse=", ") # expectedXHiFirst10 = -4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975
+paste(ext.fft$x[[1]][3990:3999], collapse=", ") # expectedXHiLast10 = 4.975, 4.9775, 4.98, 4.9825, 4.985, 4.9875, 4.99, 4.9925, 4.995, 4.9975
+
+paste(pars.fft$lo$lambda[1:10], collapse=", ") # expectedLambdaLoFirt10 = 0.100000382097925, 0.100000391770742, 0.100000401688425, 0.100000411857174, 0.100000422283344, 0.100000432973452, 0.100000443934178, 0.100000455172374, 0.100000466695064, 0.10000047850945
+paste(pars.fft$lo$lambda[989:999], collapse=", ") # expectedLambdaLoLast10 = 0.199999509377086, 0.199999521490551, 0.199999533304936, 0.199999544827626, 0.199999556065822, 0.199999567026548, 0.199999577716656, 0.199999588142826, 0.199999598311575, 0.199999608229258, 0.199999617902075
+paste(pars.fft$hi$lambda[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591
+paste(pars.fft$hi$lambda[3989:3999], collapse=", ") # expectedLambdaHiLast10 = 0.199999600814288, 0.199999603301409, 0.199999605773033, 0.199999608229258, 0.19999961067018, 0.199999613095894, 0.199999615506494, 0.199999617902075, 0.199999620282731, 0.199999622648554, 0.199999624999637
+
+paste(pars.fft$lo$mu[1:10], collapse=", ") # expectedMuLoFirt10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+paste(pars.fft$lo$mu[989:999], collapse=", ") # expectedMuLoLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+paste(pars.fft$hi$mu[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+paste(pars.fft$hi$mu[3989:3999], collapse=", ") # expectedLambdaHiLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
