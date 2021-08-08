@@ -13,6 +13,7 @@ import beast.evolution.tree.Tree;
 public abstract class QuaSSEProcess extends Distribution {
 
     final public Input<Tree> treeInput = new Input<>("tree", "Tree object containing tree.", Input.Validate.REQUIRED);
+    final public Input<RealParameter> quTraitsInput = new Input<>("quTraits", "Quantitative trait values observed at tips", Input.Validate.REQUIRED);
     final public Input<RealParameter> dtInput = new Input<>("dt", "Length of time interval over which integration is carried out.", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> nXbinsInput = new Input<>("nX", "Total number of quantitative trait bins after discretization.", Input.Validate.REQUIRED);
     final public Input<RealParameter> dXBinInput = new Input<>("dX", "Width of quantitative trait bins.", Input.Validate.REQUIRED);
@@ -21,6 +22,9 @@ public abstract class QuaSSEProcess extends Distribution {
     final public Input<RealParameter> diffusionInput = new Input<>("diffusion", "Diffusion term of quantitative trait diffusion process.", Input.Validate.REQUIRED);
     final public Input<RealParameter> flankWidthScalerInput = new Input<>("flankWidthScaler", "Multiplier of normal standard deviation when determining number of flanking bins.", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> highLowRatioInput = new Input<>("hiLoRatio", "Scale nX by this when at high resolution.", Input.Validate.REQUIRED);
+
+    protected Tree tree;
+    protected RealParameter quTraits;
 
     // state for dimensioning things and setting up resolution of integration
     protected double dt, tc;
@@ -35,6 +39,9 @@ public abstract class QuaSSEProcess extends Distribution {
 
     @Override
     public void initAndValidate() {
+
+        tree = treeInput.get();
+        quTraits = quTraitsInput.get();
 
         nLeftNRightFlanksLo = new int[2];
         nLeftNRightFlanksHi = new int[2];
@@ -86,7 +93,7 @@ public abstract class QuaSSEProcess extends Distribution {
         // preparing x rulers
         xLo = new double[nUsefulXbinsLo];
         xLo[0] = xMinLo;
-        for (int i = 1; i< nUsefulXbinsLo; i++) {
+        for (int i = 1; i < nUsefulXbinsLo; i++) {
             xLo[i] = xLo[i-1] + dXbin;
         }
 
@@ -105,12 +112,12 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void initializeEsDs(int nDimensionsFFT, int nXbins);
+    protected abstract void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbins);
 
     /*
      *
      */
-    protected abstract void initializeTips();
+    protected abstract void populateTipsEsDs(int nDimensionsFFT, int nXbins);
 
     /*
      *

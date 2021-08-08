@@ -17,7 +17,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     private Quant2MacroLinkFn q2mLambda, q2mMu;
 
     // state that matters for calculateLogP
-    private double[][][] esDs;
+    private double[][][] esDs; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
     private double[][] scratch;
 
     @Override
@@ -36,7 +36,9 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         populateMacroevolParams(true);
 
         int nDimensionsFFT = 2;
-        initializeEsDs(nDimensionsFFT, nXbins);
+        initializeEsDs(tree.getNodeCount(), nDimensionsFFT, nXbins);
+
+        populateTipsEsDs(nDimensionsFFT, nUsefulXbinsHi);
     }
 
     @Override
@@ -48,13 +50,28 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void initializeEsDs(int nDimensionsFFT, int nXbins) {
+    public void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbins) {
+        esDs = new double[nNodes][nDimensionsFFT][nXbins];
         // do stuff with nDimensionsFFT
     }
 
     @Override
-    public void initializeTips() {
+    public void populateTipsEsDs(int nDimensionsFFT, int nUsefulXbins) {
+        for (Node tip: tree.getExternalNodes()) {
+            String tipName = tip.getID();
+            int nodeIdx = tip.getNr();
 
+            for (int i=0; i < nDimensionsFFT; i++) {
+                for (int j = 0; j < nUsefulXbins; j++) {
+                    if (j == 0) esDs[nodeIdx][i][j] = 0.0; // E's = 1.0 - sampling.f
+                    else {
+                        esDs[nodeIdx][i][j] = 0.0; // TODO: dnorm()
+                    }
+
+                    System.out.println(tipName + " = " + quTraits.getValue(tipName));
+                }
+            }
+        }
     }
 
     @Override

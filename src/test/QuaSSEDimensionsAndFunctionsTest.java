@@ -10,12 +10,15 @@ import beast.core.parameter.RealParameter;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 
 public class QuaSSEDimensionsAndFunctionsTest {
 
     final static Double EPSILON = 1e-6;
+
+    List<Double> data;
 
     QuaSSEDistribution q;
 
@@ -185,7 +188,7 @@ public class QuaSSEDimensionsAndFunctionsTest {
     public void testDimensions() {
 
         // tree
-        String treeStr = "((sp1:1.0,sp2:1.0):1.0,sp3:2.0);";
+        String treeStr = "((sp1:0.5787065,sp2:0.5787065):1.0002893,sp3:1.5789958);";
         Tree myTree = new TreeParser(treeStr, false, false, true, 0);
 
         // logistic realparameter's for lambda
@@ -234,12 +237,18 @@ public class QuaSSEDimensionsAndFunctionsTest {
         Double[] diffusion = new Double[] { 0.01 };
         RealParameter diffusionrp = new RealParameter(diffusion);
 
+        String spNames = "sp1 sp2 sp3";
+        data = Arrays.asList(0.19537143, 0.00433218, 0.25996570);
+        RealParameter quTraitrp = new RealParameter();
+        quTraitrp.initByName("value", data, "keys", spNames);
+
         // QuaSSE stuff
         q = new QuaSSEDistribution();
         q.initByName("dt", dtrp, "nX", nXbinsip, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftrp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", myTree);
+                "tree", myTree,
+                "quTraits", quTraitrp);
 
         int nXbinsLo = q.getnXbins(true);
         int nXbinsHi = q.getnXbins(false);

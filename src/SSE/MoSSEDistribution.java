@@ -58,7 +58,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void initializeTips() {
+    public void populateTipsEsDs(int nDimensionsFFT, int nXbins) {
 
     }
 

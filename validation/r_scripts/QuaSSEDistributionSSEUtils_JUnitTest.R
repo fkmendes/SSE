@@ -110,42 +110,6 @@ sigmoid.x <- function (x, y0, y1, xmid, r) {
     y0 + to.add
 }
 
-make.initial.conditions.quasse <- function(control) {
-  tc = control$tc
-  r = control$r
-  nx.lo = control$nx
-  nx.hi = nx.lo * r
-
-  ## There is the chance that we could be slightly off on the depth
-  ## by rounding error.  Because of this, I've done the testing
-  ## against the *length* of the data, and then checked that the time
-  ## is appropriate (to within eps of the correct value).  It is
-  ## possible that two different branches with different numbers of
-  ## nodes that finish right at the critical interval might have
-  ## conflicting lengths.
-  eps = 1e-8
-  function(init, pars, t, idx) {
-    if ( length(init[[1]]) != length(init[[2]]) )
-      stop("Data have incompatible length")
-
-    if ( t < tc ) {
-      nx <- nx.hi
-      lambda <- pars[[1]]$lambda
-    } else {
-      nx <- nx.lo
-      lambda <- pars[[2]]$lambda
-    }
-
-    ndat = length(lambda)
-    i = seq_len(nx)
-    j = seq.int(nx+1, nx + ndat)
-
-    c(init[[1]][i],
-      init[[1]][j] * init[[2]][j] * lambda,
-      rep.int(0.0, nx - ndat))
-  }
-}
-
 ## Imports that are generally hidden.
 make.pde.quasse.fftC <- diversitree:::make.pde.quasse.fftC
 make.pde.quasse.fftR <- diversitree:::make.pde.quasse.fftR
@@ -154,6 +118,8 @@ make.pde.quasse.mol <- diversitree:::make.pde.quasse.mol
 make.branches.quasse.fftC <- diversitree:::make.branches.quasse.fftC
 make.branches.quasse.fftR <- diversitree:::make.branches.quasse.fftR
 make.branches.quasse.mol <- diversitree:::make.branches.quasse.mol
+
+make.cache.quasse <- diversitree:::make.cache.quasse
 
 
 
@@ -432,3 +398,142 @@ paste(pars.fft$lo$mu[1:10], collapse=", ") # expectedMuLoFirt10 = 0.03, 0.03, 0.
 paste(pars.fft$lo$mu[989:999], collapse=", ") # expectedMuLoLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
 paste(pars.fft$hi$mu[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
 paste(pars.fft$hi$mu[3989:3999], collapse=", ") # expectedLambdaHiLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+
+
+
+# (8)
+
+if (getRversion() >= "3.6.0") {
+    RNGkind(sample.kind = "Rounding")
+}
+
+lambda <- function(x) sigmoid.x(x, 0.1, 0.2,  0, 2.5)
+mu <- function(x) constant.x(x, 0.03)
+char <- make.brownian.with.drift(drift, diffusion)
+set.seed(1)
+phy <- tree.quasse(c(lambda, mu, char), max.taxa=3, x0=0, single.lineage=FALSE, verbose=FALSE)
+pars <- c(.1, .2, 0, 2.5, .03, 0, .01)
+sd <- 1/20
+control.C.1 <- list(dt.max=1/20) # dt = 1/20
+
+cache <- make.cache.quasse(phy, phy$tip.state, sd, lambda, mu, control.C.1, NULL)
+cache$control
+
+make.all.branches.quasse <- function(cache, control) {
+  branches <- diversitree:::make.branches.quasse(cache, control)
+  initial.conditions <- make.initial.conditions.quasse(control)
+  ## TODO: This is where tips.combined goes, *not* in the likelihood
+  ## function...
+
+  # FKM: this function does not seem to execute
+  function(pars, intermediates, preset=NULL) {
+      cache$y = initial.tip.quasse(cache, cache$control, pars[[1]]$x)
+
+      # FKM
+      print(cache$y)
+
+      diversitree:::all.branches.list(pars, cache, initial.conditions,
+                                      branches, preset)
+  }
+}
+
+# inside R/model-quasse.R
+initial.tip.quasse <- function(cache, control, x) {
+  nx = control$nx * control$r
+  npad = nx - length(x)
+  e0 = 1 - cache$sampling.f
+
+  # what is tips.combined?
+  if ( control$tips.combined ) {
+    tips = cache$tips
+    t = cache$len[tips]
+    i = order(t)
+    target = tips[i]
+
+    states = cache$states[i]
+    states.sd = cache$states.sd[i]
+
+    y = mapply(function(mean, sd)
+                c(dnorm(x, mean, sd), rep(0, npad)),
+                states, states.sd, SIMPLIFY=FALSE)
+    y = matrix(c(rep(e0, nx), unlist(y)), nx, length(target)+1)
+
+    list(target=target, y=y, t=t[i])
+  } else {
+    # FKM: seems to be the default
+      y = mapply(function(mean, sd)
+          c(rep(e0, nx), dnorm(x, mean, sd), rep(0, npad)),
+          cache$states, cache$states.sd,
+          SIMPLIFY=FALSE) # returns list
+    diversitree:::dt.tips.ordered(y, cache$tips, cache$len[cache$tips])
+  }
+}
+
+## taking following lines from R/model-quasse.R, make.quasse()
+# all.branches <- make.all.branches.quasse(cache, cache$control) # all.branches is a function
+f.pars <- diversitree:::make.pars.quasse(cache)
+pars2 <- f.pars(pars)
+
+# understanding tip initialization
+sampling.f <- 1
+e0 <- 1 - sampling.f
+nx <- cache$control$nx * cache$control$r # 1024 * 4 = 4096
+npad <- nx - length(pars2[[1]]$x)
+
+# this is how the tip y's are initialized
+sp1.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[1], cache$states.sd[1]), rep(0, npad)) # E's and D's (8192 elements)
+sp2.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[2], cache$states.sd[2]), rep(0, npad))
+sp3.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[3], cache$states.sd[3]), rep(0, npad))
+
+# we can compare it to running the function as is
+cache$y <- initial.tip.quasse(cache, cache$control, pars2[[1]]$x) # this is a list
+# cache$y$t # branch lengths
+# cache$y$target # tip indices (I think)
+identical(cache$y$y$sp1, sp1.y)
+identical(cache$y$y$sp2, sp2.y)
+identical(cache$y$y$sp3, sp3.y)
+identical(cache$y$y$sp1, sp2.y) # just as a control
+
+# ans <- all.branches(pars2, NULL)
+
+
+
+###################
+
+# inside R/model-quasse.R
+make.initial.conditions.quasse <- function(control) {
+  tc = control$tc
+  r = control$r
+  nx.lo = control$nx
+  nx.hi = nx.lo * r
+
+  ## There is the chance that we could be slightly off on the depth
+  ## by rounding error.  Because of this, I've done the testing
+  ## against the *length* of the data, and then checked that the time
+  ## is appropriate (to within eps of the correct value).  It is
+  ## possible that two different branches with different numbers of
+  ## nodes that finish right at the critical interval might have
+  ## conflicting lengths.
+  eps = 1e-8
+
+  function(init, pars, t, idx) {
+    if ( length(init[[1]]) != length(init[[2]]) )
+      stop("Data have incompatible length")
+
+    if ( t < tc ) {
+      nx <- nx.hi
+      lambda <- pars[[1]]$lambda
+    } else {
+      nx <- nx.lo
+      lambda <- pars[[2]]$lambda
+    }
+
+    ndat = length(lambda)
+    i = seq_len(nx)
+    j = seq.int(nx+1, nx + ndat)
+
+    c(init[[1]][i],
+      init[[1]][j] * init[[2]][j] * lambda,
+      rep.int(0.0, nx - ndat))
+  }
+}
