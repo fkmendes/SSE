@@ -1,5 +1,6 @@
 package SSE;
 
+import beast.core.BEASTObject;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 
@@ -8,7 +9,7 @@ import beast.core.parameter.RealParameter;
  * If you put a prior on the y value, it's the same as assuming y is
  * distributed according to that prior, and independent of x
  */
-public class ConstantFunction extends Quant2MacroLinkFn {
+public class ConstantLinkFn extends BEASTObject implements LinkFn {
 
     final public Input<RealParameter> yValueInput = new Input<>("yV", "Constant value of dependent variable (quantitative trait).", Input.Validate.REQUIRED);
 
@@ -21,7 +22,7 @@ public class ConstantFunction extends Quant2MacroLinkFn {
     }
 
     @Override
-    protected boolean refreshParams() {
+    public boolean refreshParams() {
 
         boolean refreshedSomething = false;
 
@@ -34,9 +35,14 @@ public class ConstantFunction extends Quant2MacroLinkFn {
     }
 
     @Override
-    public double[] getMacroParams(double[] x, double[] y, boolean ignoreRefresh) {
-        boolean refreshedSomething = refreshParams();
+    public double[] getY(double[] x, double[] y, boolean ignoreRefresh) {
+        boolean refreshedSomething = false;
+        if (!ignoreRefresh) refreshedSomething = refreshParams();
 
+        /*
+         * if either we don't care about refreshing, or we do and something was refreshed,
+         * we repopulate y
+         */
         if (ignoreRefresh || refreshedSomething) {
             if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
 

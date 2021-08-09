@@ -417,7 +417,10 @@ sd <- 1/20
 control.C.1 <- list(dt.max=1/20) # dt = 1/20
 
 cache <- make.cache.quasse(phy, phy$tip.state, sd, lambda, mu, control.C.1, NULL)
-cache$control
+
+## these two lines are to make this cache match the previous unit tests
+cache$control$dx <- 0.01 ## TODO: making sure this works still
+cache$control$xmid <- 0.0 ## TODO: making sure this works still
 
 make.all.branches.quasse <- function(cache, control) {
   branches <- diversitree:::make.branches.quasse(cache, control)
@@ -474,6 +477,11 @@ initial.tip.quasse <- function(cache, control, x) {
 f.pars <- diversitree:::make.pars.quasse(cache)
 pars2 <- f.pars(pars)
 
+## these two lines are to make this cache match the previous unit tests
+pars2$hi$x <- x.hi ## TODO: making sure this works still
+pars2$lo$x <- x.lo ## TODO: making sure this works still
+pars2$lo$padding <- c(12, 12)
+
 # understanding tip initialization
 sampling.f <- 1
 e0 <- 1 - sampling.f
@@ -481,6 +489,8 @@ nx <- cache$control$nx * cache$control$r # 1024 * 4 = 4096
 npad <- nx - length(pars2[[1]]$x)
 
 # this is how the tip y's are initialized
+sp1.y <- c(rep(e0, nx), dnorm(pars.fft$hi$x, cache$states[1], cache$states.sd[1]), rep(0, npad)) # E's and D's (8192 elements)
+sp1.y.ds <- sp1.y[nx+1:(length(sp1.y)-nx)]
 sp1.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[1], cache$states.sd[1]), rep(0, npad)) # E's and D's (8192 elements)
 sp2.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[2], cache$states.sd[2]), rep(0, npad))
 sp3.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[3], cache$states.sd[3]), rep(0, npad))

@@ -1,9 +1,10 @@
 package SSE;
 
+import beast.core.BEASTObject;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 
-public class LogisticFunction extends Quant2MacroLinkFn {
+public class LogisticFunction extends BEASTObject implements LinkFn {
 
     final public Input<RealParameter> curveMaxBaseInput = new Input<>("curveMaxBase", "Curve maximum base value.", Input.Validate.REQUIRED);
     final public Input<RealParameter> added2CurveMaxInput = new Input<>("added2CurveMax", "How much is added to curve max base (after subtracting curve max base from this).", Input.Validate.REQUIRED);
@@ -50,9 +51,14 @@ public class LogisticFunction extends Quant2MacroLinkFn {
     }
 
     @Override
-    public double[] getMacroParams(double[] x, double[] y, boolean ignoreRefresh) {
-        boolean refreshedSomething = refreshParams(); // if something changed in deterministic function parameters, we need to repopulate macroevol arrays
+    public double[] getY(double[] x, double[] y, boolean ignoreRefresh) {
+        boolean refreshedSomething = false;
+        if (!ignoreRefresh) refreshedSomething = refreshParams(); // if something changed in deterministic function parameters, we need to repopulate macroevol arrays
 
+        /*
+         * if either we don't care about refreshing, or we do and something was refreshed,
+         * we repopulate y
+         */
         if (ignoreRefresh || refreshedSomething) {
             if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
 

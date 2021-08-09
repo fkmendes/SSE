@@ -26,7 +26,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     private double[] instRateMat; // flattened out matrix
 
     // state that matters for calculateLogP
-    private double[][][] esDs, scratch; // first dimension are all nodes, second dimension are E's and D's, third are the bins
+    private double[][][] esDs; // first dimension are all nodes, second dimension are E's and D's, third are the bins
+    private double[][] scratch;
 
 
     @Override
@@ -49,17 +50,18 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         instRateMat = new double[4*4];
 
         int nDimensionsFFT = 5; // E, and 4 D's (one for each nuc)
-        initializeEsDs(nSitePat, nDimensionsFFT, this.nXbins);
+        initializeEsDs(tree.getNodeCount(), nSitePat, nDimensionsFFT, this.nXbins);
     }
 
     // needs extra dimension of nSitePat
-    public void initializeEsDs(int nSitePat, int nDimensionsFFT, int nXbins) {
+    public void initializeEsDs(int nNodes, int nSitePat, int nDimensionsFFT, int nXbinsHi) {
+        esDs = new double[nNodes][nDimensionsFFT][nXbinsHi];
         // do stuff with nDimensionsFFT
     }
 
     @Override
-    public void populateTipsEsDs(int nDimensionsFFT, int nXbins) {
-
+    public void populateTipsEsDs(int nDimensionsFFT, int nUsefulXbinsHi, boolean ignoreRefresh) {
+        ;
     }
 
     @Override

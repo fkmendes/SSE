@@ -13,9 +13,9 @@ import beast.evolution.tree.Tree;
 public abstract class QuaSSEProcess extends Distribution {
 
     final public Input<Tree> treeInput = new Input<>("tree", "Tree object containing tree.", Input.Validate.REQUIRED);
-    final public Input<RealParameter> quTraitsInput = new Input<>("quTraits", "Quantitative trait values observed at tips", Input.Validate.REQUIRED);
+    // final public Input<RealParameter> quTraitsInput = new Input<>("quTraits", "Quantitative trait values observed at tips", Input.Validate.REQUIRED);
     final public Input<RealParameter> dtInput = new Input<>("dt", "Length of time interval over which integration is carried out.", Input.Validate.REQUIRED);
-    final public Input<IntegerParameter> nXbinsInput = new Input<>("nX", "Total number of quantitative trait bins after discretization.", Input.Validate.REQUIRED);
+    final public Input<IntegerParameter> nXbinsInput = new Input<>("nX", "Total number of quantitative trait bins after discretization at low resolution.", Input.Validate.REQUIRED);
     final public Input<RealParameter> dXBinInput = new Input<>("dX", "Width of quantitative trait bins.", Input.Validate.REQUIRED);
     final public Input<RealParameter> xMidInput = new Input<>("xMid", "Midpoint to center the quantitative trait space.", Input.Validate.REQUIRED);
     final public Input<RealParameter> driftInput = new Input<>("drift", "Drift term of quantitative trait diffusion process.", Input.Validate.REQUIRED);
@@ -41,7 +41,7 @@ public abstract class QuaSSEProcess extends Distribution {
     public void initAndValidate() {
 
         tree = treeInput.get();
-        quTraits = quTraitsInput.get();
+        // quTraits = quTraitsInput.get();
 
         nLeftNRightFlanksLo = new int[2];
         nLeftNRightFlanksHi = new int[2];
@@ -112,12 +112,12 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbins);
+    protected abstract void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsHi);
 
     /*
      *
      */
-    protected abstract void populateTipsEsDs(int nDimensionsFFT, int nXbins);
+    protected abstract void populateTipsEsDs(int nDimensionsFFT, int nXbins, boolean ignoreRefresh);
 
     /*
      *

@@ -9,12 +9,13 @@ import java.util.Random;
 
 public class QuaSSEDistribution extends QuaSSEProcess {
 
-    final public Input<Quant2MacroLinkFn> q2mLambdaInput = new Input<>("q2mLambda", "Function converting quantitative trait into lambda parameter.", Input.Validate.REQUIRED);
-    final public Input<Quant2MacroLinkFn> q2mMuInput = new Input<>("q2mMu", "Function converting quantitative trait into mu parameter.", Input.Validate.REQUIRED);
+    final public Input<LinkFn> q2mLambdaInput = new Input<>("q2mLambda", "Function converting quantitative trait into lambda parameter.", Input.Validate.REQUIRED);
+    final public Input<LinkFn> q2mMuInput = new Input<>("q2mMu", "Function converting quantitative trait into mu parameter.", Input.Validate.REQUIRED);
+    final public Input<LinkFn> q2dInput = new Input<>("q2d", "Function converting quantitative trait into initial D values.", Input.Validate.REQUIRED);
 
     private int nDimensions = 2; // 1 for E, 1 for D
     protected double[] birthRatesLo, deathRatesLo, birthRatesHi, deathRatesHi; // macroevol parameters
-    private Quant2MacroLinkFn q2mLambda, q2mMu;
+    private LinkFn q2mLambda, q2mMu, q2d;
 
     // state that matters for calculateLogP
     private double[][][] esDs; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
@@ -33,42 +34,45 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         deathRatesLo = new double[nUsefulXbinsLo];
         deathRatesHi = new double[nUsefulXbinsHi];
 
+        q2d = q2dInput.get();
+
         populateMacroevolParams(true);
 
         int nDimensionsFFT = 2;
-        initializeEsDs(tree.getNodeCount(), nDimensionsFFT, nXbins);
+        initializeEsDs(tree.getNodeCount(), nDimensionsFFT, nXbinsHi);
 
-        populateTipsEsDs(nDimensionsFFT, nUsefulXbinsHi);
+        populateTipsEsDs(nDimensionsFFT, nXbins, true);
     }
 
     @Override
     public void populateMacroevolParams(boolean ignoreRefresh) {
-        birthRatesLo = q2mLambda.getMacroParams(xLo, birthRatesLo, ignoreRefresh);
-        birthRatesHi = q2mLambda.getMacroParams(xHi, birthRatesHi, ignoreRefresh);
-        deathRatesLo = q2mMu.getMacroParams(deathRatesLo, deathRatesLo, ignoreRefresh);
-        deathRatesHi = q2mMu.getMacroParams(deathRatesHi, deathRatesHi, ignoreRefresh);
+        birthRatesLo = q2mLambda.getY(xLo, birthRatesLo, ignoreRefresh);
+        birthRatesHi = q2mLambda.getY(xHi, birthRatesHi, ignoreRefresh);
+        deathRatesLo = q2mMu.getY(deathRatesLo, deathRatesLo, ignoreRefresh);
+        deathRatesHi = q2mMu.getY(deathRatesHi, deathRatesHi, ignoreRefresh);
     }
 
     @Override
-    public void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbins) {
-        esDs = new double[nNodes][nDimensionsFFT][nXbins];
+    public void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsHi) {
+        esDs = new double[nNodes][nDimensionsFFT][nXbinsHi];
         // do stuff with nDimensionsFFT
     }
 
     @Override
-    public void populateTipsEsDs(int nDimensionsFFT, int nUsefulXbins) {
+    public void populateTipsEsDs(int nDimensionsFFT, int nXbins, boolean ignoreRefresh) {
+
         for (Node tip: tree.getExternalNodes()) {
             String tipName = tip.getID();
             int nodeIdx = tip.getNr();
 
             for (int i=0; i < nDimensionsFFT; i++) {
-                for (int j = 0; j < nUsefulXbins; j++) {
-                    if (j == 0) esDs[nodeIdx][i][j] = 0.0; // E's = 1.0 - sampling.f
-                    else {
-                        esDs[nodeIdx][i][j] = 0.0; // TODO: dnorm()
-                    }
+                // E's
+                if (i == 0) for (int j=0; j < nXbins; j++) esDs[nodeIdx][i][j] = 0.0; // E's = 1.0 - sampling.f
 
-                    System.out.println(tipName + " = " + quTraits.getValue(tipName));
+                // D's
+                else {
+                    System.out.println("i=" + i);
+                    esDs[nodeIdx][i] = q2d.getY(xHi, esDs[nodeIdx][i], nLeftNRightFlanksHi, tipName, ignoreRefresh);
                 }
             }
         }
@@ -159,6 +163,10 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     public double[] getMu(boolean lowRes) {
         if (lowRes) return deathRatesLo;
         else return deathRatesHi;
+    }
+
+    public double[][][] getEsDs() {
+        return esDs;
     }
 
     @Override
