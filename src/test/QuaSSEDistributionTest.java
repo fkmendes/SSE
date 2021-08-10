@@ -37,7 +37,7 @@ public class QuaSSEDistributionTest {
 
         // qu trait data
         String spNames = "sp1 sp2 sp3";
-        data = Arrays.asList(0.19537143, 0.00433218, 0.25996570);
+        data = Arrays.asList(-0.19537143, 0.00433218, 0.25996570);
         RealParameter quTraitrp = new RealParameter();
         quTraitrp.initByName("value", data, "keys", spNames);
 
@@ -73,8 +73,11 @@ public class QuaSSEDistributionTest {
         cfn.initByName("yV", yValuerp);
 
         // link function for D's
+
+        Double[] sdNormaQuTraitValue = new Double[] { 0.05 };
+        RealParameter sdNormaQuTraitValuerp = new RealParameter(sdNormaQuTraitValue);
         nfn = new NormalCenteredAtObservedLinkFn();
-        nfn.initByName("quTraits", quTraitrp, "dt", dtrp, "diffusion", diffusionrp);
+        nfn.initByName("quTraits", quTraitrp, "sdNormalQuTrValue", sdNormaQuTraitValuerp);
 
         Double[] xMid = new Double[] { 0.0 };
         RealParameter xMidrp = new RealParameter(xMid);
@@ -170,12 +173,19 @@ public class QuaSSEDistributionTest {
     }
 
     /*
-     *
+     * Checks that three species in a 3sp-tree get their D's correctly
+     * initialized (using standard QuaSSE initialization)
      */
     @Test
     public void testInitializationOfTips() {
         double[][][] esDsHi = q.getEsDs();
-        // System.out.println(esDsHi[0][1].length);
-        // System.out.println(Arrays.toString(Arrays.copyOfRange(esDsHi[0][1], 5247,5258)));
+
+        double[] expectedSp1Ds = new double[] { 1.60021460660503, 1.74807698146288, 1.90483403228819, 2.07046547520583, 2.24487988376146, 2.42790945985862, 2.61930535022212, 2.81873362725308, 3.02577205091375, 3.23990772345705 };
+        double[] expectedSp2Ds = new double[] { 4.27279148709871e-07, 5.69933520491392e-07, 7.58317302503376e-07, 1.00644951269517e-06, 1.33243884785178e-06, 1.75961170550665e-06, 2.3179318461188e-06, 3.04578151100852e-06, 3.99218899881498e-06, 5.21960579763602e-06 };
+        double[] expectedSp3Ds = new double[] { 1.27621312438669e-25, 2.19814297381616e-25, 3.77661688851761e-25, 6.47238270601096e-25, 1.1064701711749e-24, 1.88681576360346e-24, 3.20947166037177e-24, 5.44567674756272e-24, 9.21689065275829e-24, 1.55607768879411e-23 };
+
+        Assert.assertArrayEquals(expectedSp1Ds, Arrays.copyOfRange(esDsHi[0][1], 1885, 1895), EPSILON);
+        Assert.assertArrayEquals(expectedSp2Ds, Arrays.copyOfRange(esDsHi[1][1], 1885, 1895), EPSILON);
+        Assert.assertArrayEquals(expectedSp3Ds, Arrays.copyOfRange(esDsHi[2][1], 1885, 1895), EPSILON);
     }
 }

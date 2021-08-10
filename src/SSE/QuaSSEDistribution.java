@@ -70,10 +70,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
                 if (i == 0) for (int j=0; j < nXbins; j++) esDs[nodeIdx][i][j] = 0.0; // E's = 1.0 - sampling.f
 
                 // D's
-                else {
-                    System.out.println("i=" + i);
-                    esDs[nodeIdx][i] = q2d.getY(xHi, esDs[nodeIdx][i], nLeftNRightFlanksHi, tipName, ignoreRefresh);
-                }
+                else esDs[nodeIdx][i] = q2d.getY(xHi, esDs[nodeIdx][i], nLeftNRightFlanksHi, tipName, ignoreRefresh);
             }
         }
     }

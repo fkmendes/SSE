@@ -407,20 +407,22 @@ if (getRversion() >= "3.6.0") {
     RNGkind(sample.kind = "Rounding")
 }
 
-lambda <- function(x) sigmoid.x(x, 0.1, 0.2,  0, 2.5)
+lambda <- function(x) sigmoid.x(x, 0.1, 0.2, 0, 2.5)
 mu <- function(x) constant.x(x, 0.03)
 char <- make.brownian.with.drift(drift, diffusion)
 set.seed(1)
 phy <- tree.quasse(c(lambda, mu, char), max.taxa=3, x0=0, single.lineage=FALSE, verbose=FALSE)
-pars <- c(.1, .2, 0, 2.5, .03, 0, .01)
+pars <- c(.1, .2, 0, 2.5, .03, 0, .01) # 6th and 7th elements are drift and difussion
 sd <- 1/20
 control.C.1 <- list(dt.max=1/20) # dt = 1/20
 
 cache <- make.cache.quasse(phy, phy$tip.state, sd, lambda, mu, control.C.1, NULL)
 
-## these two lines are to make this cache match the previous unit tests
-cache$control$dx <- 0.01 ## TODO: making sure this works still
-cache$control$xmid <- 0.0 ## TODO: making sure this works still
+## these four lines are to make this cache match the previous unit tests
+cache$args$drift <- 6
+cache$args$diffusion <- 7
+cache$control$dx <- 0.01 ## to match unit test
+cache$control$xmid <- 0.0 ## to match unit test
 
 make.all.branches.quasse <- function(cache, control) {
   branches <- diversitree:::make.branches.quasse(cache, control)
@@ -477,11 +479,6 @@ initial.tip.quasse <- function(cache, control, x) {
 f.pars <- diversitree:::make.pars.quasse(cache)
 pars2 <- f.pars(pars)
 
-## these two lines are to make this cache match the previous unit tests
-pars2$hi$x <- x.hi ## TODO: making sure this works still
-pars2$lo$x <- x.lo ## TODO: making sure this works still
-pars2$lo$padding <- c(12, 12)
-
 # understanding tip initialization
 sampling.f <- 1
 e0 <- 1 - sampling.f
@@ -489,8 +486,6 @@ nx <- cache$control$nx * cache$control$r # 1024 * 4 = 4096
 npad <- nx - length(pars2[[1]]$x)
 
 # this is how the tip y's are initialized
-sp1.y <- c(rep(e0, nx), dnorm(pars.fft$hi$x, cache$states[1], cache$states.sd[1]), rep(0, npad)) # E's and D's (8192 elements)
-sp1.y.ds <- sp1.y[nx+1:(length(sp1.y)-nx)]
 sp1.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[1], cache$states.sd[1]), rep(0, npad)) # E's and D's (8192 elements)
 sp2.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[2], cache$states.sd[2]), rep(0, npad))
 sp3.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[3], cache$states.sd[3]), rep(0, npad))
@@ -504,6 +499,17 @@ identical(cache$y$y$sp2, sp2.y)
 identical(cache$y$y$sp3, sp3.y)
 identical(cache$y$y$sp1, sp2.y) # just as a control
 
+sp1.y.ds <- sp1.y[nx+1:(length(sp1.y)-nx)]
+sp2.y.ds <- sp2.y[nx+1:(length(sp2.y)-nx)]
+sp3.y.ds <- sp3.y[nx+1:(length(sp3.y)-nx)]
+
+sp1.y.ds.exp <- sp1.y.ds[1886:1895]
+sp2.y.ds.exp <- sp2.y.ds[1886:1895]
+sp3.y.ds.exp <- sp3.y.ds[1886:1895]
+
+paste(sp1.y.ds.exp, collapse=", ")
+paste(sp2.y.ds.exp, collapse=", ")
+paste(sp3.y.ds.exp, collapse=", ")
 # ans <- all.branches(pars2, NULL)
 
 

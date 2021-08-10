@@ -12,18 +12,18 @@ import java.util.Arrays;
 public class NormalCenteredAtObservedLinkFn extends BEASTObject implements LinkFn {
 
     final public Input<RealParameter> quTraitsInput = new Input<>("quTraits", "Quantitative trait values observed at tips", Input.Validate.REQUIRED);
-    final public Input<RealParameter> dtInput = new Input<>("dt", "Length of time interval over which integration is carried out.", Input.Validate.REQUIRED);
-    final public Input<RealParameter> diffusionInput = new Input<>("diffusion", "Diffusion term of quantitative trait diffusion process.", Input.Validate.REQUIRED);
+    // final public Input<RealParameter> dtInput = new Input<>("dt", "Length of time interval over which integration is carried out.", Input.Validate.REQUIRED);
+    // final public Input<RealParameter> diffusionInput = new Input<>("diffusion", "Diffusion term of quantitative trait diffusion process.", Input.Validate.REQUIRED);
+    final public Input<RealParameter> sdNormalQuTrValueInput = new Input<>("sdNormalQuTrValue", "User-specified standard deviation of normal distribution for trait values (not trait value change!).", Input.Validate.REQUIRED);
 
     protected RealParameter quTraits;
-    protected double dt, changeInXNormalSd;
+    private double sdNormalQuTrValue; // not a parameter in the model
     private static final String LINKFUNCTION = "normalcenteredatdata";
 
     @Override
     public void initAndValidate() {
         quTraits = quTraitsInput.get();
-        dt = dtInput.get().getValue();
-        changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dt);
+        sdNormalQuTrValue = sdNormalQuTrValueInput.get().getValue();
     }
 
     @Override
@@ -36,13 +36,8 @@ public class NormalCenteredAtObservedLinkFn extends BEASTObject implements LinkF
             refreshedSomething = true;
         }
 
-        if (dtInput.isDirty()) {
-            dt = dtInput.get().getValue();
-            refreshedSomething = true;
-        }
-
-        if (diffusionInput.isDirty()) {
-            changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dt);
+        if (sdNormalQuTrValueInput.isDirty()) {
+            sdNormalQuTrValue = sdNormalQuTrValueInput.get().getValue();
             refreshedSomething = true;
         }
 
@@ -70,13 +65,7 @@ public class NormalCenteredAtObservedLinkFn extends BEASTObject implements LinkF
             if ((x.length + nLeftFlanks + nRightFlanks + 1) != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
 
             for (int i=0; i<x.length; i++) {
-//                if (i<10) {
-//                    System.out.println("x[i]=" + x[i]);
-//                    System.out.println("quTraits.getValue(" + spName + ")=" + quTraits.getValue(spName));
-//                    System.out.println("changeInXNormalSd=" + changeInXNormalSd);
-//                }
-                y[i] = SSEUtils.getNormalDensity(x[i], quTraits.getValue(spName), changeInXNormalSd);
-                // System.out.println("y[i]=" + y[i]);
+                y[i] = SSEUtils.getNormalDensity(x[i], quTraits.getValue(spName), sdNormalQuTrValue);
             }
         }
 
