@@ -26,7 +26,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     private double[] instRateMat; // flattened out matrix
 
     // state that matters for calculateLogP
-    private double[][][] esDs; // first dimension are all nodes, second dimension are E's and D's, third are the bins
+    private double[][][] esDsLo, esDsHi; // first dimension are all nodes, second dimension are E's and D's, third are the bins
     private double[][] scratch;
 
 
@@ -50,12 +50,13 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         instRateMat = new double[4*4];
 
         int nDimensionsFFT = 5; // E, and 4 D's (one for each nuc)
-        initializeEsDs(tree.getNodeCount(), nSitePat, nDimensionsFFT, this.nXbins);
+        initializeEsDs(tree.getNodeCount(), nSitePat, nDimensionsFFT, nXbinsLo, nXbinsHi);
     }
 
     // needs extra dimension of nSitePat
-    public void initializeEsDs(int nNodes, int nSitePat, int nDimensionsFFT, int nXbinsHi) {
-        esDs = new double[nNodes][nDimensionsFFT][nXbinsHi];
+    public void initializeEsDs(int nNodes, int nSitePat, int nDimensionsFFT, int nXbinsLo, int nXbinsHi) {
+        esDsLo = new double[nNodes][nDimensionsFFT][nXbinsHi];
+        esDsHi = new double[nNodes][nDimensionsFFT][nXbinsHi];
         // do stuff with nDimensionsFFT
     }
 
@@ -111,7 +112,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         propagateSubst(esDsAtNode, startTime, dt, isFirstDt, lowRes);
 
         // integrate over diffusion of substitution rate
-        propagateX(lowRes);
+        propagateX(esDsAtNode, lowRes);
     }
 
     @Override
@@ -120,8 +121,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void propagateX(boolean lowRes) {
-        super.propagateX(lowRes);
+    public void propagateX(double[][] esDsAtNode, boolean lowRes) {
+        super.propagateX(esDsAtNode, lowRes);
     }
 
     public void propagateSubst(double[][] esDsAtNode, double startTime, double aDt, boolean isFirstDt, boolean lowRes) {
@@ -131,7 +132,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         if (lowRes) xRuler = xLo;
         else xRuler = xHi;
 
-            for (int i=0; i<nXbins; i++) {
+            for (int i=0; i<nXbinsHi; i++) {
                 double xValue = xRuler[i];
                 double[] esDsAtNodeAtBin = esDsAtNode[i];
                 substModel.getTransitionProbabilities(null, startTime, endTime, xValue, instRateMat); // P(dt,r), where r = x = subst rate

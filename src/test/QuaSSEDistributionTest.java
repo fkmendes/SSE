@@ -6,6 +6,7 @@ import SSE.NormalCenteredAtObservedLinkFn;
 import SSE.QuaSSEDistribution;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
+import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.TreeParser;
 import org.junit.Assert;
@@ -22,7 +23,7 @@ public class QuaSSEDistributionTest {
     static QuaSSEDistribution q;
 
     static List<Double> data;
-    static RealParameter dtrp, diffusionrp;
+    static RealParameter dtrp, tcrp, diffusionrp;
 
     static Double[] x0, y1, y0, r;
     static LogisticFunction lfn;
@@ -51,6 +52,9 @@ public class QuaSSEDistributionTest {
         // dimension stuff
         Double[] dt = new Double[] { 0.05 };
         dtrp = new RealParameter(dt);
+
+        Double[] tc = new Double[] { 100.0 };
+        tcrp = new RealParameter(tc);
 
         // logistic realparameter's for lambda
         x0 = new Double[] { 0.0 };
@@ -96,7 +100,8 @@ public class QuaSSEDistributionTest {
 
         // QuaSSE stuff
         q = new QuaSSEDistribution();
-        q.initByName("dt", dtrp, "nX", nXbinsip, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
+        q.initByName("dt", dtrp, "tc", tcrp,
+                "nX", nXbinsip, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftrp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree,
@@ -178,7 +183,7 @@ public class QuaSSEDistributionTest {
      */
     @Test
     public void testInitializationOfTips() {
-        double[][][] esDsHi = q.getEsDs();
+        double[][][] esDsHi = q.getEsDs(false);
 
         double[] expectedSp1Ds = new double[] { 1.60021460660503, 1.74807698146288, 1.90483403228819, 2.07046547520583, 2.24487988376146, 2.42790945985862, 2.61930535022212, 2.81873362725308, 3.02577205091375, 3.23990772345705 };
         double[] expectedSp2Ds = new double[] { 4.27279148709871e-07, 5.69933520491392e-07, 7.58317302503376e-07, 1.00644951269517e-06, 1.33243884785178e-06, 1.75961170550665e-06, 2.3179318461188e-06, 3.04578151100852e-06, 3.99218899881498e-06, 5.21960579763602e-06 };
@@ -187,5 +192,17 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp1Ds, Arrays.copyOfRange(esDsHi[0][1], 1885, 1895), EPSILON);
         Assert.assertArrayEquals(expectedSp2Ds, Arrays.copyOfRange(esDsHi[1][1], 1885, 1895), EPSILON);
         Assert.assertArrayEquals(expectedSp3Ds, Arrays.copyOfRange(esDsHi[2][1], 1885, 1895), EPSILON);
+    }
+
+    /*
+     *
+     */
+    @Test
+    public void testIntegrateOneBranchNoLow() {
+        // tree
+        String treeStr = "(sp1:1.0,sp2:1.0);";
+        Tree myTree = new TreeParser(treeStr, false, false, true, 0);
+
+        q.processBranch(myTree.getNode(1));
     }
 }

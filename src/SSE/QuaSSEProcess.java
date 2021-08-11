@@ -7,14 +7,15 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import org.jtransforms.fft.DoubleFFT_1D;
 
 @Description("Specifies a quantitative trait(s) state-dependent speciation and" +
         "extinction birth-death process.")
 public abstract class QuaSSEProcess extends Distribution {
 
     final public Input<Tree> treeInput = new Input<>("tree", "Tree object containing tree.", Input.Validate.REQUIRED);
-    // final public Input<RealParameter> quTraitsInput = new Input<>("quTraits", "Quantitative trait values observed at tips", Input.Validate.REQUIRED);
     final public Input<RealParameter> dtInput = new Input<>("dt", "Length of time interval over which integration is carried out.", Input.Validate.REQUIRED);
+    final public Input<RealParameter> tcInput = new Input<>("tc", "Time (backwards, i.e., present=0.0) when integration happens with discretization at low resolution.", Input.Validate.OPTIONAL);
     final public Input<IntegerParameter> nXbinsInput = new Input<>("nX", "Total number of quantitative trait bins after discretization at low resolution.", Input.Validate.REQUIRED);
     final public Input<RealParameter> dXBinInput = new Input<>("dX", "Width of quantitative trait bins.", Input.Validate.REQUIRED);
     final public Input<RealParameter> xMidInput = new Input<>("xMid", "Midpoint to center the quantitative trait space.", Input.Validate.REQUIRED);
@@ -29,13 +30,15 @@ public abstract class QuaSSEProcess extends Distribution {
     // state for dimensioning things and setting up resolution of integration
     protected double dt, tc;
     protected double dXbin, flankWidthScaler, xMinLo, xMinHi, xMid;
-    protected int nXbins, nXbinsHi, nUsefulXbinsHi, nUsefulXbinsLo, nXbinsLo, hiLoRatio;
+    protected int nXbinsLo, nUsefulXbinsLo, nXbinsHi, nUsefulXbinsHi, hiLoRatio;
     protected int[] nUsefulXbins, nLeftNRightFlanksHi, nLeftNRightFlanksLo;
     protected double[] xLo, xHi; // x rulers
 
     // quantitative trait evolution
     protected double changeInXNormalMean; // (=diversitree's drift)
     protected double changeInXNormalSd; // (=diversitree's diffusion)
+    protected double[] fYLo, fYHi;
+    protected DoubleFFT_1D fftForEandDLo, fftForEandDHi;
 
     @Override
     public void initAndValidate() {
@@ -48,8 +51,10 @@ public abstract class QuaSSEProcess extends Distribution {
         nUsefulXbins = new int[2];
 
         dt = dtInput.get().getValue();
+        tc = tcInput.get().getValue();
+
         dXbin = dXBinInput.get().getValue();
-        nXbins = nXbinsInput.get().getValue();
+        nXbinsLo = nXbinsInput.get().getValue();
         xMid = xMidInput.get().getValue();
         flankWidthScaler = flankWidthScalerInput.get().getValue();
         hiLoRatio = highLowRatioInput.get().getValue();
@@ -58,6 +63,12 @@ public abstract class QuaSSEProcess extends Distribution {
 
         prepareDimensionsInPlace(); // in parent class
         prepareXRulers(); // in parent class
+
+        fftForEandDLo = new DoubleFFT_1D(nXbinsLo);
+        fftForEandDHi = new DoubleFFT_1D(nXbinsHi);
+
+        fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
+        fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
     }
 
     /*
@@ -73,7 +84,6 @@ public abstract class QuaSSEProcess extends Distribution {
         nLeftNRightFlanksLo[1] = (int)(Math.ceil(-(changeInXNormalMean - flankWidthScaler * changeInXNormalSd) / dXbin));
         nLeftNRightFlanksHi[1] = hiLoRatio * nLeftNRightFlanksLo[1];
 
-        nXbinsLo = nXbins;
         nXbinsHi = hiLoRatio * nXbinsLo;
 
         nUsefulXbinsLo = nXbinsLo - (nLeftNRightFlanksLo[0] + 1 + nLeftNRightFlanksLo[1]);
@@ -112,7 +122,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsHi);
+    protected abstract void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsLo, int nXbinsHi);
 
     /*
      *
@@ -152,7 +162,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void propagateX(boolean lowRes);
+    protected abstract void propagateX(double[][] esDsAtNode, boolean lowRes);
 
     /*
      *
@@ -160,7 +170,7 @@ public abstract class QuaSSEProcess extends Distribution {
     protected abstract void convolve();
 
     public int getnXbins(boolean lowRes) {
-        if (lowRes) return nXbins;
+        if (lowRes) return nXbinsLo;
         else return nXbinsHi;
     }
 

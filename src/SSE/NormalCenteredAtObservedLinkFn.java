@@ -44,6 +44,9 @@ public class NormalCenteredAtObservedLinkFn extends BEASTObject implements LinkF
         return refreshedSomething;
     }
 
+    /*
+     *
+     */
     @Override
     public double[] getY(double[] x, double[] y, int[] nLeftNRightFlanksHi, String spName, boolean ignoreRefresh) {
         boolean refreshedSomething = false;
@@ -56,13 +59,14 @@ public class NormalCenteredAtObservedLinkFn extends BEASTObject implements LinkF
          * we repopulate y
          */
         if (ignoreRefresh || refreshedSomething) {
-            // System.out.println("nLeftFlanks=" + nLeftFlanks + " nRightFlanks=" + nRightFlanks + " x.length=" + x.length);
-
             /*
              * for my unit test, I had to do +1 below, because my number of useful bins results from
              * subtracts an additional bin on top of the left and right flanks
+             *
+             * we divide y/2 because esDs array will be twice the number of useful bins to store
+             * real and complex parts
              */
-            if ((x.length + nLeftFlanks + nRightFlanks + 1) != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
+            // if ((x.length + nLeftFlanks + nRightFlanks + 1) != y.length/2) throw new RuntimeException("Sizes of x (qu trait) and y (esDs) differ. Exiting...");
 
             for (int i=0; i<x.length; i++) {
                 y[i] = SSEUtils.getNormalDensity(x[i], quTraits.getValue(spName), sdNormalQuTrValue);

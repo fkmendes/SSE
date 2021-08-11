@@ -81,11 +81,17 @@ public class SSEUtils {
         // iterating over dimensions in plan to transform (total # = nd = number of equations for D, say, 4 if A C G and T)
         // one quantitative ch: nd = 2 for QuaSSE (one eq for E, one for D), nd=5 for MoSSE (4 eqs for D, one for E)
         // ithDim starts at 1 because esDs[0] are the E's
-        for (int ithDim = 1; ithDim <= nDimensionsD; ithDim++) {
+
+//        System.out.println("esDsAtNode.length = " + esDsAtNode.length);
+//        System.out.println("esDsAtNode[0].length = " + esDsAtNode[0].length);
+//        System.out.println("esDsAtNode[1].length = " + esDsAtNode[1].length);
+//        System.out.println("nDimensionsD=" + nDimensionsD);
+
+        for (int ithDim=1; ithDim <= nDimensionsD; ithDim++) {
             // int ithDimStartIdx = nUsefulTraitBins * ithDim; // skipping E's
 
             // iterating over bins of this dimension
-            for (int j = 0; j < nUsefulTraitBins; j++) {
+            for (int j=0; j < nUsefulTraitBins; j++) {
                 if (esDsAtNode[ithDim][j] < 0) esDsAtNode[ithDim][j] = 0;
                 else esDsAtNode[ithDim][j] *= scratch[ithDim][j];
             }
@@ -122,6 +128,7 @@ public class SSEUtils {
 
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+
             everyOtherInPlace(scratch[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, scaleBy); // grabbing real part and scaling by 1/nXbins
 
             for (int i=0; i<nXbins; ++i) {
