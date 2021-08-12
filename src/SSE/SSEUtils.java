@@ -28,7 +28,10 @@ package SSE;
  * dd = deep copy of wrk, only used for D's, used locally in propagate_t to save values and restore them later, also for storing terms used in the math
  */
 
+import net.jsign.poi.poifs.nio.ByteArrayBackedDataSource;
 import org.jtransforms.fft.DoubleFFT_1D;
+
+import java.util.Arrays;
 
 public class SSEUtils {
 
@@ -48,7 +51,7 @@ public class SSEUtils {
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @return  no return, leaves result in 'esDs' and 'scratch'
      */
-    public static void propagateEandDinTQuaSSE(double[][] esDsAtNode, double[][] scratch, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
+    public static void propagateEandDinTQuaSSEInPlace(double[][] esDsAtNode, double[][] scratch, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
 
         // iterating over all continuous character bins (total # = nx), to update E and D for each of those bins
         for (int i = 0; i < nUsefulTraitBins; ++i) {
@@ -68,8 +71,8 @@ public class SSEUtils {
             tmp1 = (ithLambda - ithMu) / (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE);
 
             // checking against R
-            // System.out.println("numerator (z * r * r) =" + (ithZ * Math.pow((ithLambda - ithMu), 2)));
-            // System.out.println("denominator (z * lambda - mu + (1-z)*lambda*e0) =" + (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE));
+            // System.out.println("i=" + i + " numerator (z * r * r) =" + (ithZ * Math.pow((ithLambda - ithMu), 2)));
+            // System.out.println("i=" + i + " denominator (z * lambda - mu + (1-z)*lambda*e0) =" + (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE));
 
             scratch[1][i] = ithZ * tmp1 * tmp1;
 
@@ -82,20 +85,22 @@ public class SSEUtils {
         // one quantitative ch: nd = 2 for QuaSSE (one eq for E, one for D), nd=5 for MoSSE (4 eqs for D, one for E)
         // ithDim starts at 1 because esDs[0] are the E's
 
-//        System.out.println("esDsAtNode.length = " + esDsAtNode.length);
-//        System.out.println("esDsAtNode[0].length = " + esDsAtNode[0].length);
-//        System.out.println("esDsAtNode[1].length = " + esDsAtNode[1].length);
-//        System.out.println("nDimensionsD=" + nDimensionsD);
-
         for (int ithDim=1; ithDim <= nDimensionsD; ithDim++) {
             // int ithDimStartIdx = nUsefulTraitBins * ithDim; // skipping E's
 
             // iterating over bins of this dimension
             for (int j=0; j < nUsefulTraitBins; j++) {
                 if (esDsAtNode[ithDim][j] < 0) esDsAtNode[ithDim][j] = 0;
-                else esDsAtNode[ithDim][j] *= scratch[ithDim][j];
+                else {
+                    // System.out.println("S j=" + j + " scratch[1][j] = " + scratch[1][j]);
+                    // System.out.println("B j=" + j + " esDsAtNode[ithDim][j] = " + esDsAtNode[ithDim][j]);
+                    esDsAtNode[ithDim][j] *= scratch[1][j];
+                    // System.out.println("A j=" + j + " esDsAtNode[ithDim][j] = " + esDsAtNode[ithDim][j]);
+                }
             }
         }
+
+        // return esDsAtNode;
     }
 
     /*
@@ -119,8 +124,12 @@ public class SSEUtils {
      */
     public static void propagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratch, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
 
+        // System.out.println("esDsAtNode B: " + Arrays.toString(esDsAtNode[1]));
+
         // We FFT fY, then FFT scratch, inverse-FFT scratch, result is left in scratch
         convolveInPlace(scratch, fY, nDimensionsE, nDimensionsD, fft);
+
+        // System.out.println("scratch after convolve: " + Arrays.toString(scratch[1]));
 
         int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
         // System.out.println("nItems2Copy=" + nItems2Copy);
@@ -137,6 +146,8 @@ public class SSEUtils {
                 if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
             }
         }
+
+        // System.out.println("esDsAtNode A: " + Arrays.toString(esDsAtNode[1]));
     }
 
     /*
@@ -155,7 +166,7 @@ public class SSEUtils {
      * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
      */
     public static void convolveInPlace(double[][] scratch, double[] fY, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
-        fft.realForwardFull(fY); // first FFT the Normal kernel
+        //  fft.realForwardFull(fY); // first FFT the Normal kernel
 
         // doing E's and D's
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {

@@ -46,7 +46,7 @@ public class PropagatesQuaSSETest {
         nUsefulTraitBins = 48 - 4 - 4;
 
         // propagating in place, result left in esDs
-        propagateEandDinTQuaSSE(esDs, scratch, birthRate, deathRate, dt, nUsefulTraitBins, nDimensionsD);
+        propagateEandDinTQuaSSEInPlace(esDs, scratch, birthRate, deathRate, dt, nUsefulTraitBins, nDimensionsD);
 
         // System.out.println(Arrays.toString(esDs[0]));
         // System.out.println(Arrays.toString(esDs[1]));
@@ -126,6 +126,7 @@ public class PropagatesQuaSSETest {
 
         fY = new double[nXbins * 2];
         SSEUtils.makeNormalKernelInPlace(fY, drift, diffusion, nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
+        fftForKern.realForwardFull(fY); // first FFT the Normal kernel
         // fftForKern.realForwardFull(fY);
 
         // System.out.println(Arrays.toString(fY));
@@ -141,8 +142,8 @@ public class PropagatesQuaSSETest {
 
         SSEUtils.convolveInPlace(scratch, fY, 1, 1, fftForEandD);
 
-        everyOtherInPlace(scratch[0], esDs[0], nXbins, 0, 0, 1.0/nXbins); // grabbing real part and scaling by 1/nXbins
-        everyOtherInPlace(scratch[1], esDs[1], nXbins, 0, 0, 1.0/nXbins);
+        everyOtherInPlace(scratch[0], esDs[0], nXbins, 0, 0, 1.0/nXbins); // E's: grabbing real part and scaling by 1/nXbins
+        everyOtherInPlace(scratch[1], esDs[1], nXbins, 0, 0, 1.0/nXbins); // D's: grabbing real part and scaling by 1/nXbins
 
         // System.out.println(Arrays.toString(esDs[0]));
         // System.out.println(Arrays.toString(esDs[1]));
@@ -175,6 +176,7 @@ public class PropagatesQuaSSETest {
 
         fY = new double[nXbins * 2];
         SSEUtils.makeNormalKernelInPlace(fY, drift, diffusion, nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
+        fftForEandD.realForwardFull(fY); // first FFT the Normal kernel
 
         esDs = new double[2][nXbins * 2];
         scratch = new double[2][nXbins * 2];

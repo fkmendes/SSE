@@ -109,12 +109,14 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         while ((startTime + dt) <= node.getParent().getHeight()) {
             if (startTime > tc) lowRes = true;
 
-            doIntegrate(esDsAtNode, startTime, isFirstDt, lowRes);
+            System.out.println("startTime + dt = " + (startTime + dt));
+            System.out.println("node.getParent().getHeight() = " + node.getParent().getHeight());
+            System.out.println("calling doIntegrateInPlace");
+            doIntegrateInPlace(esDsAtNode, startTime, isFirstDt, lowRes);
 
             isFirstDt = false;
             startTime += dt;
         }
-
     }
 
     @Override
@@ -128,25 +130,37 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void doIntegrate(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
+    protected void populatefY(boolean ignoreRefresh, boolean doFFT) {
+        super.populatefY(ignoreRefresh, doFFT);
+    }
+
+    @Override
+    public void doIntegrateInPlace(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
 
         // integrate over birth and death events (low or high resolution inside)
-        propagateT(esDsAtNode, lowRes);
+        propagateTInPlace(esDsAtNode, lowRes);
+
+        // make normal kernel and FFTs it
+        // populatefY(true, true);
 
         // integrate over diffusion of substitution rate
-        propagateX(esDsAtNode, lowRes);
+        // propagateXInPlace(esDsAtNode, lowRes);
+        propagateXInPlace(esDsAtNode, lowRes);
+
+        // return esDsAtNode;
     }
 
     @Override
-    public void propagateT(double[][] esDsAtNode, boolean lowRes) {
+    public void propagateTInPlace(double[][] esDsAtNode, boolean lowRes) {
         // grab scratch, dt and nDimensions from QuaSSEDistribution state
-        if (lowRes) SSEUtils.propagateEandDinTQuaSSE(esDsAtNode, scratch, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
-        else SSEUtils.propagateEandDinTQuaSSE(esDsAtNode, scratch, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
+
+        if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratch, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
+        else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratch, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
     }
 
     @Override
-    public void propagateX(double[][] esDsAtNode, boolean lowRes) {
-        // grab scratch, dt and nDimensions from QuaSSEDistribution state
+    public void propagateXInPlace(double[][] esDsAtNode, boolean lowRes) {
+        // grab dt and nDimensions from state
         if (lowRes) SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratch, fYLo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
         else SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratch, fYHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
     }
@@ -168,7 +182,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     /*
      * Getters and setters
      */
-
     public double[] getLambda(boolean lowRes) {
         if (lowRes) return birthRatesLo;
         else return birthRatesHi;
@@ -182,6 +195,16 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     public double[][][] getEsDs(boolean lowRes) {
         if (lowRes) return esDsLo;
         else return esDsHi;
+    }
+
+    public double[][] getEsDsAtNode(int nodeIdx, boolean lowRes) {
+        if (lowRes) return esDsLo[nodeIdx];
+        return esDsHi[nodeIdx];
+    }
+
+    public int getNUsefulTraitBins(boolean lowRes) {
+        if (lowRes) return nUsefulXbinsLo;
+        else return nUsefulXbinsHi;
     }
 
     @Override

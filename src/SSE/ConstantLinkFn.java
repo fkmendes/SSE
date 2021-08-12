@@ -26,7 +26,7 @@ public class ConstantLinkFn extends BEASTObject implements LinkFn {
 
         boolean refreshedSomething = false;
 
-        if (yValueInput.isDirty()) {
+        if (yValueInput.get().somethingIsDirty()) {
             yValue = yValueInput.get().getValue();
             refreshedSomething = true;
         }

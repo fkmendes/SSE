@@ -27,22 +27,22 @@ public class LogisticFunction extends BEASTObject implements LinkFn {
 
         boolean refreshedSomething = false;
 
-        if (curveMaxBaseInput.isDirty()) {
+        if (curveMaxBaseInput.get().somethingIsDirty()) {
             y0 = curveMaxBaseInput.get().getValue();
             refreshedSomething = true;
         }
 
-        if (added2CurveMaxInput.isDirty()) {
+        if (added2CurveMaxInput.get().somethingIsDirty()) {
             y1 = added2CurveMaxInput.get().getValue();
             refreshedSomething = true;
         }
 
-        if (logisticGrowthRateInput.isDirty()) {
+        if (logisticGrowthRateInput.get().somethingIsDirty()) {
             r = logisticGrowthRateInput.get().getValue();
             refreshedSomething = true;
         }
 
-        if (sigmoidMidpointInput.isDirty()) {
+        if (sigmoidMidpointInput.get().somethingIsDirty()) {
             x0 = sigmoidMidpointInput.get().getValue();
             refreshedSomething = true;
         }

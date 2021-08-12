@@ -69,6 +69,8 @@ public abstract class QuaSSEProcess extends Distribution {
 
         fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
         fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
+
+        populatefY(true, true); // force populate fY, and do FFT
     }
 
     /*
@@ -122,6 +124,33 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
+    protected void populatefY(boolean ignoreRefresh, boolean doFFT) {
+        boolean refreshedSomething = false;
+        if (!ignoreRefresh) {
+            if (driftInput.get().somethingIsDirty()) {
+                changeInXNormalMean = driftInput.get().getValue();
+                refreshedSomething = true;
+            }
+            if (diffusionInput.get().somethingIsDirty()) {
+                changeInXNormalSd = diffusionInput.get().getValue();
+                refreshedSomething = true;
+            }
+        }
+
+        if (ignoreRefresh || refreshedSomething) {
+            SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
+            SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
+        }
+
+        if (doFFT) {
+            fftForEandDLo.realForwardFull(fYLo);
+            fftForEandDHi.realForwardFull(fYHi);
+        }
+    }
+
+    /*
+     *
+     */
     protected abstract void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsLo, int nXbinsHi);
 
     /*
@@ -150,19 +179,19 @@ public abstract class QuaSSEProcess extends Distribution {
     protected abstract void processRootNode();
 
     /*
-     *
+     * Does integration in time and character space in place
      */
-    protected abstract void doIntegrate(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes);
+    protected abstract void doIntegrateInPlace(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes);
 
     /*
      *
      */
-    protected abstract void propagateT(double[][] esDsAtNode, boolean lowRes);
+    protected abstract void propagateTInPlace(double[][] esDsAtNode, boolean lowRes);
 
     /*
      *
      */
-    protected abstract void propagateX(double[][] esDsAtNode, boolean lowRes);
+    protected abstract void propagateXInPlace(double[][] esDsAtNode, boolean lowRes);
 
     /*
      *

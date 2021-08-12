@@ -6,7 +6,6 @@ import SSE.NormalCenteredAtObservedLinkFn;
 import SSE.QuaSSEDistribution;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.TreeParser;
 import org.junit.Assert;
@@ -16,31 +15,45 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static SSE.SSEUtils.propagateEandDinTQuaSSEInPlace;
+
 public class QuaSSEDistributionTest {
 
     final static Double EPSILON = 1e-6;
 
-    static QuaSSEDistribution q;
+    static QuaSSEDistribution q, q2;
+    static Tree myTree, myTree2;
+    int nDimensionsE, nDimensionsD;
+    double[] birthRate, deathRate;
 
-    static List<Double> data;
+    static List<Double> data, data2;
+    static RealParameter quTraitrp, quTraitrp2;
     static RealParameter dtrp, tcrp, diffusionrp;
 
     static Double[] x0, y1, y0, r;
     static LogisticFunction lfn;
     static ConstantLinkFn cfn;
-    static NormalCenteredAtObservedLinkFn nfn;
+    static NormalCenteredAtObservedLinkFn nfn, nfn2;
 
     @BeforeClass
     public static void setupQuaSSEDist() {
         // tree
         String treeStr = "((sp1:0.5787065,sp2:0.5787065):1.0002893,sp3:1.5789958);";
-        Tree myTree = new TreeParser(treeStr, false, false, true, 0);
+        myTree = new TreeParser(treeStr, false, false, true, 0);
+
+        String treeStr2 = "(sp1:0.05,sp2:0.05);";
+        myTree2 = new TreeParser(treeStr2, false, false, true, 0);
 
         // qu trait data
         String spNames = "sp1 sp2 sp3";
         data = Arrays.asList(-0.19537143, 0.00433218, 0.25996570);
-        RealParameter quTraitrp = new RealParameter();
+        quTraitrp = new RealParameter();
         quTraitrp.initByName("value", data, "keys", spNames);
+
+        String spNames2 = "sp1 sp2";
+        data2 = Arrays.asList(0.0, 0.0);
+        quTraitrp2 = new RealParameter();
+        quTraitrp2.initByName("value", data2, "keys", spNames2);
 
         // qu trait stuff
         Double[] drift = new Double[] { 0.0 };
@@ -82,6 +95,8 @@ public class QuaSSEDistributionTest {
         RealParameter sdNormaQuTraitValuerp = new RealParameter(sdNormaQuTraitValue);
         nfn = new NormalCenteredAtObservedLinkFn();
         nfn.initByName("quTraits", quTraitrp, "sdNormalQuTrValue", sdNormaQuTraitValuerp);
+        nfn2 = new NormalCenteredAtObservedLinkFn();
+        nfn2.initByName("quTraits", quTraitrp2, "sdNormalQuTrValue", sdNormaQuTraitValuerp);
 
         Double[] xMid = new Double[] { 0.0 };
         RealParameter xMidrp = new RealParameter(xMid);
@@ -106,6 +121,14 @@ public class QuaSSEDistributionTest {
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree,
                 "q2d", nfn);
+
+        q2 = new QuaSSEDistribution();
+        q2.initByName("dt", dtrp, "tc", tcrp,
+                "nX", nXbinsip, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
+                "drift", driftrp, "diffusion", diffusionrp,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", myTree2,
+                "q2d", nfn2);
     }
 
     /*
@@ -194,15 +217,56 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp3Ds, Arrays.copyOfRange(esDsHi[2][1], 1885, 1895), EPSILON);
     }
 
+    @Test
+    public void propagateTInsideClass() {
+        double[][][] esDsHi = q.getEsDs(false);
+        double[][] scratch = new double[2][esDsHi[0][1].length];
+
+        birthRate = q.getLambda(false);
+        System.out.println("Lambdas = " + Arrays.toString(birthRate));
+        deathRate = q.getMu(false);
+        System.out.println("Mus = " + Arrays.toString(deathRate));
+
+        System.out.println("nUsefulXbinsHi = " + q.getNUsefulTraitBins(false));
+        System.out.println("Before = " + Arrays.toString(esDsHi[0][1]));
+        propagateEandDinTQuaSSEInPlace(esDsHi[0], scratch, birthRate, deathRate, 0.05, q.getNUsefulTraitBins(false), 1);
+        System.out.println("After = " + Arrays.toString(esDsHi[0][1]));
+    }
+
     /*
      *
      */
     @Test
-    public void testIntegrateOneBranchNoLow() {
-        // tree
-        String treeStr = "(sp1:1.0,sp2:1.0);";
-        Tree myTree = new TreeParser(treeStr, false, false, true, 0);
+    public void testIntegrateOneBranchHiResOutsideClass() {
 
-        q.processBranch(myTree.getNode(1));
+        // we're going to look at sp1
+        int nodeIdx = 0; // sp1
+        double[][] esDsHiAtNode;
+
+        /*
+         * we'll test the integration outside the class
+         */
+        // printing
+        esDsHiAtNode = q2.getEsDsAtNode(nodeIdx, false);
+        // System.out.println("B: " + Arrays.toString(esDsHiAtNode)); // D's
+
+        // first just propagate in t, in place
+        q2.propagateTInPlace(esDsHiAtNode, false);
+
+        esDsHiAtNode = q2.getEsDsAtNode(nodeIdx, false);
+        double[] esHiAtNode = esDsHiAtNode[0];
+        double[] dsHiAtNode = esDsHiAtNode[1];
+        for (int i=0; i<esDsHiAtNode[0].length; ++i) {
+            System.out.println("e" + i + " = " + esHiAtNode[i] + " d" + i + " = " + dsHiAtNode[i]);
+        }
+
+        // now propagate in x, in place
+        // TODO
+
+        // now we'll test the integration inside the class
+        // double[][][] esDsHi = q2.getEsDs(false);
+
+        // TODO: in another test, do inside class
+        // q2.processBranch(myTree2.getNode(nodeIdx));
     }
 }

@@ -5,9 +5,10 @@
 # (2) testMakeNormalKernInPlaceAndFFT
 # (3) testConvolve
 # (4) testPropagateChOneChQuaSSETest
-# (5) testProcessBranch
-# (6) testLogistic
-# (7) testDimensions
+# (5) testLogistic
+# (6) testDimensions
+# (7) testInitializationOfTips
+# (8) testIntegrateOneBranchHiResOutsideClass
 
 library(diversitree)
 
@@ -22,10 +23,15 @@ fftR.propagate.t <- function(vars, lambda, mu, dt, ndat) {
   vars[i,1] <- (mu + z*(e0 - 1)*mu - lambda*e0) /
     (mu + z*(e0 - 1)*lambda - lambda*e0)
   dd <- (z * r * r)/(z * lambda - mu + (1-z)*lambda*e0)^2
-  ##print(paste("numerator", (z * r * r)))
-  ##print(paste("denominator", (z * lambda - mu + (1-z)*lambda*e0)))
-  ##print(paste("numerator/denominator", dd))
-  ##vars[i,-1] <- dd * d0
+
+  # print(paste("numerator", (z * r * r)))
+  # print(paste("denominator", (z * lambda - mu + (1-z)*lambda*e0)))
+  # print(paste("numerator/denominator", dd))
+
+  # print(paste("scratch", dd))
+  # print(paste("d0", d0))
+  vars[i,-1] <- dd * d0 # D's are set in place (note that E's are not!!! can only capture E if we throw the return of this function into a variable)
+  # print(paste("dd * d0", vars[i,-1]))
   vars
 }
 
@@ -278,7 +284,7 @@ res
 
 
 
-# (5) testProcessBranchNoLowRes
+### PREPARING THINGS FOR A FEW TESTS BELOW ###
 
 ## Basic control list.
 control.fft <- list(tc=1.3, # time point at which we go from high -> low resolution of X
@@ -300,7 +306,7 @@ mu <- constant.x
 drift <- 0.0
 diffusion <- 0.01
 sd <- 1/20
-len <- 1 # Integrate down a branch length of 1, doesn't get to low res (@tc=1.3)
+len <- 1/20 # Integrate down a branch length of 1, doesn't get to low res (@tc=1.3)
 
 args <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
 pars <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
@@ -322,13 +328,6 @@ ndat <- ext.fft$ndat[2] # 999
 # control.mol <- modifyList(control.fft, list(nx=ndat, method="mol")) # he didn't finish implementing mol stuff
 # ext.mol <- quasse.extent(control.mol, drift, diffusion)
 
-vars.fft <- matrix(0, control.fft$nx, 2)
-
-# vars.fft
-# [,1]: E, [,2]: D
-# D comes from a normal distn, with states=dnorm(ext.fft$x[[2]], 0, sd), where sd=1/20
-vars.fft[seq_len(ndat),2] <- dnorm(ext.fft$x[[2]], 0, sd) # states are the qu character values observed at the tips
-
 pars.fft <- expand.pars.quasse(lambda, mu, args, ext.fft, pars) # adds lambda and mu vectors to ext.fft
 
 # pars.fft
@@ -339,16 +338,11 @@ pars.fft <- expand.pars.quasse(lambda, mu, args, ext.fft, pars) # adds lambda an
 # $hi$drift, $hi$diffusion, $hi$padding, $hi$ndat, $hi$nx are self-explanatory
 # $lo: low-res stuff (counterparts of high-res)
 
-pde.fftC <- with(control.fft, make.pde.quasse.fftC(nx, dx, dt.max, 2L, flags)) # partial differential equation
-pde.fftR <- with(control.fft, make.pde.quasse.fftR(nx, dx, dt.max, 2L))
-ans.fftC <- pde.fftC(vars.fft, len, pars.fft$lo, 0) # calculates answer with C
-ans.fftR <- pde.fftR(vars.fft, len, pars.fft$lo, 0) # calculates answer with R
 
 
+# (5) testLogistic
 
-# (6) testLogistic
-
-## See test (5) to get ext.fft done first
+## See above to get ext.fft done first
 
 ## The following code is inside quasse.extent
 ndat.lo <- ext.fft$ndat[2]
@@ -375,7 +369,7 @@ paste(ls.hi[3989:3999], collapse=", ")
 
 
 
-# (7) testDimensions
+# (6) testDimensions
 
 ext.fft$nx # nXbinsHi = 4096, nXbinslo = 1024
 ndat.lo # nUsefulXbinsLo = 999
@@ -401,7 +395,7 @@ paste(pars.fft$hi$mu[3989:3999], collapse=", ") # expectedLambdaHiLast10 = 0.03,
 
 
 
-# (8)
+# (7) testInitializationOfTips
 
 if (getRversion() >= "3.6.0") {
     RNGkind(sample.kind = "Rounding")
@@ -513,6 +507,77 @@ paste(sp3.y.ds.exp, collapse=", ")
 # ans <- all.branches(pars2, NULL)
 
 
+
+# (8) testIntegrateOneBranchHiResOutsideClass
+
+quasse.integrate.fftR.2 <- function (vars, lambda, mu, drift, diffusion, nstep, dt, nx,
+    ndat, dx, nkl, nkr)
+{
+    kern <- fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
+        nx, dx, nkl, nkr)
+    fy <- fft(kern)
+    for (i in seq_len(nstep)) {
+        vars <- fftR.propagate.t(vars, lambda, mu, dt, ndat)
+        # vars <- fftR.propagate.x(vars, nx, fy, nkl, nkr) # ignoring propagate X for now
+    }
+
+    vars
+}
+
+make.pde.quasse.fftR.2 <- function (nx, dx, dt.max, nd) {
+    function(y, len, pars, t0) {
+        padding <- pars$padding
+        ndat <- length(pars$lambda)
+        nt <- as.integer(ceiling(len/dt.max))
+        print(paste0("nt=", nt))
+        dt <- len/nt
+        if (!(length(y) %in% (nd * nx)))
+            stop("Wrong size y")
+        if (length(pars$lambda) != length(pars$mu) || length(pars$lambda) >
+            (nx - 3))
+            stop("Incorrect length pars")
+        if (pars$diffusion <= 0)
+            stop("Invalid diffusion parameter")
+        if (!is.matrix(y))
+            y <- matrix(y, nx, nd)
+        ans <- quasse.integrate.fftR.2(y, pars$lambda, pars$mu,
+            pars$drift, pars$diffusion, nt, dt, nx, ndat, dx,
+            padding[1], padding[2])
+        q <- sum(ans[, 2]) * dx
+
+        print(ans[,1]) # E's
+        # print(ans[,2]) ## FKM: D's that are returned from fftR.propagate.t
+
+        ans[,2] <- ans[,2]/q ## FKM: D's are normalized before returning
+
+        list(log(q), ans)
+    }
+}
+
+# single branch with length 1/20 = 0.05
+
+control.fft$nx <- 1024 * 4
+vars.fft <- matrix(0, control.fft$nx, 2) # high resolution
+
+# vars.fft
+# [,1]: E, [,2]: D
+# D comes from a normal distn, with states=dnorm(ext.fft$x[[2]], 0, sd), where sd=1/20
+vars.fft[seq_len(ext.fft$ndat[1]),2] <- dnorm(ext.fft$x[[1]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0)
+
+# vars.fft # to see initial E's and D's
+# pars.fft$hi$lambda
+# pars.fft$hi$mu
+
+## vars.fft <- fftR.propagate.t(vars.fft, pars.fft$hi$lambda, pars.fft$hi$mu, control.fft$dt.max, ext.fft$ndat[1]) # gotta capture the result of fftR.propagate.t to get the E's (only D's are set in place by this functio
+## vars.fft[,1] # E's
+## vars.fft[,-1] # D's
+
+pde.fftR <- with(control.fft, make.pde.quasse.fftR.2(nx, dx, dt.max, 2L))
+ans.fftR <- pde.fftR(vars.fft, len, pars.fft$hi, 0) # calculates answer with R; t0 = 0; E's work, but D's are further normalized so then they don't match with the result of fftR.propagate.t
+
+
+## pde.fftC <- with(control.fft, make.pde.quasse.fftC(nx, dx, dt.max, 2L, flags)) # partial differential equation
+## ans.fftC <- pde.fftC(vars.fft, len, pars.fft$lo, 0) # calculates answer with C
 
 ###################
 
