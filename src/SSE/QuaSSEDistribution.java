@@ -4,6 +4,7 @@ import beast.core.Input;
 import beast.core.State;
 import beast.evolution.tree.Node;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -130,7 +131,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    protected void populatefY(boolean ignoreRefresh, boolean doFFT) {
+    public void populatefY(boolean ignoreRefresh, boolean doFFT) {
         super.populatefY(ignoreRefresh, doFFT);
     }
 
@@ -141,7 +142,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         propagateTInPlace(esDsAtNode, lowRes);
 
         // make normal kernel and FFTs it
-        // populatefY(true, true);
+        populatefY(true, true);
 
         // integrate over diffusion of substitution rate
         // propagateXInPlace(esDsAtNode, lowRes);
@@ -153,13 +154,23 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     @Override
     public void propagateTInPlace(double[][] esDsAtNode, boolean lowRes) {
         // grab scratch, dt and nDimensions from QuaSSEDistribution state
-
         if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratch, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
         else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratch, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
     }
 
     @Override
     public void propagateXInPlace(double[][] esDsAtNode, boolean lowRes) {
+
+        // TODO: check if this should not be moved into SSEUtils
+        for (int ithDim=0; ithDim < nDimensions; ithDim++) {
+            for (int i=0; i < esDsAtNode[ithDim].length; i++) {
+                scratch[ithDim][i] = esDsAtNode[ithDim][i];
+            }
+        }
+
+        // System.out.println("esDsAtNode[1] = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratch[1] = " + Arrays.toString(scratch[1]));
+
         // grab dt and nDimensions from state
         if (lowRes) SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratch, fYLo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
         else SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratch, fYHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
@@ -190,6 +201,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     public double[] getMu(boolean lowRes) {
         if (lowRes) return deathRatesLo;
         else return deathRatesHi;
+    }
+
+    public double[] getfY(boolean lowRes) {
+        if (lowRes) return fYLo;
+        else return fYHi;
     }
 
     public double[][][] getEsDs(boolean lowRes) {

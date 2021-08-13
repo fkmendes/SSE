@@ -77,8 +77,8 @@ public class PropagatesQuaSSETest {
         double[] realIfftFy = new double[nXbins * 2];
 
         // prepare fY
-        SSEUtils.makeNormalKernelInPlace(fY, drift, diffusion, nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
-        // System.out.println("fY=" + Arrays.toString(fY));
+        SSEUtils.makeNormalKernelInPlace(fY, dt * drift, Math.sqrt(dt * diffusion), nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
+        // System.out.println("fY = " + Arrays.toString(fY));
 
         // fft
         for (int i=0; i<fY.length; i++) {
@@ -87,7 +87,7 @@ public class PropagatesQuaSSETest {
         fftForKern = new DoubleFFT_1D(nXbins);
         fftForKern.realForwardFull(fftFY);
         everyOtherInPlace(fftFY, realFftFy, nXbins, 0, 0, 1.0);
-        // System.out.println(Arrays.toString(realFftFy));
+        // System.out.println("fft fY = " + Arrays.toString(realFftFy));
 
         // ifft
         for (int i=0; i<fftFY.length; i++) {
@@ -95,7 +95,7 @@ public class PropagatesQuaSSETest {
         }
         fftForKern.complexInverse(ifftFY, false);
         everyOtherInPlace(ifftFY, realIfftFy, nXbins, 0, 0, 1.0);
-        // System.out.println(Arrays.toString(realIfftFy));
+        // System.out.println("ifft fY =" + Arrays.toString(realIfftFy));
 
         double[] expectedStartFy = new double[] { 0.14894618, 0.14168199, 0.12194682, 0.09497228, 0.06692583, 0.0, 0.0, 0.0, 0.0, 0.0 };
         double[] expectedEndFy = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06692583, 0.09497228, 0.12194682, 0.14168199 };
@@ -125,7 +125,7 @@ public class PropagatesQuaSSETest {
         fftForEandD = new DoubleFFT_1D(nXbins);
 
         fY = new double[nXbins * 2];
-        SSEUtils.makeNormalKernelInPlace(fY, drift, diffusion, nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
+        SSEUtils.makeNormalKernelInPlace(fY, (dt * drift), Math.sqrt(dt * diffusion), nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
         fftForKern.realForwardFull(fY); // first FFT the Normal kernel
         // fftForKern.realForwardFull(fY);
 
@@ -175,7 +175,7 @@ public class PropagatesQuaSSETest {
         fftForEandD = new DoubleFFT_1D(nXbins);
 
         fY = new double[nXbins * 2];
-        SSEUtils.makeNormalKernelInPlace(fY, drift, diffusion, nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
+        SSEUtils.makeNormalKernelInPlace(fY, (dt * drift), Math.sqrt(dt * diffusion), nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
         fftForEandD.realForwardFull(fY); // first FFT the Normal kernel
 
         esDs = new double[2][nXbins * 2];
@@ -194,7 +194,7 @@ public class PropagatesQuaSSETest {
         double[] expectedDsSecondHalf = new double[nXbins];
 
         for (int i=0; i<nXbins; i++) {
-            expectedEsSecondHalf[i] = expectedDsSecondHalf[i]  = 0.0;
+            expectedEsSecondHalf[i] = expectedDsSecondHalf[i] = 0.0;
         }
 
         assertArrayEquals(expectedEsFirstHalf, Arrays.copyOfRange(esDs[0], 0, nXbins), EPSILON);

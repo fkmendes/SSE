@@ -20,8 +20,9 @@ import static SSE.SSEUtils.propagateEandDinTQuaSSEInPlace;
 public class QuaSSEDistributionTest {
 
     final static Double EPSILON = 1e-6;
+    final static Double EPSILON2 = 1e-16;
 
-    static QuaSSEDistribution q, q2;
+    static QuaSSEDistribution q, q2, q3, q4;
     static Tree myTree, myTree2;
     int nDimensionsE, nDimensionsD;
     double[] birthRate, deathRate;
@@ -129,6 +130,14 @@ public class QuaSSEDistributionTest {
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree2,
                 "q2d", nfn2);
+
+        q3 = new QuaSSEDistribution();
+        q3.initByName("dt", dtrp, "tc", tcrp,
+                "nX", nXbinsip, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
+                "drift", driftrp, "diffusion", diffusionrp,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", myTree2,
+                "q2d", nfn2);
     }
 
     /*
@@ -217,27 +226,21 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp3Ds, Arrays.copyOfRange(esDsHi[2][1], 1885, 1895), EPSILON);
     }
 
-    @Test
-    public void propagateTInsideClass() {
-        double[][][] esDsHi = q.getEsDs(false);
-        double[][] scratch = new double[2][esDsHi[0][1].length];
-
-        birthRate = q.getLambda(false);
-        System.out.println("Lambdas = " + Arrays.toString(birthRate));
-        deathRate = q.getMu(false);
-        System.out.println("Mus = " + Arrays.toString(deathRate));
-
-        System.out.println("nUsefulXbinsHi = " + q.getNUsefulTraitBins(false));
-        System.out.println("Before = " + Arrays.toString(esDsHi[0][1]));
-        propagateEandDinTQuaSSEInPlace(esDsHi[0], scratch, birthRate, deathRate, 0.05, q.getNUsefulTraitBins(false), 1);
-        System.out.println("After = " + Arrays.toString(esDsHi[0][1]));
-    }
-
     /*
+     * Checks that propagate methods in time for E's and D's
+     * inside QuaSSE class are working.
      *
+     * Differs from 'testPropagateTimeOneChQuaSSETest' inside
+     * 'PropagatesQuaSSETest' because it relies on the QuaSSE class
+     * correctly initializing all its dimensions and E's and D's.
+     *
+     * Test is done on a bifurcating tree over a single dt = 1/20 = 0.05
+     *
+     * We look at just a single branch here, from 'sp1', whose trait value
+     * is set to 0.0
      */
     @Test
-    public void testIntegrateOneBranchHiResOutsideClass() {
+    public void testIntegrateOneBranchHiResOutsideClassJustT() {
 
         // we're going to look at sp1
         int nodeIdx = 0; // sp1
@@ -246,27 +249,82 @@ public class QuaSSEDistributionTest {
         /*
          * we'll test the integration outside the class
          */
-        // printing
         esDsHiAtNode = q2.getEsDsAtNode(nodeIdx, false);
-        // System.out.println("B: " + Arrays.toString(esDsHiAtNode)); // D's
 
-        // first just propagate in t, in place
+        // printing
+        // System.out.println("D's before prop in t: " + Arrays.toString(esDsHiAtNode[1])); // D's
+
+        // just propagate in t, in place
         q2.propagateTInPlace(esDsHiAtNode, false);
 
         esDsHiAtNode = q2.getEsDsAtNode(nodeIdx, false);
         double[] esHiAtNode = esDsHiAtNode[0];
         double[] dsHiAtNode = esDsHiAtNode[1];
+
+        // printing
+        // for (int i=0; i<esDsHiAtNode[0].length; ++i) {
+        //     System.out.println("e" + i + " = " + esHiAtNode[i] + " d" + i + " = " + dsHiAtNode[i]);
+        // }
+
+        double[] expectedSp1EsAfterPropT = new double[] { 0.00149145856502394, 0.00149145829907251, 0.00149145803473995, 0.00149145777201677, 0.00149145751089328, 0.00149145725136005, 0.0014914569934076, 0.00149145673702653, 0.00149145648220743, 0.00149145622894108 };
+        double[] expectedSp1DsAfterPropT = new double[] { 2.92247877978117e-274, 4.93457667574128e-275, 8.31118025653625e-276, 1.39633545736575e-276, 2.34008210599557e-277, 3.91189050109308e-278, 6.52313773491418e-279, 1.0850273169382e-279, 1.80027587020561e-280, 2.97955710585536e-281 };
+
+        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esHiAtNode, 2710, 2720), EPSILON2);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(dsHiAtNode, 2710, 2720), EPSILON2);
+    }
+
+    /*
+     * Checks that propagate methods in quantitative trait
+     * value  for E's and D's inside QuaSSE class are working.
+     *
+     * Differs from 'testPropagateTimeOneChQuaSSETest' inside
+     * 'PropagatesQuaSSETest' because it relies on the QuaSSE class
+     * correctly initializing all its dimensions and E's and D's.
+     *
+     * Test is done on a bifurcating tree over a single dt = 1/20 = 0.05
+     *
+     * We look at just a single branch here, from 'sp1', whose trait value
+     * is set to 0.0
+     */
+    @Test
+    public void testIntegrateOneBranchHiResOutsideClassJustX() {
+        // we're going to look at sp1
+        int nodeIdx = 0; // sp1
+        double[][] esDsHiAtNode;
+
+        /*
+         * we'll test the integration outside the class
+         */
+        esDsHiAtNode = q3.getEsDsAtNode(nodeIdx, false);
+
+        // printing
+        System.out.println("D's before prop in x: " + Arrays.toString(esDsHiAtNode[1])); // D's
+
+        // just propagate in x, in place
+        q3.populatefY(true, true);
+        System.out.println("Normalized, FFTed fY = " + Arrays.toString(q3.getfY(false)));
+        q3.propagateXInPlace(esDsHiAtNode, false);
+
+        esDsHiAtNode = q3.getEsDsAtNode(nodeIdx, false); // TODO: something wrong, probably with how scratch is being used... need to look at each individual output of fftR.propagate.x and compare to mine
+         double[] esHiAtNode = esDsHiAtNode[0];
+         double[] dsHiAtNode = esDsHiAtNode[1];
+
+        // printing
+        // TODO: this is not matching R... need to look at each individual output of fftR.propagate.x and compare to mine
         for (int i=0; i<esDsHiAtNode[0].length; ++i) {
-            System.out.println("e" + i + " = " + esHiAtNode[i] + " d" + i + " = " + dsHiAtNode[i]);
+             System.out.println("e" + i + " = " + esHiAtNode[i] + " d" + i + " = " + dsHiAtNode[i]);
         }
 
-        // now propagate in x, in place
-        // TODO
-
-        // now we'll test the integration inside the class
-        // double[][][] esDsHi = q2.getEsDs(false);
-
-        // TODO: in another test, do inside class
-        // q2.processBranch(myTree2.getNode(nodeIdx));
+//        double[] expectedSp1EsAfterPropT = new double[] { 0.00149145856502394, 0.00149145829907251, 0.00149145803473995, 0.00149145777201677, 0.00149145751089328, 0.00149145725136005, 0.0014914569934076, 0.00149145673702653, 0.00149145648220743, 0.00149145622894108 };
+//        double[] expectedSp1DsAfterPropT = new double[] { 7.37216673449324e-275, 1.24478310225507e-275, 2.09655608230632e-276, 3.52235844455164e-277, 5.90302847608537e-278, 9.86803025591104e-279, 1.64550926243005e-279, 2.73706086329468e-280, 4.54132771641012e-281, 7.51615099184898e-282 };
+//
+//        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esHiAtNode, 2710, 2720), EPSILON);
+//        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(dsHiAtNode, 2710, 2720), EPSILON);
     }
+
+    // now we'll test the integration inside the class
+    // double[][][] esDsHi = q2.getEsDs(false);
+
+    // TODO: in another test, do inside class
+    // q2.processBranch(myTree2.getNode(nodeIdx));
 }

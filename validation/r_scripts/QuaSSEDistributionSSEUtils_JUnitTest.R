@@ -41,11 +41,11 @@ fftR.make.kern <- function(mean, sd, nx, dx, nkl, nkr) {
   kern <- rep(0, nx)
   xkern <- (-nkl:nkr)*dx
   ikern <- c((nx - nkl + 1):nx, 1:(nkr + 1))
-  ##print("xkern=")
-  ##print(xkern)
-  ##print(paste0("mean=", mean, " sd=", sd))
-  ##print("dnorm=")
-  ##print(dnorm(xkern, mean, sd))
+  print("xkern=")
+  print(xkern)
+  print(paste0("mean=", mean, " sd=", sd))
+  print("dnorm=")
+  print(dnorm(xkern, mean, sd))
   kern[ikern] <- normalise(dnorm(xkern, mean, sd))
   kern
 }
@@ -53,12 +53,15 @@ fftR.make.kern <- function(mean, sd, nx, dx, nkl, nkr) {
 ifft <- function(x) fft(x, inverse=TRUE)
 
 fftR.propagate.x <- function(vars, nx, fy, nkl, nkr) {
+  print(paste("nkl=", nkl, " nkr=", nkl, " nx=", nx))
   vars.out <- Re(apply(apply(vars, 2, fft) * fy, 2, ifft))/nx
   ndat <- nx - (nkl + 1 + nkr) # this plus 1 here is confusing, need to ask Xia
   i.prev.l <- 1:nkl
   i.prev.r <- (ndat-nkr+1):ndat
   i.zero <- (ndat+1):nx
-  print(c(i.prev.l, i.prev.r))
+
+  # print(c(i.prev.l, i.prev.r))
+
   vars.out[c(i.prev.l, i.prev.r),] <- vars[c(i.prev.l, i.prev.r),]
   vars.out[i.zero,] <- 0
   vars.out[vars.out < 0] <- 0
@@ -508,7 +511,7 @@ paste(sp3.y.ds.exp, collapse=", ")
 
 
 
-# (8) testIntegrateOneBranchHiResOutsideClass
+# (8) testIntegrateOneBranchHiResOutsideClassJustT
 
 quasse.integrate.fftR.2 <- function (vars, lambda, mu, drift, diffusion, nstep, dt, nx,
     ndat, dx, nkl, nkr)
@@ -518,7 +521,8 @@ quasse.integrate.fftR.2 <- function (vars, lambda, mu, drift, diffusion, nstep, 
     fy <- fft(kern)
     for (i in seq_len(nstep)) {
         vars <- fftR.propagate.t(vars, lambda, mu, dt, ndat)
-        # vars <- fftR.propagate.x(vars, nx, fy, nkl, nkr) # ignoring propagate X for now
+        # print(paste("nx = ", nx, " length(fy)=", length(fy)))
+        # vars <- fftR.propagate.x(vars, nx, fy, nkl, nkr) # ignoring propagate X
     }
 
     vars
@@ -529,8 +533,8 @@ make.pde.quasse.fftR.2 <- function (nx, dx, dt.max, nd) {
         padding <- pars$padding
         ndat <- length(pars$lambda)
         nt <- as.integer(ceiling(len/dt.max))
-        print(paste0("nt=", nt))
         dt <- len/nt
+
         if (!(length(y) %in% (nd * nx)))
             stop("Wrong size y")
         if (length(pars$lambda) != length(pars$mu) || length(pars$lambda) >
@@ -545,10 +549,10 @@ make.pde.quasse.fftR.2 <- function (nx, dx, dt.max, nd) {
             padding[1], padding[2])
         q <- sum(ans[, 2]) * dx
 
-        print(ans[,1]) # E's
+        # print(ans[,1]) # E's
         # print(ans[,2]) ## FKM: D's that are returned from fftR.propagate.t
 
-        ans[,2] <- ans[,2]/q ## FKM: D's are normalized before returning
+        # ans[,2] <- ans[,2]/q ## FKM: D's are normalized before returning
 
         list(log(q), ans)
     }
@@ -568,16 +572,83 @@ vars.fft[seq_len(ext.fft$ndat[1]),2] <- dnorm(ext.fft$x[[1]], 0.0, sd) # states 
 # pars.fft$hi$lambda
 # pars.fft$hi$mu
 
-## vars.fft <- fftR.propagate.t(vars.fft, pars.fft$hi$lambda, pars.fft$hi$mu, control.fft$dt.max, ext.fft$ndat[1]) # gotta capture the result of fftR.propagate.t to get the E's (only D's are set in place by this functio
-## vars.fft[,1] # E's
-## vars.fft[,-1] # D's
+# vars.fft.just.t <- fftR.propagate.t(vars.fft, pars.fft$hi$lambda, pars.fft$hi$mu, control.fft$dt.max, ext.fft$ndat[1]) # gotta capture the result of fftR.propagate.t to get the E's (only D's are set in place by this functio
+# vars.fft.just.t[,1] # E's
+# vars.fft.just.t[2711:2720,-1] # D's
 
-pde.fftR <- with(control.fft, make.pde.quasse.fftR.2(nx, dx, dt.max, 2L))
-ans.fftR <- pde.fftR(vars.fft, len, pars.fft$hi, 0) # calculates answer with R; t0 = 0; E's work, but D's are further normalized so then they don't match with the result of fftR.propagate.t
+pde.fftR.just.t <- with(control.fft, make.pde.quasse.fftR.2(nx, dx, dt.max, 2L))
+ans.fftR.just.t <- pde.fftR.just.t(vars.fft, len, pars.fft$hi, 0) # calculates answer with R; t0 = 0; E's work, but D's are further normalized so then they don't match with the result of fftR.propagate.t
 
+paste(ans.fftR.just.t[[2]][2711:2720,1], collapse=", ") # E's 0.00149145856502394, 0.00149145829907251, 0.00149145803473995, 0.00149145777201677, 0.00149145751089328, 0.00149145725136005, 0.0014914569934076, 0.00149145673702653, 0.00149145648220743, 0.00149145622894108
+paste(ans.fftR.just.t[[2]][2711:2720,2], collapse=", ") # D's 2.92247877978117e-274, 4.93457667574128e-275, 8.31118025653625e-276, 1.39633545736575e-276, 2.34008210599557e-277, 3.91189050109308e-278, 6.52313773491418e-279, 1.0850273169382e-279, 1.80027587020561e-280, 2.97955710585536e-281
 
 ## pde.fftC <- with(control.fft, make.pde.quasse.fftC(nx, dx, dt.max, 2L, flags)) # partial differential equation
 ## ans.fftC <- pde.fftC(vars.fft, len, pars.fft$lo, 0) # calculates answer with C
+
+
+
+# (9) testIntegrateOneBranchHiResOutsideClassJustX
+
+quasse.integrate.fftR.3 <- function (vars, lambda, mu, drift, diffusion, nstep, dt, nx,
+    ndat, dx, nkl, nkr) {
+    kern <- fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
+        nx, dx, nkl, nkr)
+    fy <- fft(kern)
+    for (i in seq_len(nstep)) {
+        # vars <- fftR.propagate.t(vars, lambda, mu, dt, ndat) # ignoring propagate t
+        vars <- fftR.propagate.x(vars, nx, fy, nkl, nkr)
+    }
+
+    vars
+}
+
+make.pde.quasse.fftR.3 <- function (nx, dx, dt.max, nd) {
+    function(y, len, pars, t0) {
+        padding <- pars$padding
+        ndat <- length(pars$lambda)
+        nt <- as.integer(ceiling(len/dt.max))
+        dt <- len/nt
+
+        if (!(length(y) %in% (nd * nx)))
+            stop("Wrong size y")
+        if (length(pars$lambda) != length(pars$mu) || length(pars$lambda) >
+            (nx - 3))
+            stop("Incorrect length pars")
+        if (pars$diffusion <= 0)
+            stop("Invalid diffusion parameter")
+        if (!is.matrix(y))
+            y <- matrix(y, nx, nd)
+        ans <- quasse.integrate.fftR.3(y, pars$lambda, pars$mu,
+            pars$drift, pars$diffusion, nt, dt, nx, ndat, dx,
+            padding[1], padding[2])
+        q <- sum(ans[, 2]) * dx
+
+        # print(ans[,1]) # E's
+        # print(ans[,2]) ## FKM: D's that are returned from fftR.propagate.t
+
+        # ans[,2] <- ans[,2]/q ## FKM: D's are normalized before returning
+
+        list(log(q), ans)
+    }
+}
+
+vars.fft <- matrix(0, control.fft$nx, 2) # high resolution
+
+# vars.fft
+# [,1]: E, [,2]: D
+# D comes from a normal distn, with states=dnorm(ext.fft$x[[2]], 0, sd), where sd=1/20
+vars.fft[seq_len(ext.fft$ndat[1]),2] <- dnorm(ext.fft$x[[1]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0)
+
+kern.just.x <- fftR.make.kern(-control.fft$dt * pars.fft$hi$drift, sqrt(control.fft$dt * pars.fft$hi$diffusion), control.fft$nx, control.fft$dx, pars.fft$hi$padding[1], pars.fft$hi$padding[2]) ## in different orientation than java code, but below the FFT matches
+
+fy.just.x <- fft(kern.just.x) ## matches java code
+
+vars.fft.just.x <- fftR.propagate.x(vars.fft, control.fft$nx, fy.just.x, pars.fft$hi$padding[1], pars.fft$hi$padding[2]) # gotta capture the result of fftR.propagate.t to get the E's (only D's are set in place by this function
+vars.fft.just.x[,1] # E's
+vars.fft.just.x[,-1] # D's
+
+# pde.fftR.just.x <- with(control.fft, make.pde.quasse.fftR.3(nx, dx, dt.max, 2L))
+# ans.fftR.just.x <- pde.fftR.just.x(vars.fft, len, pars.fft$hi, 0) # calculates answer with R; t0 = 0; E's work, but D's are further normalized so then they don't match with the result of fftR.propagate.t
 
 ###################
 

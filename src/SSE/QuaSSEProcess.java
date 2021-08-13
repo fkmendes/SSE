@@ -58,7 +58,7 @@ public abstract class QuaSSEProcess extends Distribution {
         xMid = xMidInput.get().getValue();
         flankWidthScaler = flankWidthScalerInput.get().getValue();
         hiLoRatio = highLowRatioInput.get().getValue();
-        changeInXNormalMean = driftInput.get().getValue() * dt;
+        changeInXNormalMean = driftInput.get().getValue() * -dt;
         changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dt);
 
         prepareDimensionsInPlace(); // in parent class
@@ -128,22 +128,22 @@ public abstract class QuaSSEProcess extends Distribution {
         boolean refreshedSomething = false;
         if (!ignoreRefresh) {
             if (driftInput.get().somethingIsDirty()) {
-                changeInXNormalMean = driftInput.get().getValue();
+                changeInXNormalMean = driftInput.get().getValue() * -dt;
                 refreshedSomething = true;
             }
             if (diffusionInput.get().somethingIsDirty()) {
-                changeInXNormalSd = diffusionInput.get().getValue();
+                changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dt);
                 refreshedSomething = true;
             }
         }
 
         if (ignoreRefresh || refreshedSomething) {
-            SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
-            SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
+            // SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
+            SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin, dt); // normalizes inside already
         }
 
         if (doFFT) {
-            fftForEandDLo.realForwardFull(fYLo);
+            // fftForEandDLo.realForwardFull(fYLo);
             fftForEandDHi.realForwardFull(fYHi);
         }
     }

@@ -126,7 +126,7 @@ public class SSEUtils {
 
         // System.out.println("esDsAtNode B: " + Arrays.toString(esDsAtNode[1]));
 
-        // We FFT fY, then FFT scratch, inverse-FFT scratch, result is left in scratch
+        // fY is already FFTed, then FFT scratch, inverse-FFT scratch, result is left in scratch
         convolveInPlace(scratch, fY, nDimensionsE, nDimensionsD, fft);
 
         // System.out.println("scratch after convolve: " + Arrays.toString(scratch[1]));
@@ -207,10 +207,14 @@ public class SSEUtils {
      * @param   dx  size of each bin
      * @param   dt  length of time slice over which to propagate
      */
-    public static void makeNormalKernelInPlace(double[] yValues, double drift, double diffusion, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx, double dt) {
+    public static void makeNormalKernelInPlace(double[] yValues, double mean, double sd, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx, double dt) {
+
         double total = 0.0;
-        double mean = -dt * drift;
-        double sd = Math.sqrt(dt * diffusion);
+
+        // double mean = -dt * drift;
+        // double sd = Math.sqrt(dt * diffusion);
+        // System.out.println("drift = " + drift + " diffusion = " + diffusion + " dt = " + dt);
+        // System.out.println("mean = " + mean + " sd = " + sd + " nXbins = " + nXbins + " nLeftFlankBins = " + nLeftFlankBins + " nRightFlankBins = " + nRightFlankBins + " dx = " + dx);
 
         double x = 0.0;
         for (int i = 0; i <= nRightFlankBins; i++) {
