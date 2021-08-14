@@ -124,7 +124,7 @@ public class SSEUtils {
 
         // System.out.println("esDsAtNode B: " + Arrays.toString(esDsAtNode[1]));
 
-        // fY is already FFTed, then FFT scratch, inverse-FFT scratch, result is left in scratch
+        // fY is already FFTed (in QuaSSEDistribution -> populatefY()), then FFT scratch, inverse-FFT scratch, result is left in scratch
         convolveInPlace(scratch, fY, nDimensionsE, nDimensionsD, fft);
 
         // System.out.println("scratch after convolve: " + Arrays.toString(scratch[1]));
@@ -136,6 +136,7 @@ public class SSEUtils {
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
 
+            System.out.println("ithDim = " + ithDim);
             everyOtherInPlace(scratch[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, scaleBy); // grabbing real part and scaling by 1/nXbins
 
             for (int i=0; i<nXbins; ++i) {
@@ -170,17 +171,18 @@ public class SSEUtils {
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
             fft.realForwardFull(scratch[ithDim]); // FFT for each E and D dimension
 
-            for (int i = 0; i < fY.length; i += 2) {
-                scratch[ithDim][i] *= fY[i]; // real part
-                scratch[ithDim][i + 1] *= fY[i]; // complex part
-            }
-
-            fft.complexInverse(scratch[ithDim], false); // inverse FFT for each E and D dimension
+            // TODO: uncomment this later when finished with debugging
+//            for (int i = 0; i < fY.length; i += 2) {
+//                scratch[ithDim][i] *= fY[i]; // real part
+//                scratch[ithDim][i + 1] *= fY[i]; // complex part
+//            }
+//
+//            fft.complexInverse(scratch[ithDim], false); // inverse FFT for each E and D dimension
         }
 
         // looking at things
-        // System.out.println(Arrays.toString(esDs[0]));
-        // System.out.println(Arrays.toString(esDs[1]));
+        // System.out.println(Arrays.toString(scratch[0]));
+        System.out.println(Arrays.toString(scratch[1]));
     }
 
     /*
@@ -278,14 +280,17 @@ public class SSEUtils {
     public static void everyOtherInPlace(double[] inArray, double[] outArray, int nXbins, int skipFirstN, int skipLastN, double scaleBy) {
 
         // move these checks to initAndValidate later
-        // if (skipFirstN == 0 || skipLastN == 0) throw new RuntimeException("Number of flanking bins on both sides must be > 0. Exiting...");
+        if (skipFirstN == 0 && skipLastN == 0) skipLastN = -1; // this should only happen in debugging, where there are no elements to skip at the start or end
         if (inArray.length != outArray.length) throw new RuntimeException("Arrays of different size. Exiting...");
         if (outArray.length/nXbins != 2.0) throw new RuntimeException("Size of arrays must be double the number of quantitative ch bins. Exiting...");
         if ((2 * nXbins) % 4 != 0.0) throw new RuntimeException("Number of quantitative character bins must be a multiple of 4. Exiting...");
         if ((nXbins - skipLastN - (skipFirstN + skipLastN)) <= skipFirstN) throw new RuntimeException("There are no useful bins left after pushing left and right flanks to the end, on top of right flank. Exiting...");
 
-        for (int i=skipFirstN * 2, j=skipFirstN; i < inArray.length; i+=2, j++) {
-            if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) outArray[j] = inArray[i] * scaleBy;
+        for (int i=skipFirstN * 2, j=skipFirstN; i <= (inArray.length-2); i+=2, j++) {
+            // if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) { // working
+            if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {
+                outArray[j] = inArray[i] * scaleBy;
+            }
         }
     }
 }

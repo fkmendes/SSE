@@ -142,6 +142,7 @@ public abstract class QuaSSEProcess extends Distribution {
             SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin, dt); // normalizes inside already
         }
 
+        // FFTs normal kernel
         if (doFFT) {
             // fftForEandDLo.realForwardFull(fYLo);
             fftForEandDHi.realForwardFull(fYHi);
