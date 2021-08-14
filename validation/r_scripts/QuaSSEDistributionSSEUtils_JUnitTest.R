@@ -639,9 +639,14 @@ vars.fft <- matrix(0, control.fft$nx, 2) # high resolution
 # D comes from a normal distn, with states=dnorm(ext.fft$x[[2]], 0, sd), where sd=1/20
 vars.fft[seq_len(ext.fft$ndat[1]),2] <- dnorm(ext.fft$x[[1]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0)
 
+paste(vars.fft[1229:1238,2], collapse=", ") # 1.58101006669199e-322, 1.10176639022598e-321, 7.4109846876187e-321, 5.07356011714376e-320, 3.45643385174078e-319, 2.34868926720012e-318, 1.59204205849798e-317, 1.07646593078779e-316, 7.26038680888007e-316, 4.88465194356752e-315
+paste(vars.fft[2762:2771,2], collapse=", ") # 4.88465194356752e-315, 7.26038680888007e-316, 1.07646593078779e-316, 1.59204205849798e-317, 2.34868926720012e-318, 3.45643385174078e-319, 5.07356011714376e-320, 7.4109846876187e-321, 1.10176639022598e-321, 1.58101006669199e-322
+
 kern.just.x <- fftR.make.kern(-control.fft$dt * pars.fft$hi$drift, sqrt(control.fft$dt * pars.fft$hi$diffusion), control.fft$nx, control.fft$dx, pars.fft$hi$padding[1], pars.fft$hi$padding[2]) ## in different orientation than java code, but below the FFT matches
 
 fy.just.x <- fft(kern.just.x) ## matches java code
+paste(Re(fy.just.x)[1:10], collapse=", ") # 1, 0.999994117274659, 0.999976469306275, 0.999947056717749, 0.999905880547209, 0.999852942247951, 0.999788243688349, 0.999711787151749, 0.999623575336331, 0.999523611354957
+paste(Re(fy.just.x)[4087:4096], collapse=", ") # 0.999411898734979, 0.999523611354957, 0.999623575336331, 0.999711787151749, 0.999788243688349, 0.999852942247951, 0.999905880547209, 0.999947056717749, 0.999976469306275, 0.999994117274659
 
 vars.fft.just.x <- fftR.propagate.x(vars.fft, control.fft$nx, fy.just.x, pars.fft$hi$padding[1], pars.fft$hi$padding[2]) # gotta capture the result of fftR.propagate.t to get the E's (only D's are set in place by this function
 vars.fft.just.x[,1] # E's

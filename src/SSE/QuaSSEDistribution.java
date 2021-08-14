@@ -223,6 +223,10 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         else return nUsefulXbinsHi;
     }
 
+    public void setEsDsAtNodeElementAtDim(int nodeIdx, int dim, int eleIdx, double val, boolean lowRes) {
+        if (lowRes) esDsLo[nodeIdx][dim][eleIdx] = val;
+        else esDsHi[nodeIdx][dim][eleIdx] = val;
+    }
     @Override
     public List<String> getArguments() {
         return null;

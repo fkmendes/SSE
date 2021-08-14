@@ -28,9 +28,7 @@ package SSE;
  * dd = deep copy of wrk, only used for D's, used locally in propagate_t to save values and restore them later, also for storing terms used in the math
  */
 
-import net.jsign.poi.poifs.nio.ByteArrayBackedDataSource;
 import org.jtransforms.fft.DoubleFFT_1D;
-
 import java.util.Arrays;
 
 public class SSEUtils {

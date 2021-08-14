@@ -1,9 +1,6 @@
 package test;
 
-import SSE.ConstantLinkFn;
-import SSE.LogisticFunction;
-import SSE.NormalCenteredAtObservedLinkFn;
-import SSE.QuaSSEDistribution;
+import SSE.*;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
@@ -15,6 +12,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static SSE.SSEUtils.everyOtherInPlace;
 import static SSE.SSEUtils.propagateEandDinTQuaSSEInPlace;
 
 public class QuaSSEDistributionTest {
@@ -298,27 +296,52 @@ public class QuaSSEDistributionTest {
         esDsHiAtNode = q3.getEsDsAtNode(nodeIdx, false);
 
         // printing
-        System.out.println("D's before prop in x: " + Arrays.toString(esDsHiAtNode[1])); // D's
+        q3.setEsDsAtNodeElementAtDim(nodeIdx, 1, 2771, 0.0, false);
+        q3.setEsDsAtNodeElementAtDim(nodeIdx, 1, 1227, 0.0, false);
+        esDsHiAtNode = q3.getEsDsAtNode(nodeIdx, false);
+        // System.out.println("D's before prop in x: " + Arrays.toString(esDsHiAtNode[1])); // D's
+
+        double[][] esDsHiAtNodeInitial = new double[esDsHiAtNode.length][esDsHiAtNode[0].length];
+        esDsHiAtNodeInitial[0] = Arrays.copyOf(esDsHiAtNode[0], esDsHiAtNode[0].length);
+        esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsHiAtNode[1], esDsHiAtNode[1].length);
 
         // just propagate in x, in place
         q3.populatefY(true, true);
-        System.out.println("Normalized, FFTed fY = " + Arrays.toString(q3.getfY(false)));
+        double[] fftedfY = q3.getfY(false);
+        System.out.println("Normalized, FFTed fY = " + Arrays.toString(fftedfY));
+
+        double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
+        everyOtherInPlace(fftedfY, realFFTedfY, q3.getnXbins(false),0, 0, 1.0); // TODO: bug here, last element of inArray not copied!
+        System.out.println("Normalized, FFTed fY (real part) = " + Arrays.toString(Arrays.copyOfRange(realFFTedfY, 4086, 4097)));
+
         q3.propagateXInPlace(esDsHiAtNode, false);
+
 
         esDsHiAtNode = q3.getEsDsAtNode(nodeIdx, false); // TODO: something wrong, probably with how scratch is being used... need to look at each individual output of fftR.propagate.x and compare to mine
          double[] esHiAtNode = esDsHiAtNode[0];
          double[] dsHiAtNode = esDsHiAtNode[1];
 
+        System.out.println("realFFTedfY.length = " + realFFTedfY.length);
+        System.out.println("realFFTedfY = " + Arrays.toString(realFFTedfY));
+
         // printing
         // TODO: this is not matching R... need to look at each individual output of fftR.propagate.x and compare to mine
-        for (int i=0; i<esDsHiAtNode[0].length; ++i) {
-             System.out.println("e" + i + " = " + esHiAtNode[i] + " d" + i + " = " + dsHiAtNode[i]);
-        }
+//        for (int i=0; i<esDsHiAtNode[0].length; ++i) {
+//             System.out.println("e" + i + " = " + esHiAtNode[i] + " d" + i + " = " + dsHiAtNode[i]);
+//        }
 
+        double[] expectedKernelFirst10 = new double[] { 1.58101006669199e-322, 1.10176639022598e-321, 7.4109846876187e-321, 5.07356011714376e-320, 3.45643385174078e-319, 2.34868926720012e-318, 1.59204205849798e-317, 1.07646593078779e-316, 7.26038680888007e-316, 4.88465194356752e-315 };
+        double[] expectedKernelLast10 = new double[] { 4.88465194356752e-315, 7.26038680888007e-316, 1.07646593078779e-316, 1.59204205849798e-317, 2.34868926720012e-318, 3.45643385174078e-319, 5.07356011714376e-320, 7.4109846876187e-321, 1.10176639022598e-321, 1.58101006669199e-322 };
+        double[] expectedFFTedfYFirstF10 = new double[] {  1, 0.999994117274659, 0.999976469306275, 0.999947056717749, 0.999905880547209, 0.999852942247951, 0.999788243688349, 0.999711787151749, 0.999623575336331, 0.999523611354957 };
+        double[] expectedFFTedfYLastF10 = new double[] {  0.999411898734979, 0.999523611354957, 0.999623575336331, 0.999711787151749, 0.999788243688349, 0.999852942247951, 0.999905880547209, 0.999947056717749, 0.999976469306275, 0.999994117274659 };
 //        double[] expectedSp1EsAfterPropT = new double[] { 0.00149145856502394, 0.00149145829907251, 0.00149145803473995, 0.00149145777201677, 0.00149145751089328, 0.00149145725136005, 0.0014914569934076, 0.00149145673702653, 0.00149145648220743, 0.00149145622894108 };
 //        double[] expectedSp1DsAfterPropT = new double[] { 7.37216673449324e-275, 1.24478310225507e-275, 2.09655608230632e-276, 3.52235844455164e-277, 5.90302847608537e-278, 9.86803025591104e-279, 1.64550926243005e-279, 2.73706086329468e-280, 4.54132771641012e-281, 7.51615099184898e-282 };
 //
-//        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esHiAtNode, 2710, 2720), EPSILON);
+
+        Assert.assertArrayEquals(expectedKernelFirst10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 1228, 1238), EPSILON2);
+        Assert.assertArrayEquals(expectedKernelLast10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 2761, 2771), EPSILON2);
+        Assert.assertArrayEquals(expectedFFTedfYFirstF10, Arrays.copyOfRange(realFFTedfY, 0, 10), EPSILON);
+        // Assert.assertArrayEquals(expectedFFTedfYLastF10, Arrays.copyOfRange(realFFTedfY, 4086, 4096), EPSILON);
 //        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(dsHiAtNode, 2710, 2720), EPSILON);
     }
 
