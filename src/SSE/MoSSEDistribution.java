@@ -85,10 +85,10 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void doIntegrateInPlace(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
+    public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
 
         // integrate over birth and death events (either at low or high resolution inside)
-        this.propagateTInPlace(esDsAtNode, lowRes);
+        this.propagateTInPlace(esDsAtNode, scratchAtNode, lowRes);
 
         /*
          * For the step below, I am working on the MoSSELikelihoodCore
@@ -112,21 +112,21 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         propagateSubst(esDsAtNode, startTime, dt, isFirstDt, lowRes);
 
         // integrate over diffusion of substitution rate
-        this.propagateXInPlace(esDsAtNode, lowRes);
+        this.propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
 
         // return null;
     }
 
     @Override
-    public void propagateTInPlace(double[][] esDsAtNode, boolean lowRes) {
-        super.propagateTInPlace(esDsAtNode, lowRes);
+    public void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+        super.propagateTInPlace(esDsAtNode, scratchAtNode, lowRes);
 
         // return null;
     }
 
     @Override
-    public void propagateXInPlace(double[][] esDsAtNode, boolean lowRes) {
-        super.propagateXInPlace(esDsAtNode, lowRes);
+    public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+        super.propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
     }
 
     public void propagateSubst(double[][] esDsAtNode, double startTime, double aDt, boolean isFirstDt, boolean lowRes) {

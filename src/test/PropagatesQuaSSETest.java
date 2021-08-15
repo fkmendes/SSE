@@ -141,6 +141,10 @@ public class PropagatesQuaSSETest {
         }
 
         SSEUtils.convolveInPlace(scratch, fY, 1, 1, fftForEandD);
+        double[] unnormalizedDs = new double[scratch[1].length];
+        for (int i=0, j=0; i<scratch[1].length; i+=2, j++) {
+            unnormalizedDs[j] = scratch[1][i];
+        }
 
         everyOtherInPlace(scratch[0], esDs[0], nXbins, 0, 0, 1.0/nXbins); // E's: grabbing real part and scaling by 1/nXbins
         everyOtherInPlace(scratch[1], esDs[1], nXbins, 0, 0, 1.0/nXbins); // D's: grabbing real part and scaling by 1/nXbins
@@ -148,8 +152,11 @@ public class PropagatesQuaSSETest {
         // System.out.println(Arrays.toString(esDs[0]));
         // System.out.println(Arrays.toString(esDs[1]));
 
+        double[] expectedDsUnnormalized = new double[] { 467.240440289566, 462.703177306665, 459.856152933147, 461.440433939161, 465.874789977974, 472.451812121762, 476.733925415043, 481.999282566312, 486.944235716159, 500.984817472873 };
         double[] expectedEs = new double[] { 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001, 0.0001 };
         double[] expectedDs = new double[] { 9.73417583936596, 9.63964952722219, 9.58033651944056, 9.61334237373252, 9.70572479120779, 9.84274608587003, 9.93195677948007, 10.0416517201315, 10.14467157742, 10.4371836973515 };
+
+        assertArrayEquals(expectedDsUnnormalized, Arrays.copyOfRange(unnormalizedDs, 0, 10), EPSILON); // comes straight out of convolve
         assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0], 0, 10), EPSILON);
         assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, 10), EPSILON);
     }

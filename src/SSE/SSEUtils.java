@@ -120,14 +120,12 @@ public class SSEUtils {
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
      */
-    public static void propagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratch, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
-
-        // System.out.println("esDsAtNode B: " + Arrays.toString(esDsAtNode[1]));
+    public static void propagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratchAtNode, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
 
         // fY is already FFTed (in QuaSSEDistribution -> populatefY()), then FFT scratch, inverse-FFT scratch, result is left in scratch
-        convolveInPlace(scratch, fY, nDimensionsE, nDimensionsD, fft);
+        convolveInPlace(scratchAtNode, fY, nDimensionsE, nDimensionsD, fft);
 
-        // System.out.println("scratch after convolve: " + Arrays.toString(scratch[1]));
+        System.out.println("scratchAtNode[1] after convolve: " + Arrays.toString(scratchAtNode[1]));
 
         int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
         // System.out.println("nItems2Copy=" + nItems2Copy);
@@ -136,8 +134,8 @@ public class SSEUtils {
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
 
-            System.out.println("ithDim = " + ithDim);
-            everyOtherInPlace(scratch[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, scaleBy); // grabbing real part and scaling by 1/nXbins
+            // System.out.println("ithDim = " + ithDim);
+            everyOtherInPlace(scratchAtNode[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, scaleBy); // grabbing real part and scaling by 1/nXbins
 
             for (int i=0; i<nXbins; ++i) {
                 // if negative value, set to 0.0
@@ -146,7 +144,7 @@ public class SSEUtils {
             }
         }
 
-        // System.out.println("esDsAtNode A: " + Arrays.toString(esDsAtNode[1]));
+        System.out.println("esDsAtNode[1] after convolve and scaling: " + Arrays.toString(esDsAtNode[1]));
     }
 
     /*
@@ -158,31 +156,34 @@ public class SSEUtils {
      * Function leaves results in scratch (after moving all real elements to the first half of each row of esDs)
      *
      * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
-     * @param   scratch 2D-array for storing/restoring flanking values and other math terms
+     * @param   scratchAtNode 2D-array for storing/restoring flanking values and other math terms (from a node)
      * @param   fY  Normal kernel giving the density for changes in value of the quantitative trait
      * @param   nDimensionsE number of E equations (dimensions in plan) to solve for each quantitative ch
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
      */
-    public static void convolveInPlace(double[][] scratch, double[] fY, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+    public static void convolveInPlace(double[][] scratchAtNode, double[] fY, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+
         //  fft.realForwardFull(fY); // first FFT the Normal kernel
 
         // doing E's and D's
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-            fft.realForwardFull(scratch[ithDim]); // FFT for each E and D dimension
+            fft.realForwardFull(scratchAtNode[ithDim]); // FFT for each E and D dimension
 
-            // TODO: uncomment this later when finished with debugging
-//            for (int i = 0; i < fY.length; i += 2) {
-//                scratch[ithDim][i] *= fY[i]; // real part
-//                scratch[ithDim][i + 1] *= fY[i]; // complex part
-//            }
-//
-//            fft.complexInverse(scratch[ithDim], false); // inverse FFT for each E and D dimension
+            for (int i = 0; i < fY.length; i += 2) {
+                scratchAtNode[ithDim][i] *= fY[i]; // real part
+                scratchAtNode[ithDim][i + 1] *= fY[i]; // complex part
+            }
+
+            fft.complexInverse(scratchAtNode[ithDim], false); // inverse FFT for each E and D dimension
         }
 
         // looking at things
         // System.out.println(Arrays.toString(scratch[0]));
-        System.out.println(Arrays.toString(scratch[1]));
+        for (int i=0; i<scratchAtNode[1].length; i+=2) {
+            System.out.println("i = " + i + " scratchAtNode[1][i] = " + scratchAtNode[1][i]);
+        }
+        System.out.println("scratchAtNode[1] after ifft:" + Arrays.toString(scratchAtNode[1]));
     }
 
     /*

@@ -25,7 +25,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     // state that matters directly for calculateLogP
     private double[][][] esDsLo, esDsHi; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
-    private double[][] scratch;
+    private double[][][] scratch;
 
     @Override
     public void initAndValidate() {
@@ -43,7 +43,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         q2d = q2dInput.get();
 
-        scratch = new double[nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
+        scratch = new double[nNodes][nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
 
         populateMacroevolParams(true);
 
@@ -106,6 +106,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         if (lowRes) esDsAtNode = esDsLo[nodeIdx];
         else esDsAtNode = esDsHi[nodeIdx];
 
+        double[][] scratchAtNode = scratch[nodeIdx];
+
         boolean isFirstDt = true;
         while ((startTime + dt) <= node.getParent().getHeight()) {
             if (startTime > tc) lowRes = true;
@@ -113,7 +115,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             System.out.println("startTime + dt = " + (startTime + dt));
             System.out.println("node.getParent().getHeight() = " + node.getParent().getHeight());
             System.out.println("calling doIntegrateInPlace");
-            doIntegrateInPlace(esDsAtNode, startTime, isFirstDt, lowRes);
+            doIntegrateInPlace(esDsAtNode, scratchAtNode, startTime, isFirstDt, lowRes);
 
             isFirstDt = false;
             startTime += dt;
@@ -136,35 +138,35 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void doIntegrateInPlace(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
+    public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
 
         // integrate over birth and death events (low or high resolution inside)
-        propagateTInPlace(esDsAtNode, lowRes);
+        propagateTInPlace(esDsAtNode, scratchAtNode, lowRes);
 
         // make normal kernel and FFTs it
         populatefY(true, true);
 
         // integrate over diffusion of substitution rate
         // propagateXInPlace(esDsAtNode, lowRes);
-        propagateXInPlace(esDsAtNode, lowRes);
+        propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
 
         // return esDsAtNode;
     }
 
     @Override
-    public void propagateTInPlace(double[][] esDsAtNode, boolean lowRes) {
+    public void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
         // grab scratch, dt and nDimensions from QuaSSEDistribution state
-        if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratch, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
-        else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratch, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
+        if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
+        else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
     }
 
     @Override
-    public void propagateXInPlace(double[][] esDsAtNode, boolean lowRes) {
+    public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
 
         // TODO: check if this should not be moved into SSEUtils
         for (int ithDim=0; ithDim < nDimensions; ithDim++) {
             for (int i=0; i < esDsAtNode[ithDim].length; i++) {
-                scratch[ithDim][i] = esDsAtNode[ithDim][i];
+                scratchAtNode[ithDim][i] = esDsAtNode[ithDim][i];
             }
         }
 
@@ -172,8 +174,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // System.out.println("scratch[1] = " + Arrays.toString(scratch[1]));
 
         // grab dt and nDimensions from state
-        if (lowRes) SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratch, fYLo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
-        else SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratch, fYHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
+        if (lowRes) SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYLo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
+        else SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
     }
 
     @Override

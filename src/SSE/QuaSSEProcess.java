@@ -182,17 +182,17 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      * Does integration in time and character space in place
      */
-    protected abstract void doIntegrateInPlace(double[][] esDsAtNode, double startTime, boolean isFirstDt, boolean lowRes);
+    protected abstract void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, boolean lowRes);
 
     /*
      *
      */
-    protected abstract void propagateTInPlace(double[][] esDsAtNode, boolean lowRes);
+    protected abstract void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
 
     /*
      *
      */
-    protected abstract void propagateXInPlace(double[][] esDsAtNode, boolean lowRes);
+    protected abstract void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
 
     /*
      *
