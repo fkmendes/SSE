@@ -9,6 +9,8 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import org.jtransforms.fft.DoubleFFT_1D;
 
+import java.util.Arrays;
+
 @Description("Specifies a quantitative trait(s) state-dependent speciation and" +
         "extinction birth-death process.")
 public abstract class QuaSSEProcess extends Distribution {
@@ -125,6 +127,7 @@ public abstract class QuaSSEProcess extends Distribution {
      *
      */
     protected void populatefY(boolean ignoreRefresh, boolean doFFT) {
+
         boolean refreshedSomething = false;
         if (!ignoreRefresh) {
             if (driftInput.get().somethingIsDirty()) {
@@ -141,6 +144,10 @@ public abstract class QuaSSEProcess extends Distribution {
             // SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
             SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin, dt); // normalizes inside already
         }
+
+//        for (int i=0; i<fYHi.length; i++) {
+//            System.out.println("i = "  + i + " " + fYHi[i]);
+//        }
 
         // FFTs normal kernel
         if (doFFT) {

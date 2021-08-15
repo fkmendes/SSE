@@ -16,7 +16,7 @@ public class PropagatesQuaSSETest {
     DoubleFFT_1D fftForKern, fftForEandD;
     int nUsefulTraitBins, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD;
     double dt = 0.01;
-    double dx = 0.001;
+    double dx = 0.01; // before I used 0.001
     double drift, diffusion;
     double[] birthRate, deathRate;
     double[] fY;
@@ -97,10 +97,16 @@ public class PropagatesQuaSSETest {
         everyOtherInPlace(ifftFY, realIfftFy, nXbins, 0, 0, 1.0);
         // System.out.println("ifft fY =" + Arrays.toString(realIfftFy));
 
-        double[] expectedStartFy = new double[] { 0.14894618, 0.14168199, 0.12194682, 0.09497228, 0.06692583, 0.0, 0.0, 0.0, 0.0, 0.0 };
-        double[] expectedEndFy = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06692583, 0.09497228, 0.12194682, 0.14168199 };
-        double[] expectedFftFY = new double[] { 1.000000000, 0.956873917, 0.835109753, 0.655887828, 0.449367562, 0.248270676, 0.081152021, -0.033081907, -0.088189035, -0.090559850 };
-        double[] expectedIfftFY = new double[] { 7.149417e+00, 6.800735e+00, 5.853447e+00, 4.558669e+00, 3.212440e+00, 5.957485e-16, 4.549779e-16, 1.366926e-15, 2.766926e-16, 3.584917e-17 };
+        double[] expectedStartFy = new double[] { 0.986703287028858, 0.00664835445182386, 2.03374705433156e-09, 2.82445649260927e-20, 1.78085279698565e-35, 0, 0, 0, 0, 0 };
+        double[] expectedEndFy = new double[] { 0, 0, 0, 0, 0, 0, 1.78085279698565e-35, 2.82445649260927e-20, 2.03374705433156e-09, 0.00664835445182386 };
+        // when dx = 0.001
+        // double[] expectedStartFy = new double[] { 0.14894618, 0.14168199, 0.12194682, 0.09497228, 0.06692583, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        // double[] expectedEndFy = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06692583, 0.09497228, 0.12194682, 0.14168199 };
+        double[] expectedFftFY = new double[] { 1, 0.999886244673461, 0.999546925086093, 0.998987847110852, 0.998218576759891, 0.997252276505192, 0.996105480062091, 0.994797809489411, 0.993351639446935, 0.991791714355113 };
+        double[] expectedIfftFY = new double[] { 47.3617577773852, 0.319121013687545, 9.76198587343688e-08, 7.45931094670027e-17, -4.44089209850063e-16, 1.51614216742138e-16, 4.05992386804242e-16, -1.43599463769065e-16, -4.44089209850063e-16, -5.17654502592123e-16 };
+        // when dx = 0.001
+        // double[] expectedFftFY = new double[] { 1.000000000, 0.956873917, 0.835109753, 0.655887828, 0.449367562, 0.248270676, 0.081152021, -0.033081907, -0.088189035, -0.090559850 };
+        // double[] expectedIfftFY = new double[] { 7.149417e+00, 6.800735e+00, 5.853447e+00, 4.558669e+00, 3.212440e+00, 5.957485e-16, 4.549779e-16, 1.366926e-15, 2.766926e-16, 3.584917e-17 };
 
         assertArrayEquals(expectedStartFy, Arrays.copyOfRange(fY, 0, 10), EPSILON);
         assertArrayEquals(expectedEndFy, Arrays.copyOfRange(fY, 38, nXbins), EPSILON);

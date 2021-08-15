@@ -162,7 +162,9 @@ drift <- 0.0
 diffusion <- 0.001
 nkl <- nkr <- 4
 nx <- 48
-dx <- 0.001 # (dx * nx) gives the range of x values we're considering
+
+# changed from 0.001 -> 0.01, updating!
+dx <- 0.01 # (dx * nx) gives the range of x values we're considering
 
 # '-' in -dt because we're going back in time
 kern <- fftR.make.kern(-dt * drift, sqrt(dt * diffusion), nx, dx, nkl, nkr)
@@ -183,7 +185,7 @@ plot(kern)
 ## start x at rate = 0.01 = 1/100
 ## dx = 0.001
 ## nx = 100
-## nkl = nkr = 5
+## nkl = nkr = 4
 ##
 ## x is at 10th bin, so we ignore anything beyond nkl and nkr bins away from 10th, meaning
 ## x will influence from 5th - 15th bins
@@ -195,13 +197,15 @@ plot(kern)
 fy <- fft(kern)
 ify <- ifft(fy) # note that this is NOT what we do in the likelihood calculation
 
-Re(fy)
+paste(Re(fy)[1:10], collapse=", ") # 1, 0.999886244673461, 0.999546925086093, 0.998987847110852, 0.998218576759891, 0.997252276505192, 0.996105480062091, 0.994797809489411, 0.993351639446935, 0.991791714355113
 
+# when dx = 0.001
 # [1]  1.000000000  0.956873917  0.835109753  0.655887828  0.449367562
 # [5]  0.248270676  0.081152021 -0.033081907 -0.088189035 -0.090559850
 
-Re(ify)
+paste(Re(ify)[1:10], collapse=", ") # 47.3617577773852, 0.319121013687545, 9.76198587343688e-08, 7.45931094670027e-17, -4.44089209850063e-16, 1.51614216742138e-16, 4.05992386804242e-16, -1.43599463769065e-16, -4.44089209850063e-16, -5.17654502592123e-16
 
+# when dx = 0.001
 # [1]  7.149417e+00  6.800735e+00  5.853447e+00  4.558669e+00  3.212440e+00
 # [6]  5.957485e-16  4.549779e-16  1.366926e-15  2.766926e-16  3.584917e-17
 
@@ -527,8 +531,7 @@ paste(sp3.y.ds.exp, collapse=", ")
 # (8) testIntegrateOneBranchHiResOutsideClassJustT
 
 quasse.integrate.fftR.2 <- function (vars, lambda, mu, drift, diffusion, nstep, dt, nx,
-    ndat, dx, nkl, nkr)
-{
+    ndat, dx, nkl, nkr) {
     kern <- fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
         nx, dx, nkl, nkr)
     fy <- fft(kern)
@@ -602,6 +605,42 @@ paste(ans.fftR.just.t[[2]][2711:2720,2], collapse=", ") # D's 2.92247877978117e-
 
 # (9) testIntegrateOneBranchHiResOutsideClassJustX
 
+# TODO: Replicating test in testPropagateChOneChQuaSSETest, but building control variable
+# TODO: need to change test in Java to use dx = 0.01 instead of 0.001, also update the R code here to make sure it matches
+
+control.fft.just.x <- list(tc=100.0, # time point at which we go from high -> low resolution of X
+                    dt.max=1/20, # dt
+                    nx=48, # number of X bins
+                    dx=0.01, # size of each X bin
+                    r=4L, # high res of X = nx * r
+                    xmid=0, # sp rate ~ X is a logistic regression, and xmid is the value of X at the inflection point
+                    w=1.5, # used to determine nkl and nkr (see quasse.extent)
+                    flags=0L, # FFT stuff below
+                    verbose=0L,
+                    atol=1e-6,
+                    rtol=1e-6,
+                    eps=1e-3,
+                    method="fftC")
+
+args.fft.just.x <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
+pars.just.x <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
+# note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
+
+ext.fft.just.x <- quasse.extent(control.fft.just.x, drift, diffusion) # prepares X axis stuff
+
+pars.fft.just.x <- expand.pars.quasse(lambda, mu, args, ext.fft.just.x, pars.just.x) # adds lambda and mu vectors to ext.fft.just.x
+
+
+control.fft.just.x$nx <- 1032 * 4 # TODO: try 1032 (multiple of 12... might work)
+vars.fft.just.x <- matrix(0, control.fft.just.x$nx, 2) # high resolution
+
+## args <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
+## pars <- c(.1, .2, 0, 2.5, .03, 0, .01) # 6th and 7th elements are drift and difussion
+
+## ext.fft.just.x <- quasse.extent(control.fft.just.x, drift, diffusion) # prepares X axis stuff
+
+## pars.fft.just.x <- expand.pars.quasse(lambda, mu, args, ext.fft.just.x, pars) # adds lambda and mu vectors to ext.fft
+
 quasse.integrate.fftR.3 <- function (vars, lambda, mu, drift, diffusion, nstep, dt, nx,
     ndat, dx, nkl, nkr) {
     kern <- fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
@@ -645,36 +684,48 @@ make.pde.quasse.fftR.3 <- function (nx, dx, dt.max, nd) {
     }
 }
 
-vars.fft <- matrix(0, control.fft$nx, 2) # high resolution
-
 # vars.fft
 # [,1]: E, [,2]: D
 # D comes from a normal distn, with states=dnorm(ext.fft$x[[2]], 0, sd), where sd=1/20
-vars.fft[seq_len(ext.fft$ndat[1]),2] <- dnorm(ext.fft$x[[1]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0)
+vars.fft.just.x[seq_len(ext.fft.just.x$ndat[1]),2] <- dnorm(ext.fft.just.x$x[[1]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0)
 
 # checking initial D's match
-paste(vars.fft[1229:1238,2], collapse=", ") # 1.58101006669199e-322, 1.10176639022598e-321, 7.4109846876187e-321, 5.07356011714376e-320, 3.45643385174078e-319, 2.34868926720012e-318, 1.59204205849798e-317, 1.07646593078779e-316, 7.26038680888007e-316, 4.88465194356752e-315
-paste(vars.fft[2762:2771,2], collapse=", ") # 4.88465194356752e-315, 7.26038680888007e-316, 1.07646593078779e-316, 1.59204205849798e-317, 2.34868926720012e-318, 3.45643385174078e-319, 5.07356011714376e-320, 7.4109846876187e-321, 1.10176639022598e-321, 1.58101006669199e-322
+paste(vars.fft.just.x[1245:1254,2], collapse=", ")
+# paste(vars.fft.just.x[1229:1238,2], collapse=", ") # 1.58101006669199e-322, 1.10176639022598e-321, 7.4109846876187e-321, 5.07356011714376e-320, 3.45643385174078e-319, 2.34868926720012e-318, 1.59204205849798e-317, 1.07646593078779e-316, 7.26038680888007e-316, 4.88465194356752e-315
+paste(vars.fft.just.x[2778:2787,2], collapse=", ")
+# paste(vars.fft[2762:2771,2], collapse=", ") # 4.88465194356752e-315, 7.26038680888007e-316, 1.07646593078779e-316, 1.59204205849798e-317, 2.34868926720012e-318, 3.45643385174078e-319, 5.07356011714376e-320, 7.4109846876187e-321, 1.10176639022598e-321, 1.58101006669199e-322
 
 # checking kernel matches
-kern.just.x <- fftR.make.kern(-control.fft$dt * pars.fft$hi$drift, sqrt(control.fft$dt * pars.fft$hi$diffusion), control.fft$nx, control.fft$dx, pars.fft$hi$padding[1], pars.fft$hi$padding[2]) ## in different orientation than java code, but below the FFT matches
+kern.just.x <- fftR.make.kern(-control.fft.just.x$dt * pars.fft.just.x$hi$drift, sqrt(control.fft.just.x$dt * pars.fft.just.x$hi$diffusion), control.fft.just.x$nx, control.fft.just.x$dx, pars.fft.just.x$hi$padding[1], pars.fft.just.x$hi$padding[2]) ## in different orientation than java code, but below the FFT matches
+
+kern.just.x[1:49]
+
 
 # checking fft-ed fY matches
 fy.just.x <- fft(kern.just.x) ## matches java code
-paste(Re(fy.just.x)[1:50], collapse=", ") # 1, 0.999994117274659, 0.999976469306275, 0.999947056717749, 0.999905880547209, 0.999852942247951, 0.999788243688349, 0.999711787151749, 0.999623575336331, 0.999523611354957, 0.999411898734979, 0.999288441418039, 0.999153243759831, 0.999006310529851, 0.998847646911114, 0.998677258499846, 0.99849515130516, 0.998301331748702, 0.998095806664269, 0.997878583297413, 0.997649669305013, 0.997409072754826, 0.99715680212501, 0.99689286630363, 0.996617274588134, 0.996330036684809, 0.996031162708207, 0.995720663180558, 0.995398549031146, 0.995064831595672, 0.994719522615589, 0.994362634237409, 0.993994179011997, 0.993614169893832, 0.993222620240249, 0.992819543810655, 0.992404954765725, 0.991978867666571, 0.991541297473892, 0.991092259547098, 0.990631769643406, 0.990159843916929, 0.989676498917723, 0.989181751590822, 0.988675619275247, 0.988158119702999, 0.987629270998015, 0.987089091675116, 0.986537600638924, 0.985974817182761
-paste(Re(fy.just.x)[4057:4096], collapse=", ") # 0.990631769643406, 0.991092259547097, 0.991541297473893, 0.991978867666572, 0.992404954765725, 0.992819543810655, 0.993222620240249, 0.993614169893832, 0.993994179011997, 0.994362634237409, 0.994719522615589, 0.995064831595673, 0.995398549031146, 0.995720663180558, 0.996031162708207, 0.996330036684809, 0.996617274588134, 0.99689286630363, 0.99715680212501, 0.997409072754826, 0.997649669305013, 0.997878583297413, 0.998095806664269, 0.998301331748702, 0.99849515130516, 0.998677258499846, 0.998847646911114, 0.999006310529851, 0.99915324375983, 0.999288441418038, 0.999411898734979, 0.999523611354957, 0.999623575336331, 0.999711787151749, 0.999788243688349, 0.999852942247951, 0.999905880547209, 0.999947056717749, 0.999976469306275, 0.999994117274659
+paste(Re(fy.just.x)[1:50], collapse=", ") # 1, 0.999994208125932, 0.999976832705003, 0.999947874341024, 0.999907334040305, 0.999855213211602, 0.999791513666033, 0.999716237616971, 0.999629387679916, 0.999530966872351, 0.999420978613554, 0.999299426724412, 0.999166315427195, 0.999021649345309, 0.998865433503034, 0.998697673325228, 0.998518374637017, 0.998327543663455, 0.998125187029166, 0.997911311757958, 0.99768592527242, 0.99744903539349, 0.997200650340003, 0.99694077872822, 0.996669429571321, 0.996386612278893, 0.996092336656382, 0.995786612904526, 0.995469451618766, 0.995140863788637, 0.994800860797127, 0.994449454420028, 0.994086656825248, 0.993712480572116, 0.993326938610653, 0.992930044280825, 0.992521811311775, 0.992102253821033, 0.991671386313699, 0.991229223681611, 0.990775781202482, 0.990311074539025, 0.989835119738051, 0.989347933229541, 0.988849531825706, 0.988339932720017, 0.987819153486219, 0.987287212077317, 0.986744126824548, 0.986189916436328
+
+paste(Re(fy.just.x)[4077:4126], collapse=", ") # 0.984460727178075, 0.985048196966617, 0.985624599997174, 0.986189916436327, 0.986744126824547, 0.987287212077316, 0.987819153486218, 0.988339932720017, 0.988849531825705, 0.98934793322954, 0.98983511973805, 0.990311074539025, 0.990775781202481, 0.99122922368161, 0.991671386313699, 0.992102253821032, 0.992521811311774, 0.992930044280824, 0.993326938610652, 0.993712480572116, 0.994086656825248, 0.994449454420027, 0.994800860797126, 0.995140863788636, 0.995469451618766, 0.995786612904525, 0.996092336656382, 0.996386612278893, 0.99666942957132, 0.996940778728219, 0.997200650340003, 0.997449035393489, 0.997685925272419, 0.997911311757958, 0.998125187029166, 0.998327543663455, 0.998518374637017, 0.998697673325228, 0.998865433503033, 0.999021649345309, 0.999166315427194, 0.999299426724412, 0.999420978613553, 0.99953096687235, 0.999629387679916, 0.99971623761697, 0.999791513666033, 0.999855213211602, 0.999907334040304, 0.999947874341023
+
+## paste(Re(fy.just.x)[1:50], collapse=", ") # 1, 0.999994117274659, 0.999976469306275, 0.999947056717749, 0.999905880547209, 0.999852942247951, 0.999788243688349, 0.999711787151749, 0.999623575336331, 0.999523611354957, 0.999411898734979, 0.999288441418039, 0.999153243759831, 0.999006310529851, 0.998847646911114, 0.998677258499846, 0.99849515130516, 0.998301331748702, 0.998095806664269, 0.997878583297413, 0.997649669305013, 0.997409072754826, 0.99715680212501, 0.99689286630363, 0.996617274588134, 0.996330036684809, 0.996031162708207, 0.995720663180558, 0.995398549031146, 0.995064831595672, 0.994719522615589, 0.994362634237409, 0.993994179011997, 0.993614169893832, 0.993222620240249, 0.992819543810655, 0.992404954765725, 0.991978867666571, 0.991541297473892, 0.991092259547098, 0.990631769643406, 0.990159843916929, 0.989676498917723, 0.989181751590822, 0.988675619275247, 0.988158119702999, 0.987629270998015, 0.987089091675116, 0.986537600638924, 0.985974817182761
+
+## paste(Re(fy.just.x)[4057:4096], collapse=", ") # 0.990631769643406, 0.991092259547097, 0.991541297473893, 0.991978867666572, 0.992404954765725, 0.992819543810655, 0.993222620240249, 0.993614169893832, 0.993994179011997, 0.994362634237409, 0.994719522615589, 0.995064831595673, 0.995398549031146, 0.995720663180558, 0.996031162708207, 0.996330036684809, 0.996617274588134, 0.99689286630363, 0.99715680212501, 0.997409072754826, 0.997649669305013, 0.997878583297413, 0.998095806664269, 0.998301331748702, 0.99849515130516, 0.998677258499846, 0.998847646911114, 0.999006310529851, 0.99915324375983, 0.999288441418038, 0.999411898734979, 0.999523611354957, 0.999623575336331, 0.999711787151749, 0.999788243688349, 0.999852942247951, 0.999905880547209, 0.999947056717749, 0.999976469306275, 0.999994117274659
 
 # checking part of convolution matches
-cstep.1 <- apply(vars.fft, 2, fft) ## TODO: continue debugging here
-Re(cstep.1[,2])
+cstep.1 <- apply(vars.fft.just.x, 2, fft) ## TODO: continue debugging here
+Re(cstep.1[,2])[1:10]
 cstep.2 <- cstep.1 * fy.just.x
-Re(cstep.2[,2]) # up to here, matches Java
+Re(cstep.2[,2])[1:10] # up to here, matches Java
 cstep.3 <- apply(cstep.2, 2, ifft)
-Re(cstep.3[,2]) # this one bombs, have no clue why
+Re(cstep.3[,2])[1:10] # this one bombs, have no clue why
 
-Re(apply(apply(vars.fft, 2, fft), 2, ifft)) / control.fft$nx
+Re(apply(apply(vars.fft.just.x, 2, fft) * fy.just.x, 2, ifft))
 
-vars.fft.just.x <- fftR.propagate.x(vars.fft, control.fft$nx, fy.just.x, pars.fft$hi$padding[1], pars.fft$hi$padding[2]) # gotta capture the result of fftR.propagate.t to get the E's (only D's are set in place by this function
+/ control.fft.just.x$nx
+
+fftR.propagate.x(vars.fft.just.x, control.fft.just.x$nx, fy.just.x, pars.fft.just.x$hi$padding[1], pars.fft.just.x$hi$padding[2])
+
+vars.fft.just.x <- fftR.propagate.x(vars.fft.just.x, control.fft.just.x$nx, fy.just.x, pars.fft.just.x$hi$padding[1], pars.fft.just.x$hi$padding[2]) # gotta capture the result of fftR.propagate.t to get the E's (only D's are set in place by this function
 vars.fft.just.x[,1] # E's
 vars.fft.just.x[,-1] # D's
 
