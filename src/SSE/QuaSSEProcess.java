@@ -141,7 +141,7 @@ public abstract class QuaSSEProcess extends Distribution {
         }
 
         if (ignoreRefresh || refreshedSomething) {
-            // SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
+            SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
             SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin, dt); // normalizes inside already
         }
 
@@ -151,7 +151,7 @@ public abstract class QuaSSEProcess extends Distribution {
 
         // FFTs normal kernel
         if (doFFT) {
-            // fftForEandDLo.realForwardFull(fYLo);
+            fftForEandDLo.realForwardFull(fYLo);
             fftForEandDHi.realForwardFull(fYHi);
         }
     }

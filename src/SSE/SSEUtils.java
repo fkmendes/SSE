@@ -169,26 +169,31 @@ public class SSEUtils {
         // doing E's and D's
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
 
-            System.out.println("before FFT scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
+            // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
+            // System.out.println("Before FFT scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
+
             fft.realForwardFull(scratchAtNode[ithDim]); // FFT for each E and D dimension
-            System.out.println("after FFT scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
+
+            // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
+            // System.out.println("After FFT scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
 
             for (int i = 0; i < fY.length; i += 2) {
                 scratchAtNode[ithDim][i] *= fY[i]; // real part
                 scratchAtNode[ithDim][i + 1] *= fY[i]; // complex part
             }
 
-            System.out.println("after FFT, after * fY scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
+            // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
+            // System.out.println("After FFT and * fY scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
 
             fft.complexInverse(scratchAtNode[ithDim], false); // inverse FFT for each E and D dimension
+
+            // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
+            // System.out.println("After iFFT scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
         }
 
         // looking at things
         // System.out.println(Arrays.toString(scratch[0]));
-//        for (int i=0; i<scratchAtNode[1].length; i+=2) {
-//            System.out.println("i = " + i + " scratchAtNode[1][i] = " + scratchAtNode[1][i]);
-//        }
-        System.out.println("scratchAtNode[1] after ifft:" + Arrays.toString(scratchAtNode[1]));
+        // System.out.println(Arrays.toString(scratch[1]));
     }
 
     /*
@@ -216,11 +221,6 @@ public class SSEUtils {
     public static void makeNormalKernelInPlace(double[] yValues, double mean, double sd, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx, double dt) {
 
         double total = 0.0;
-
-        // double mean = -dt * drift;
-        // double sd = Math.sqrt(dt * diffusion);
-        // System.out.println("drift = " + drift + " diffusion = " + diffusion + " dt = " + dt);
-        // System.out.println("mean = " + mean + " sd = " + sd + " nXbins = " + nXbins + " nLeftFlankBins = " + nLeftFlankBins + " nRightFlankBins = " + nRightFlankBins + " dx = " + dx);
 
         double x = 0.0;
         for (int i = 0; i <= nRightFlankBins; i++) {

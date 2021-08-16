@@ -77,13 +77,25 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
             for (int i=0; i < nDimensionsFFT; i++) {
                 // E's
-                if (i == 0) for (int j=0; j < nXbinsHi; j++) esDsHi[nodeIdx][i][j] = 0.0; // E's = 1.0 - sampling.f
+                if (i == 0) {
+                    // high res
+                    for (int j=0; j < nXbinsHi; j++) esDsHi[nodeIdx][i][j] = 0.0; // E's = 1.0 - sampling.f
+
+                    // low res (just for debugging)
+                    for (int j=0; j < nXbinsLo; j++) esDsLo[nodeIdx][i][j] = 0.0; // E's = 1.0 - sampling.f
+                }
 
                 // D's
                 /*
                  * TODO: if tips are not contemporanous (at present moment), but instead fossil, then we need to initialize esDsLo if t > tc
                  */
-                else esDsHi[nodeIdx][i] = q2d.getY(xHi, esDsHi[nodeIdx][i], nLeftNRightFlanksHi, tipName, ignoreRefresh);
+                else {
+                    // high res
+                    esDsHi[nodeIdx][i] = q2d.getY(xHi, esDsHi[nodeIdx][i], nLeftNRightFlanksHi, tipName, ignoreRefresh);
+
+                    // low res (just for debugging)
+                    esDsLo[nodeIdx][i] = q2d.getY(xLo, esDsLo[nodeIdx][i], nLeftNRightFlanksLo, tipName, ignoreRefresh);
+                }
             }
         }
     }
