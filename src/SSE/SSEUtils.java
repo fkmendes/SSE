@@ -65,17 +65,21 @@ public class SSEUtils {
             /* Updating E's */
             esDsAtNode[0][i] = (tmp1 + tmp2 * ithMu) / (tmp1 + tmp2 * ithLambda);
 
+            // checking against R
+            // System.out.println("ithMu = " + ithMu + " ithLambda = " + ithLambda + " ithE = " + ithE + " ithZ = " + ithZ);
+            // System.out.println("esDsAtNode[0][i] = " + esDsAtNode[0][i]);
+
             // Saving values for updating D below
             tmp1 = (ithLambda - ithMu) / (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE);
 
             // checking against R
-            // System.out.println("i=" + i + " numerator (z * r * r) =" + (ithZ * Math.pow((ithLambda - ithMu), 2)));
-            // System.out.println("i=" + i + " denominator (z * lambda - mu + (1-z)*lambda*e0) =" + (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE));
+            // System.out.println("i = " + i + " numerator (z * r * r) = " + (ithZ * Math.pow((ithLambda - ithMu), 2)));
+            // System.out.println("i = " + i + " denominator (z * lambda - mu + (1-z) * lambda * e0) = " + (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE));
 
             scratchAtNode[1][i] = ithZ * tmp1 * tmp1;
 
             // checking against R
-            // System.out.println("(numerator/denominator^2) = " + scratch[1][i]);
+            // System.out.println("i = " + i + " (numerator/denominator^2) = " + scratchAtNode[1][i]);
         }
 
         /* Updating D's */
@@ -90,15 +94,16 @@ public class SSEUtils {
             for (int j=0; j < nUsefulTraitBins; j++) {
                 if (esDsAtNode[ithDim][j] < 0) esDsAtNode[ithDim][j] = 0;
                 else {
-                    // System.out.println("S j=" + j + " scratch[1][j] = " + scratch[1][j]);
-                    // System.out.println("B j=" + j + " esDsAtNode[ithDim][j] = " + esDsAtNode[ithDim][j]);
+                    // checking against R
+                    // System.out.println("Scr j=" + j + " scratchAtNode[0][j] = " + scratchAtNode[0][j] + " scratchAtNode[1][j] = " + scratchAtNode[1][j]);
+                    // System.out.println("Bef j=" + j + " esDsAtNode[0][j] = " + esDsAtNode[0][j] + " esDsAtNode[1][j] = " + esDsAtNode[1][j]);
                     esDsAtNode[ithDim][j] *= scratchAtNode[1][j];
-                    // System.out.println("A j=" + j + " esDsAtNode[ithDim][j] = " + esDsAtNode[ithDim][j]);
+
+                    // checking against R
+                    // System.out.println("Aft j=" + j + " esDsAtNode[0][j] = " + esDsAtNode[0][j] + " esDsAtNode[1][j] = " + esDsAtNode[1][j]);
                 }
             }
         }
-
-        // return esDsAtNode;
     }
 
     /*

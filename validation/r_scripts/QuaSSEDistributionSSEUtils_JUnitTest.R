@@ -20,18 +20,20 @@ fftR.propagate.t <- function(vars, lambda, mu, dt, ndat) {
   z <- exp(dt * r)
   e0 <- vars[i,1]
   d0 <- vars[i,-1]
-  vars[i,1] <- (mu + z*(e0 - 1)*mu - lambda*e0) /
-    (mu + z*(e0 - 1)*lambda - lambda*e0)
+  print(paste("mu =", mu, "lambda =", lambda, "e0 =", e0, "z =", z))
+  vars[i,1] <- (mu + z*(e0 - 1)*mu - lambda*e0) / (mu + z*(e0 - 1)*lambda - lambda*e0) # E's
+  print(paste("e =", vars[i,1]))
   dd <- (z * r * r)/(z * lambda - mu + (1-z)*lambda*e0)^2
 
-  # print(paste("numerator", (z * r * r)))
-  # print(paste("denominator", (z * lambda - mu + (1-z)*lambda*e0)))
-  # print(paste("numerator/denominator", dd))
+  # for debugging
+  ## print(paste("numerator", (z * r * r)))
+  ## print(paste("denominator", (z * lambda - mu + (1-z)*lambda*e0)))
+  ## print(paste("numerator/denominator", dd))
 
-  # print(paste("scratch", dd))
-  # print(paste("d0", d0))
+  ## print(paste("scratch", dd))
+  ## print(paste("d0", d0))
   vars[i,-1] <- dd * d0 # D's are set in place (note that E's are not!!! can only capture E if we throw the return of this function into a variable)
-  # print(paste("dd * d0", vars[i,-1]))
+  ## print(paste("dd * d0", vars[i,-1]))
   vars
 }
 
@@ -41,11 +43,11 @@ fftR.make.kern <- function(mean, sd, nx, dx, nkl, nkr) {
   kern <- rep(0, nx)
   xkern <- (-nkl:nkr)*dx
   ikern <- c((nx - nkl + 1):nx, 1:(nkr + 1))
-  print("xkern=")
-  print(xkern)
-  print(paste0("mean=", mean, " sd=", sd))
-  print("dnorm=")
-  print(dnorm(xkern, mean, sd))
+  ## print("xkern=")
+  ## print(xkern)
+  ## print(paste0("mean=", mean, " sd=", sd))
+  ## print("dnorm=")
+  ## print(dnorm(xkern, mean, sd))
   kern[ikern] <- normalise(dnorm(xkern, mean, sd))
   kern
 }
@@ -358,9 +360,9 @@ mu <- function(x) constant.x(x, 0.03)
 char <- make.brownian.with.drift(drift, diffusion)
 set.seed(1)
 phy <- tree.quasse(c(lambda, mu, char), max.taxa=3, x0=0, single.lineage=FALSE, verbose=FALSE)
-pars <- c(.1, .2, 0, 2.5, .03, 0, .01) # 6th and 7th elements are drift and difussion
+pars <- c(.1, .2, 0, 2.5, .03, 0, .001) # 6th and 7th elements are drift and diffusion
 sd <- 1/20
-control.C.1 <- list(dt.max=1/20) # dt = 1/20
+control.C.1 <- list(dt.max=0.01) # dt = 0.01
 
 cache <- make.cache.quasse(phy, phy$tip.state, sd, lambda, mu, control.C.1, NULL)
 
@@ -369,27 +371,13 @@ cache$args$drift <- 6
 cache$args$diffusion <- 7
 cache$control$dx <- 0.01 ## to match unit test
 cache$control$xmid <- 0.0 ## to match unit test
-
-make.all.branches.quasse <- function(cache, control) {
-  branches <- diversitree:::make.branches.quasse(cache, control)
-  initial.conditions <- make.initial.conditions.quasse(control)
-  ## TODO: This is where tips.combined goes, *not* in the likelihood
-  ## function...
-
-  # FKM: this function does not seem to execute
-  function(pars, intermediates, preset=NULL) {
-      cache$y = initial.tip.quasse(cache, cache$control, pars[[1]]$x)
-
-      # FKM
-      print(cache$y)
-
-      diversitree:::all.branches.list(pars, cache, initial.conditions,
-                                      branches, preset)
-  }
-}
+cache$control$w <- 10
 
 # inside R/model-quasse.R
 initial.tip.quasse <- function(cache, control, x) {
+
+  print(paste("nx=", control$nx))
+
   nx = control$nx * control$r
   npad = nx - length(x)
   e0 = 1 - cache$sampling.f
@@ -420,9 +408,42 @@ initial.tip.quasse <- function(cache, control, x) {
   }
 }
 
+make.all.branches.quasse <- function(cache, control) {
+  branches <- diversitree:::make.branches.quasse(cache, control)
+  initial.conditions <- make.initial.conditions.quasse(control)
+  ## TODO: This is where tips.combined goes, *not* in the likelihood
+  ## function...
+
+  # FKM: this function does not seem to execute
+  function(pars, intermediates, preset=NULL) {
+      cache$y = initial.tip.quasse(cache, cache$control, pars[[1]]$x)
+
+      # FKM
+      print(cache$y)
+
+      diversitree:::all.branches.list(pars, cache, initial.conditions,
+                                      branches, preset)
+  }
+}
+
+make.pars.quasse <- function (cache) {
+    args <- cache$args
+    function(pars) {
+        names(pars) <- NULL
+        drift <- pars[args$drift]
+        diffusion <- pars[args$diffusion]
+        ext <- quasse.extent(cache$control, drift, diffusion)
+        pars <- expand.pars.quasse(cache$lambda, cache$mu, args,
+            ext, pars)
+        diversitree:::check.pars.quasse(pars$hi$lambda, pars$hi$mu, drift,
+            diffusion)
+        pars
+    }
+}
+
 ## taking following lines from R/model-quasse.R, make.quasse()
 # all.branches <- make.all.branches.quasse(cache, cache$control) # all.branches is a function
-f.pars <- diversitree:::make.pars.quasse(cache)
+f.pars <- make.pars.quasse(cache)
 pars2 <- f.pars(pars)
 
 # understanding tip initialization
@@ -438,12 +459,13 @@ sp3.y <- c(rep(e0, nx), dnorm(pars2[[1]]$x, cache$states[3], cache$states.sd[3])
 
 # we can compare it to running the function as is
 cache$y <- initial.tip.quasse(cache, cache$control, pars2[[1]]$x) # this is a list
-# cache$y$t # branch lengths
+
+                                        # cache$y$t # branch lengths
 # cache$y$target # tip indices (I think)
-identical(cache$y$y$sp1, sp1.y)
-identical(cache$y$y$sp2, sp2.y)
-identical(cache$y$y$sp3, sp3.y)
-identical(cache$y$y$sp1, sp2.y) # just as a control
+identical(cache$y$y$sp1, sp1.y) # TRUE
+identical(cache$y$y$sp2, sp2.y) # TRUE
+identical(cache$y$y$sp3, sp3.y) # TRUE
+identical(cache$y$y$sp1, sp2.y) # FALSE (just as a control)
 
 sp1.y.ds <- sp1.y[nx+1:(length(sp1.y)-nx)]
 sp2.y.ds <- sp2.y[nx+1:(length(sp2.y)-nx)]
@@ -453,14 +475,13 @@ sp1.y.ds.exp <- sp1.y.ds[1886:1895]
 sp2.y.ds.exp <- sp2.y.ds[1886:1895]
 sp3.y.ds.exp <- sp3.y.ds[1886:1895]
 
-paste(sp1.y.ds.exp, collapse=", ")
-paste(sp2.y.ds.exp, collapse=", ")
-paste(sp3.y.ds.exp, collapse=", ")
-# ans <- all.branches(pars2, NULL)
+paste(sp1.y.ds.exp, collapse=", ") # 8.13623712450468e-08, 1.1005578408194e-07, 1.48496566106919e-07, 1.99863833658288e-07, 2.68328176840003e-07, 3.59345830399246e-07, 4.80035331999228e-07, 6.39658332527801e-07, 8.50231484597812e-07, 1.12730275515906e-06
+paste(sp2.y.ds.exp, collapse=", ") # 1.82648393304909e-11, 2.63062707587468e-11, 3.77934883411903e-11, 5.41612820961595e-11, 7.74239202284714e-11, 1.10401669802924e-10, 1.57032805818765e-10, 2.2280216312045e-10, 3.15328103714112e-10, 4.45164187528514e-10
+paste(sp3.y.ds.exp, collapse=", ") # 3.51799453441839e-17, 5.49394711042998e-17, 8.55831075496442e-17, 1.32985990766802e-16, 2.06128478871848e-16, 3.18701690685798e-16, 4.91524307682648e-16, 7.56170789433044e-16, 1.16040357229278e-15, 1.77628431652675e-15
 
 
 
-# (8) testIntegrateOneBranchHiResOutsideClassJustT
+# (8) testIntegrateOneBranchLoRes48BinsOutsideClassJustT
 
 quasse.integrate.fftR.2 <- function (vars, lambda, mu, drift, diffusion, nstep, dt, nx,
     ndat, dx, nkl, nkr) {
@@ -537,61 +558,20 @@ vars.fft.just.t <- matrix(0, control.fft.just.t$nx, 2) # low resolution
 vars.fft.just.t[seq_len(ext.fft.just.t$ndat[2]),2] <- dnorm(ext.fft.just.t$x[[2]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0), note that the last pars.fft.just.x$lo$padding should be 0.0
 paste(vars.fft.just.t[,2], collapse=", ") # 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
+vars.fft.just.t.tmp <- fftR.propagate.t(vars.fft.just.t, pars.fft.just.t$lo$lambda, pars.fft.just.t$lo$mu, control.fft.just.t$dt.max, ext.fft.just.t$ndat[2])
+paste(vars.fft.just.t.tmp[,1], collapse=", ") # 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.000299744087825142, 0.000299743181686865, 0.000299742271619522, 0.000299741357883741, 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0.000299719056361739, 0.000299718142720333, 0.000299717232754363, 0.000299716326724287, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0
+paste(vars.fft.just.t.tmp[,2], collapse=", ") # 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.0884858018341865, 0.158038086959484, 0.271192794627236, 0.447118602442875, 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052117, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0.447052058075915, 0.271149126249059, 0.158010719780681, 0.0884694089104536, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
 pde.fftR.just.t <- with(control.fft.just.t, make.pde.quasse.fftR.2(nx, dx, dt.max, 2L))
-ans.fftR.just.t <- pde.fftR.just.t(vars.fft.just.t, len, pars.fft.just.t$lo, 0) # calculates answer with R; t0 = 0; E's work, but D's are further normalized so then they don't match with the result of fftR.propagate.t
+ans.fftR.just.t <- pde.fftR.just.t(vars.fft.just.t, control.fft.just.t$dt.max, pars.fft.just.t$lo, 0)
 
-paste(ans.fftR.just.t[[2]][,1], collapse=", ") # 0.00149370994379142, 0.00149368786296715, 0.00149366566009926, 0.00149364334116711, 0.0014936209122861, 0.00149359837970088, 0.00149357574977893, 0.00149355302900443, 0.0014935302239704, 0.00149350734137188, 0.00149348438799768, 0.00149346137072356, 0.00149343829650327, 0.00149341517236111, 0.00149339200538258, 0.0014933688027066, 0.00149334557151628, 0.0014933223190299, 0.00149329905249347, 0.00149327577916897, 0.00149325250632815, 0.00149322924124165, 0.00149320599116985, 0.00149318276335575, 0.00149315956501302, 0.00149313640331981, 0.00149311328540833, 0.00149309021835688, 0.00149306720918005, 0.00149304426482232, 0.00149302139214795, 0.00149299859793396, 0.00149297588886225, 0.00149295327151184, 0.00149293075235137, 0.00149290833773301, 0.00149288603388406, 0.00149286384690245, 0.00149284178274917, 0, 0, 0, 0, 0, 0, 0, 0, 0
-paste(ans.fftR.just.t[[2]][,2], collapse=", ") #  0.00579005736174394, 0.0121352277429472, 0.0244366205695344, 0.0472783719250338, 0.0878844494649893, 0.156960263942535, 0.269336720628206, 0.444047657299951, 0.703382841402857, 1.07048880941099, 1.5653111283757, 2.19911224723919, 2.96839922078803, 3.84968692464613, 4.79685632357302, 5.7427010526194, 6.60547283589975, 7.29994891700679, 7.75111077151784, 7.90744686571959, 7.75062709006449, 7.29903803124074, 6.60423685237185, 5.74126889110111, 4.79536172096607, 3.84824841117278, 2.96710606450487, 2.19801824876123, 1.56443588948085, 1.06982441610763, 0.702903170869044, 0.443717712813496, 0.269120201314488, 0.156824570265688, 0.0878031690333764, 0.0472318065561379, 0.0244110920425363, 0.0121218288516093, 0.00578332208315072, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-
-
+## same as above
+paste(ans.fftR.just.t[[2]][,1], collapse=", ") # 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.000299744087825142, 0.000299743181686865, 0.000299742271619522, 0.000299741357883741, 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0.000299719056361739, 0.000299718142720333, 0.000299717232754363, 0.000299716326724287, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0
+paste(ans.fftR.just.t[[2]][,2], collapse=", ") #  0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.0884858018341865, 0.158038086959484, 0.271192794627236, 0.447118602442875, 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052117, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0.447052058075915, 0.271149126249059, 0.158010719780681, 0.0884694089104536, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-control.fft$nx <- 1024 * 4 # TODO: try 1032 (multiple of 12... might work)
-vars.fft <- matrix(0, control.fft$nx, 2) # high resolution
-
-# vars.fft
-# [,1]: E, [,2]: D
-# D comes from a normal distn, with states=dnorm(ext.fft$x[[2]], 0, sd), where sd=1/20
-vars.fft[seq_len(ext.fft$ndat[1]),2] <- dnorm(ext.fft$x[[1]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0)
-
-# vars.fft # to see initial E's and D's
-# pars.fft$hi$lambda
-# pars.fft$hi$mu
-
-# vars.fft.just.t <- fftR.propagate.t(vars.fft, pars.fft$hi$lambda, pars.fft$hi$mu, control.fft$dt.max, ext.fft$ndat[1]) # gotta capture the result of fftR.propagate.t to get the E's (only D's are set in place by this functio
-# vars.fft.just.t[,1] # E's
-# vars.fft.just.t[2711:2720,-1] # D's
-
-pde.fftR.just.t <- with(control.fft, make.pde.quasse.fftR.2(nx, dx, dt.max, 2L))
-ans.fftR.just.t <- pde.fftR.just.t(vars.fft, len, pars.fft$hi, 0) # calculates answer with R; t0 = 0; E's work, but D's are further normalized so then they don't match with the result of fftR.propagate.t
-
-paste(ans.fftR.just.t[[2]][2711:2720,1], collapse=", ") # E's 0.00149145856502394, 0.00149145829907251, 0.00149145803473995, 0.00149145777201677, 0.00149145751089328, 0.00149145725136005, 0.0014914569934076, 0.00149145673702653, 0.00149145648220743, 0.00149145622894108
-paste(ans.fftR.just.t[[2]][2711:2720,2], collapse=", ") # D's 2.92247877978117e-274, 4.93457667574128e-275, 8.31118025653625e-276, 1.39633545736575e-276, 2.34008210599557e-277, 3.91189050109308e-278, 6.52313773491418e-279, 1.0850273169382e-279, 1.80027587020561e-280, 2.97955710585536e-281
-
-## pde.fftC <- with(control.fft, make.pde.quasse.fftC(nx, dx, dt.max, 2L, flags)) # partial differential equation
-## ans.fftC <- pde.fftC(vars.fft, len, pars.fft$lo, 0) # calculates answer with C
-
-
-
-# (9) testIntegrateOneBranchHiResOutsideClassJustX
+# (9) testIntegrateOneBranchLoRes48BinsOutsideClassJustX
 
 control.fft.just.x <- list(tc=100.0, # time point at which we go from high -> low resolution of X
                     dt.max=0.01, # dt
