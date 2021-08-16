@@ -41,7 +41,7 @@ public class QuaSSEDistributionTest {
         String treeStr = "((sp1:0.5787065,sp2:0.5787065):1.0002893,sp3:1.5789958);";
         myTree = new TreeParser(treeStr, false, false, true, 0);
 
-        String treeStr2 = "(sp1:0.05,sp2:0.05);";
+        String treeStr2 = "(sp1:0.01,sp2:0.01);";
         myTree2 = new TreeParser(treeStr2, false, false, true, 0);
 
         // qu trait data
@@ -59,11 +59,11 @@ public class QuaSSEDistributionTest {
         Double[] drift = new Double[] { 0.0 };
         RealParameter driftrp = new RealParameter(drift);
 
-        Double[] diffusion = new Double[] { 0.01 };
+        Double[] diffusion = new Double[] { 0.001 };
         diffusionrp = new RealParameter(diffusion);
 
         // dimension stuff
-        Double[] dt = new Double[] { 0.05 };
+        Double[] dt = new Double[] { 0.01 };
         dtrp = new RealParameter(dt);
 
         Double[] tc = new Double[] { 100.0 };
@@ -104,7 +104,7 @@ public class QuaSSEDistributionTest {
         Double[] dxBin = new Double[] { 0.01 };
         RealParameter dxBinrp = new RealParameter(dxBin);
 
-        Double[] flankWidthScaler = new Double[] { 5.0 };
+        Double[] flankWidthScaler = new Double[] { 10.0 };
         RealParameter flankWidthScalerrp = new RealParameter(flankWidthScaler);
 
         Integer[] hiLoRatio = new Integer[] { 4 };
@@ -113,7 +113,7 @@ public class QuaSSEDistributionTest {
         Integer[] nXbins = new Integer[] { 1024 };
         IntegerParameter nXbinsip = new IntegerParameter(nXbins);
 
-        Integer[] nXbins2 = new Integer[] { 1032 };
+        Integer[] nXbins2 = new Integer[] { 48 };
         IntegerParameter nxBinsip2 = new IntegerParameter(nXbins2);
 
         // QuaSSE stuff
@@ -301,8 +301,8 @@ public class QuaSSEDistributionTest {
         int nodeIdx = 0; // sp1
         double[][] esDsHiAtNode;
 
-        System.out.println("nLeftFlanks hi = " + q3.getNLeftFlanks(false));
-        System.out.println("nXbins hi = " + q3.getnXbins(false));
+        System.out.println("nLeftFlanks hi = " + q3.getNLeftFlanks(true));
+        System.out.println("nXbins hi = " + q3.getnXbins(true));
 
         /*
          * we'll test the integration outside the class
@@ -324,7 +324,7 @@ public class QuaSSEDistributionTest {
         // System.out.println("realFFTedfU: " + Arrays.toString(realFFTedfY));
 
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        q3.propagateXInPlace(esDsHiAtNode, scratchAtNode, false);
+        // q3.propagateXInPlace(esDsHiAtNode, scratchAtNode, false);
 
         esDsHiAtNode = q3.getEsDsAtNode(nodeIdx, false); // TODO: something wrong, probably with how scratch is being used... need to look at each individual output of fftR.propagate.x and compare to mine
         double[] esHiAtNode = esDsHiAtNode[0];
@@ -349,12 +349,12 @@ public class QuaSSEDistributionTest {
 //        double[] expectedSp1DsAfterPropT = new double[] { 7.37216673449324e-275, 1.24478310225507e-275, 2.09655608230632e-276, 3.52235844455164e-277, 5.90302847608537e-278, 9.86803025591104e-279, 1.64550926243005e-279, 2.73706086329468e-280, 4.54132771641012e-281, 7.51615099184898e-282 };
 //
 
-        Assert.assertArrayEquals(expectedInitialDsFirst10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 1243, 1253), 4.0E-323); // 4.0E-323 in Java is 0.0 in R (the expectation above, from R, has a 0.0 at its first element)
-        Assert.assertArrayEquals(expectedInitialDsLast10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 2779, 2788), 4.0E-323);
+        // Assert.assertArrayEquals(expectedInitialDsFirst10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 1243, 1253), 4.0E-323); // 4.0E-323 in Java is 0.0 in R (the expectation above, from R, has a 0.0 at its first element)
+        // Assert.assertArrayEquals(expectedInitialDsLast10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 2779, 2788), 4.0E-323);
         // Assert.assertArrayEquals(expectedInitialDsFirst10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 1227, 1237), 4.0E-323); // 4.0E-323 in Java is 0.0 in R (the expectation above, from R, has a 0.0 at its first element)
         // Assert.assertArrayEquals(expectedInitialDsLast10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 2763, 2772), 4.0E-323);
-        Assert.assertArrayEquals(expectedFFTedfYFirst50, Arrays.copyOfRange(realFFTedfY, 0, 50), EPSILON);
-        Assert.assertArrayEquals(expectedFFTedfYLast50, Arrays.copyOfRange(realFFTedfY, 4076, 4126), EPSILON3);
+        // Assert.assertArrayEquals(expectedFFTedfYFirst50, Arrays.copyOfRange(realFFTedfY, 0, 50), EPSILON);
+        // Assert.assertArrayEquals(expectedFFTedfYLast50, Arrays.copyOfRange(realFFTedfY, 4076, 4126), EPSILON3);
         // Assert.assertArrayEquals(expectedFFTedfYLast50, Arrays.copyOfRange(realFFTedfY, 4056, 4096), EPSILON3);
 //        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(dsHiAtNode, 2710, 2720), EPSILON);
     }
