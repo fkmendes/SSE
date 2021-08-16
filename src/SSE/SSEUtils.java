@@ -41,7 +41,7 @@ public class SSEUtils {
      * Note: only the first nUsefulTraitBins elements in each row of esDs are used (and in birthRate and deathRate);
      *
      * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
-     * @param   scratch 2D-array for storing/restoring flanking values and other math terms
+     * @param   scratchAtNode 2D-array for storing/restoring flanking values and other math terms
      * @param   birthRate   birth rates (lambdas), one per quantitative ch useful bin
      * @param   deathRate   death rates (mus), one per quantitative ch useful bin
      * @param   dt  length of time slice over which to propagate
@@ -49,7 +49,7 @@ public class SSEUtils {
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @return  no return, leaves result in 'esDs' and 'scratch'
      */
-    public static void propagateEandDinTQuaSSEInPlace(double[][] esDsAtNode, double[][] scratch, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
+    public static void propagateEandDinTQuaSSEInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
 
         // iterating over all continuous character bins (total # = nx), to update E and D for each of those bins
         for (int i = 0; i < nUsefulTraitBins; ++i) {
@@ -72,7 +72,7 @@ public class SSEUtils {
             // System.out.println("i=" + i + " numerator (z * r * r) =" + (ithZ * Math.pow((ithLambda - ithMu), 2)));
             // System.out.println("i=" + i + " denominator (z * lambda - mu + (1-z)*lambda*e0) =" + (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE));
 
-            scratch[1][i] = ithZ * tmp1 * tmp1;
+            scratchAtNode[1][i] = ithZ * tmp1 * tmp1;
 
             // checking against R
             // System.out.println("(numerator/denominator^2) = " + scratch[1][i]);
@@ -92,7 +92,7 @@ public class SSEUtils {
                 else {
                     // System.out.println("S j=" + j + " scratch[1][j] = " + scratch[1][j]);
                     // System.out.println("B j=" + j + " esDsAtNode[ithDim][j] = " + esDsAtNode[ithDim][j]);
-                    esDsAtNode[ithDim][j] *= scratch[1][j];
+                    esDsAtNode[ithDim][j] *= scratchAtNode[1][j];
                     // System.out.println("A j=" + j + " esDsAtNode[ithDim][j] = " + esDsAtNode[ithDim][j]);
                 }
             }

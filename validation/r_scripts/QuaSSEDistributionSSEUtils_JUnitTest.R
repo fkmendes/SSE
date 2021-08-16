@@ -506,7 +506,63 @@ make.pde.quasse.fftR.2 <- function (nx, dx, dt.max, nd) {
     }
 }
 
-# single branch with length 1/20 = 0.05
+control.fft.just.t <- list(tc=100.0, # time point at which we go from high -> low resolution of X
+                    dt.max=0.01, # dt
+                    nx=48, # number of X bins
+                    dx=0.01, # size of each X bin
+                    r=4L, # high res of X = nx * r
+                    xmid=0, # sp rate ~ X is a logistic regression, and xmid is the value of X at the inflection point
+                    w=10, # used to determine nkl and nkr (see quasse.extent)
+                    flags=0L, # FFT stuff below
+                    verbose=0L,
+                    atol=1e-6,
+                    rtol=1e-6,
+                    eps=1e-3,
+                    method="fftC")
+
+lambda <- sigmoid.x
+mu <- constant.x
+
+args.fft.just.t <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
+pars.just.t <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
+# note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
+
+ext.fft.just.t <- quasse.extent(control.fft.just.t, drift, diffusion) # prepares X axis stuff
+ext.fft.just.t$padding
+
+pars.fft.just.t <- expand.pars.quasse(lambda, mu, args.fft.just.t, ext.fft.just.t, pars.just.t) # adds lambda and mu vectors to ext.fft.just.x
+
+# initialization
+vars.fft.just.t <- matrix(0, control.fft.just.t$nx, 2) # low resolution
+vars.fft.just.t[seq_len(ext.fft.just.t$ndat[2]),2] <- dnorm(ext.fft.just.t$x[[2]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0), note that the last pars.fft.just.x$lo$padding should be 0.0
+paste(vars.fft.just.t[,2], collapse=", ") # 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+pde.fftR.just.t <- with(control.fft.just.t, make.pde.quasse.fftR.2(nx, dx, dt.max, 2L))
+ans.fftR.just.t <- pde.fftR.just.t(vars.fft.just.t, len, pars.fft.just.t$lo, 0) # calculates answer with R; t0 = 0; E's work, but D's are further normalized so then they don't match with the result of fftR.propagate.t
+
+paste(ans.fftR.just.t[[2]][,1], collapse=", ") # 0.00149370994379142, 0.00149368786296715, 0.00149366566009926, 0.00149364334116711, 0.0014936209122861, 0.00149359837970088, 0.00149357574977893, 0.00149355302900443, 0.0014935302239704, 0.00149350734137188, 0.00149348438799768, 0.00149346137072356, 0.00149343829650327, 0.00149341517236111, 0.00149339200538258, 0.0014933688027066, 0.00149334557151628, 0.0014933223190299, 0.00149329905249347, 0.00149327577916897, 0.00149325250632815, 0.00149322924124165, 0.00149320599116985, 0.00149318276335575, 0.00149315956501302, 0.00149313640331981, 0.00149311328540833, 0.00149309021835688, 0.00149306720918005, 0.00149304426482232, 0.00149302139214795, 0.00149299859793396, 0.00149297588886225, 0.00149295327151184, 0.00149293075235137, 0.00149290833773301, 0.00149288603388406, 0.00149286384690245, 0.00149284178274917, 0, 0, 0, 0, 0, 0, 0, 0, 0
+paste(ans.fftR.just.t[[2]][,2], collapse=", ") #  0.00579005736174394, 0.0121352277429472, 0.0244366205695344, 0.0472783719250338, 0.0878844494649893, 0.156960263942535, 0.269336720628206, 0.444047657299951, 0.703382841402857, 1.07048880941099, 1.5653111283757, 2.19911224723919, 2.96839922078803, 3.84968692464613, 4.79685632357302, 5.7427010526194, 6.60547283589975, 7.29994891700679, 7.75111077151784, 7.90744686571959, 7.75062709006449, 7.29903803124074, 6.60423685237185, 5.74126889110111, 4.79536172096607, 3.84824841117278, 2.96710606450487, 2.19801824876123, 1.56443588948085, 1.06982441610763, 0.702903170869044, 0.443717712813496, 0.269120201314488, 0.156824570265688, 0.0878031690333764, 0.0472318065561379, 0.0244110920425363, 0.0121218288516093, 0.00578332208315072, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 control.fft$nx <- 1024 * 4 # TODO: try 1032 (multiple of 12... might work)
 vars.fft <- matrix(0, control.fft$nx, 2) # high resolution
@@ -536,9 +592,6 @@ paste(ans.fftR.just.t[[2]][2711:2720,2], collapse=", ") # D's 2.92247877978117e-
 
 
 # (9) testIntegrateOneBranchHiResOutsideClassJustX
-
-# TODO: Replicating test in testPropagateChOneChQuaSSETest, but building control variable
-# TODO: need to change test in Java to use dx = 0.01 instead of 0.001, also update the R code here to make sure it matches
 
 control.fft.just.x <- list(tc=100.0, # time point at which we go from high -> low resolution of X
                     dt.max=0.01, # dt

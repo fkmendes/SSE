@@ -114,7 +114,7 @@ public class QuaSSEDistributionTest {
         IntegerParameter nXbinsip = new IntegerParameter(nXbins);
 
         Integer[] nXbins2 = new Integer[] { 48 };
-        IntegerParameter nxBinsip2 = new IntegerParameter(nXbins2);
+        IntegerParameter nXbinsip2 = new IntegerParameter(nXbins2);
 
         // QuaSSE stuff
 //        q = new QuaSSEDistribution();
@@ -125,17 +125,17 @@ public class QuaSSEDistributionTest {
 //                "tree", myTree,
 //                "q2d", nfn);
 //
-//        q2 = new QuaSSEDistribution();
-//        q2.initByName("dt", dtrp, "tc", tcrp,
-//                "nX", nXbinsip, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
-//                "drift", driftrp, "diffusion", diffusionrp,
-//                "q2mLambda", lfn, "q2mMu", cfn,
-//                "tree", myTree2,
-//                "q2d", nfn2);
+        q2 = new QuaSSEDistribution();
+        q2.initByName("dt", dtrp, "tc", tcrp,
+                "nX", nXbinsip2, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
+                "drift", driftrp, "diffusion", diffusionrp,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", myTree2,
+                "q2d", nfn2);
 
         q3 = new QuaSSEDistribution();
         q3.initByName("dt", dtrp, "tc", tcrp,
-                "nX", nxBinsip2, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
+                "nX", nXbinsip2, "dX", dxBinrp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftrp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree2,
@@ -241,46 +241,45 @@ public class QuaSSEDistributionTest {
      * We look at just a single branch here, from 'sp1', whose trait value
      * is set to 0.0
      */
-//    @Test
-//    public void testIntegrateOneBranchHiResOutsideClassJustT() {
-//
-//        // we're going to look at sp1
-//        int nodeIdx = 0; // sp1
-//        double[][] esDsHiAtNode;
-//
-//        /*
-//         * we'll test the integration outside the class
-//         */
-//        esDsHiAtNode = q2.getEsDsAtNode(nodeIdx, false);
-//
-//        double[][] scratchAtNode = new double[2][esDsHiAtNode[0].length];
-//        for (int ithDim=0; ithDim < 2; ithDim++) {
-//            for (int i=0; i < esDsHiAtNode[ithDim].length; i++) {
-//                scratchAtNode[ithDim][i] = esDsHiAtNode[ithDim][i];
-//            }
-//        }
-//
-//        // printing
-//        // System.out.println("D's before prop in t: " + Arrays.toString(esDsHiAtNode[1])); // D's
-//
-//        // just propagate in t, in place
-//        q2.propagateTInPlace(esDsHiAtNode, scratchAtNode, false);
-//
-//        esDsHiAtNode = q2.getEsDsAtNode(nodeIdx, false);
-//        double[] esHiAtNode = esDsHiAtNode[0];
-//        double[] dsHiAtNode = esDsHiAtNode[1];
-//
-//        // printing
-//        // for (int i=0; i<esDsHiAtNode[0].length; ++i) {
-//        //     System.out.println("e" + i + " = " + esHiAtNode[i] + " d" + i + " = " + dsHiAtNode[i]);
-//        // }
-//
-//        double[] expectedSp1EsAfterPropT = new double[] { 0.00149145856502394, 0.00149145829907251, 0.00149145803473995, 0.00149145777201677, 0.00149145751089328, 0.00149145725136005, 0.0014914569934076, 0.00149145673702653, 0.00149145648220743, 0.00149145622894108 };
-//        double[] expectedSp1DsAfterPropT = new double[] { 2.92247877978117e-274, 4.93457667574128e-275, 8.31118025653625e-276, 1.39633545736575e-276, 2.34008210599557e-277, 3.91189050109308e-278, 6.52313773491418e-279, 1.0850273169382e-279, 1.80027587020561e-280, 2.97955710585536e-281 };
-//
-//        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esHiAtNode, 2710, 2720), EPSILON2);
-//        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(dsHiAtNode, 2710, 2720), EPSILON2);
-//    }
+    @Test
+    public void testIntegrateOneBranchHiResOutsideClassJustT() {
+
+        // we're going to look at sp1
+        int nodeIdx = 0; // sp1
+        double[][] esDsHiAtNode;
+
+        /*
+         * we'll test the integration outside the class
+         */
+        esDsHiAtNode = q2.getEsDsAtNode(nodeIdx, true);
+        // printing
+        System.out.println("D's before prop in t: " + Arrays.toString(esDsHiAtNode[1])); // D's
+
+        double[][] scratchAtNode = new double[2][esDsHiAtNode[0].length];
+        for (int ithDim=0; ithDim < 2; ithDim++) {
+            for (int i=0; i < esDsHiAtNode[ithDim].length; i++) {
+                scratchAtNode[ithDim][i] = esDsHiAtNode[ithDim][i];
+            }
+        }
+
+        // just propagate in t, in place
+        q2.propagateTInPlace(esDsHiAtNode, scratchAtNode, true);
+
+        esDsHiAtNode = q2.getEsDsAtNode(nodeIdx, true);
+        double[] esHiAtNode = esDsHiAtNode[0];
+        double[] dsHiAtNode = esDsHiAtNode[1];
+
+        // printing
+         for (int i=0; i<esDsHiAtNode[0].length; ++i) {
+             System.out.println("e" + i + " = " + esHiAtNode[i] + " d" + i + " = " + dsHiAtNode[i]);
+         }
+
+        double[] expectedSp1EsAfterPropT = new double[] { 0.00149370994379142, 0.00149368786296715, 0.00149366566009926, 0.00149364334116711, 0.0014936209122861, 0.00149359837970088, 0.00149357574977893, 0.00149355302900443, 0.0014935302239704, 0.00149350734137188, 0.00149348438799768, 0.00149346137072356, 0.00149343829650327, 0.00149341517236111, 0.00149339200538258, 0.0014933688027066, 0.00149334557151628, 0.0014933223190299, 0.00149329905249347, 0.00149327577916897, 0.00149325250632815, 0.00149322924124165, 0.00149320599116985, 0.00149318276335575, 0.00149315956501302, 0.00149313640331981, 0.00149311328540833, 0.00149309021835688, 0.00149306720918005, 0.00149304426482232, 0.00149302139214795, 0.00149299859793396, 0.00149297588886225, 0.00149295327151184, 0.00149293075235137, 0.00149290833773301, 0.00149288603388406, 0.00149286384690245, 0.00149284178274917, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1DsAfterPropT = new double[] { 0.00579005736174394, 0.0121352277429472, 0.0244366205695344, 0.0472783719250338, 0.0878844494649893, 0.156960263942535, 0.269336720628206, 0.444047657299951, 0.703382841402857, 1.07048880941099, 1.5653111283757, 2.19911224723919, 2.96839922078803, 3.84968692464613, 4.79685632357302, 5.7427010526194, 6.60547283589975, 7.29994891700679, 7.75111077151784, 7.90744686571959, 7.75062709006449, 7.29903803124074, 6.60423685237185, 5.74126889110111, 4.79536172096607, 3.84824841117278, 2.96710606450487, 2.19801824876123, 1.56443588948085, 1.06982441610763, 0.702903170869044, 0.443717712813496, 0.269120201314488, 0.156824570265688, 0.0878031690333764, 0.0472318065561379, 0.0244110920425363, 0.0121218288516093, 0.00578332208315072, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esHiAtNode, 0, 48), EPSILON2);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(dsHiAtNode, 0, 48), EPSILON2);
+    }
 
     /*
      * Checks that propagate methods in quantitative trait
