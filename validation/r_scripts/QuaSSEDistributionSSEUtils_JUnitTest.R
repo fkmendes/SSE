@@ -4,13 +4,19 @@
 # (1) testPropagateTimeOneChQuaSSETest
 # (2) testMakeNormalKernInPlaceAndFFT
 # (3) testConvolve
-# (4) testPropagateChOneChQuaSSETest
+# (4) testPropagateChOneCh48QuaSSETest
 # (5) testLogistic
 # (6) testDimensions
 # (7) testInitializationOfTips
 # (8) testIntegrateOneBranchLoRes48BinsOutsideClassJustT
 # (9) testIntegrateOneBranchLoRes48BinsOutsideClassJustX
 # (10) testIntegrateOneBranchLoRes1024BinsOutsideClassJustX and testPropagateChOneCh1024QuaSSETest
+# (11) testPropagateChOneCh4096QuaSSETest and testIntegrateOneBranchLoRes4096BinsOutsideClassJustX (note that I'm using this in 4096 low res, but I'll co-opt 4096 high res in Java)
+
+## IMPORTANT: expectations (outputs from paste(xyz, collapse=", ") will vary depending on machine architecture
+## Main expectations come from a 2014 iMac running Mac OS X Catalina
+## I have pasted another expectation for (10) and (11) when running on a Dell XPS (i5 7th gen)
+
 
 library(diversitree)
 
@@ -237,62 +243,6 @@ res <- fftR.propagate.x(vars, nx, fy, nkl, nkr)
 
 paste(res[,1], collapse=", ") # 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 paste(res[,2], collapse=", ") # 0.0011788613551308, 0.00267660451529771, 0.0058389385158292, 0.0122380386022755, 0.0247150623561646, 0.0478008882241639, 0.088827888339617, 0.158599420774613, 0.272077439492024, 0.448458176810809, 0.710214708266688, 1.0806760140649, 1.57993546382425, 2.21932565164128, 2.99530083804266, 3.88416335936269, 4.83940600155166, 5.79327421787607, 6.66336349661661, 7.36377090119626, 7.81887626199731, 7.97674483551017, 7.81887626199731, 7.36377090119626, 6.66336349661661, 5.79327421787606, 4.83940600155166, 3.8841633593627, 2.99530083804265, 2.21932565164129, 1.57993546382425, 1.0806760140649, 0.710214708266687, 0.44845817681081, 0.272077439492023, 0.158309031659599, 0.0886369682387602, 0.0476817640292969, 0.0246443833694604, 0, 0, 0, 0, 0, 0, 0, 0, 0
-
-
-
-### PREPARING THINGS FOR A FEW TESTS BELOW ###
-
-## Basic control list.
-control.fft <- list(tc=1.3, # time point at which we go from high -> low resolution of X
-                    dt.max=1/20, # dt
-                    nx=1024, # number of X bins
-                    dx=0.01, # size of each X bin
-                    r=4L, # high res of X = nx * r
-                    xmid=0, # sp rate ~ X is a logistic regression, and xmid is the value of X at the inflection point
-                    w=5, # used to determine nkl and nkr (see quasse.extent)
-                    flags=0L, # FFT stuff below
-                    verbose=0L,
-                    atol=1e-6,
-                    rtol=1e-6,
-                    eps=1e-3,
-                    method="fftC")
-
-lambda <- sigmoid.x
-mu <- constant.x
-drift <- 0.0
-diffusion <- 0.01
-sd <- 1/20
-len <- 1/20 # Integrate down a branch length of 1, doesn't get to low res (@tc=1.3)
-
-args <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
-pars <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
-# note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
-
-ext.fft <- quasse.extent(control.fft, drift, diffusion) # prepares X axis stuff
-
-# ext.fft
-# x[[1]]: high-res X bins
-# x[[2]]: low-res X bins
-# padding: [1,] left and right padding for high-res
-#          [2,] left and right padding for low-res
-# ndat: number of X bins actually updated by propagate X
-# tr: indices of high-res bins that become each i-th low-res bin
-# nx: total number of bins in high-res and low-res, respectively
-
-ndat <- ext.fft$ndat[2] # 999
-
-# control.mol <- modifyList(control.fft, list(nx=ndat, method="mol")) # he didn't finish implementing mol stuff
-# ext.mol <- quasse.extent(control.mol, drift, diffusion)
-
-pars.fft <- expand.pars.quasse(lambda, mu, args, ext.fft, pars) # adds lambda and mu vectors to ext.fft
-
-# pars.fft
-# $hi: high-res stuff
-# $hi$x: high-res X bins
-# $hi$lambda: high-res lambda values, calculated from the 'lambda' variable (sigmoid.x)
-# $hi$mu: high-res mu values, calculated from the 'mu' variable (constant.x)
-# $hi$drift, $hi$diffusion, $hi$padding, $hi$ndat, $hi$nx are self-explanatory
-# $lo: low-res stuff (counterparts of high-res)
 
 
 
@@ -545,6 +495,8 @@ control.fft.just.t <- list(tc=100.0, # time point at which we go from high -> lo
 
 lambda <- sigmoid.x
 mu <- constant.x
+diffusion <- 0.001
+sd <- 0.05
 
 args.fft.just.t <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
 pars.just.t <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
@@ -589,6 +541,9 @@ control.fft.just.x <- list(tc=100.0, # time point at which we go from high -> lo
                     eps=1e-3,
                     method="fftC")
 
+sd <- 0.05
+drift <- 0.0
+diffusion <- 0.001
 lambda <- sigmoid.x
 mu <- constant.x
 
@@ -597,14 +552,14 @@ pars.just.x <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter va
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
 ext.fft.just.x <- quasse.extent(control.fft.just.x, drift, diffusion) # prepares X axis stuff
-ext.fft.just.x$padding
+ext.fft.just.x$padding # 16/16, 4/4
 
 pars.fft.just.x <- expand.pars.quasse(lambda, mu, args.fft.just.x, ext.fft.just.x, pars.just.x) # adds lambda and mu vectors to ext.fft.just.x
 
 # initialization
 vars.fft.just.x <- matrix(0, control.fft.just.x$nx, 2) # low resolution
 vars.fft.just.x[seq_len(ext.fft.just.x$ndat[2]),2] <- dnorm(ext.fft.just.x$x[[2]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0), note that the last pars.fft.just.x$lo$padding should be 0.0
-paste(vars.fft.just.x[,2], collapse=", ") # 0.0011788613551308, 0.00267660451529771, 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.047681764029297, 0.0886369682387602, 0.1583090316596, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522966, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.99454931271489, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924628, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.0886369682387602, 0.0476817640292969, 0.0246443833694604, 0.0122380386022754, 0.0058389385158292, 0.0026766045152977, 0.0011788613551308, 0, 0, 0, 0, 0
+paste(vars.fft.just.x[,2], collapse=", ") # 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 # checking kernel matches (see PropagatesQuaSSETest -> testMakeNormalKernInPlaceAndFFtAndIfft)
 kern.just.x <- fftR.make.kern(-control.fft.just.x$dt * pars.fft.just.x$hi$drift, sqrt(control.fft.just.x$dt * pars.fft.just.x$hi$diffusion), control.fft.just.x$nx, control.fft.just.x$dx, pars.fft.just.x$hi$padding[1], pars.fft.just.x$hi$padding[2])
@@ -663,15 +618,32 @@ vars.fft.just.x.1024 <- matrix(0, control.fft.just.x.1024$nx, 2) # low resolutio
 vars.fft.just.x.1024[seq_len(ext.fft.just.x.1024$ndat[2]),2] <- dnorm(ext.fft.just.x.1024$x[[2]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0), note that the last pars.fft.just.x.1024$lo$padding should be 0.0
 paste(vars.fft.just.x.1024[316:326,2], collapse=", ") # 5.07356011714376e-320, 1.07646593078779e-316, 2.19444210413816e-313, 4.29809786779161e-310, 8.0882896186969e-307, 1.46239706910102e-303, 2.54040022766109e-300, 4.24001310304921e-297, 6.79924162752444e-294, 1.04756739392715e-290, 1.55071393737006e-287
 
-kern.just.x.1024 <- fftR.make.kern(-control.fft.just.x.1024$dt * pars.fft.just.x.1024$hi$drift, sqrt(control.fft.just.x.1024$dt * pars.fft.just.x.1024$hi$diffusion), control.fft.just.x.1024$nx, control.fft.just.x.1024$dx, pars.fft.just.x.1024$hi$padding[1], pars.fft.just.x.1024$hi$padding[2])
+kern.just.x.1024 <- fftR.make.kern(-control.fft.just.x.1024$dt * pars.fft.just.x.1024$lo$drift, sqrt(control.fft.just.x.1024$dt * pars.fft.just.x.1024$lo$diffusion), control.fft.just.x.1024$nx, control.fft.just.x.1024$dx, pars.fft.just.x.1024$lo$padding[1], pars.fft.just.x.1024$lo$padding[2])
 
 fy.just.x.1024 <- fft(kern.just.x.1024)
+paste(Re(fy.just.x.1024)[1:48], collapse=", ") # 1, 0.999999749692906, 0.999998998781049, 0.9999977472927, 0.999995995274977, 0.999993742793842, 0.999990989934102, 0.999987736799399, 0.999983983512212, 0.999979730213853, 0.999974977064454, 0.999969724242971, 0.99996397194717, 0.999957720393623, 0.999950969817696, 0.999943720473548, 0.999935972634113, 0.999927726591093, 0.999918982654949, 0.999909741154885, 0.999900002438841, 0.999889766873476, 0.999879034844152, 0.999867806754928, 0.999856083028535, 0.999843864106368, 0.999831150448462, 0.999817942533483, 0.999804240858701, 0.99979004593998, 0.999775358311752, 0.999760178527001, 0.999744507157237, 0.999728344792482, 0.999711692041242, 0.999694549530485, 0.999676917905621, 0.999658797830471, 0.999640189987249, 0.999621095076532, 0.999601513817236, 0.999581446946586, 0.999560895220092, 0.999539859411516, 0.999518340312849, 0.999496338734275, 0.999473855504143, 0.999450891468938
+
+# checking part of convolution matches
+cstep.1 <- apply(vars.fft.just.x.1024, 2, fft)
+Re(cstep.1[,2])[1:10]
+cstep.2 <- cstep.1 * fy.just.x.1024
+Re(cstep.2[,2])[1:10] # matches with prints
+cstep.3 <- apply(cstep.2, 2, ifft)
+Re(cstep.3[,2])[1:10] # matches with prints (in Dell XPS + Ubuntu, this differs!)
 
 ds.prop.x.1024 <- fftR.propagate.x(vars.fft.just.x.1024, control.fft.just.x.1024$nx, fy.just.x.1024, pars.fft.just.x.1024$lo$padding[1], pars.fft.just.x.1024$lo$padding[2])
 paste(ds.prop.x.1024[1:48,2], collapse=", ") # 0, 0, 0, 0, 1.11022302462516e-16, 0, 0, 0, 2.77555756156289e-17, 2.77555756156289e-17, 0, 8.32667268468867e-17, 0, 1.04083408558608e-16, 5.89805981832114e-17, 0, 0, 4.99275100429575e-17, 1.74936020530536e-16, 0, 5.47996435555642e-17, 1.64060117487791e-16, 2.55997708857483e-16, 0, 8.5609964086127e-17, 9.49329645689794e-17, 2.91487168428854e-16, 3.34092533592135e-17, 0, 2.19845474956207e-16, 3.57227590802606e-16, 3.37917798902023e-16, 0, 4.14102761209603e-17, 0, 0, 0, 0, 0, 0, 0, 3.49655200626575e-17, 2.86229373536173e-17, 0, 0, 0, 1.55257751099924e-16, 0
+
+## Dell XPS + Ubuntu: 0, 0, 0, 0, 1.11022302462516e-16, 0, 0, 0, 0, 1.38777878078145e-17, 0, 6.24500451351651e-17, 0, 0, 3.12250225675825e-17, 0, 6.50521303491303e-19, 3.49113099540332e-17, 1.21511958481313e-16, 1.17507186706695e-16, 2.10894263207376e-17, 5.35274000687883e-17, 5.02197364097602e-17, 3.61670362983377e-17, 0, 1.00437977276973e-16, 1.40893263454573e-16, 0, 0, 2.8380293557579e-16, 1.92721955491255e-16, 4.808896282696e-16, 0, 1.05501288772753e-16, 0, 1.70226305585565e-16, 0, 9.91401242784323e-17, 0, 2.5766064629118e-16, 0, 2.75224721485445e-16, 0, 0, 0, 3.68628738645072e-17, 1.86482773667507e-16, 0
+## Note that this might still not match the Java numbers on a Dell XPS!
+
 paste(ds.prop.x.1024[977:1024,2], collapse=", ") # 0, 0, 0, 0, 0, 0, 7.52487427515263e-17, 0, 0, 0, 1.55620691069343e-16, 1.14818872876954e-17, 0, 0, 1.58130728038333e-16, 1.0696554404076e-16, 0, 1.57854754116206e-16, 1.40605775178319e-16, 0, 0, 0, 0, 0, 0, 1.04083408558608e-16, 1.31838984174237e-16, 1.17961196366423e-16, 8.32667268468867e-17, 5.55111512312578e-17, 5.55111512312578e-17, 1.11022302462516e-16, 1.11022302462516e-16, 1.11022302462516e-16, 1.11022302462516e-16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
+## Dell XPS + Ubuntu: 8.92393931646661e-18, 3.61898562752898e-17, 0, 0, 0, 0, 9.72187199547035e-18, 1.355742881706e-16, 2.31874617906132e-18, 3.96980040328682e-17, 1.39926235965349e-16, 2.62039212712805e-17, 0, 9.24831732319526e-17, 4.45901701538509e-17, 2.26437211910374e-16, 0, 1.28362760958706e-16, 1.0392247229863e-16, 8.10779937111816e-17, 0, 1.76724954115137e-17, 0, 5.72458747072346e-17, 0, 1.30104260698261e-16, 4.33680868994202e-17, 5.55111512312578e-17, 0, 1.94289029309402e-16, 0, 5.55111512312578e-17, 5.55111512312578e-17, 1.11022302462516e-16, 1.11022302462516e-16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+## Note that this might still not match the Java numbers on a Dell XPS!
 
+pde.fftC <- with(control.fft.just.x.1024$nx, diversitree:::make.pde.mosse.fftC(control.fft.just.x.1024$nx, control.fft.just.x.1024$nx*control.fft.just.x.1024$r, control.fft.just.x.1024$dt.max, 4L, flags))
+  ans.fftC <- pde.fftC(vars.fft, len, pars.fft$lo, 0, control.fft$dt.max)
 
 # (11) testPropagateChOneCh4096QuaSSETest and testIntegrateOneBranchLoRes4096BinsOutsideClassJustX (note that I'm using this in 4096 low res, but I'll co-opt 4096 high res in Java)
 

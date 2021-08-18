@@ -175,12 +175,12 @@ public class SSEUtils {
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
 
             // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
-            // System.out.println("Before FFT scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
+            // System.out.println("Before FFT scratchAtNode[" + ithDim + "] = " + Arrays.toString(scratchAtNode[ithDim]));
 
             fft.realForwardFull(scratchAtNode[ithDim]); // FFT for each E and D dimension
 
             // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
-            // System.out.println("After FFT scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
+            // System.out.println("After FFT scratchAtNode[" + ithDim + "] = " + Arrays.toString(scratchAtNode[ithDim]));
 
             for (int i = 0; i < fY.length; i += 2) {
                 scratchAtNode[ithDim][i] *= fY[i]; // real part
@@ -188,12 +188,12 @@ public class SSEUtils {
             }
 
             // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
-            // System.out.println("After FFT and * fY scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
+            // System.out.println("After FFT and * fY scratchAtNode[" + ithDim + "] = " + Arrays.toString(scratchAtNode[ithDim]));
 
             fft.complexInverse(scratchAtNode[ithDim], false); // inverse FFT for each E and D dimension
 
             // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
-            // System.out.println("After iFFT scratchAtNode[" + "ithDim] = " + Arrays.toString(scratchAtNode[ithDim]));
+            // System.out.println("After iFFT scratchAtNode[" + ithDim + "] = " + Arrays.toString(scratchAtNode[ithDim]));
         }
 
         // looking at things
@@ -248,6 +248,8 @@ public class SSEUtils {
 
         for (int i = 0; i <= nRightFlankBins; i++) yValues[i] /= total;
         for (int i = (nXbins - nLeftFlankBins); i < nXbins; i++) yValues[i] /= total;
+
+        // System.out.println("fY = " + Arrays.toString(yValues));
     }
 
     /*

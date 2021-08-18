@@ -70,6 +70,7 @@ public class NormalCenteredAtObservedLinkFn extends BEASTObject implements LinkF
 
             for (int i=0; i<x.length; i++) {
                 y[i] = SSEUtils.getNormalDensity(x[i], quTraits.getValue(spName), sdNormalQuTrValue);
+                // System.out.println("x["+ i + "] = " + x[i] + " : " + y[i]);
             }
         }
 

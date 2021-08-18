@@ -108,13 +108,19 @@ public abstract class QuaSSEProcess extends Distribution {
         xLo = new double[nUsefulXbinsLo];
         xLo[0] = xMinLo;
         for (int i = 1; i < nUsefulXbinsLo; i++) {
-            xLo[i] = xLo[i-1] + dXbin;
+            // System.out.println("xLo[" + (i-1) + "]" + xLo[i-1]);
+            // xLo[i] = xLo[i-1] + dXbin;
+            // xLo[i] = Math.round((xLo[i-1] + dXbin) * 1e4) / 1e4;
+            // System.out.println("xLo[" + i + "] = " + xLo[i] + " dx = " + dXbin);
         }
 
         xHi = new double[nUsefulXbinsHi];
         xHi[0] = xMinHi;
         for (int i = 1; i< nUsefulXbinsHi; i++) {
+            // System.out.println("xHi[" + (i-1) + "]" + xHi[i-1]);
             xHi[i] = xHi[i-1] + dXbin / hiLoRatio;
+            // xHi[i] = Math.round((xHi[i-1] + (dXbin / hiLoRatio)) * 1e4) / 1e4;
+            // System.out.println("xHi[" + i + "] = " + xHi[i] + " dx = " + dXbin);
         }
     }
 

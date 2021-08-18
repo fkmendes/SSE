@@ -25,7 +25,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     // state that matters directly for calculateLogP
     private double[][][] esDsLo, esDsHi; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
-    private double[][][] scratch;
+    private double[][][] scratchLo, scratchHi;
 
     @Override
     public void initAndValidate() {
@@ -43,7 +43,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         q2d = q2dInput.get();
 
-        scratch = new double[nNodes][nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
+        scratchLo = new double[nNodes][nDimensions][2 * nXbinsLo]; // for real and complex part after FFT
+        scratchHi = new double[nNodes][nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
 
         populateMacroevolParams(true);
 
@@ -114,11 +115,15 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         double startTime = node.getHeight(); // we're going backwards in time, toward the root
         if (startTime > tc) lowRes = true; // entire branch might already be > tc
 
-        double[][] esDsAtNode;
-        if (lowRes) esDsAtNode = esDsLo[nodeIdx];
-        else esDsAtNode = esDsHi[nodeIdx];
-
-        double[][] scratchAtNode = scratch[nodeIdx];
+        double[][] esDsAtNode, scratchAtNode;
+        if (lowRes) {
+            esDsAtNode = esDsLo[nodeIdx];
+            scratchAtNode = scratchLo[nodeIdx];
+        }
+        else {
+            esDsAtNode = esDsHi[nodeIdx];
+            scratchAtNode = scratchHi[nodeIdx];
+        }
 
         boolean isFirstDt = true;
         while ((startTime + dt) <= node.getParent().getHeight()) {
@@ -127,6 +132,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             System.out.println("startTime + dt = " + (startTime + dt));
             System.out.println("node.getParent().getHeight() = " + node.getParent().getHeight());
             System.out.println("calling doIntegrateInPlace");
+            // TODO: need to re-set esDsAtNode and scratchAtNode to the low-res versions before doIntegrateInPlace if lowRes becomes true
             doIntegrateInPlace(esDsAtNode, scratchAtNode, startTime, isFirstDt, lowRes);
 
             isFirstDt = false;
@@ -227,9 +233,19 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         else return esDsHi;
     }
 
+    public double[][][] getScratch(boolean lowRes) {
+        if (lowRes) return scratchLo;
+        else return scratchHi;
+    }
+
     public double[][] getEsDsAtNode(int nodeIdx, boolean lowRes) {
         if (lowRes) return esDsLo[nodeIdx];
         return esDsHi[nodeIdx];
+    }
+
+    public double[][] getScratchAtNode(int nodeIdx, boolean lowRes) {
+        if (lowRes) return scratchLo[nodeIdx];
+        else return scratchHi[nodeIdx];
     }
 
     public int getNUsefulTraitBins(boolean lowRes) {
@@ -237,9 +253,9 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         else return nUsefulXbinsHi;
     }
 
-    public void setEsDsAtNodeElementAtDim(int nodeIdx, int dim, int eleIdx, double val, boolean lowRes) {
-        if (lowRes) esDsLo[nodeIdx][dim][eleIdx] = val;
-        else esDsHi[nodeIdx][dim][eleIdx] = val;
+    public void setEsDsAtNodeElementAtDim(int nodeIdx, int dimIdx, int eleIdx, double val, boolean lowRes) {
+        if (lowRes) esDsLo[nodeIdx][dimIdx][eleIdx] = val;
+        else esDsHi[nodeIdx][dimIdx][eleIdx] = val;
     }
     @Override
     public List<String> getArguments() {

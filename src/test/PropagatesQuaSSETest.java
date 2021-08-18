@@ -9,6 +9,16 @@ import java.util.Arrays;
 import static SSE.SSEUtils.*;
 import static org.junit.Assert.*;
 
+/*
+ * Tests for functions used in QuaSSEDistribution
+ *
+ * Note that expectations for D's in tests with PopagateCh
+ * come from R running on an 2014 iMac with Mac OS X Catalina.
+ *
+ * These might not be met if Java tests are being run from machines with
+ * different CPU architectures (and small differences are expected
+ * even within the same architecture).
+ */
 public class PropagatesQuaSSETest {
 
     final static double EPSILON = 1e-5;
@@ -193,8 +203,8 @@ public class PropagatesQuaSSETest {
         double[] expectedEs = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         double[] expectedDs = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0888278883396176, 0.158599420774612, 0.272077439492023, 0.448458176810809, 0.710214708266689, 1.0806760140649, 1.57993546382425, 2.21932565164128, 2.99530083804266, 3.88416335936269, 4.83940600155166, 5.79327421787606, 6.66336349661661, 7.36377090119626, 7.81887626199731, 7.97674483551017, 7.81887626199731, 7.36377090119626, 6.66336349661661, 5.79327421787606, 4.83940600155166, 3.88416335936269, 2.99530083804266, 2.21932565164129, 1.57993546382425, 1.0806760140649, 0.710214708266689, 0.44845817681081, 0.272077439492023, 0.158599420774612, 0.0888278883396172, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0], 0, nXbins), EPSILON);
-        assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, nXbins), EPSILON);
+        assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0], 0, nXbins), 1E-14);
+        assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, nXbins), 1E-14);
     }
 
     /*
@@ -221,6 +231,7 @@ public class PropagatesQuaSSETest {
 
         fY = new double[nXbins * 2];
         SSEUtils.makeNormalKernelInPlace(fY, (dt * drift), Math.sqrt(dt * diffusion), nXbins, nLeftFlankBins, nRightFlankBins, dx, dt); // normalizes inside already
+
         fftForEandD.realForwardFull(fY); // first FFT the Normal kernel
 
         esDs = new double[2][nXbins * 2];
@@ -240,6 +251,8 @@ public class PropagatesQuaSSETest {
         }
 
         propagateEandDinXQuaLike(esDs, scratch, fY, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD);
+
+        System.out.println("Final D's: " + Arrays.toString(Arrays.copyOfRange(esDs[1], 0, 48)));
 
         double[] expectedEs = new double[2048];
         double[] expectedDsFirst48 = new double[] { 0, 0, 0, 0, 1.11022302462516e-16, 0, 0, 0, 2.77555756156289e-17, 2.77555756156289e-17, 0, 8.32667268468867e-17, 0, 1.04083408558608e-16, 5.89805981832114e-17, 0, 0, 4.99275100429575e-17, 1.74936020530536e-16, 0, 5.47996435555642e-17, 1.64060117487791e-16, 2.55997708857483e-16, 0, 8.5609964086127e-17, 9.49329645689794e-17, 2.91487168428854e-16, 3.34092533592135e-17, 0, 2.19845474956207e-16, 3.57227590802606e-16, 3.37917798902023e-16, 0, 4.14102761209603e-17, 0, 0, 0, 0, 0, 0, 0, 3.49655200626575e-17, 2.86229373536173e-17, 0, 0, 0, 1.55257751099924e-16, 0 };
