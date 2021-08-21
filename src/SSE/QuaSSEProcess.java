@@ -94,6 +94,11 @@ public abstract class QuaSSEProcess extends Distribution {
         nUsefulXbinsHi = nXbinsHi - (nLeftNRightFlanksHi[0] + 1 + nLeftNRightFlanksHi[1]);
         nUsefulXbins[0] = nUsefulXbinsLo;
         nUsefulXbins[1] = nUsefulXbinsHi;
+
+        // uncomment to check things
+        // System.out.println("nXbinsLo = " + nXbinsLo + " nXbinsHi = " + nXbinsHi);
+        // System.out.println("nLeftFlankHi = " + nLeftNRightFlanksHi[0] + " nRightFlankHi = " + nLeftNRightFlanksHi[1]);
+        // System.out.println("nUsefulXbinsHi = " + nUsefulXbinsHi);
     }
 
     /*
@@ -104,12 +109,14 @@ public abstract class QuaSSEProcess extends Distribution {
         xMinLo = xMid - dXbin * Math.ceil((nUsefulXbinsLo - 1.0) / 2.0);
         xMinHi = xMinLo - dXbin * (1.0 - 1.0 / hiLoRatio);
 
+        // System.out.println("xMinLo = " + xMinLo + " xMinHi = " + xMinHi);
+
         // preparing x rulers
         xLo = new double[nUsefulXbinsLo];
         xLo[0] = xMinLo;
         for (int i = 1; i < nUsefulXbinsLo; i++) {
             // System.out.println("xLo[" + (i-1) + "]" + xLo[i-1]);
-            // xLo[i] = xLo[i-1] + dXbin;
+            xLo[i] = xLo[i-1] + dXbin;
             // xLo[i] = Math.round((xLo[i-1] + dXbin) * 1e4) / 1e4;
             // System.out.println("xLo[" + i + "] = " + xLo[i] + " dx = " + dXbin);
         }
@@ -147,8 +154,8 @@ public abstract class QuaSSEProcess extends Distribution {
         }
 
         if (ignoreRefresh || refreshedSomething) {
-            SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin, dt); // normalizes inside already
-            SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin, dt); // normalizes inside already
+            SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
+            SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin); // normalizes inside already
         }
 
 //        for (int i=0; i<fYHi.length; i++) {

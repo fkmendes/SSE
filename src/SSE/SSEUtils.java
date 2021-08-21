@@ -223,7 +223,7 @@ public class SSEUtils {
      * @param   dx  size of each bin
      * @param   dt  length of time slice over which to propagate
      */
-    public static void makeNormalKernelInPlace(double[] yValues, double mean, double sd, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx, double dt) {
+    public static void makeNormalKernelInPlace(double[] yValues, double mean, double sd, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx) {
 
         double total = 0.0;
 
