@@ -11,7 +11,7 @@
 # (8) testIntegrateOneBranchLoRes48BinsOutsideClassJustT
 # (9) testIntegrateOneBranchLoRes48BinsOutsideClassJustX
 # (10) testIntegrateOneBranchLoRes1024BinsOutsideClassJustX and testPropagateChOneCh1024QuaSSETest
-# (11) testPropagateChOneCh4096QuaSSETest and testIntegrateOneBranchLoRes4096BinsOutsideClassJustX (note that I'm using this in 4096 low res, but I'll co-opt 4096 high res in Java)
+# (11) testIntegrateOneBranchLoRes4096BinsOutsideClassJustX and testPropagateChOneCh4096QuaSSETest (note that I'm using this in 4096 low res, but I'll co-opt 4096 high res in Java)
 
 ## IMPORTANT: expectations (outputs from paste(xyz, collapse=", ") will vary depending on machine architecture; when dnorm() gets very small inputs (e.g., dx * nx are both large), the initial values of D will be tiny, and then the result of FFT on different machines will differ
 ## 
@@ -28,9 +28,9 @@ fftR.propagate.t <- function(vars, lambda, mu, dt, ndat) {
   z <- exp(dt * r)
   e0 <- vars[i,1]
   d0 <- vars[i,-1]
-  print(paste("mu =", mu, "lambda =", lambda, "e0 =", e0, "z =", z))
+  ## print(paste("mu =", mu, "lambda =", lambda, "e0 =", e0, "z =", z))
   vars[i,1] <- (mu + z*(e0 - 1)*mu - lambda*e0) / (mu + z*(e0 - 1)*lambda - lambda*e0) # E's
-  print(paste("e =", vars[i,1]))
+  ## print(paste("e =", vars[i,1]))
   dd <- (z * r * r)/(z * lambda - mu + (1-z)*lambda*e0)^2
 
   # for debugging
@@ -116,11 +116,14 @@ expand.pars.quasse <- function (lambda, mu, args, ext, pars) {
     pars.use <- vector("list", 2)
     for (i in c(1, 2)) {
         x <- list()
-        pars.use[[i]] <- list(x = ext$x[[i]], lambda = do.call(lambda,
-            c(ext$x[i], pars[args$lambda])), mu = do.call(mu,
-            c(ext$x[i], pars[args$mu])), drift = pars[args$drift],
-            diffusion = pars[args$diffusion], padding = ext$padding[i,
-                ], ndat = ext$ndat[i], nx = ext$nx[i])
+        pars.use[[i]] <- list(x = ext$x[[i]],
+                              lambda = do.call(lambda, c(ext$x[i], pars[args$lambda])),
+                              mu = do.call(mu, c(ext$x[i], pars[args$mu])),
+                              drift = pars[args$drift],
+                              diffusion = pars[args$diffusion],
+                              padding = ext$padding[i,],
+                              ndat = ext$ndat[i],
+                              nx = ext$nx[i])
     }
     names(pars.use) <- c("hi", "lo")
     pars.use$tr <- ext$tr
@@ -158,6 +161,7 @@ ndat <- 40 # just one useful quant ch bin
 #### eAndD
 
 res <- fftR.propagate.t(vars, lambda, mu, dt, ndat)
+res[1:10,]
 
 #                 E         D
 #  [1,] 0.005061285  8.383508
@@ -186,7 +190,7 @@ kern <- fftR.make.kern(-dt * drift, sqrt(dt * diffusion), nx, dx, nkl, nkr)
 
 paste(kern, collapse=", ") # 0.986703287028858, 0.00664835445182386, 2.03374705433156e-09, 2.82445649260927e-20, 1.78085279698565e-35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.78085279698565e-35, 2.82445649260927e-20, 2.03374705433156e-09, 0.00664835445182386
 
-plot(kern)
+## plot(kern)
 
 ## x: the substitution rate
 ## y: gives you the probability of changing from x to (x + delta.x) over time dt,
@@ -251,14 +255,22 @@ paste(res[,2], collapse=", ") # 0.0011788613551308, 0.00267660451529771, 0.00583
 
 # (5) testLogistic
 
-## See above to get ext.fft done first
-
 ## The following code is inside quasse.extent
-ndat.lo <- ext.fft$ndat[2]
-ndat.hi <- ext.fft$ndat[1]
-dx <- 0.01
-y0 <- 0.1; y1 <- 0.2; xmid <- 0; r <- 2.5
-hi.lo.ratio <- 4
+drift <- 0.0; diffusion <- 0.01
+nx <- 1024; dx <- 0.01; dt <- 0.05
+y0 <- 0.1; y1 <- 0.2; xmid <- 0; r <- 2.5; death <- 0.03
+hi.lo.ratio <- 4 # r=4L when making control.fft
+w <- 5
+
+mean4test <- drift * dt
+sd4test <- sqrt(diffusion * dt)
+nkleft <- max(ceiling(-(mean4test - w * sd4test)/dx)) * c(hi.lo.ratio, 1)
+nkright <- max(ceiling((mean4test + w * sd4test)/dx)) * c(hi.lo.ratio, 1)
+
+ndat <- nx * c(hi.lo.ratio, 1) - (nkleft + 1 + nkright)
+ndat.lo <- ndat[2];
+ndat.hi <- ndat[1];
+
 xmin.lo <- xmid - dx * ceiling((ndat.lo - 1)/2) # x.02
 xmin.hi <- xmin.lo - dx * (1 - 1/hi.lo.ratio) # x.01
 x.lo <- seq(xmin.lo, length.out=ndat.lo, by = dx) # same as ext.fft$x[[2]]
@@ -280,22 +292,42 @@ paste(ls.hi[3989:3999], collapse=", ")
 
 # (6) testDimensions
 
-ext.fft$nx # nXbinsHi = 4096, nXbinslo = 1024
-ndat.lo # nUsefulXbinsLo = 999
-ndat.hi # nUsefulXbinsHi = 3999
-ext.fft$padding # nLeftFlanksLo = nRightFlanksLo = 12, nLeftFlanksHi = nRightFlanksHi = 48
-xmin.lo # xMinLo = -4.99
-xmin.hi # xMinHi = -4.9975
+## Requires some variables from (5)
+# modifying some of them though...
+dx <- 0.0005; diffusion <- 0.001; w <- 10
 
-paste(ext.fft$x[[2]][1:10], collapse=", ") # expectedXLoFirst10 = -4.99, -4.98, -4.97, -4.96, -4.95, -4.94, -4.93, -4.92, -4.91, -4.9
-paste(ext.fft$x[[2]][990:999], collapse=", ") # expectedXLoLast10 = 4.9, 4.91, 4.92, 4.93, 4.94, 4.95, 4.96, 4.97, 4.98, 4.99
-paste(ext.fft$x[[1]][1:10], collapse=", ") # expectedXHiFirst10 = -4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975
-paste(ext.fft$x[[1]][3990:3999], collapse=", ") # expectedXHiLast10 = 4.975, 4.9775, 4.98, 4.9825, 4.985, 4.9875, 4.99, 4.9925, 4.995, 4.9975
+sd4test <- sqrt(diffusion * dt)
+nkleft <- max(ceiling(-(mean4test - w * sd4test)/dx)) * c(hi.lo.ratio, 1)
+nkright <- max(ceiling((mean4test + w * sd4test)/dx)) * c(hi.lo.ratio, 1)
 
-paste(pars.fft$lo$lambda[1:10], collapse=", ") # expectedLambdaLoFirt10 = 0.100000382097925, 0.100000391770742, 0.100000401688425, 0.100000411857174, 0.100000422283344, 0.100000432973452, 0.100000443934178, 0.100000455172374, 0.100000466695064, 0.10000047850945
-paste(pars.fft$lo$lambda[989:999], collapse=", ") # expectedLambdaLoLast10 = 0.199999509377086, 0.199999521490551, 0.199999533304936, 0.199999544827626, 0.199999556065822, 0.199999567026548, 0.199999577716656, 0.199999588142826, 0.199999598311575, 0.199999608229258, 0.199999617902075
-paste(pars.fft$hi$lambda[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591
-paste(pars.fft$hi$lambda[3989:3999], collapse=", ") # expectedLambdaHiLast10 = 0.199999600814288, 0.199999603301409, 0.199999605773033, 0.199999608229258, 0.19999961067018, 0.199999613095894, 0.199999615506494, 0.199999617902075, 0.199999620282731, 0.199999622648554, 0.199999624999637
+ndat <- nx * c(hi.lo.ratio, 1) - (nkleft + 1 + nkright)
+ndat.lo <- ndat[2]; ndat.lo
+ndat.hi <- ndat[1];
+
+xmin.lo <- xmid - dx * ceiling((ndat.lo - 1)/2) # x.02
+xmin.hi <- xmin.lo - dx * (1 - 1/hi.lo.ratio) # x.01
+x.lo <- seq(xmin.lo, length.out=ndat.lo, by = dx) # same as ext.fft$x[[2]]
+x.hi <- seq(xmin.hi, length.out=ndat.hi, by = dx/hi.lo.ratio) # same as ext.fft$x[[1]]
+
+paste(x.lo[1:10], collapse=", ") # expectedXLoFirst10 = -4.99, -4.98, -4.97, -4.96, -4.95, -4.94, -4.93, -4.92, -4.91, -4.9
+paste(x.lo[990:999], collapse=", ") # expectedXLoLast10 = 4.9, 4.91, 4.92, 4.93, 4.94, 4.95, 4.96, 4.97, 4.98, 4.99
+
+paste(x.hi[1:10], collapse=", ") # expectedXHiFirst10 = -4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975
+paste(x.hi[3990:3999], collapse=", ") # expectedXHiFirst10 = 4.975, 4.9775, 4.98, 4.9825, 4.985, 4.9875, 4.99, 4.9925, 4.995, 4.9975-4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975
+
+lambda <- sigmoid.x
+mu <- constant.x
+
+# lambdas
+paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[1:10], collapse=", ") # expectedLambdaLoFirt10 = 0.100000382097925, 0.100000391770742, 0.100000401688425, 0.100000411857174, 0.100000422283344, 0.100000432973452, 0.100000443934178, 0.100000455172374, 0.100000466695064, 0.10000047850945
+paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[989:999], collapse=", ") # expectedLambdaLoLast10 = 0.199999509377086, 0.199999521490551, 0.199999533304936, 0.199999544827626, 0.199999556065822, 0.199999567026548, 0.199999577716656, 0.199999588142826, 0.199999598311575, 0.199999608229258, 0.199999617902075
+
+paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591
+paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[3989:3999], collapse=", ") # expectedLambdaHiLast10 = 0.199999600814288, 0.199999603301409, 0.199999605773033, 0.199999608229258, 0.19999961067018, 0.199999613095894, 0.199999615506494, 0.199999617902075, 0.199999620282731, 0.199999622648554, 0.199999624999637
+
+# mus
+paste(do.call(mu, c(list(x.lo), death))[1:10], collapse=", ") # expectedMuLoFirst10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+paste(do.call(mu, c(list(x.lo), death))[989:999], collapse=", ") # expectedMuLoLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
 
 paste(pars.fft$lo$mu[1:10], collapse=", ") # expectedMuLoFirt10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
 paste(pars.fft$lo$mu[989:999], collapse=", ") # expectedMuLoLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
@@ -486,7 +518,7 @@ make.pde.quasse.fftR.2 <- function (nx, dx, dt.max, nd) {
     }
 }
 
-control.fft.just.t <- list(tc=100.0, # time point at which we go from high -> low resolution of X
+control.fft.48 <- list(tc=100.0, # time point at which we go from high -> low resolution of X
                     dt.max=0.01, # dt
                     nx=48, # number of X bins
                     dx=0.01, # size of each X bin
@@ -509,22 +541,22 @@ args.fft.just.t <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each 
 pars.just.t <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
-ext.fft.just.t <- quasse.extent(control.fft.just.t, drift, diffusion) # prepares X axis stuff
+ext.fft.just.t <- quasse.extent(control.fft.48, drift, diffusion) # prepares X axis stuff
 ext.fft.just.t$padding
 
 pars.fft.just.t <- expand.pars.quasse(lambda, mu, args.fft.just.t, ext.fft.just.t, pars.just.t) # adds lambda and mu vectors to ext.fft.just.x
 
 # initialization
-vars.fft.just.t <- matrix(0, control.fft.just.t$nx, 2) # low resolution
+vars.fft.just.t <- matrix(0, control.fft.48$nx, 2) # low resolution
 vars.fft.just.t[seq_len(ext.fft.just.t$ndat[2]),2] <- dnorm(ext.fft.just.t$x[[2]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0), note that the last pars.fft.just.x$lo$padding should be 0.0
 paste(vars.fft.just.t[,2], collapse=", ") # 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-vars.fft.just.t.tmp <- fftR.propagate.t(vars.fft.just.t, pars.fft.just.t$lo$lambda, pars.fft.just.t$lo$mu, control.fft.just.t$dt.max, ext.fft.just.t$ndat[2])
+vars.fft.just.t.tmp <- fftR.propagate.t(vars.fft.just.t, pars.fft.just.t$lo$lambda, pars.fft.just.t$lo$mu, control.fft.48$dt.max, ext.fft.just.t$ndat[2])
 paste(vars.fft.just.t.tmp[,1], collapse=", ") # 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.000299744087825142, 0.000299743181686865, 0.000299742271619522, 0.000299741357883741, 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0.000299719056361739, 0.000299718142720333, 0.000299717232754363, 0.000299716326724287, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0
 paste(vars.fft.just.t.tmp[,2], collapse=", ") # 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.0884858018341865, 0.158038086959484, 0.271192794627236, 0.447118602442875, 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052117, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0.447052058075915, 0.271149126249059, 0.158010719780681, 0.0884694089104536, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-pde.fftR.just.t <- with(control.fft.just.t, make.pde.quasse.fftR.2(nx, dx, dt.max, 2L))
-ans.fftR.just.t <- pde.fftR.just.t(vars.fft.just.t, control.fft.just.t$dt.max, pars.fft.just.t$lo, 0)
+pde.fftR.just.t <- with(control.fft.48, make.pde.quasse.fftR.2(nx, dx, dt.max, 2L))
+ans.fftR.just.t <- pde.fftR.just.t(vars.fft.just.t, control.fft.48$dt.max, pars.fft.just.t$lo, 0)
 
 ## same as above
 paste(ans.fftR.just.t[[2]][,1], collapse=", ") # 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.000299744087825142, 0.000299743181686865, 0.000299742271619522, 0.000299741357883741, 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0.000299719056361739, 0.000299718142720333, 0.000299717232754363, 0.000299716326724287, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -532,44 +564,30 @@ paste(ans.fftR.just.t[[2]][,2], collapse=", ") #  0.00582911973804044, 0.0122173
 
 
 
+# (8.5)
+
+pde.fftR.t.x <- with(control.fft.48, diversitree:::make.pde.quasse.fftR(control.fft.48$nx, control.fft.48$dx, control.fft.48$dt.max, 2L))
+ans.fftR.t.x <- pde.fftR.t.x(vars.fft.just.t, control.fft.48$dt.max, pars.fft.just.t$lo, 0)
+
+
 # (9) testIntegrateOneBranchLoRes48BinsOutsideClassJustX
-
-control.fft.just.x <- list(tc=100.0, # time point at which we go from high -> low resolution of X
-                    dt.max=0.01, # dt
-                    nx=48, # number of X bins
-                    dx=0.01, # size of each X bin
-                    r=4L, # high res of X = nx * r
-                    xmid=0, # sp rate ~ X is a logistic regression, and xmid is the value of X at the inflection point
-                    w=10, # used to determine nkl and nkr (see quasse.extent)
-                    flags=0L, # FFT stuff below
-                    verbose=0L,
-                    atol=1e-6,
-                    rtol=1e-6,
-                    eps=1e-3,
-                    method="fftC")
-
-sd <- 0.05
-drift <- 0.0
-diffusion <- 0.001
-lambda <- sigmoid.x
-mu <- constant.x
 
 args.fft.just.x <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
 pars.just.x <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
-ext.fft.just.x <- quasse.extent(control.fft.just.x, drift, diffusion) # prepares X axis stuff
+ext.fft.just.x <- quasse.extent(control.fft.48, drift, diffusion) # prepares X axis stuff
 ext.fft.just.x$padding # 16/16, 4/4
 
 pars.fft.just.x <- expand.pars.quasse(lambda, mu, args.fft.just.x, ext.fft.just.x, pars.just.x) # adds lambda and mu vectors to ext.fft.just.x
 
 # initialization
-vars.fft.just.x <- matrix(0, control.fft.just.x$nx, 2) # low resolution
+vars.fft.just.x <- matrix(0, control.fft.48$nx, 2) # low resolution
 vars.fft.just.x[seq_len(ext.fft.just.x$ndat[2]),2] <- dnorm(ext.fft.just.x$x[[2]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0), note that the last pars.fft.just.x$lo$padding should be 0.0
 paste(vars.fft.just.x[,2], collapse=", ") # 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 # checking kernel matches (see PropagatesQuaSSETest -> testMakeNormalKernInPlaceAndFFtAndIfft)
-kern.just.x <- fftR.make.kern(-control.fft.just.x$dt * pars.fft.just.x$hi$drift, sqrt(control.fft.just.x$dt * pars.fft.just.x$hi$diffusion), control.fft.just.x$nx, control.fft.just.x$dx, pars.fft.just.x$hi$padding[1], pars.fft.just.x$hi$padding[2])
+kern.just.x <- fftR.make.kern(-control.fft.48$dt * pars.fft.just.x$hi$drift, sqrt(control.fft.48$dt * pars.fft.just.x$hi$diffusion), control.fft.48$nx, control.fft.48$dx, pars.fft.just.x$hi$padding[1], pars.fft.just.x$hi$padding[2])
 paste(kern.just.x, collapse=", ") # 0.986703287028858, 0.00664835445182386, 2.03374705433156e-09, 2.82445649260927e-20, 1.78085279698565e-35, 5.09772422059472e-55, 6.62490770689586e-79, 3.90875553004076e-107, 1.04701370374391e-139, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.04701370374391e-139, 3.90875553004076e-107, 6.62490770689586e-79, 5.09772422059472e-55, 1.78085279698565e-35, 2.82445649260927e-20, 2.03374705433156e-09, 0.00664835445182386
 
 # checking fft-ed fY matches
@@ -584,7 +602,7 @@ Re(cstep.2[,2])[1:10] # matches with prints
 cstep.3 <- apply(cstep.2, 2, ifft)
 Re(cstep.3[,2])[1:10] # matches with prints
 
-ds.prop.x <- fftR.propagate.x(vars.fft.just.x, control.fft.just.x$nx, fy.just.x, pars.fft.just.x$lo$padding[1], pars.fft.just.x$lo$padding[2])
+ds.prop.x <- fftR.propagate.x(vars.fft.just.x, control.fft.48$nx, fy.just.x, pars.fft.just.x$lo$padding[1], pars.fft.just.x$lo$padding[2])
 paste(ds.prop.x[,1], collapse=", ") # 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 paste(ds.prop.x[,2], collapse=", ") # 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0888278883396178, 0.158599420774613, 0.272077439492024, 0.44845817681081, 0.710214708266689, 1.0806760140649, 1.57993546382425, 2.21932565164129, 2.99530083804265, 3.88416335936269, 4.83940600155166, 5.79327421787607, 6.66336349661662, 7.36377090119626, 7.81887626199731, 7.97674483551017, 7.81887626199731, 7.36377090119626, 6.66336349661662, 5.79327421787607, 4.83940600155166, 3.88416335936269, 2.99530083804265, 2.21932565164129, 1.57993546382425, 1.08067601406491, 0.710214708266689, 0.448458176810809, 0.272077439492024, 0.158599420774613, 0.088827888339617, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0
 

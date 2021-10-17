@@ -161,41 +161,47 @@ public class QuaSSEDistributionTest {
      * on the quantitative trait for lambda, and a constant function
      * for mu.
      */
-//    @Test
-//    public void testDimensions() {
-//
-//        int nXbinsLo = q.getnXbins(true);
-//        int nXbinsHi = q.getnXbins(false);
-//        int nUsefulXbinsLo = q.getNUsefulXbins(true);
-//        int nUsefulXbinsHi = q.getNUsefulXbins(false);
-//        int nLeftFlanksLo = q.getNLeftFlanks(true);
-//        int nLeftFlanksHi = q.getNLeftFlanks(false);
-//        int nRightFlanksLo = q.getNRightFlanks(true);
-//        int nRightFlanksHi = q.getNRightFlanks(false);
-//        double xMinLo = q.getXMinLo();
-//        double xMinHi = q.getXMinHi();
-//        double[] xLo = q.getX(true);
-//        double[] xHi = q.getX(false);
-//        double[] lambdaLo = q.getLambda(true);
-//        double[] lambdaHi = q.getLambda(false);
-//        double[] muLo = q.getMu(true);
-//        double[] muHi = q.getMu(false);
-//
-//        // expected x rulers
-//        double[] expectedXLoFirst10 = new double[] { -4.99, -4.98, -4.97, -4.96, -4.95, -4.94, -4.93, -4.92, -4.91, -4.90 };
-//        double[] expectedXLoLast10 = new double[] { 4.90, 4.91, 4.92, 4.93, 4.94, 4.95, 4.96, 4.97, 4.98, 4.99 };
-//        double[] expectedXHiFirst10 = new double[] { -4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975 };
-//        double[] expectedXHiLast10 = new double[] { 4.975, 4.9775, 4.98, 4.9825, 4.985, 4.9875, 4.99, 4.9925, 4.995, 4.9975 };
-//
-//        // expected lambdas
-//        double[] expectedLambdaLoFirt10 = new double[] { 0.100000382097925, 0.100000391770742, 0.100000401688425, 0.100000411857174, 0.100000422283344, 0.100000432973452, 0.100000443934178, 0.100000455172374, 0.100000466695064, 0.10000047850945 };
-//        double[] expectedLambdaLoLast10 = new double[] { 0.199999521490551, 0.199999533304936, 0.199999544827626, 0.199999556065822, 0.199999567026548, 0.199999577716656, 0.199999588142826, 0.199999598311575, 0.199999608229258, 0.199999617902075 };
-//        double[] expectedLambdaHiFirst10 = new double[] { 0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591 };
-//        double[] expectedLambdaHiLast10 = new double[] { 0.199999603301409, 0.199999605773033, 0.199999608229258, 0.19999961067018, 0.199999613095894, 0.199999615506494, 0.199999617902075, 0.199999620282731, 0.199999622648554, 0.199999624999637 };
-//
-//        // expected mus
-//        double[] expectedMuLoHiFirstLast10 = new double[] { 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03 };
-//
+    @Test
+    public void testDimensions() {
+
+        int nXbinsLo = q1024.getnXbins(true);
+        int nXbinsHi = q1024.getnXbins(false);
+        int nUsefulXbinsLo = q1024.getNUsefulXbins(true);
+        int nUsefulXbinsHi = q1024.getNUsefulXbins(false);
+
+        System.out.println(nUsefulXbinsLo);
+
+        int nLeftFlanksLo = q1024.getNLeftFlanks(true);
+
+        System.out.println(nLeftFlanksLo);
+
+        int nLeftFlanksHi = q1024.getNLeftFlanks(false);
+        int nRightFlanksLo = q1024.getNRightFlanks(true);
+        int nRightFlanksHi = q1024.getNRightFlanks(false);
+        double xMinLo = q1024.getXMinLo();
+        double xMinHi = q1024.getXMinHi();
+        double[] xLo = q1024.getX(true);
+        double[] xHi = q1024.getX(false);
+        double[] lambdaLo = q1024.getLambda(true);
+        double[] lambdaHi = q1024.getLambda(false);
+        double[] muLo = q1024.getMu(true);
+        double[] muHi = q1024.getMu(false);
+
+        // expected x rulers
+        double[] expectedXLoFirst10 = new double[] { -4.99, -4.98, -4.97, -4.96, -4.95, -4.94, -4.93, -4.92, -4.91, -4.90 };
+        double[] expectedXLoLast10 = new double[] { 4.90, 4.91, 4.92, 4.93, 4.94, 4.95, 4.96, 4.97, 4.98, 4.99 };
+        double[] expectedXHiFirst10 = new double[] { -4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975 };
+        double[] expectedXHiLast10 = new double[] { 4.975, 4.9775, 4.98, 4.9825, 4.985, 4.9875, 4.99, 4.9925, 4.995, 4.9975 };
+
+        // expected lambdas
+        double[] expectedLambdaLoFirst10 = new double[] { 0.100000382097925, 0.100000391770742, 0.100000401688425, 0.100000411857174, 0.100000422283344, 0.100000432973452, 0.100000443934178, 0.100000455172374, 0.100000466695064, 0.10000047850945 };
+        double[] expectedLambdaLoLast10 = new double[] { 0.199999521490551, 0.199999533304936, 0.199999544827626, 0.199999556065822, 0.199999567026548, 0.199999577716656, 0.199999588142826, 0.199999598311575, 0.199999608229258, 0.199999617902075 };
+        double[] expectedLambdaHiFirst10 = new double[] { 0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591 };
+        double[] expectedLambdaHiLast10 = new double[] { 0.199999603301409, 0.199999605773033, 0.199999608229258, 0.19999961067018, 0.199999613095894, 0.199999615506494, 0.199999617902075, 0.199999620282731, 0.199999622648554, 0.199999624999637 };
+
+        // expected mus
+        double[] expectedMuLoHiFirstLast10 = new double[] { 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03 };
+
 //        Assert.assertEquals(nXbinsLo, 1024, 0.0);
 //        Assert.assertEquals(nXbinsHi, 1024 * 4, 0.0);
 //        Assert.assertEquals(999, nUsefulXbinsLo, 0.0);
@@ -214,7 +220,7 @@ public class QuaSSEDistributionTest {
 //        Assert.assertArrayEquals(expectedXHiLast10, Arrays.copyOfRange(xHi, 3989, 3999), EPSILON);
 //        Assert.assertEquals(999, lambdaLo.length, 0.0);
 //        Assert.assertEquals(3999, lambdaHi.length, 0.0);
-//        Assert.assertArrayEquals(expectedLambdaLoFirt10, Arrays.copyOfRange(lambdaLo, 0, 10), EPSILON);
+//        Assert.assertArrayEquals(expectedLambdaLoFirst10, Arrays.copyOfRange(lambdaLo, 0, 10), EPSILON);
 //        Assert.assertArrayEquals(expectedLambdaLoLast10, Arrays.copyOfRange(lambdaLo, 989, 999), EPSILON);
 //        Assert.assertArrayEquals(expectedLambdaHiFirst10, Arrays.copyOfRange(lambdaHi, 0, 10), EPSILON);
 //        Assert.assertArrayEquals(expectedLambdaHiLast10, Arrays.copyOfRange(lambdaHi, 3989, 3999), EPSILON);
@@ -222,7 +228,7 @@ public class QuaSSEDistributionTest {
 //        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muLo, 989, 999), 0.0);
 //        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muHi, 0, 10), 0.0);
 //        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muHi, 3989, 3999), 0.0);
-//    }
+    }
 
     /*
      * Checks that two species in a 2sp-tree get their D's correctly
