@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.nio.file.ClosedWatchServiceException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class QuaSSEDistributionTest {
     final static Double EPSILON2 = 1e-16;
     final static Double EPSILON3 = 1e-14;
 
-    static QuaSSEDistribution q1024, q48One, q48Two;
+    static QuaSSEDistribution q1024, q48One, q48Two, q48Three;
     static Tree myTree;
     static int nDimensionsE, nDimensionsD;
     double[] birthRate, deathRate;
@@ -148,6 +149,15 @@ public class QuaSSEDistributionTest {
         // same as q2, but needs a new instance, otherwise its starting values will have been processed by previous unit tests
         q48Two = new QuaSSEDistribution();
         q48Two.initByName("dt", dtrp, "tc", tcrp,
+                "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
+                "drift", driftRp, "diffusion", diffusionrp,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", myTree,
+                "q2d", nfn);
+
+        // same as q2, but needs a new instance, otherwise its starting values will have been processed by previous unit tests
+        q48Three = new QuaSSEDistribution();
+        q48Three.initByName("dt", dtrp, "tc", tcrp,
                 "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
@@ -318,30 +328,39 @@ public class QuaSSEDistributionTest {
     public void testIntegrateOneBranchLoRes48BinsOutsideClassJustX() {
         // we're going to look at sp1
         int nodeIdx = 0; // sp1
-        double[][] esDsHiAtNode;
+        double[][] esDsLoAtNode;
 
         /*
          * we'll test the integration outside the class
          */
-        esDsHiAtNode = q48Two.getEsDsAtNode(nodeIdx, true);
+        esDsLoAtNode = q48Two.getEsDsAtNode(nodeIdx, true);
 
-        // making deep copy for assert below (checking that initial D's are correct)
-        double[][] esDsHiAtNodeInitial = new double[esDsHiAtNode.length][esDsHiAtNode[0].length];
-        esDsHiAtNodeInitial[0] = Arrays.copyOf(esDsHiAtNode[0], esDsHiAtNode[0].length); // E
-        esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsHiAtNode[1], esDsHiAtNode[1].length); // D
+        /*
+         * we are going to have a look at (make a deep copy of) the initial D's
+         * in the assert below because they are used in propagate in x
+         */
+        double[][] esDsHiAtNodeInitial = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
+        esDsHiAtNodeInitial[0] = Arrays.copyOf(esDsLoAtNode[0], esDsLoAtNode[0].length); // E
+        esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsLoAtNode[1], esDsLoAtNode[1].length); // D
 
-        // just propagate in x, in place
+        /*
+         * fY is computed and FFTed in initialization, by QuaSSEProcess;
+         * here we are just grabbing it to verify its values in the asserts
+         * below
+         */
         double[] fftedfY = q48Two.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q48Two.getnXbins(true),0, 0, 1.0); // getting real part for assert below
 
+        // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        double[][] scratchAtNode = new double[2][esDsHiAtNode[0].length];
-        q48Two.propagateXInPlace(esDsHiAtNode, scratchAtNode, true);
+        double[][] scratchAtNode = new double[2][esDsLoAtNode[0].length];
+        q48Two.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
 
-        esDsHiAtNode = q48Two.getEsDsAtNode(nodeIdx, true);
-        double[] esLoAtNode = esDsHiAtNode[0];
-        double[] dsLoAtNode = esDsHiAtNode[1];
+        // looking at 'sp1'
+        esDsLoAtNode = q48Two.getEsDsAtNode(nodeIdx, true);
+        double[] esLoAtNode = esDsLoAtNode[0];
+        double[] dsLoAtNode = esDsLoAtNode[1];
 
         double[] expectedInitialDs = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         double[] expectedFFTedfY = new double[] { 1, 0.999886244673461, 0.999546925086093, 0.998987847110852, 0.998218576759891, 0.997252276505192, 0.996105480062091, 0.994797809489411, 0.993351639446935, 0.991791714355113, 0.990144725007753, 0.988438851882212, 0.986703282961364, 0.984967714317709, 0.983261842004857, 0.981614853950298, 0.980054930543287, 0.978608762462816, 0.977301093995625, 0.976154299658014, 0.97518800136532, 0.97441873269917, 0.97385965601673, 0.973520337242051, 0.973406582192705, 0.973520337242051, 0.97385965601673, 0.97441873269917, 0.97518800136532, 0.976154299658014, 0.977301093995625, 0.978608762462816, 0.980054930543287, 0.981614853950298, 0.983261842004857, 0.984967714317709, 0.986703282961364, 0.988438851882212, 0.990144725007753, 0.991791714355113, 0.993351639446935, 0.994797809489411, 0.996105480062091, 0.997252276505192, 0.998218576759891, 0.998987847110852, 0.999546925086093, 0.999886244673461 };
@@ -382,11 +401,16 @@ public class QuaSSEDistributionTest {
         esDsHiAtNodeInitial[0] = Arrays.copyOf(esDsLoAtNode[0], esDsLoAtNode[0].length); // E
         esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsLoAtNode[1], esDsLoAtNode[1].length); // D
 
-        // just propagate in x, in place
+        /*
+         * fY is computed and FFTed in initialization, by QuaSSEProcess;
+         * here we are just grabbing it to verify its values in the asserts
+         * below
+         */
         double[] fftedfY = q1024.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q1024.getnXbins(true),0, 0, 1.0); // getting real part for assert below
 
+        // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = q1024.getScratchAtNode(nodeIdx, true); // sp1
         q1024.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
@@ -465,8 +489,93 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp1DsFirst48AfterPropX, Arrays.copyOfRange(dsLoAtNode, 0, 48), 1E-16);
         Assert.assertArrayEquals(expectedSp1DsLater48AfterPropX, Arrays.copyOfRange(dsLoAtNode, 1000, 1048), 1E-12); // here things start to get different between R and Java and different CPU architectures (the fft-ed fY's multiplying the D's are very small!)
 }
-    // now we'll test the integration inside the class
-    // double[][][] esDsHi = q2.getEsDs(false);
+
+    /*
+     * Checks that propagate methods in both time and quantitative trait value (X)
+     * for E's and D's inside QuaSSE class are working.
+     *
+     * Differs from 'testPropagateChOneCh48QuaSSETest' inside
+     * 'PropagatesQuaSSETest' because it relies on the QuaSSE class
+     * correctly initializing all its dimensions and E's and D's.
+     *
+     * Test is done on a bifurcating tree (but just looking at a single
+     * branch here, "sp1"), over a single dt = 0.01, with dx = 0.0005,
+     * and nXbins = 48 (low res). The trait value of "sp1" is set to 0.0.
+     */
+    @Test
+    public void testIntegrateOneBranchLoRes48BinsOutsideClassBothXandT() {
+        // we're going to look at sp1
+        int nodeIdx = 0; // sp1
+        double[][] esDsLoAtNode;
+
+        /*
+         * we'll test the integration outside the class
+         */
+        esDsLoAtNode = q48Three.getEsDsAtNode(nodeIdx, true);
+
+        /*
+         * we are going to have a look at (make a deep copy of) the initial D's
+         * in the assert below because they are the starting point of everything
+         */
+        double[][] esDsLoAtNodeInitial = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
+        esDsLoAtNodeInitial[0] = Arrays.copyOf(esDsLoAtNode[0], esDsLoAtNode[0].length); // E
+        esDsLoAtNodeInitial[1] = Arrays.copyOf(esDsLoAtNode[1], esDsLoAtNode[1].length); // D
+
+
+        // propagating in t
+        // preparing scratch for propagate in t
+        double[][] scratchAtNode = new double[2][esDsLoAtNode[0].length];
+        for (int ithDim=0; ithDim < 2; ithDim++) {
+            for (int i=0; i < esDsLoAtNode[ithDim].length; i++) {
+                scratchAtNode[ithDim][i] = esDsLoAtNode[ithDim][i];
+            }
+        }
+
+        // just propagate in t, in place
+        q48Three.propagateTInPlace(esDsLoAtNode, scratchAtNode, true);
+
+        // grabbing intermediate to see if it's all good
+        double[][] esDsLoAtNodeAfterPropT = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
+        // making deep copy
+        for (int ithDim=0; ithDim < 2; ithDim++) {
+            for (int i = 0; i < esDsLoAtNode[ithDim].length; i++) {
+                esDsLoAtNodeAfterPropT[ithDim][i] = esDsLoAtNode[ithDim][i];
+            }
+        }
+
+
+
+        // propagating in x
+        // getting fY
+        q48Three.populatefY(true, true);
+        double[] fftedfY = q48Three.getfY(true);
+        double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
+        everyOtherInPlace(fftedfY, realFFTedfY, q48Three.getnXbins(true),0, 0, 1.0); // getting real part for assert below
+
+        // just propagate in x, in place
+        // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
+        q48Three.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
+
+
+
+        double[] expectedInitialDs = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedFFTedfY = new double[] { 1, 0.999886244673461, 0.999546925086093, 0.998987847110852, 0.998218576759891, 0.997252276505192, 0.996105480062091, 0.994797809489411, 0.993351639446935, 0.991791714355113, 0.990144725007753, 0.988438851882212, 0.986703282961364, 0.984967714317709, 0.983261842004857, 0.981614853950298, 0.980054930543287, 0.978608762462816, 0.977301093995625, 0.976154299658014, 0.97518800136532, 0.97441873269917, 0.97385965601673, 0.973520337242051, 0.973406582192705, 0.973520337242051, 0.97385965601673, 0.97441873269917, 0.97518800136532, 0.976154299658014, 0.977301093995625, 0.978608762462816, 0.980054930543287, 0.981614853950298, 0.983261842004857, 0.984967714317709, 0.986703282961364, 0.988438851882212, 0.990144725007753, 0.991791714355113, 0.993351639446935, 0.994797809489411, 0.996105480062091, 0.997252276505192, 0.998218576759891, 0.998987847110852, 0.999546925086093, 0.999886244673461 };
+
+        // note how first nkl (=4) and last nkr (=4) are the same
+        double[] expectedSp1EsAfterPropT = new double[] { 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.000299744087825142, 0.000299743181686865, 0.000299742271619522, 0.000299741357883741, 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0.000299719056361739, 0.000299718142720333, 0.000299717232754363, 0.000299716326724287, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1EsAfterPropTandX = new double[] { 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.00029974408779732, 0.000299743181660744, 0.000299742271595132, 0.000299741357861114, 0.00029974044072366, 0.000299739520451864, 0.000299738597318595, 0.000299737671600252, 0.000299736743576341, 0.000299735813529336, 0.000299734881744068, 0.000299733948507617, 0.000299733014108822, 0.000299732078837909, 0.000299731142986375, 0.000299730206846234, 0.000299729270710011, 0.000299728334870154, 0.000299727399618708, 0.000299726465247143, 0.000299725532045626, 0.000299724600302962, 0.000299723670306136, 0.000299722742340082, 0.000299721816686999, 0.00029972089362645, 0.000299719973434657, 0.000299719056384414, 0.000299718142744768, 0.00029971723278053, 0.000299716326752154, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        // note how first nkl (=4) and last nkr (=4) are the same
+        double[] expectedSp1DsAfterPropT = new double[] { 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.0884858018341865, 0.158038086959484, 0.271192794627236, 0.447118602442875, 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052117, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0.447052058075915, 0.271149126249059, 0.158010719780681, 0.0884694089104536, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1DsAfterPropTandX = new double[] { 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.08867639188041, 0.15832797168282, 0.271610119667664, 0.447685177240542, 0.708986186416951, 1.07880005021062, 1.57718311562593, 2.21544576526305, 2.99004586159941, 3.87732490267096, 4.83085571964462, 5.78300263831972, 6.65150777531997, 7.35062312893061, 7.80486719135139, 7.96240319031702, 7.80476971649718, 7.35043955518597, 6.65125867066457, 5.78271397425439, 4.83055444185051, 3.87703489789509, 2.98978512541793, 2.21522515007474, 1.57700658374745, 1.07866601799939, 0.708889397846809, 0.447618584199003, 0.271566407577905, 0.158300569088559, 0.0886599725440681, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        Assert.assertArrayEquals(expectedInitialDs, Arrays.copyOfRange(esDsLoAtNodeInitial[1], 0, 48), 1E-14);
+        Assert.assertArrayEquals(expectedFFTedfY, Arrays.copyOfRange(realFFTedfY, 0, 48), 1E-14);
+        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[0], 0, 48), 1E-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[1], 0, 48), 1E-14);
+        Assert.assertArrayEquals(expectedSp1EsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[0], 0, 48), 1E-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
+    }
 
     // TODO: in another test, do inside class
     // q2.processBranch(myTree2.getNode(nodeIdx));

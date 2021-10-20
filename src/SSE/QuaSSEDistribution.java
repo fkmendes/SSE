@@ -3,8 +3,6 @@ package SSE;
 import beast.core.Input;
 import beast.core.State;
 import beast.evolution.tree.Node;
-
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -30,7 +28,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     @Override
     public void initAndValidate() {
 
-        super.initAndValidate(); // read in all dimension-related stuff
+        super.initAndValidate(); // read in all dimension-related stuff, populates fYLo and fYHi
+
         int nNodes = tree.getNodeCount();
 
         q2mLambda = q2mLambdaInput.get();

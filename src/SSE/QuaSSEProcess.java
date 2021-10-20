@@ -76,7 +76,8 @@ public abstract class QuaSSEProcess extends Distribution {
     }
 
     /*
-     *
+     * Set up the number of left and right discrete bins at both low and high resolution
+     * that will not contribute to... (fill this out later)
      */
     protected void prepareDimensionsInPlace() {
 
@@ -96,6 +97,7 @@ public abstract class QuaSSEProcess extends Distribution {
         nUsefulXbins[1] = nUsefulXbinsHi;
 
         // uncomment to check things
+        // System.out.println("Setting dimensions of QuaSSEProcess");
         // System.out.println("nXbinsLo = " + nXbinsLo + " nXbinsHi = " + nXbinsHi);
         // System.out.println("nLeftFlankHi = " + nLeftNRightFlanksHi[0] + " nRightFlankHi = " + nLeftNRightFlanksHi[1]);
         // System.out.println("nUsefulXbinsHi = " + nUsefulXbinsHi);

@@ -202,26 +202,26 @@ public class SSEUtils {
     }
 
     /*
-     * Builds Normal distribution where x is the CHANGE in quantitative trait values
+     * Builds Normal distribution (yValues) where x is the CHANGE in quantitative trait values
      * (not the quantitative trait values themselves!). Under BM, for example, this
      * kernel is centered at 0.0
      *
-     * Note: this kernel is FFT-ed and then used in the convolution function, and for
-     * reasons I do not fully understand, this bell-shaped kernel needs to be cuts in two,
-     * with the left half being placed at the tail end of the kernel, and the right
-     * half at the head of the kernel
+     * Note: this kernel (yValues) is later FFT-ed in the likelihood class, and then used in the
+     * convolution function, and for reasons I do not fully understand, this bell-shaped kernel\
+     * needs to be cuts in two, with the left half being placed at the (right-)tail end of the kernel,
+     * and the right half at the (left-)head of the kernel
      *
      * 'nLeftFlankBins' and 'nRightFlankBins' are also the number of bins on the left-
      * side (and right-side, after skipping (nLeftFlankBins + nRightFlankBins))
      * of E and D that are not updated by 'propagateEandDinXQuaLike'
      *
-     * @param   drift   mean of Normal distribution
-     * @param   diffusion   variance of Normal distribution
+     * @param   yValues (= fY) where the result is left; gives the probability density of a given change in quantitative trait value
+     * @param   mean    (= changeInXNormalMean = diversitree's drift * -dt) is the mean expected change in quantitative trait value
+     * @param   sd  (= changeInXNormalSd = squared root(diversitree's diffusion * dt)) is the standard deviation of the expected change in quantitative trait value
      * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
      * @param   nLeftFlankBins  how many bins on the right side of kernel are non-zero
      * @param   nRightFlankBins  how many bins on the left side of kernel are non-zero
      * @param   dx  size of each bin
-     * @param   dt  length of time slice over which to propagate
      */
     public static void makeNormalKernelInPlace(double[] yValues, double mean, double sd, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx) {
 
