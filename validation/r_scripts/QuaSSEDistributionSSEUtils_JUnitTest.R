@@ -21,7 +21,7 @@
 
 
 ## IMPORTANT: expectations (outputs from paste(xyz, collapse=", ") will vary depending on machine architecture; when dnorm() gets very small inputs (e.g., dx * nx are both large), the initial values of D will be tiny, and then the result of FFT on different machines will differ
-## 
+##
 ## This is the reason for 48 bins having a dx = 0.01, and 1024/4096 bins having a dx = 0.0005
 
 
@@ -73,7 +73,7 @@ fftR.propagate.x <- function(vars, nx, fy, nkl, nkr) {
 
     print(paste("nkl=", nkl, " nkr=", nkl, " nx=", nx))
     print("vars="); print(vars)
-    
+
     vars.out <- Re(apply(apply(vars, 2, fft) * fy, 2, ifft))/nx
 
     print("vars after fft-ing, multiplying by fy kernel, i-ffting, and normalizing"); print(vars.out)
@@ -83,7 +83,7 @@ fftR.propagate.x <- function(vars, nx, fy, nkl, nkr) {
     i.zero <- (ndat+1):nx
 
     # print(c(i.prev.l, i.prev.r))
-    
+
     vars.out[c(i.prev.l, i.prev.r),] <- vars[c(i.prev.l, i.prev.r),]
     vars.out[i.zero,] <- 0
     vars.out[vars.out < 0] <- 0
@@ -264,7 +264,7 @@ paste(vars.out[,2], collapse=", ") # 0.00584266269487207, 0.0122779769413863, 0.
 res <- fftR.propagate.x(vars, nx, fy, nkl, nkr)
 
 paste(res[,1], collapse=", ") # 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-paste(res[,2], collapse=", ") # 0.0011788613551308, 0.00267660451529771, 0.0058389385158292, 0.0122380386022755, 0.0247150623561646, 0.0478008882241639, 0.088827888339617, 0.158599420774613, 0.272077439492024, 0.448458176810809, 0.710214708266688, 1.0806760140649, 1.57993546382425, 2.21932565164128, 2.99530083804266, 3.88416335936269, 4.83940600155166, 5.79327421787607, 6.66336349661661, 7.36377090119626, 7.81887626199731, 7.97674483551017, 7.81887626199731, 7.36377090119626, 6.66336349661661, 5.79327421787606, 4.83940600155166, 3.8841633593627, 2.99530083804265, 2.21932565164129, 1.57993546382425, 1.0806760140649, 0.710214708266687, 0.44845817681081, 0.272077439492023, 0.158309031659599, 0.0886369682387602, 0.0476817640292969, 0.0246443833694604, 0, 0, 0, 0, 0, 0, 0, 0, 0
+paste(res[,2], collapse=", ") # 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0888278883396176, 0.158599420774612, 0.272077439492023, 0.448458176810809, 0.710214708266689, 1.0806760140649, 1.57993546382425, 2.21932565164128, 2.99530083804266, 3.88416335936269, 4.83940600155166, 5.79327421787606, 6.66336349661661, 7.36377090119626, 7.81887626199731, 7.97674483551017, 7.81887626199731, 7.36377090119626, 6.66336349661661, 5.79327421787606, 4.83940600155166, 3.88416335936269, 2.99530083804266, 2.21932565164129, 1.57993546382425, 1.0806760140649, 0.710214708266689, 0.44845817681081, 0.272077439492023, 0.158599420774612, 0.0888278883396172, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
 
@@ -317,37 +317,36 @@ nkright <- max(ceiling((mean4test + w * sd4test)/dx)) * c(hi.lo.ratio, 1)
 
 ndat <- nx * c(hi.lo.ratio, 1) - (nkleft + 1 + nkright)
 ndat.lo <- ndat[2]; ndat.lo
-ndat.hi <- ndat[1];
+ndat.hi <- ndat[1]; ndat.hi
 
 xmin.lo <- xmid - dx * ceiling((ndat.lo - 1)/2) # x.02
 xmin.hi <- xmin.lo - dx * (1 - 1/hi.lo.ratio) # x.01
 x.lo <- seq(xmin.lo, length.out=ndat.lo, by = dx) # same as ext.fft$x[[2]]
 x.hi <- seq(xmin.hi, length.out=ndat.hi, by = dx/hi.lo.ratio) # same as ext.fft$x[[1]]
 
-paste(x.lo[1:10], collapse=", ") # expectedXLoFirst10 = -4.99, -4.98, -4.97, -4.96, -4.95, -4.94, -4.93, -4.92, -4.91, -4.9
-paste(x.lo[990:999], collapse=", ") # expectedXLoLast10 = 4.9, 4.91, 4.92, 4.93, 4.94, 4.95, 4.96, 4.97, 4.98, 4.99
+paste(x.lo[1:10], collapse=", ") # expectedXLoFirst10 = -0.2235, -0.223, -0.2225, -0.222, -0.2215, -0.221, -0.2205, -0.22, -0.2195, -0.219
+paste(x.lo[886:895], collapse=", ") # expectedXLoLast10 = 0.219, 0.2195, 0.22, 0.2205, 0.221, 0.2215, 0.222, 0.2225, 0.223, 0.2235
 
-paste(x.hi[1:10], collapse=", ") # expectedXHiFirst10 = -4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975
-paste(x.hi[3990:3999], collapse=", ") # expectedXHiFirst10 = 4.975, 4.9775, 4.98, 4.9825, 4.985, 4.9875, 4.99, 4.9925, 4.995, 4.9975-4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975
+paste(x.hi[1:10], collapse=", ") # expectedXHiFirst10 = -0.223875, -0.22375, -0.223625, -0.2235, -0.223375, -0.22325, -0.223125, -0.223, -0.222875, -0.22275
+paste(x.hi[3574:3583], collapse=", ") # expectedXHiFirst10 = 0.22275, 0.222875, 0.223, 0.223125, 0.22325, 0.223375, 0.2235, 0.223625, 0.22375, 0.223875
 
 lambda <- sigmoid.x
 mu <- constant.x
 
 # lambdas
-paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[1:10], collapse=", ") # expectedLambdaLoFirt10 = 0.100000382097925, 0.100000391770742, 0.100000401688425, 0.100000411857174, 0.100000422283344, 0.100000432973452, 0.100000443934178, 0.100000455172374, 0.100000466695064, 0.10000047850945
-paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[989:999], collapse=", ") # expectedLambdaLoLast10 = 0.199999509377086, 0.199999521490551, 0.199999533304936, 0.199999544827626, 0.199999556065822, 0.199999567026548, 0.199999577716656, 0.199999588142826, 0.199999598311575, 0.199999608229258, 0.199999617902075
+paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[1:10], collapse=", ") # expectedLambdaLoFirt10 = 0.13638367349015, 0.136412610857295, 0.13644155805569, 0.136470515067719, 0.136499481875741, 0.136528458462084, 0.136557444809052, 0.13658644089892, 0.136615446713936, 0.136644462236322
+paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[886:895], collapse=", ") # expectedLambdaLoLast10 = 0.163355537763678, 0.163384553286064, 0.16341355910108, 0.163442555190948, 0.163471541537916, 0.163500518124259, 0.163529484932281, 0.16355844194431, 0.163587389142705, 0.16361632650985
 
-paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591
-paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[3989:3999], collapse=", ") # expectedLambdaHiLast10 = 0.199999600814288, 0.199999603301409, 0.199999605773033, 0.199999608229258, 0.19999961067018, 0.199999613095894, 0.199999615506494, 0.199999617902075, 0.199999620282731, 0.199999622648554, 0.199999624999637
+paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.136361976927131, 0.136369208498794, 0.136376440686558, 0.13638367349015, 0.136390906909294, 0.136398140943716, 0.136405375593141, 0.136412610857295, 0.136419846735901, 0.136427083228686
+paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[3574:3583], collapse=", ") # expectedLambdaHiLast10 = 0.163572916771314, 0.163580153264099, 0.163587389142705, 0.163594624406859, 0.163601859056284, 0.163609093090706, 0.16361632650985, 0.163623559313442, 0.163630791501206, 0.163638023072869
 
 # mus
 paste(do.call(mu, c(list(x.lo), death))[1:10], collapse=", ") # expectedMuLoFirst10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
-paste(do.call(mu, c(list(x.lo), death))[989:999], collapse=", ") # expectedMuLoLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+paste(do.call(mu, c(list(x.lo), death))[886:895], collapse=", ") # expectedMuLoLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
 
-paste(pars.fft$lo$mu[1:10], collapse=", ") # expectedMuLoFirt10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
-paste(pars.fft$lo$mu[989:999], collapse=", ") # expectedMuLoLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
-paste(pars.fft$hi$mu[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
-paste(pars.fft$hi$mu[3989:3999], collapse=", ") # expectedLambdaHiLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+paste(do.call(mu, c(list(x.hi), death))[1:10], collapse=", ") # expectedMuHiFirst10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+paste(do.call(mu, c(list(x.hi), death))[3574:3583], collapse=", ") # expectedMuHiLast10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
+
 
 
 
@@ -706,17 +705,17 @@ quasse.integrate.fftR.3 <- function (vars, lambda, mu, drift, diffusion, nstep, 
     fy = fft(kern)
 
     ## print("fy"); print(fy)
-    
+
     for (i in seq_len(nstep)) {
         vars = diversitree:::fftR.propagate.t(vars, lambda, mu, dt, ndat)
 
         ## print("D's after propagate in t")
-        ## print(vars[,2])        
+        ## print(vars[,2])
 
         vars = diversitree:::fftR.propagate.x(vars, nx, fy, nkl, nkr) # ignoring propagate X
 
         ## print("D's after propagate in x")
-        ## print(vars[,2])        
+        ## print(vars[,2])
     }
 
     vars

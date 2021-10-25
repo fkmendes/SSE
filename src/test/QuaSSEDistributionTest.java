@@ -38,8 +38,6 @@ public class QuaSSEDistributionTest {
 
     static QuaSSEDistribution q1024, q48;
     static Tree myTree;
-    static int nDimensionsE, nDimensionsD;
-    double[] birthRate, deathRate;
 
     static List<Double> data;
     static RealParameter driftRp, xMidrp, flankWidthScalerrp;
@@ -164,18 +162,11 @@ public class QuaSSEDistributionTest {
      */
     @Test
     public void testDimensions() {
-
         int nXbinsLo = q1024.getnXbins(true);
         int nXbinsHi = q1024.getnXbins(false);
         int nUsefulXbinsLo = q1024.getNUsefulXbins(true);
         int nUsefulXbinsHi = q1024.getNUsefulXbins(false);
-
-        System.out.println(nUsefulXbinsLo);
-
         int nLeftFlanksLo = q1024.getNLeftFlanks(true);
-
-        System.out.println(nLeftFlanksLo);
-
         int nLeftFlanksHi = q1024.getNLeftFlanks(false);
         int nRightFlanksLo = q1024.getNRightFlanks(true);
         int nRightFlanksHi = q1024.getNRightFlanks(false);
@@ -189,46 +180,46 @@ public class QuaSSEDistributionTest {
         double[] muHi = q1024.getMu(false);
 
         // expected x rulers
-        double[] expectedXLoFirst10 = new double[] { -4.99, -4.98, -4.97, -4.96, -4.95, -4.94, -4.93, -4.92, -4.91, -4.90 };
-        double[] expectedXLoLast10 = new double[] { 4.90, 4.91, 4.92, 4.93, 4.94, 4.95, 4.96, 4.97, 4.98, 4.99 };
-        double[] expectedXHiFirst10 = new double[] { -4.9975, -4.995, -4.9925, -4.99, -4.9875, -4.985, -4.9825, -4.98, -4.9775, -4.975 };
-        double[] expectedXHiLast10 = new double[] { 4.975, 4.9775, 4.98, 4.9825, 4.985, 4.9875, 4.99, 4.9925, 4.995, 4.9975 };
+        double[] expectedXLoFirst10 = new double[] { -0.2235, -0.223, -0.2225, -0.222, -0.2215, -0.221, -0.2205, -0.22, -0.2195, -0.219 };
+        double[] expectedXLoLast10 = new double[] { 0.219, 0.2195, 0.22, 0.2205, 0.221, 0.2215, 0.222, 0.2225, 0.223, 0.2235 };
+        double[] expectedXHiFirst10 = new double[] { -0.223875, -0.22375, -0.223625, -0.2235, -0.223375, -0.22325, -0.223125, -0.223, -0.222875, -0.22275 };
+        double[] expectedXHiLast10 = new double[] { 0.22275, 0.222875, 0.223, 0.223125, 0.22325, 0.223375, 0.2235, 0.223625, 0.22375, 0.223875 };
 
         // expected lambdas
-        double[] expectedLambdaLoFirst10 = new double[] { 0.100000382097925, 0.100000391770742, 0.100000401688425, 0.100000411857174, 0.100000422283344, 0.100000432973452, 0.100000443934178, 0.100000455172374, 0.100000466695064, 0.10000047850945 };
-        double[] expectedLambdaLoLast10 = new double[] { 0.199999521490551, 0.199999533304936, 0.199999544827626, 0.199999556065822, 0.199999567026548, 0.199999577716656, 0.199999588142826, 0.199999598311575, 0.199999608229258, 0.199999617902075 };
-        double[] expectedLambdaHiFirst10 = new double[] { 0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591 };
-        double[] expectedLambdaHiLast10 = new double[] { 0.199999603301409, 0.199999605773033, 0.199999608229258, 0.19999961067018, 0.199999613095894, 0.199999615506494, 0.199999617902075, 0.199999620282731, 0.199999622648554, 0.199999624999637 };
+        double[] expectedLambdaLoFirst10 = new double[] { 0.13638367349015, 0.136412610857295, 0.13644155805569, 0.136470515067719, 0.136499481875741, 0.136528458462084, 0.136557444809052, 0.13658644089892, 0.136615446713936, 0.136644462236322 };
+        double[] expectedLambdaLoLast10 = new double[] { 0.163355537763678, 0.163384553286064, 0.16341355910108, 0.163442555190948, 0.163471541537916, 0.163500518124259, 0.163529484932281, 0.16355844194431, 0.163587389142705, 0.16361632650985 };
+        double[] expectedLambdaHiFirst10 = new double[] { 0.136361976927131, 0.136369208498794, 0.136376440686558, 0.13638367349015, 0.136390906909294, 0.136398140943716, 0.136405375593141, 0.136412610857295, 0.136419846735901, 0.136427083228686 };
+        double[] expectedLambdaHiLast10 = new double[] { 0.163572916771314, 0.163580153264099, 0.163587389142705, 0.163594624406859, 0.163601859056284, 0.163609093090706, 0.16361632650985, 0.163623559313442, 0.163630791501206, 0.163638023072869 };
 
-        // expected mus
+        // expected mus for both lo and hi, first and last 10
         double[] expectedMuLoHiFirstLast10 = new double[] { 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03 };
 
-//        Assert.assertEquals(nXbinsLo, 1024, 0.0);
-//        Assert.assertEquals(nXbinsHi, 1024 * 4, 0.0);
-//        Assert.assertEquals(999, nUsefulXbinsLo, 0.0);
-//        Assert.assertEquals(3999, nUsefulXbinsHi, 0.0);
-//        Assert.assertEquals(12, nLeftFlanksLo, 0.0);
-//        Assert.assertEquals(48, nLeftFlanksHi, 0.0);
-//        Assert.assertEquals(12, nRightFlanksLo, 0.0);
-//        Assert.assertEquals(48, nRightFlanksHi, 0.0);
-//        Assert.assertEquals(-4.99, xMinLo, EPSILON);
-//        Assert.assertEquals(-4.9975, xMinHi, EPSILON);
-//        Assert.assertEquals(999, xLo.length, 0.0);
-//        Assert.assertEquals(3999, xHi.length, 0.0);
-//        Assert.assertArrayEquals(expectedXLoFirst10, Arrays.copyOfRange(xLo, 0, 10), EPSILON);
-//        Assert.assertArrayEquals(expectedXLoLast10, Arrays.copyOfRange(xLo, 989, 999), EPSILON);
-//        Assert.assertArrayEquals(expectedXHiFirst10, Arrays.copyOfRange(xHi, 0, 10), EPSILON);
-//        Assert.assertArrayEquals(expectedXHiLast10, Arrays.copyOfRange(xHi, 3989, 3999), EPSILON);
-//        Assert.assertEquals(999, lambdaLo.length, 0.0);
-//        Assert.assertEquals(3999, lambdaHi.length, 0.0);
-//        Assert.assertArrayEquals(expectedLambdaLoFirst10, Arrays.copyOfRange(lambdaLo, 0, 10), EPSILON);
-//        Assert.assertArrayEquals(expectedLambdaLoLast10, Arrays.copyOfRange(lambdaLo, 989, 999), EPSILON);
-//        Assert.assertArrayEquals(expectedLambdaHiFirst10, Arrays.copyOfRange(lambdaHi, 0, 10), EPSILON);
-//        Assert.assertArrayEquals(expectedLambdaHiLast10, Arrays.copyOfRange(lambdaHi, 3989, 3999), EPSILON);
-//        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muLo, 0, 10), 0.0);
-//        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muLo, 989, 999), 0.0);
-//        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muHi, 0, 10), 0.0);
-//        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muHi, 3989, 3999), 0.0);
+        Assert.assertEquals(nXbinsLo, 1024, 0.0);
+        Assert.assertEquals(nXbinsHi, 1024 * 4, 0.0);
+        Assert.assertEquals(895, nUsefulXbinsLo, 0.0);
+        Assert.assertEquals(3583, nUsefulXbinsHi, 0.0);
+        Assert.assertEquals(64, nLeftFlanksLo, 0.0);
+        Assert.assertEquals(256, nLeftFlanksHi, 0.0);
+        Assert.assertEquals(64, nRightFlanksLo, 0.0);
+        Assert.assertEquals(256, nRightFlanksHi, 0.0);
+        Assert.assertEquals(-0.2235, xMinLo, EPSILON);
+        Assert.assertEquals(-0.223875, xMinHi, EPSILON);
+        Assert.assertEquals(895, xLo.length, 0.0);
+        Assert.assertEquals(3583, xHi.length, 0.0);
+        Assert.assertArrayEquals(expectedXLoFirst10, Arrays.copyOfRange(xLo, 0, 10), EPSILON);
+        Assert.assertArrayEquals(expectedXLoLast10, Arrays.copyOfRange(xLo, 885, 895), EPSILON);
+        Assert.assertArrayEquals(expectedXHiFirst10, Arrays.copyOfRange(xHi, 0, 10), EPSILON);
+        Assert.assertArrayEquals(expectedXHiLast10, Arrays.copyOfRange(xHi, 3573, 3583), EPSILON);
+        Assert.assertEquals(895, lambdaLo.length, 0.0);
+        Assert.assertEquals(3583, lambdaHi.length, 0.0);
+        Assert.assertArrayEquals(expectedLambdaLoFirst10, Arrays.copyOfRange(lambdaLo, 0, 10), EPSILON);
+        Assert.assertArrayEquals(expectedLambdaLoLast10, Arrays.copyOfRange(lambdaLo, 885, 895), EPSILON);
+        Assert.assertArrayEquals(expectedLambdaHiFirst10, Arrays.copyOfRange(lambdaHi, 0, 10), EPSILON);
+        Assert.assertArrayEquals(expectedLambdaHiLast10, Arrays.copyOfRange(lambdaHi, 3573, 3583), EPSILON);
+        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muLo, 0, 10), 0.0);
+        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muLo, 885, 895), 0.0);
+        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muHi, 0, 10), 0.0);
+        Assert.assertArrayEquals(expectedMuLoHiFirstLast10, Arrays.copyOfRange(muHi, 3573, 3583), 0.0);
     }
 
     /*
@@ -564,20 +555,20 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
     }
 
-    @Test
-    public void testIntegrateOneBranchLoRes48BinsInsideClassBothXandT() {
-        // we're going to look at sp1
-        int nodeIdx = 0; // sp1
-        double[][] esDsLoAtNode;
-
-
-
-        double[] expectedSp1EsAfterPropTandX = new double[] { 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.00029974408779732, 0.000299743181660744, 0.000299742271595132, 0.000299741357861114, 0.00029974044072366, 0.000299739520451864, 0.000299738597318595, 0.000299737671600252, 0.000299736743576341, 0.000299735813529336, 0.000299734881744068, 0.000299733948507617, 0.000299733014108822, 0.000299732078837909, 0.000299731142986375, 0.000299730206846234, 0.000299729270710011, 0.000299728334870154, 0.000299727399618708, 0.000299726465247143, 0.000299725532045626, 0.000299724600302962, 0.000299723670306136, 0.000299722742340082, 0.000299721816686999, 0.00029972089362645, 0.000299719973434657, 0.000299719056384414, 0.000299718142744768, 0.00029971723278053, 0.000299716326752154, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        double[] expectedSp1DsAfterPropTandX = new double[] { 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.08867639188041, 0.15832797168282, 0.271610119667664, 0.447685177240542, 0.708986186416951, 1.07880005021062, 1.57718311562593, 2.21544576526305, 2.99004586159941, 3.87732490267096, 4.83085571964462, 5.78300263831972, 6.65150777531997, 7.35062312893061, 7.80486719135139, 7.96240319031702, 7.80476971649718, 7.35043955518597, 6.65125867066457, 5.78271397425439, 4.83055444185051, 3.87703489789509, 2.98978512541793, 2.21522515007474, 1.57700658374745, 1.07866601799939, 0.708889397846809, 0.447618584199003, 0.271566407577905, 0.158300569088559, 0.0886599725440681, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-        Assert.assertArrayEquals(expectedSp1EsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[0], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
-    }
+//    @Test
+//    public void testIntegrateOneBranchLoRes48BinsInsideClassBothXandT() {
+//        // we're going to look at sp1
+//        int nodeIdx = 0; // sp1
+//        double[][] esDsLoAtNode;
+//
+//
+//
+//        double[] expectedSp1EsAfterPropTandX = new double[] { 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.00029974408779732, 0.000299743181660744, 0.000299742271595132, 0.000299741357861114, 0.00029974044072366, 0.000299739520451864, 0.000299738597318595, 0.000299737671600252, 0.000299736743576341, 0.000299735813529336, 0.000299734881744068, 0.000299733948507617, 0.000299733014108822, 0.000299732078837909, 0.000299731142986375, 0.000299730206846234, 0.000299729270710011, 0.000299728334870154, 0.000299727399618708, 0.000299726465247143, 0.000299725532045626, 0.000299724600302962, 0.000299723670306136, 0.000299722742340082, 0.000299721816686999, 0.00029972089362645, 0.000299719973434657, 0.000299719056384414, 0.000299718142744768, 0.00029971723278053, 0.000299716326752154, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+//        double[] expectedSp1DsAfterPropTandX = new double[] { 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.08867639188041, 0.15832797168282, 0.271610119667664, 0.447685177240542, 0.708986186416951, 1.07880005021062, 1.57718311562593, 2.21544576526305, 2.99004586159941, 3.87732490267096, 4.83085571964462, 5.78300263831972, 6.65150777531997, 7.35062312893061, 7.80486719135139, 7.96240319031702, 7.80476971649718, 7.35043955518597, 6.65125867066457, 5.78271397425439, 4.83055444185051, 3.87703489789509, 2.98978512541793, 2.21522515007474, 1.57700658374745, 1.07866601799939, 0.708889397846809, 0.447618584199003, 0.271566407577905, 0.158300569088559, 0.0886599725440681, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+//
+//        Assert.assertArrayEquals(expectedSp1EsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[0], 0, 48), 1E-14);
+//        Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
+//    }
     // TODO: in another test, do inside class
     // q2.processBranch(myTree2.getNode(nodeIdx));
 }
