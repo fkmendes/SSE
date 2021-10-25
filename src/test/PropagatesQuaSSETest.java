@@ -172,6 +172,8 @@ public class PropagatesQuaSSETest {
     }
 
     /*
+     * Test for propagating in x (quantitative trait value)
+     *
      * Calls convolve function, which makes Normal kernel, FFTs it, convolves,
      * and iFFTs it. Then reorganize all elements of esDs by bookkeeping all
      * flanking bins, etc.
@@ -215,6 +217,8 @@ public class PropagatesQuaSSETest {
     }
 
     /*
+     * Test for propagating in x (quantitative trait value)
+     *
      * Calls convolve function, which makes Normal kernel, FFTs it, convolves,
      * and iFFTs it. Then reorganize all elements of esDs by bookkeeping all
      * flanking bins, etc.
@@ -265,6 +269,8 @@ public class PropagatesQuaSSETest {
     }
 
     /*
+     * Test for propagating in x (quantitative trait value)
+     *
      * Calls convolve function, which makes Normal kernel, FFTs it, convolves,
      * and iFFTs it. Then reorganize all elements of esDs by bookkeeping all
      * flanking bins, etc.

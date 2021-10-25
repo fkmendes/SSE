@@ -6,10 +6,10 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
 import beast.util.TreeParser;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.nio.file.ClosedWatchServiceException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,14 +36,17 @@ public class QuaSSEDistributionTest {
     final static Double EPSILON2 = 1e-16;
     final static Double EPSILON3 = 1e-14;
 
-    static QuaSSEDistribution q1024, q48One, q48Two, q48Three;
+    static QuaSSEDistribution q1024, q48;
     static Tree myTree;
     static int nDimensionsE, nDimensionsD;
     double[] birthRate, deathRate;
 
     static List<Double> data;
+    static RealParameter driftRp, xMidrp, flankWidthScalerrp;
+    static RealParameter dxBin48Rp, dxBin1024Rp;
     static RealParameter quTraitrp, quTraitRp;
     static RealParameter dtrp, tcrp, diffusionrp;
+    static IntegerParameter hiLoRatiorp, nXbins1024Ip, nXbins48Ip;
 
     static Double[] x0, y1, y0, r;
     static LogisticFunction lfn;
@@ -51,7 +54,7 @@ public class QuaSSEDistributionTest {
     static NormalCenteredAtObservedLinkFn nfn;
 
     @BeforeClass
-    public static void setupQuaSSEDist() {
+    public static void setupParameters() {
         // tree
         String treeStr = "(sp1:0.01,sp2:0.01);";
         myTree = new TreeParser(treeStr, false, false, true, 0);
@@ -64,7 +67,7 @@ public class QuaSSEDistributionTest {
 
         // qu trait stuff
         Double[] drift = new Double[] { 0.0 };
-        RealParameter driftRp = new RealParameter(drift);
+        driftRp = new RealParameter(drift);
 
         Double[] diffusion = new Double[] { 0.001 };
         diffusionrp = new RealParameter(diffusion);
@@ -106,28 +109,34 @@ public class QuaSSEDistributionTest {
         // nfn2.initByName("quTraits", quTraitRp, "sdNormalQuTrValue", sdNormaQuTraitValuerp);
 
         Double[] xMid = new Double[] { 0.0 };
-        RealParameter xMidrp = new RealParameter(xMid);
+        xMidrp = new RealParameter(xMid);
 
         Double[] dxBin48 = new Double[] { 0.01 };
-        RealParameter dxBin48Rp = new RealParameter(dxBin48);
+        dxBin48Rp = new RealParameter(dxBin48);
 
         Double[] dxBin1024 = new Double[] { 0.0005 };
-        RealParameter dxBin1024Rp = new RealParameter(dxBin1024);
+        dxBin1024Rp = new RealParameter(dxBin1024);
 
         Double[] flankWidthScaler = new Double[] { 10.0 };
-        RealParameter flankWidthScalerrp = new RealParameter(flankWidthScaler);
+        flankWidthScalerrp = new RealParameter(flankWidthScaler);
 
         Integer[] hiLoRatio = new Integer[] { 4 };
-        IntegerParameter hiLoRatiorp = new IntegerParameter(hiLoRatio);
+        hiLoRatiorp = new IntegerParameter(hiLoRatio);
 
         Integer[] nXbins1024 = new Integer[] { 1024 };
-        IntegerParameter nXbins1024Ip = new IntegerParameter(nXbins1024);
+        nXbins1024Ip = new IntegerParameter(nXbins1024);
 
         Integer[] nXbins2 = new Integer[] { 48 };
-        IntegerParameter nXbins48Ip = new IntegerParameter(nXbins2);
+        nXbins48Ip = new IntegerParameter(nXbins2);
+    }
 
-        // QuaSSE stuff
-
+    /*
+     * Setup before each test (initializing from scratch every time,
+     * otherwise we modify the state of classes in place and a test
+     * interferes with the next one.
+     */
+    @Before
+    public void setupQuaSSELiks() {
         // more bins and 3-sp tree (more complex)
         q1024 = new QuaSSEDistribution();
         q1024.initByName("dt", dtrp, "tc", tcrp,
@@ -138,26 +147,8 @@ public class QuaSSEDistributionTest {
                 "q2d", nfn);
 
         // fewer bins and 2-sp tree (less complex)
-        q48One = new QuaSSEDistribution();
-        q48One.initByName("dt", dtrp, "tc", tcrp,
-                "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
-                "drift", driftRp, "diffusion", diffusionrp,
-                "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", myTree,
-                "q2d", nfn);
-
-        // same as q2, but needs a new instance, otherwise its starting values will have been processed by previous unit tests
-        q48Two = new QuaSSEDistribution();
-        q48Two.initByName("dt", dtrp, "tc", tcrp,
-                "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
-                "drift", driftRp, "diffusion", diffusionrp,
-                "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", myTree,
-                "q2d", nfn);
-
-        // same as q2, but needs a new instance, otherwise its starting values will have been processed by previous unit tests
-        q48Three = new QuaSSEDistribution();
-        q48Three.initByName("dt", dtrp, "tc", tcrp,
+        q48 = new QuaSSEDistribution();
+        q48.initByName("dt", dtrp, "tc", tcrp,
                 "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
@@ -280,7 +271,7 @@ public class QuaSSEDistributionTest {
         /*
          * we'll test the integration outside the class
          */
-        esDsLoAtNode = q48One.getEsDsAtNode(nodeIdx, true);
+        esDsLoAtNode = q48.getEsDsAtNode(nodeIdx, true);
         // printing
         // System.out.println("D's before prop in t: " + Arrays.toString(esDsLoAtNode[1])); // D's
 
@@ -292,9 +283,9 @@ public class QuaSSEDistributionTest {
         }
 
         // just propagate in t, in place
-        q48One.propagateTInPlace(esDsLoAtNode, scratchAtNode, true);
+        q48.propagateTInPlace(esDsLoAtNode, scratchAtNode, true);
 
-        esDsLoAtNode = q48One.getEsDsAtNode(nodeIdx, true);
+        esDsLoAtNode = q48.getEsDsAtNode(nodeIdx, true);
         double[] esHiAtNode = esDsLoAtNode[0];
         double[] dsHiAtNode = esDsLoAtNode[1];
 
@@ -333,7 +324,7 @@ public class QuaSSEDistributionTest {
         /*
          * we'll test the integration outside the class
          */
-        esDsLoAtNode = q48Two.getEsDsAtNode(nodeIdx, true);
+        esDsLoAtNode = q48.getEsDsAtNode(nodeIdx, true);
 
         /*
          * we are going to have a look at (make a deep copy of) the initial D's
@@ -348,17 +339,17 @@ public class QuaSSEDistributionTest {
          * here we are just grabbing it to verify its values in the asserts
          * below
          */
-        double[] fftedfY = q48Two.getfY(true);
+        double[] fftedfY = q48.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
-        everyOtherInPlace(fftedfY, realFFTedfY, q48Two.getnXbins(true),0, 0, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY, realFFTedfY, q48.getnXbins(true),0, 0, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = new double[2][esDsLoAtNode[0].length];
-        q48Two.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
+        q48.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
 
         // looking at 'sp1'
-        esDsLoAtNode = q48Two.getEsDsAtNode(nodeIdx, true);
+        esDsLoAtNode = q48.getEsDsAtNode(nodeIdx, true);
         double[] esLoAtNode = esDsLoAtNode[0];
         double[] dsLoAtNode = esDsLoAtNode[1];
 
@@ -494,10 +485,6 @@ public class QuaSSEDistributionTest {
      * Checks that propagate methods in both time and quantitative trait value (X)
      * for E's and D's inside QuaSSE class are working.
      *
-     * Differs from 'testPropagateChOneCh48QuaSSETest' inside
-     * 'PropagatesQuaSSETest' because it relies on the QuaSSE class
-     * correctly initializing all its dimensions and E's and D's.
-     *
      * Test is done on a bifurcating tree (but just looking at a single
      * branch here, "sp1"), over a single dt = 0.01, with dx = 0.0005,
      * and nXbins = 48 (low res). The trait value of "sp1" is set to 0.0.
@@ -511,7 +498,7 @@ public class QuaSSEDistributionTest {
         /*
          * we'll test the integration outside the class
          */
-        esDsLoAtNode = q48Three.getEsDsAtNode(nodeIdx, true);
+        esDsLoAtNode = q48.getEsDsAtNode(nodeIdx, true);
 
         /*
          * we are going to have a look at (make a deep copy of) the initial D's
@@ -532,7 +519,7 @@ public class QuaSSEDistributionTest {
         }
 
         // just propagate in t, in place
-        q48Three.propagateTInPlace(esDsLoAtNode, scratchAtNode, true);
+        q48.propagateTInPlace(esDsLoAtNode, scratchAtNode, true);
 
         // grabbing intermediate to see if it's all good
         double[][] esDsLoAtNodeAfterPropT = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
@@ -547,14 +534,14 @@ public class QuaSSEDistributionTest {
 
         // propagating in x
         // getting fY
-        q48Three.populatefY(true, true);
-        double[] fftedfY = q48Three.getfY(true);
+        q48.populatefY(true, true);
+        double[] fftedfY = q48.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
-        everyOtherInPlace(fftedfY, realFFTedfY, q48Three.getnXbins(true),0, 0, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY, realFFTedfY, q48.getnXbins(true),0, 0, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        q48Three.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
+        q48.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
 
 
 
@@ -577,6 +564,20 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
     }
 
+    @Test
+    public void testIntegrateOneBranchLoRes48BinsInsideClassBothXandT() {
+        // we're going to look at sp1
+        int nodeIdx = 0; // sp1
+        double[][] esDsLoAtNode;
+
+
+
+        double[] expectedSp1EsAfterPropTandX = new double[] { 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.00029974408779732, 0.000299743181660744, 0.000299742271595132, 0.000299741357861114, 0.00029974044072366, 0.000299739520451864, 0.000299738597318595, 0.000299737671600252, 0.000299736743576341, 0.000299735813529336, 0.000299734881744068, 0.000299733948507617, 0.000299733014108822, 0.000299732078837909, 0.000299731142986375, 0.000299730206846234, 0.000299729270710011, 0.000299728334870154, 0.000299727399618708, 0.000299726465247143, 0.000299725532045626, 0.000299724600302962, 0.000299723670306136, 0.000299722742340082, 0.000299721816686999, 0.00029972089362645, 0.000299719973434657, 0.000299719056384414, 0.000299718142744768, 0.00029971723278053, 0.000299716326752154, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1DsAfterPropTandX = new double[] { 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.08867639188041, 0.15832797168282, 0.271610119667664, 0.447685177240542, 0.708986186416951, 1.07880005021062, 1.57718311562593, 2.21544576526305, 2.99004586159941, 3.87732490267096, 4.83085571964462, 5.78300263831972, 6.65150777531997, 7.35062312893061, 7.80486719135139, 7.96240319031702, 7.80476971649718, 7.35043955518597, 6.65125867066457, 5.78271397425439, 4.83055444185051, 3.87703489789509, 2.98978512541793, 2.21522515007474, 1.57700658374745, 1.07866601799939, 0.708889397846809, 0.447618584199003, 0.271566407577905, 0.158300569088559, 0.0886599725440681, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        Assert.assertArrayEquals(expectedSp1EsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[0], 0, 48), 1E-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
+    }
     // TODO: in another test, do inside class
     // q2.processBranch(myTree2.getNode(nodeIdx));
 }
