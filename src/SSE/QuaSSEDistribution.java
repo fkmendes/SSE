@@ -3,6 +3,8 @@ package SSE;
 import beast.core.Input;
 import beast.core.State;
 import beast.evolution.tree.Node;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -114,6 +116,10 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         double startTime = node.getHeight(); // we're going backwards in time, toward the root
         if (startTime > tc) lowRes = true; // entire branch might already be > tc
 
+        // debugging
+        // System.out.println("lowRes at beginning of branch subtending node " + nodeIdx + " = " + lowRes);
+
+        // grabbing esDs and scratch depending on resolution
         double[][] esDsAtNode, scratchAtNode;
         if (lowRes) {
             esDsAtNode = esDsLo[nodeIdx];
@@ -126,12 +132,18 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         boolean isFirstDt = true;
         while ((startTime + dt) <= node.getParent().getHeight()) {
-            if (startTime > tc) lowRes = true;
+            // if we go through tc in the middle of a branch
+            if (startTime > tc) {
+                esDsAtNode = esDsLo[nodeIdx];
+                scratchAtNode = scratchLo[nodeIdx];
+                lowRes = true;
+            }
 
-            System.out.println("startTime + dt = " + (startTime + dt));
-            System.out.println("node.getParent().getHeight() = " + node.getParent().getHeight());
-            System.out.println("calling doIntegrateInPlace");
-            // TODO: need to re-set esDsAtNode and scratchAtNode to the low-res versions before doIntegrateInPlace if lowRes becomes true
+            // debugging
+            // System.out.println("startTime + dt = " + (startTime + dt));
+            // System.out.println("node.getParent().getHeight() = " + node.getParent().getHeight());
+            // System.out.println("calling doIntegrateInPlace");
+
             doIntegrateInPlace(esDsAtNode, scratchAtNode, startTime, isFirstDt, lowRes);
 
             isFirstDt = false;
@@ -157,17 +169,24 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     @Override
     public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
 
+        // debugging
+        // System.out.println("esDsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
+
         // integrate over birth and death events (low or high resolution inside)
         propagateTInPlace(esDsAtNode, scratchAtNode, lowRes);
+
+        // debugging
+        // System.out.println("esDsAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[1]));
 
         // make normal kernel and FFTs it
         populatefY(true, true);
 
-        // integrate over diffusion of substitution rate
+        // integrate over diffusion of quantitative trait
         // propagateXInPlace(esDsAtNode, lowRes);
         propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
 
-        // return esDsAtNode;
+        // debugging
+        // System.out.println("esDsAtNode after propagate in t and x = " + Arrays.toString(esDsAtNode[1]));
     }
 
     @Override
