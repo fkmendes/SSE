@@ -1061,7 +1061,7 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
             print("y inside combine.branches for hi = ")
             print(y)
 
-            len.hi <- tc - t0 # by adding dt here, we went beyond tc; we only care to integrate over the remaining distance though, which is given by len.hi
+            len.hi <- tc - t0 # this first stretch in high-res
 
             ans.hi <- careful(f.hi, y, len.hi, pars$hi, t0, dt.max) # integrate first stretch at high-res
 
@@ -1069,7 +1069,7 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
             ## y.lo will be the first elements inside the low-res y -- the rest will be 0's (see below)
             y.lo <- ans.hi[[2]][pars$tr, ]
 
-            lq0 <- lq0 + ans.hi[[1]] # we get the normalization factor still at high-res
+            lq0 <- lq0 + ans.hi[[1]] # we add the high-res normalization factor to the total normalization factor
 
             ## why would nrow(y.lo) < nx (nx here is the low-res nx)?
             ## we're putting 0's after the y.lo

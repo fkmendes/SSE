@@ -128,70 +128,94 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         boolean lowRes = false;
         int nodeIdx = aNode.getNr();
 
+        // dealing with branch lengths
         double startTime = aNode.getHeight(); // we're going backwards in time, toward the root
-        if (startTime > tc) lowRes = true; // entire branch might already be > tc
+        double endTime = aNode.getParent().getHeight();
+        double branchLength2Integrate = endTime - startTime;
 
-        // debugging
-        // System.out.println("lowRes at beginning of branch subtending node " + nodeIdx + " = " + lowRes);
+        // dealing with dt
+        double dt, nIntervals, nonIntegratedDt;
+        if (dynamicallyAdjustDt) {
+            nIntervals = Math.ceil(branchLength2Integrate / dtMax);
+            dt = branchLength2Integrate / nIntervals; // dynamically adjusted dt
+        } else {
+            nIntervals = Math.floor(branchLength2Integrate / dtMax);
+            dt = dtMax;
+            nonIntegratedDt = branchLength2Integrate % dtMax;
+        }
 
         /*
-         * Grabbing esDs and scratch depending on resolution.
-         * This is done only once if node is already at low, rather than
+         * Sorting out E's and D's prior to integration
+         * (1) Grabbing esDs and scratch depending on resolution
+         * (2) Calculating normalization factor
+         * (3) Storing normalization factor to unnormalize at the very end of pruning
+         * (4) Normalize DsThis is done only once if node is already at low, rather than
          * at every loop of the while block below
          */
         double[][] esDsAtNode, scratchAtNode;
-        double normalizationFactorFromDs = 0.0;
-        if (lowRes) {
-            // calculate normalization factor to avoid underflow
-            for (double d: esDsLo[nodeIdx][1]) normalizationFactorFromDs += d;
-            normalizationFactorFromDs *= dXbin;
 
+        // option 1: entire branch might already be > tc (all low-res)
+        if (startTime >= tc) {
+            lowRes = true;
             esDsAtNode = esDsLo[nodeIdx];
             scratchAtNode = scratchLo[nodeIdx];
-
-            // now normalize D's
-            // TODO: later it could be a problem that I'm normalizing esDsAtNode instead of esDsLo[nodeIdx]
-            for (int i=0; i<esDsAtNode[1].length; i++) {
-                esDsAtNode[1][i] /= normalizationFactorFromDs;
-            }
-        } else {
-            // calculate normalization factor to avoid underflow
-            for (double d: esDsHi[nodeIdx][1]) normalizationFactorFromDs += d;
-            normalizationFactorFromDs *= (dXbin / hiLoRatio);
-
+            // debug
+            // System.out.println("Unnormalized D's at low-res = " + Arrays.toString(esDsAtNode[1]));
+        }
+        // option 2: entire branch < tc (all high-res)
+        // option 3: tc happens inside branch (tip-end part in high-res, root-end part in low-res)
+        else {
             esDsAtNode = esDsHi[nodeIdx];
             scratchAtNode = scratchHi[nodeIdx];
-
-            // now normalize D's
-            // TODO: later it could be a problem that I'm normalizing esDsAtNode instead of esDsHi[nodeIdx]
             // debug
-            // System.out.println("Unnormalized D's = " + Arrays.toString(esDsAtNode[1]));
-
-            for (int i=0; i<esDsAtNode[1].length; i++) {
-                esDsAtNode[1][i] /= normalizationFactorFromDs;
-            }
-
-            System.out.println("Normalized D's = " + Arrays.toString(esDsAtNode[1]));
+            // System.out.println("Unnormalized D's at high-res = " + Arrays.toString(esDsAtNode[1]));
         }
 
-        boolean isFirstDt = true;
-        while ((startTime + dt) <= aNode.getParent().getHeight()) {
-            // if we go through tc in the middle of a branch
-            if (startTime > tc) {
+        /*
+         * Normalizing D's to avoid underflow
+         * This is done prior to integration, at the right resolution already
+         * (since we have already gone through options 1 -- 3 above)
+         */
+        double normalizationFactorFromDs = 0.0;
+        if (lowRes) normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], dXbin);
+        else normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
+        logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
+
+        for (int i=0; i<esDsAtNode[1].length; i++) {
+            esDsAtNode[1][i] /= normalizationFactorFromDs;
+            // there will be an additional step of normalization when in option 3
+            // as a result of integrating the tip-end part in high-res
+        }
+
+        // debug
+        // System.out.println("Normalized D's at either low or high-res = " + Arrays.toString(esDsAtNode[1]));
+
+        // integrating!
+        double integrationTStart = startTime;
+        for (int i=0; i<nIntervals; i++) {
+            // tc happens inside branch (tip-end part in high-res, root-end part in low-res)
+            if ((integrationTStart + dt) >= tc) {
+                // integration of this tip-end in high res
+                double dtAtHi = tc - integrationTStart;
+                doIntegrateInPlace(esDsAtNode, scratchAtNode, dtAtHi, false);
+
+                // one more normalization for this high-res stretch
+                normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
+                for (int j=0; j<esDsAtNode[1].length; j++) esDsAtNode[1][j] /= normalizationFactorFromDs;
+                logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
+                // TODO: store normalizationFactorFromDs
+
+                // integration of the root-end in low res
                 esDsAtNode = esDsLo[nodeIdx];
                 scratchAtNode = scratchLo[nodeIdx];
-                lowRes = true;
+                double dtAtLo = integrationTStart + dt - tc;
+                doIntegrateInPlace(esDsAtNode, scratchAtNode, dtAtLo, true);
             }
-
-            // debugging
-            // System.out.println("startTime + dt = " + (startTime + dt));
-            // System.out.println("node.getParent().getHeight() = " + node.getParent().getHeight());
-            // System.out.println("calling doIntegrateInPlace");
-
-            doIntegrateInPlace(esDsAtNode, scratchAtNode, startTime, isFirstDt, lowRes);
-
-            isFirstDt = false;
-            startTime += dt;
+            // otherwise
+            else {
+                doIntegrateInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
+                integrationTStart += dt;
+            }
         }
     }
 
@@ -203,14 +227,20 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         super.populatefY(ignoreRefresh, doFFT);
     }
 
+    private double calculateNormalizationFactor(double[] dS, double binSize) {
+        double normalizationFactorFromDs = 0.0;
+        for (double d: dS) normalizationFactorFromDs += d;
+        return (normalizationFactorFromDs *= binSize);
+    }
+
     @Override
-    public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
+    public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes) {
 
         // debugging
         System.out.println("esDsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
 
         // integrate over birth and death events (low or high resolution inside)
-        propagateTInPlace(esDsAtNode, scratchAtNode, lowRes);
+        propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
 
         // debugging
         // System.out.println("esDsAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[1]));
@@ -227,7 +257,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+    public void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes) {
         // grab scratch, dt and nDimensions from QuaSSEDistribution state
         if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
         else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);

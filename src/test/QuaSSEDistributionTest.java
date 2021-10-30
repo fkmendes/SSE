@@ -1,6 +1,7 @@
 package test;
 
 import SSE.*;
+import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
@@ -46,7 +47,9 @@ public class QuaSSEDistributionTest {
     static RealParameter quTraitrp, quTraitRp;
     static RealParameter dtrp, twoDtrp, tcrp, diffusionrp;
     static IntegerParameter hiLoRatiorp, nXbins1024Ip, nXbins48Ip, nXbins32Ip;
+    static BooleanParameter dynDtbp;
 
+    static double dt, dtLarger;
     static Double[] x0, y1, y0, r;
     static LogisticFunction lfn;
     static ConstantLinkFn cfn;
@@ -74,10 +77,16 @@ public class QuaSSEDistributionTest {
         diffusionrp = new RealParameter(diffusion);
 
         // dimension stuff
-        Double[] dt = new Double[] { 0.01 };
-        Double[] twoDt = new Double[] { 0.02 };
-        dtrp = new RealParameter(dt);
-        twoDtrp = new RealParameter(twoDt);
+        dt = 0.01;
+        dtLarger = 0.02;
+        Double[] dtD = new Double[] { 0.01 };
+        Double[] largerDtD = new Double[] { 0.02 };
+        dtrp = new RealParameter(dtD);
+        twoDtrp = new RealParameter(largerDtD);
+
+        // adjust dt dynamically to maximize accuracy and match diversitree
+        Boolean[] dynDt = new Boolean[] { true };
+        dynDtbp = new BooleanParameter(dynDt);
 
         Double[] tc = new Double[] { 100.0 };
         tcrp = new RealParameter(tc);
@@ -144,7 +153,8 @@ public class QuaSSEDistributionTest {
     @Before
     public void setupQuaSSELiks() {
         q1024 = new QuaSSEDistribution();
-        q1024.initByName("dt", dtrp, "tc", tcrp,
+        q1024.initByName("dtMax", dtrp, "dynDt", dynDtbp,
+                "tc", tcrp,
                 "nX", nXbins1024Ip, "dX", dxBin1024Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
@@ -152,7 +162,8 @@ public class QuaSSEDistributionTest {
                 "q2d", nfn);
 
         q48 = new QuaSSEDistribution();
-        q48.initByName("dt", dtrp, "tc", tcrp,
+        q48.initByName("dtMax", dtrp, "dynDt", dynDtbp,
+                "tc", tcrp,
                 "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
@@ -160,7 +171,8 @@ public class QuaSSEDistributionTest {
                 "q2d", nfn);
 
         q48TwoDt = new QuaSSEDistribution();
-        q48TwoDt.initByName("dt", twoDtrp, "tc", tcrp,
+        q48TwoDt.initByName("dtMax", twoDtrp, "dynDt", dynDtbp,
+                "tc", tcrp,
                 "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
@@ -168,7 +180,8 @@ public class QuaSSEDistributionTest {
                 "q2d", nfn);
 
         q32 = new QuaSSEDistribution();
-        q32.initByName("dt", dtrp, "tc", tcrp,
+        q32.initByName("dtMax", dtrp, "dynDt", dynDtbp,
+                "tc", tcrp,
                 "nX", nXbins32Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
@@ -296,7 +309,7 @@ public class QuaSSEDistributionTest {
         }
 
         // just propagate in t, in place
-        q48.propagateTInPlace(esDsLoAtNode, scratchAtNode, true);
+        q48.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt,true);
 
         esDsLoAtNode = q48.getEsDsAtNode(nodeIdx, true);
         double[] esHiAtNode = esDsLoAtNode[0];
@@ -532,7 +545,7 @@ public class QuaSSEDistributionTest {
         }
 
         // just propagate in t, in place
-        q48.propagateTInPlace(esDsLoAtNode, scratchAtNode, true);
+        q48.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt, true);
 
         // grabbing intermediate to see if it's all good
         double[][] esDsLoAtNodeAfterPropT = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
@@ -615,7 +628,7 @@ public class QuaSSEDistributionTest {
         }
 
         // just propagate in t, in place
-        q48TwoDt.propagateTInPlace(esDsLoAtNode, scratchAtNode, true);
+        q48TwoDt.propagateTInPlace(esDsLoAtNode, scratchAtNode, dtLarger,true);
 
         // grabbing intermediate to see if it's all good
         double[][] esDsLoAtNodeAfterPropT = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];

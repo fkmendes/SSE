@@ -3,20 +3,20 @@ package SSE;
 import beast.core.Description;
 import beast.core.Distribution;
 import beast.core.Input;
+import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import org.jtransforms.fft.DoubleFFT_1D;
 
-import java.util.Arrays;
-
 @Description("Specifies a quantitative trait(s) state-dependent speciation and" +
         "extinction birth-death process.")
 public abstract class QuaSSEProcess extends Distribution {
 
     final public Input<Tree> treeInput = new Input<>("tree", "Tree object containing tree.", Input.Validate.REQUIRED);
-    final public Input<RealParameter> dtInput = new Input<>("dt", "Length of time interval over which integration is carried out.", Input.Validate.REQUIRED);
+    final public Input<RealParameter> dtMaxInput = new Input<>("dtMax", "Length of max time interval over which integration is carried out.", Input.Validate.REQUIRED);
+    final public Input<BooleanParameter> dynamicDtInput = new Input<>("dynDt", "If interval over which to carry out integration should be dynamically adjusted to maximize accuracy.", Input.Validate.REQUIRED);
     final public Input<RealParameter> tcInput = new Input<>("tc", "Time (backwards, i.e., present=0.0) when integration happens with discretization at low resolution.", Input.Validate.OPTIONAL);
     final public Input<IntegerParameter> nXbinsInput = new Input<>("nX", "Total number of quantitative trait bins after discretization at low resolution.", Input.Validate.REQUIRED);
     final public Input<RealParameter> dXBinInput = new Input<>("dX", "Width of quantitative trait bins.", Input.Validate.REQUIRED);
@@ -30,7 +30,8 @@ public abstract class QuaSSEProcess extends Distribution {
     protected RealParameter quTraits;
 
     // state for dimensioning things and setting up resolution of integration
-    protected double dt, tc;
+    protected boolean dynamicallyAdjustDt;
+    protected double dtMax, tc;
     protected double dXbin, flankWidthScaler, xMinLo, xMinHi, xMid;
     protected int nXbinsLo, nUsefulXbinsLo, nXbinsHi, nUsefulXbinsHi, hiLoRatio;
     protected int[] nUsefulXbins, nLeftNRightFlanksHi, nLeftNRightFlanksLo;
@@ -52,7 +53,8 @@ public abstract class QuaSSEProcess extends Distribution {
         nLeftNRightFlanksHi = new int[2];
         nUsefulXbins = new int[2];
 
-        dt = dtInput.get().getValue();
+        dynamicallyAdjustDt = dynamicDtInput.get().getValue();
+        dtMax = dtMaxInput.get().getValue();
         tc = tcInput.get().getValue();
 
         dXbin = dXBinInput.get().getValue();
@@ -60,8 +62,8 @@ public abstract class QuaSSEProcess extends Distribution {
         xMid = xMidInput.get().getValue();
         flankWidthScaler = flankWidthScalerInput.get().getValue();
         hiLoRatio = highLowRatioInput.get().getValue();
-        changeInXNormalMean = driftInput.get().getValue() * -dt;
-        changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dt);
+        changeInXNormalMean = driftInput.get().getValue() * -dtMax;
+        changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dtMax);
 
         prepareDimensionsInPlace(); // in parent class
         prepareXRulers(); // in parent class
@@ -149,11 +151,11 @@ public abstract class QuaSSEProcess extends Distribution {
         boolean refreshedSomething = false;
         if (!ignoreRefresh) {
             if (driftInput.get().somethingIsDirty()) {
-                changeInXNormalMean = driftInput.get().getValue() * -dt;
+                changeInXNormalMean = driftInput.get().getValue() * -dtMax;
                 refreshedSomething = true;
             }
             if (diffusionInput.get().somethingIsDirty()) {
-                changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dt);
+                changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dtMax);
                 refreshedSomething = true;
             }
         }
@@ -203,12 +205,12 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      * Does integration in time and character space in place
      */
-    protected abstract void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, boolean lowRes);
+    protected abstract void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes);
 
     /*
      *
      */
-    protected abstract void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
+    protected abstract void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes);
 
     /*
      *
