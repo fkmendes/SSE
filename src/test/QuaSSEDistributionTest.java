@@ -37,15 +37,15 @@ public class QuaSSEDistributionTest {
     final static Double EPSILON2 = 1e-16;
     final static Double EPSILON3 = 1e-14;
 
-    static QuaSSEDistribution q1024, q48, q48TwoDt;
-    static Tree myTree;
+    static QuaSSEDistribution q1024, q48, q48TwoDt, q32;
+    static Tree myTree, myTree2;
 
     static List<Double> data;
     static RealParameter driftRp, xMidrp, flankWidthScalerrp;
     static RealParameter dxBin48Rp, dxBin1024Rp;
     static RealParameter quTraitrp, quTraitRp;
     static RealParameter dtrp, twoDtrp, tcrp, diffusionrp;
-    static IntegerParameter hiLoRatiorp, nXbins1024Ip, nXbins48Ip;
+    static IntegerParameter hiLoRatiorp, nXbins1024Ip, nXbins48Ip, nXbins32Ip;
 
     static Double[] x0, y1, y0, r;
     static LogisticFunction lfn;
@@ -56,7 +56,9 @@ public class QuaSSEDistributionTest {
     public static void setupParameters() {
         // tree
         String treeStr = "(sp1:0.02,sp2:0.02);";
+        String treeStr2 = "(sp1:0.01,sp2:0.01);";
         myTree = new TreeParser(treeStr, false, false, true, 0);
+        myTree2 = new TreeParser(treeStr2, false, false, true, 0);
 
         // qu trait data
         String spNames = "sp1 sp2";
@@ -129,6 +131,9 @@ public class QuaSSEDistributionTest {
 
         Integer[] nXbins2 = new Integer[] { 48 };
         nXbins48Ip = new IntegerParameter(nXbins2);
+
+        Integer[] nXbins32 = new Integer[] { 32 };
+        nXbins32Ip = new IntegerParameter(nXbins32);
     }
 
     /*
@@ -160,6 +165,14 @@ public class QuaSSEDistributionTest {
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree,
+                "q2d", nfn);
+
+        q32 = new QuaSSEDistribution();
+        q32.initByName("dt", dtrp, "tc", tcrp,
+                "nX", nXbins32Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
+                "drift", driftRp, "diffusion", diffusionrp,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", myTree2,
                 "q2d", nfn);
     }
 
@@ -490,7 +503,7 @@ public class QuaSSEDistributionTest {
      * and nXbins = 48 (low res). The trait value of "sp1" is set to 0.0.
      */
     @Test
-    public void testIntegrateOneBranchLoRes48BinsOutsideClassBothXandT() {
+    public void testBothXandTPropagateMethodsInsideClassOneBranchLoRes48Bins() {
         // we're going to look at sp1
         int nodeIdx = 0; // sp1
         double[][] esDsLoAtNode;
@@ -573,7 +586,7 @@ public class QuaSSEDistributionTest {
      * and nXbins = 48 (low res). The trait value of "sp1" is set to 0.0.
      */
     @Test
-    public void testIntegrateOneBranchLoRes48BinsOutsideClassBothXandTTwoDt() {
+    public void testBothXandTPropagateMethodsInsideClassOneBranchLoRes48BinsLargerDt() {
         // we're going to look at sp1
         int nodeIdx = 0; // sp1
         double[][] esDsLoAtNode;
@@ -647,6 +660,15 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
     }
 
+    /*
+     * Checks that integrateBranch method inside QuaSSE class is working
+     * (it propagates in both time and quantitative trait value (X).
+     *
+     * Test is done on a bifurcating tree (but just looking at a single
+     * branch here, "sp1"), over two dt's of 0.01 = 2 * 0.01 = 0.02,
+     * with dx = 0.0005, and nXbins = 192 (high res).
+     * The trait value of "sp1" is set to 0.0.
+     */
     @Test
     public void testIntegrateOneBranchHiRes48BinsInsideClassBothXandTTwoDt() {
         // we're going to look at sp1
@@ -668,7 +690,7 @@ public class QuaSSEDistributionTest {
         esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsHiAtNode[1], esDsHiAtNode[1].length); // D
 
         // now we integrate over 2 dt's = 2 * 0.01 = 0.02, inside class!
-        q48TwoDt.processBranch(sp1Node);
+        q48TwoDt.integrateBranch(sp1Node);
         esDsHiAtNode = q48TwoDt.getEsDsAtNode(nodeIdx, false);
 
 
@@ -688,6 +710,33 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp1DsAfterPropTandXLater10, Arrays.copyOfRange(esDsHiAtNode[1], 146, 156), 1E-14);
     }
 
+    @Test
+    public void testPruneTree32Bins() {
+
+        /*
+         * let us grab the E's and D's before integration
+         */
+        double[][] esDsHiAtNode0, esDsHiAtNode1, esDsHiAtNode2;
+        esDsHiAtNode0 = q32.getEsDsAtNode(0, false); // sp1
+        esDsHiAtNode1 = q32.getEsDsAtNode(1, false); // sp2
+
+        /*
+         * we are going to have a look at (make a deep copy of) the initial D's
+         * in the assert below because they are the starting point of everything
+         */
+        double[][] esDsHiAtNodeInitial0 = new double[esDsHiAtNode0.length][esDsHiAtNode0[0].length];
+        esDsHiAtNodeInitial0[0] = Arrays.copyOf(esDsHiAtNode0[0], esDsHiAtNode0[0].length); // E
+        esDsHiAtNodeInitial0[1] = Arrays.copyOf(esDsHiAtNode0[1], esDsHiAtNode0[1].length); // D
+
+        double[][] esDsHiAtNodeInitial1 = new double[esDsHiAtNode1.length][esDsHiAtNode1[0].length];
+        esDsHiAtNodeInitial1[0] = Arrays.copyOf(esDsHiAtNode1[0], esDsHiAtNode1[0].length); // E
+        esDsHiAtNodeInitial1[1] = Arrays.copyOf(esDsHiAtNode1[1], esDsHiAtNode1[1].length); // D
+
+        System.out.println("Size of D's = " + esDsHiAtNode0[1].length);
+        System.out.println("Initial D's for sp1 = " + Arrays.toString(esDsHiAtNodeInitial0[1]));
+
+        q32.integrateBranch(myTree.getNode(0));
+    }
 //    @Test
 //    public void testIntegrateOneBranchLoRes48BinsInsideClassBothXandT() {
 //        // we're going to look at sp1

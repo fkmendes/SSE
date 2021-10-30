@@ -66,21 +66,16 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void pruneTree() {
-
+    public void integrateBranch(Node aNode) {
+        super.integrateBranch(aNode);
     }
 
     @Override
-    public void processBranch(Node node) {
-        super.processBranch(node);
+    public void processInternalNode(Node aNode) {
     }
 
     @Override
-    public void processInternalNode() {
-    }
-
-    @Override
-    public void processRootNode() {
+    public void startRecursionAtRootNode(Node rootNode) {
 
     }
 

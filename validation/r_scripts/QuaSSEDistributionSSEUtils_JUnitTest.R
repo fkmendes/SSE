@@ -18,8 +18,9 @@
 ## (9) testIntegrateOneBranchLoRes48BinsOutsideClassJustX
 ## (10) testIntegrateOneBranchLoRes1024BinsOutsideClassJustX
 ## (11) testIntegrateOneBranchLoRes4096BinsOutsideClassJustX (note that I'm using this in 4096 low res, but I'll co-opt 4096 high res in Java)
-## (12) testIntegrateOneBranchLoRes48BinsOutsideClassBothXandT
-## (13) testIntegrateOneBranchLoRes48BinsOutsideClassBothXandTTwoDt
+## (12) testBothXandTPropagateMethodsInsideClassOneBranchLoRes48Bins
+## (13) testBothXandTPropagateMethodsInsideClassOneBranchLoRes48BinsLargerDt
+## (14) testIntegrateOneBranchHiRes48BinsInsideClassBothXandTTwoDt
 
 ## IMPORTANT: expectations (outputs from paste(xyz, collapse=", ") will vary depending on machine architecture; when dnorm() gets very small inputs (e.g., dx * nx are both large), the initial values of D will be tiny, and then the result of FFT on different machines will differ
 ##
@@ -94,7 +95,7 @@ fftR.propagate.x <- function(vars, nx, fy, nkl, nkr) {
     vars.out
 }
 
-quasse.extent <- function (control, drift, diffusion) {
+quasse.extent.debug <- function (control, drift, diffusion) {
     nx <- control$nx
     dx <- control$dx
     dt <- control$dt.max
@@ -110,11 +111,16 @@ quasse.extent <- function (control, drift, diffusion) {
         sd <- sqrt(diffusion * dt)
         nkl <- max(ceiling(-(mean - w * sd)/dx)) * c(r, 1)
         nkr <- max(ceiling((mean + w * sd)/dx)) * c(r, 1)
+
         print(paste("nx =", nx))
+        print(paste("diffusion = ", diffusion, " drift = ", drift))
         print(paste("mean =", mean, "sd =", sd, "w =", w, "r =", r))
         print(paste("nkl =", nkl, "nkr =", nkr))
+
         ndat <- nx * c(r, 1) - (nkl + 1 + nkr)
+
         print(paste("ndat =", ndat))
+
         padding <- cbind(nkl, nkr)
         storage.mode(padding) <- "integer"
     }
@@ -157,7 +163,6 @@ make.pde.quasse.fftR <- diversitree:::make.pde.quasse.fftR
 make.pde.quasse.mol <- diversitree:::make.pde.quasse.mol
 
 make.branches.quasse.fftC <- diversitree:::make.branches.quasse.fftC
-make.branches.quasse.fftR <- diversitree:::make.branches.quasse.fftR
 make.branches.quasse.mol <- diversitree:::make.branches.quasse.mol
 
 make.cache.quasse <- diversitree:::make.cache.quasse
@@ -443,7 +448,7 @@ make.pars.quasse <- function (cache) {
         names(pars) <- NULL
         drift <- pars[args$drift]
         diffusion <- pars[args$diffusion]
-        ext <- quasse.extent(cache$control, drift, diffusion)
+        ext <- quasse.extent.debug(cache$control, drift, diffusion)
         pars <- expand.pars.quasse(cache$lambda, cache$mu, args,
             ext, pars)
         diversitree:::check.pars.quasse(pars$hi$lambda, pars$hi$mu, drift,
@@ -556,7 +561,7 @@ args.fft.just.t <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each 
 pars.just.t <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
-ext.fft.just.t <- quasse.extent(control.fft.48, drift, diffusion) # prepares X axis stuff
+ext.fft.just.t <- quasse.extent.debug(control.fft.48, drift, diffusion) # prepares X axis stuff
 ext.fft.just.t$padding
 
 pars.fft.just.t <- expand.pars.quasse(lambda, mu, args.fft.just.t, ext.fft.just.t, pars.just.t) # adds lambda and mu vectors to ext.fft.just.x
@@ -585,7 +590,7 @@ args.fft.just.x <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each 
 pars.just.x <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
-ext.fft.just.x <- quasse.extent(control.fft.48, drift, diffusion) # prepares X axis stuff
+ext.fft.just.x <- quasse.extent.debug(control.fft.48, drift, diffusion) # prepares X axis stuff
 ext.fft.just.x$padding # 16/16, 4/4
 
 pars.fft.just.x <- expand.pars.quasse(lambda, mu, args.fft.just.x, ext.fft.just.x, pars.just.x) # adds lambda and mu vectors to ext.fft.just.x
@@ -694,7 +699,7 @@ paste(ds.prop.x.4096[1001:1048,2], collapse=", ") # 1.12964601442883, 1.13523957
 
 
 
-## (12) testIntegrateOneBranchLoRes48BinsOutsideClassBothXandT
+## (12) testBothXandTPropagateMethodsInsideClassOneBranchLoRes48Bins
 
 ## need to control.fft.48 from (8)
 
@@ -702,17 +707,17 @@ paste(ds.prop.x.4096[1001:1048,2], collapse=", ") # 1.12964601442883, 1.13523957
 quasse.integrate.fftR.3 <- function (vars, lambda, mu, drift, diffusion, nstep, dt, nx,
     ndat, dx, nkl, nkr) {
 
-    ## print("vars"); print(vars)
-    ## print("lambda"); print(lambda)
-    ## print("mu"); print(mu)
-    ## print("drift"); print(drift)
-    ## print("diffusion"); print(diffusion)
-    ## print("nstep"); print(nstep)
-    ## print("dt"); print(dt)
-    ## print("nx"); print(nx)
-    ## print("dx"); print(dx)
-    ## print("nkl"); print(nkl)
-    ## print("nkr"); print(nkr)
+    print("vars"); print(vars)
+    print("lambda"); print(lambda)
+    print("mu"); print(mu)
+    print("drift"); print(drift)
+    print("diffusion"); print(diffusion)
+    print("nstep"); print(nstep)
+    print("dt"); print(dt)
+    print("nx"); print(nx)
+    print("dx"); print(dx)
+    print("nkl"); print(nkl)
+    print("nkr"); print(nkr)
 
     kern = fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
         nx, dx, nkl, nkr)
@@ -730,7 +735,7 @@ quasse.integrate.fftR.3 <- function (vars, lambda, mu, drift, diffusion, nstep, 
         print("D's after propagate in t")
         print(paste(vars[,2], collapse=", "))
 
-        vars = diversitree:::fftR.propagate.x(vars, nx, fy, nkl, nkr) # ignoring propagate X
+        vars = diversitree:::fftR.propagate.x(vars, nx, fy, nkl, nkr)
 
         print("E's after propagate in t and x")
         print(paste(vars[,1], collapse=", "))
@@ -747,14 +752,21 @@ make.pde.quasse.fftR.3 <- function (nx, dx, dt.max, nd) {
         padding <- pars$padding
 
         ndat <- length(pars$lambda)
-        nt <- as.integer(ceiling(len/dt.max))
-        dt <- len/nt
+        nt <- as.integer(ceiling(len/dt.max)) # number of time intervals, rounded up
+        dt <- len/nt # size of the interval;
 
-        ## print("y"); print(y)
-        ## print("length(y)"); print(length(y))
-        ## print("nd"); print(nd)
-        ## print("nd * nx"); print(nd * nx)
-        ## print("ndat"); print(ndat)
+        ## branch length = 10
+        ## dt.max = 0.45
+        ## 0.1 length left after 2 * dt.max
+        ## when he ceiling, he gets nt = 3
+        ## then dt = 10 / 3 = 0.33333333
+        ## then there's no left over, and dt is by definition < dt.max
+
+        print("y"); print(y)
+        print("length(y)"); print(length(y))
+        print("nd"); print(nd)
+        print("nd * nx"); print(nd * nx)
+        print("ndat"); print(ndat)
 
         if (!(length(y) %in% (nd * nx)))
             stop("Wrong size y")
@@ -813,7 +825,7 @@ paste(ans.fftR.48.both[[2]][,2], collapse=", ") # 0.00582911973804044, 0.0122173
 
 
 
-## (13) testIntegrateOneBranchLoRes48BinsOutsideClassBothXandTTwoDt
+## (13) testBothXandTPropagateMethodsInsideClassOneBranchLoRes48BinsLargerDt
 
 ## need to define quasse.integrate.fftR.3 and make.pde.quasse.fftR.3 from (12)
 
@@ -900,6 +912,465 @@ paste(ans.fftR.48.2dt.both.hi[[2]][147:156,1], collapse=", ") # first 10 after t
 ## D's
 paste(ans.fftR.48.2dt.both.hi[[2]][1:10,2], collapse=", ") # first 10 after t and x = 0.00702820159929666, 0.00846701389122616, 0.0101749104601223, 0.0121967797643638, 0.0145839118185068, 0.0173947078706217, 0.0206954327177744, 0.0245610056719514, 0.0290758246777289, 0.0343346164011134
 paste(ans.fftR.48.2dt.both.hi[[2]][147:156,2], collapse=", ") # first 10 after t and x = 0.0145775495535427, 0.0121913864192371, 0.0101703507995081, 0.00846316941698422, 0.00702496883741221, 0, 0, 0, 0, 0
+
+
+
+## (15)
+
+lambda <- function(x) sigmoid.x(x, 0.1, 0.2, 0, 2.5)
+mu <- function(x) constant.x(x, 0.03)
+char <- make.brownian.with.drift(0, 0.025)
+drift <- 0.0
+diffusion <- 0.001
+sd <- 0.05
+
+set.seed(1)
+tr <- tree.quasse(c(lambda, mu, char), max.taxa=2, x0=0, single.lineage=FALSE, verbose=TRUE)
+# simplifying tree for unit test
+tr$tip.state[1] <- 0.0 # ch state
+tr$tip.state[2] <- 0.1 # ch state
+tr$edge.length <- c(0.01, 0.01)  # branch lengths
+tr$orig[,2] <- c(0.01, 0.01) # branch lengths
+tr$orig[,4] <- c(0.0, 0.1) # ch states
+
+pars <- c(.1, .2, 0, 2.5, .03, drift, diffusion)
+
+make.cache.quasse.debug <- function (tree, states, states.sd, lambda, mu, control, sampling.f, for.split = FALSE) {
+    tree <- diversitree:::check.tree(tree)
+    tmp <- diversitree:::check.states.quasse(tree, states, states.sd)
+    states <- tmp$states
+    states.sd <- tmp$states.sd
+    control <- check.control.quasse(control, tree, states)
+    cache <- make.cache(tree)
+    cache$states <- states
+    cache$states.sd <- states.sd
+    cache$control <- control
+    if (!for.split) {
+        n.lambda <- check.f.quasse(lambda)
+        n.mu <- check.f.quasse(mu)
+        n.args <- n.lambda + n.mu + 2
+        args <- list(lambda = seq_len(n.lambda), mu = seq_len(n.mu) +
+            n.lambda, drift = n.lambda + n.mu + 1, diffusion = n.lambda +
+            n.mu + 2)
+        cache$lambda <- lambda
+        cache$mu <- mu
+        cache$args <- args
+        sampling.f <- check.sampling.f(sampling.f, 1)
+        cache$sampling.f <- sampling.f
+    }
+    cache$info <- make.info.quasse(lambda, mu, tree)
+    cache
+}
+
+combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
+
+    nx <- control$nx
+    dx <- control$dx
+    tc <- control$tc
+    r <- control$r
+    eps <- log(control$eps)
+    dt.max <- control$dt.max
+
+    careful <- function(f, y, len, pars, t0, dt.max) {
+
+        ## if low res, f() == f.lo
+        ## if high res, f() == f.hi
+        ans <- f(y, len, pars, t0)
+
+        if (ans[[1]] > eps) {
+            ans
+        }
+        else {
+            if (control$method == "fftC" || control$method ==
+                "fftR")
+                dt.max <- dt.max/2
+            len2 <- len/2
+            ans1 <- Recall(f, y, len2, pars, t0, dt.max)
+            ans2 <- Recall(f, ans1[[2]], len2, pars, t0 + len2,
+                dt.max)
+            ans2[[1]][[1]] <- ans1[[1]][[1]] + ans2[[1]][[1]]
+            ans2
+        }
+    }
+
+    function(y, len, pars, t0, idx) {
+
+        print(paste0("len = ", len))
+
+        if (t0 < tc) {
+            dx0 <- dx/r
+            nx0 <- nx * r
+
+            ## print(paste("dx0 = ", dx0))
+            ## print(paste("nx0 = ", nx0))
+
+        }
+        else {
+            dx0 <- dx
+            nx0 <- nx
+        }
+        if (any(y < -1e-08))
+            stop("Actual negative D value detected -- calculation failure")
+
+        y[y < 0] <- 0
+        y <- matrix(y, nx0, 2) # if in low-res, this re-sizes it
+
+        print("y inside combine.branches before changes = ")
+        print(y)
+
+        q0 <- sum(y[, 2]) * dx0 # calculating normalization factor from D's
+        if (q0 <= 0)
+            stop("No positive D values")
+
+        y[, 2] <- y[, 2]/q0 # normalizing D's, before we integrate
+
+        print("y inside combine.branches after changes = ")
+        print(y)
+
+        lq0 <- log(q0) # will be added at the very end
+
+        ## option 1: initial time is already past tc, low-res
+        if (t0 >= tc) {
+
+            print("y inside combine.branches for lo = ")
+            print(y)
+
+            ans <- careful(f.lo, y, len, pars$lo, t0, dt.max) # integrate
+
+            print("ans at lo, prior to adding log-normalization factor")
+            print(ans)
+        }
+
+        ## option 2: initial time + dt is still lower than tc, high-res
+        else if (t0 + len < tc) {
+
+            print("y inside combine.branches for hi = ")
+            print(y)
+
+            ans <- careful(f.hi, y, len, pars$hi, t0, dt.max) # integrate
+
+            print("ans at hi, prior to adding log-normalization factor")
+            print(ans)
+        }
+
+        ## option 3: first segment in high-resolution (up until tc), then remaining in low-res
+        ## note that option 3 will happen before option 1 -- in option 1, y has already been
+        ## resized to low-res
+        else {
+
+            print("y inside combine.branches for hi = ")
+            print(y)
+
+            len.hi <- tc - t0 # by adding dt here, we went beyond tc; we only care to integrate over the remaining distance though, which is given by len.hi
+
+            ans.hi <- careful(f.hi, y, len.hi, pars$hi, t0, dt.max) # integrate first stretch at high-res
+
+            ## but then here we grab just every r-th element in ans.hi (as given by a vector of indices separated by r in pars$tr)
+            ## y.lo will be the first elements inside the low-res y -- the rest will be 0's (see below)
+            y.lo <- ans.hi[[2]][pars$tr, ]
+
+            lq0 <- lq0 + ans.hi[[1]] # we get the normalization factor still at high-res
+
+            ## why would nrow(y.lo) < nx (nx here is the low-res nx)?
+            ## we're putting 0's after the y.lo
+            if (nrow(y.lo) < nx) y.lo <- rbind(y.lo, matrix(0, nx - length(pars$tr), 2))
+
+            ans <- careful(f.lo, y.lo, len - len.hi, pars$lo, tc, dt.max) # integrate remaining stretch at low-res
+
+            print("ans at hi, but interval < dt, prior to adding log-normalization factor")
+            print(ans)
+        }
+
+        print("ans at return of combine.branches.quasse, prior to adding log-normalization factor")
+        print(ans)
+
+        print(paste0("log-normalization factor = ", lq0))
+
+        print("ans at return of combine.branches.quasse, after adding log-normalization factor")
+        print(c(ans[[1]] + lq0, ans[[2]])) # lq0 here can be either high or low-res depending on which of the if/else if/else block executed, i.e., whether the branch is < >= tc
+
+        ## ans[[1]] is the log((sum over all D's) * dx), the input of which was normalized; we need to keep adding to it; so at the very end of the pruning (at the root) we can unnormalize the likelihood
+        ## ans[[2]] is the dataframe with the E's and D's
+        c(ans[[1]] + lq0, ans[[2]])
+    }
+}
+
+make.branches.quasse.fftR.debug <- function(control) {
+    nx <- control$nx
+    dx <- control$dx
+    r <- control$r
+    dt.max <- control$dt.max
+    tc <- control$tc
+
+    ## make.pde.quasse.fftR returns a function, which in turn runs quasse.integrate.fftR, returning c(log(q), ans)
+    f.hi <- make.pde.quasse.fftR.3(nx * r, dx/r, dt.max, 2L)
+    f.lo <- make.pde.quasse.fftR.3(nx, dx, dt.max, 2L)
+
+    combine.branches.quasse.debug(f.hi, f.lo, control)
+}
+
+initial.tip.quasse.debug <- function(cache, control, x) {
+    nx <- control$nx * control$r
+    npad <- nx - length(x)
+    e0 <- 1 - cache$sampling.f
+    if (control$tips.combined) {
+        tips <- cache$tips
+        t <- cache$len[tips]
+        i <- order(t)
+        target <- tips[i]
+        states <- cache$states[i]
+        states.sd <- cache$states.sd[i]
+        y <- mapply(function(mean, sd) c(dnorm(x, mean, sd),
+            rep(0, npad)), states, states.sd, SIMPLIFY = FALSE)
+        y <- matrix(c(rep(e0, nx), unlist(y)), nx, length(target) + 1)
+
+        ## print("if: y inside initial.tip.quasse = ");  print(y)
+
+        list(target = target, y = y, t = t[i])
+    }
+    else {
+
+        print("cache$states = "); print(cache$states)
+        print("cache$states.sd = "); print(cache$states.sd)
+
+        y <- mapply(function(mean, sd) c(rep(e0, nx), dnorm(x,
+            mean, sd), rep(0, npad)), cache$states, cache$states.sd,
+            SIMPLIFY = FALSE)
+
+        print("else: y inside initial.tip.quasse = ");  print(y)
+
+        diversitree:::dt.tips.ordered(y, cache$tips, cache$len[cache$tips])
+    }
+}
+
+all.branches.list.debug <- function (pars, cache, initial.conditions, branches, preset) {
+    len <- cache$len
+    depth <- cache$depth
+    children <- cache$children
+    order <- cache$order[-length(cache$order)]
+    root <- cache$root
+    n <- length(len)
+    lq <- rep(0, n)
+    n.tip <- cache$n.tip
+    y <- cache$y
+
+    branch.init <- branch.base <- vector("list", n)
+
+    ## not sure what this is for
+    if (!is.null(preset)) {
+        lq[preset$target] <- preset$lq
+        branch.base[preset$target] <- preset$base
+    }
+
+    ## doing all tips first
+    if (is.null(names(y))) {
+        ## x is a tip
+        for (x in y) {
+            if (!is.null(x)) {
+                idx <- x$target
+                branch.init[idx] <- list(x$y)
+                ans <- branches(x$y, x$t, pars, 0, idx) # return from combine.branches.quasse()
+                lq[idx] <- unlist(lapply(ans, "[[", 1)) # getting the log((sum over all D's) * dt) for this node
+                branch.base[idx] <- lapply(ans, "[", -1)
+            }
+        }
+    }
+
+    ## tip (not used)
+    else {
+        tip.t <- y$t
+        tip.target <- y$target
+        tip.y <- branch.init[tip.target] <- y$y
+        for (i in seq_along(tip.t)) {
+            idx <- tip.target[i]
+            ans <- branches(tip.y[[i]], tip.t[i], pars, 0, idx) # return from combine.branches.quasse()
+            lq[idx] <- ans[[1]] # getting the log((sum over all D's) * dt) for this node
+            branch.base[[idx]] <- ans[-1]
+        }
+    }
+
+    ## internal nodes done here
+    for (i in order) {
+        y.in <- initial.conditions(branch.base[children[i, ]], pars, depth[i], i) # compute initial D for i-th internal node from children
+        if (!is.list(y.in) && !all(is.finite(y.in)))
+            stop("Bad initial conditions: calculation failure along branches?")
+        branch.init[[i]] <- y.in # book keeping, and MLE at each internal node
+        ans <- branches(y.in, len[i], pars, depth[i], i) # return from combine.branches.quasse()
+        lq[i] <- ans[[1]] # getting the log((sum over all D's) * dt) for this node
+        branch.base[[i]] <- ans[-1] # E's and normalized D's
+    }
+
+    y.in <- initial.conditions(branch.base[children[root, ]],
+        pars, depth[root], root)
+
+    branch.init[[root]] <- y.in
+
+    ## return with answer we care: lq (normalizing factors for all nodes in the tree) and y.in (normalized D of root)
+    list(init = branch.init, base = branch.base, lq = lq, vals = y.in)
+}
+
+make.initial.conditions.quasse.debug <- function() {
+    tc <- control$tc
+    r <- control$r
+    nx.lo <- control$nx
+    nx.hi <- nx.lo * r
+    eps <- 1e-08
+    function(init, pars, t, idx) {
+        if (length(init[[1]]) != length(init[[2]]))
+            stop("Data have incompatible length")
+        if (t < tc) {
+            nx <- nx.hi
+            lambda <- pars[[1]]$lambda
+        }
+        else {
+            nx <- nx.lo
+            lambda <- pars[[2]]$lambda
+        }
+        ndat <- length(lambda)
+        i <- seq_len(nx)
+        j <- seq.int(nx + 1, nx + ndat)
+
+        ## return
+        ## init[[1]][i] is the E from child 1 (= E from child 2)
+        ## init[[1]][j] is the D from child 1
+        ## init[[2]][j] is the D from child 2
+        ## and 0's for padding
+        c(init[[1]][i], init[[1]][j] * init[[2]][j] * lambda,
+            rep.int(0, nx - ndat))
+    }
+}
+
+make.all.branches.quasse.debug <- function (cache, control)  {
+
+    branches <- make.branches.quasse.fftR.debug(control)
+
+    initial.conditions <- make.initial.conditions.quasse.debug(control)
+
+    function(pars, intermediates, preset = NULL) {
+        cache$y <- initial.tip.quasse.debug(cache, cache$control, pars[[1]]$x)
+
+        ## prunes tree and returns list with likelihood
+        all.branches.list.debug(pars, cache, initial.conditions, branches,
+            preset)
+    }
+}
+
+make.pars.quasse.debug <- function (cache) {
+    args <- cache$args
+    function(pars) {
+        names(pars) <- NULL
+        drift <- pars[args$drift]
+        diffusion <- pars[args$diffusion]
+        ext <- quasse.extent.debug(cache$control, drift, diffusion)
+        pars <- expand.pars.quasse(cache$lambda, cache$mu, args,
+            ext, pars)
+        diversitree:::check.pars.quasse(pars$hi$lambda, pars$hi$mu, drift,
+            diffusion)
+        pars
+    }
+}
+
+make.quasse.debug <- function (tree, states, states.sd, lambda, mu, control = NULL, sampling.f = NULL) {
+    cache <- make.cache.quasse(tree, states, states.sd, lambda, mu, control, sampling.f)
+
+    print("cache$control")
+    print(cache$control)
+
+    ## We go function to function to function to function...
+    ## make.all.branches.quasse (1) initializes things with make.initial.conditions.quasse(),
+    ## and then (2) computes the likelihood with all.branches.list(), which in turn calls make.branches.quasse.fftR()
+    ## then make.branches.quasse.fftR() calls combine.branches.quasse()
+    ## combine.branches.quasse() makes use of make.pde.quasse.fftR(), which returns a function that actually does the integration
+    ## in quasse.integrate.fftR()
+    all.branches <- make.all.branches.quasse.debug(cache, cache$control)
+
+    rootfunc <- diversitree:::make.rootfunc.quasse(cache)
+    f.pars <- make.pars.quasse.debug(cache)
+    ll <- function(pars, condition.surv = TRUE, root = ROOT.OBS,
+        root.f = NULL, intermediates = FALSE) {
+        pars2 <- f.pars(pars)
+        ans <- all.branches(pars2, intermediates) # list containing numbers we care about
+        rootfunc.debug(ans, pars2, condition.surv, root, root.f, intermediates)
+    }
+    class(ll) <- c("quasse", "dtlik", "function")
+    ll
+}
+
+rootfunc.debug <- function(cache) {
+    root.idx <- cache$root
+    nx <- cache$control$nx
+    dx <- cache$control$dx
+    function(res, pars, condition.surv, root, root.f, intermediates) {
+        ## vals and lq come from all.branches.list
+        vals <- matrix(res$vals, nx, 2)[seq_len(pars$lo$ndat),] # just making matrix
+        lq <- res$lq # all normalizing factors for all nodes in tree
+        d.root <- vals[, 2] # normalized D's at root
+        root.p <- root.p.quasse(d.root, pars$lo, root, root.f) # prior at root for each trait value bin (several options, user-defined); the default is the weighted sum, which is (d.root/sum(d.root) ==> returns a vector)
+
+        if (condition.surv) {
+            lambda <- pars$lo$lambda
+            e.root <- vals[, 1]
+            ## param = lambda, mu
+            ## data D = tree (fixed)
+            ## tip states are boundary conditions
+            ## P(D|param) = L(param;D)
+            ## at this point, d.root = P(D,tree_exists|params) = P(D|params,tree_exists) * P(tree_exists)
+            ## but what we want is P(D|params,tree_exists)
+            ## so we need to d.root / P(tree_exists)
+
+            d.root <- d.root /
+                sum(root.p * lambda * (1 - e.root)^2) * dx ## normalizing by this sum here accounts for conditioning for survival, P(tree_exists)
+            ## e.root is the probability of extinction of a lineage starting at the root
+            ## (1 - e.root) is the probability that lineage survives until today
+            ## we square it because there are two lineages coming from the root (i.e., the definition of a tree)
+            ## multiply by lambda because we need a sp'n event at the root generating those two lineages
+            ## multiply by root.p to account for the trait value states (those influence the extinction probability)
+            ## * dx: multiplying by bin size converts densities (median of bin is a density) into probabilities
+        }
+
+        loglik <- log(sum(root.p * d.root) * dx) + sum(lq) # goes back to actual likelihood ("unnormalizing it")
+
+        ## doesn't seem important (?)
+        if (intermediates) {
+            attr(loglik, "intermediates") <- res
+            attr(loglik, "vals") <- vals
+        }
+
+        ## returns final result
+        loglik
+    }
+}
+
+## in C
+
+control.C.1 <- list(tc=0.009,
+                    dt.max=0.01,
+                    nx=32,
+                    dx=0.01,
+                    r=4L,
+                    xmid=0,
+                    w=10,
+                    flags=0L,
+                    verbose=0L,
+                    atol=1e-6,
+                    rtol=1e-6,
+                    eps=1e-3,
+                    method="fftC") # single dt covering entire bifurcating tree height
+
+lik.C.1 <- make.quasse.debug(tr, tr$tip.state, sd, sigmoid.x, constant.x, control.C.1)
+(ll.C.1 <- lik.C.1(pars))
+
+## the above command will print a lot of things, some of those things are the unit tests expectations
+## at the top, $sp1 and $sp2 correspond to the expectedEsDsAtTips
+##
+## sp1, elements 129-138, expected = 0.5043644, 0.5665408, 0.6347930, 0.7094919, 0.7910008, 0.8796719, 0.9758404, 1.0798193, 1.1918941, 1.3123163
+
+## in R
+## control.R.1 <- list(dt.max=0.01, method="fftR")
+## lik.R.1 <- make.quasse.debug(tr, tr$tip.state, sd, sigmoid.x, constant.x, control.R.1)
+## (ll.R.1 <- lik.R.1(pars)) # -28.43912
+
+## diversitree:::make.quasse
 
 ###################
 

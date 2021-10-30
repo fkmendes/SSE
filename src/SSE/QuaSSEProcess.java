@@ -97,10 +97,12 @@ public abstract class QuaSSEProcess extends Distribution {
         nUsefulXbins[1] = nUsefulXbinsHi;
 
         // uncomment to check things
-        // System.out.println("Setting dimensions of QuaSSEProcess");
-        // System.out.println("nXbinsLo = " + nXbinsLo + " nXbinsHi = " + nXbinsHi);
-        // System.out.println("nLeftFlankHi = " + nLeftNRightFlanksHi[0] + " nRightFlankHi = " + nLeftNRightFlanksHi[1]);
-        // System.out.println("nUsefulXbinsHi = " + nUsefulXbinsHi);
+        System.out.println("\n\nSetting dimensions of QuaSSEProcess");
+        System.out.println("nXbinsLo = " + nXbinsLo + " nXbinsHi = " + nXbinsHi);
+        System.out.println("nLeftFlankLo = " + nLeftNRightFlanksLo[0] + " nRightFlankLo = " + nLeftNRightFlanksLo[1]);
+        System.out.println("nUsefulXbinsLo = " + nUsefulXbinsLo);
+        System.out.println("nLeftFlankHi = " + nLeftNRightFlanksHi[0] + " nRightFlankHi = " + nLeftNRightFlanksHi[1]);
+        System.out.println("nUsefulXbinsHi = " + nUsefulXbinsHi);
     }
 
     /*
@@ -111,7 +113,8 @@ public abstract class QuaSSEProcess extends Distribution {
         xMinLo = xMid - dXbin * Math.ceil((nUsefulXbinsLo - 1.0) / 2.0);
         xMinHi = xMinLo - dXbin * (1.0 - 1.0 / hiLoRatio);
 
-        // System.out.println("xMinLo = " + xMinLo + " xMinHi = " + xMinHi);
+        // debugging
+        System.out.println("xMinLo = " + xMinLo + " xMinHi = " + xMinHi);
 
         // preparing x rulers
         xLo = new double[nUsefulXbinsLo];
@@ -165,6 +168,7 @@ public abstract class QuaSSEProcess extends Distribution {
 //        }
 
         // FFTs normal kernel
+        // TODO: think if the FFTs below should maybe be inside the previous if block together with making the kernel
         if (doFFT) {
             fftForEandDLo.realForwardFull(fYLo);
             fftForEandDHi.realForwardFull(fYHi);
@@ -184,22 +188,17 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void pruneTree();
+    protected abstract void integrateBranch(Node aNode);
 
     /*
      *
      */
-    protected abstract void processBranch(Node node);
+    protected abstract void processInternalNode(Node aNode);
 
     /*
      *
      */
-    protected abstract void processInternalNode();
-
-    /*
-     *
-     */
-    protected abstract void processRootNode();
+    protected abstract void startRecursionAtRootNode(Node rootNode);
 
     /*
      * Does integration in time and character space in place
@@ -221,6 +220,15 @@ public abstract class QuaSSEProcess extends Distribution {
      */
     protected abstract void convolve();
 
+    /*
+     * This method looks at the relevant objects in state,
+     * computes the log-likelihood, and returns it
+     */
+    protected abstract double getLogPFromRelevantObjects();
+
+    /*
+     * Getters, setters and helper methods below
+     */
     public int getnXbins(boolean lowRes) {
         if (lowRes) return nXbinsLo;
         else return nXbinsHi;

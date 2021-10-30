@@ -26,6 +26,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     // state that matters directly for calculateLogP
     private double[][][] esDsLo, esDsHi; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
     private double[][][] scratchLo, scratchHi;
+    private double[] logNormalizationFactors;
 
     @Override
     public void initAndValidate() {
@@ -33,6 +34,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         super.initAndValidate(); // read in all dimension-related stuff, populates fYLo and fYHi
 
         int nNodes = tree.getNodeCount();
+
+        logNormalizationFactors = new double[nNodes];
 
         q2mLambda = q2mLambdaInput.get();
         birthRatesLo = new double[nUsefulXbinsLo];
@@ -72,7 +75,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public void populateTipsEsDs(int nDimensionsFFT, int nXbinsHi, boolean ignoreRefresh) {
-
         for (Node tip: tree.getExternalNodes()) {
             String tipName = tip.getID();
             int nodeIdx = tip.getNr();
@@ -103,35 +105,77 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void pruneTree() {
+    public void startRecursionAtRootNode(Node rootNode) {
+        processInternalNode(rootNode); // start recursion
 
+        // do stuff after recursion is done
+        // TODO: stuff
     }
 
     @Override
-    public void processBranch(Node node) {
+    public void processInternalNode(Node aNode) {
+        if (aNode.isLeaf()) integrateBranch(aNode);
 
+        else {
+            for (Node childNode: aNode.getChildren()) {
+                processInternalNode(childNode); // recur
+            }
+        }
+    }
+
+    @Override
+    public void integrateBranch(Node aNode) {
         boolean lowRes = false;
-        int nodeIdx = node.getNr();
+        int nodeIdx = aNode.getNr();
 
-        double startTime = node.getHeight(); // we're going backwards in time, toward the root
+        double startTime = aNode.getHeight(); // we're going backwards in time, toward the root
         if (startTime > tc) lowRes = true; // entire branch might already be > tc
 
         // debugging
         // System.out.println("lowRes at beginning of branch subtending node " + nodeIdx + " = " + lowRes);
 
-        // grabbing esDs and scratch depending on resolution
+        /*
+         * Grabbing esDs and scratch depending on resolution.
+         * This is done only once if node is already at low, rather than
+         * at every loop of the while block below
+         */
         double[][] esDsAtNode, scratchAtNode;
+        double normalizationFactorFromDs = 0.0;
         if (lowRes) {
+            // calculate normalization factor to avoid underflow
+            for (double d: esDsLo[nodeIdx][1]) normalizationFactorFromDs += d;
+            normalizationFactorFromDs *= dXbin;
+
             esDsAtNode = esDsLo[nodeIdx];
             scratchAtNode = scratchLo[nodeIdx];
-        }
-        else {
+
+            // now normalize D's
+            // TODO: later it could be a problem that I'm normalizing esDsAtNode instead of esDsLo[nodeIdx]
+            for (int i=0; i<esDsAtNode[1].length; i++) {
+                esDsAtNode[1][i] /= normalizationFactorFromDs;
+            }
+        } else {
+            // calculate normalization factor to avoid underflow
+            for (double d: esDsHi[nodeIdx][1]) normalizationFactorFromDs += d;
+            normalizationFactorFromDs *= (dXbin / hiLoRatio);
+
             esDsAtNode = esDsHi[nodeIdx];
             scratchAtNode = scratchHi[nodeIdx];
+
+            // now normalize D's
+            // TODO: later it could be a problem that I'm normalizing esDsAtNode instead of esDsHi[nodeIdx]
+            // debug
+            // System.out.println("Unnormalized D's = " + Arrays.toString(esDsAtNode[1]));
+
+            for (int i=0; i<esDsAtNode[1].length; i++) {
+                esDsAtNode[1][i] /= normalizationFactorFromDs;
+            }
+
+            System.out.println("Normalized D's = " + Arrays.toString(esDsAtNode[1]));
         }
 
         boolean isFirstDt = true;
-        while ((startTime + dt) <= node.getParent().getHeight()) {
+        while ((startTime + dt) <= aNode.getParent().getHeight()) {
             // if we go through tc in the middle of a branch
             if (startTime > tc) {
                 esDsAtNode = esDsLo[nodeIdx];
@@ -151,16 +195,9 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         }
     }
 
-    @Override
-    public void processInternalNode() {
-
-    }
-
-    @Override
-    public void processRootNode() {
-
-    }
-
+    /*
+     * Math-y methods start below
+     */
     @Override
     public void populatefY(boolean ignoreRefresh, boolean doFFT) {
         super.populatefY(ignoreRefresh, doFFT);
@@ -170,7 +207,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, boolean lowRes) {
 
         // debugging
-        // System.out.println("esDsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
+        System.out.println("esDsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
 
         // integrate over birth and death events (low or high resolution inside)
         propagateTInPlace(esDsAtNode, scratchAtNode, lowRes);
@@ -220,11 +257,26 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
+    public double getLogPFromRelevantObjects() {
+        return 0.0;
+    }
+
+    @Override
     public double calculateLogP() {
 
+        // refreshing parameters
         populateMacroevolParams(false);
 
-        return 0.0;
+        // refreshing tree
+        tree = treeInput.get();
+
+        // start recursion for likelihood calculation
+        startRecursionAtRootNode(tree.getRoot());
+
+        // put it all together
+        double myLogP = getLogPFromRelevantObjects();
+
+        return myLogP;
     }
 
 
