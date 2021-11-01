@@ -114,13 +114,15 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public void processInternalNode(Node aNode) {
-        if (aNode.isLeaf()) integrateBranch(aNode);
-
-        else {
+        // recur if internal node or sampled ancestor
+        if (!aNode.isLeaf()) {
             for (Node childNode: aNode.getChildren()) {
                 processInternalNode(childNode); // recur
             }
         }
+
+        // after recursion, do its own branch
+        integrateBranch(aNode);
     }
 
     @Override
@@ -203,7 +205,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
                 normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
                 for (int j=0; j<esDsAtNode[1].length; j++) esDsAtNode[1][j] /= normalizationFactorFromDs;
                 logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
-                // TODO: store normalizationFactorFromDs
 
                 // integration of the root-end in low res
                 esDsAtNode = esDsLo[nodeIdx];
@@ -231,6 +232,20 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         double normalizationFactorFromDs = 0.0;
         for (double d: dS) normalizationFactorFromDs += d;
         return (normalizationFactorFromDs *= binSize);
+    }
+
+    @Override
+    public void populatePriorProbAtRoot(String rootPriorType) {
+        if (rootPriorType == FLAT) {
+            ;
+        }
+        else if (rootPriorType == OBS) {
+            ;
+        }
+        else if (givenPriorProbsAtRoot != null) {
+            // GIVEN!
+        }
+        else { throw new RuntimeException(); }
     }
 
     @Override
@@ -288,6 +303,10 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public double getLogPFromRelevantObjects() {
+        double denormalizationLogLik = 0.0;
+        for (double d: logNormalizationFactors) denormalizationLogLik += d;
+
+
         return 0.0;
     }
 

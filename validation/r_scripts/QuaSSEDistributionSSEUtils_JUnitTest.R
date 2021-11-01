@@ -648,7 +648,7 @@ args.fft.just.x.1024 <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of 
 pars.just.x.1024 <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
-ext.fft.just.x.1024 <- quasse.extent(control.fft.just.x.1024, drift, diffusion) # prepares X axis stuff
+ext.fft.just.x.1024 <- quasse.extent.debug(control.fft.just.x.1024, drift, diffusion) # prepares X axis stuff
 # ext.fft.just.x.1024$padding
 
 pars.fft.just.x.1024 <- expand.pars.quasse(lambda, mu, args.fft.just.x.1024, ext.fft.just.x.1024, pars.just.x.1024) # adds lambda and mu vectors to ext.fft.just.x
@@ -719,7 +719,7 @@ quasse.integrate.fftR.3 <- function (vars, lambda, mu, drift, diffusion, nstep, 
     print("nkl"); print(nkl)
     print("nkr"); print(nkr)
 
-    kern = fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
+    kern = diversitree:::fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
         nx, dx, nkl, nkr)
 
     fy = fft(kern)
@@ -803,7 +803,7 @@ args.fft.48.both <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each
 pars.48.both <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
-ext.fft.48.both <- quasse.extent(control.fft.48, drift, diffusion) # prepares X axis stuff
+ext.fft.48.both <- quasse.extent.debug(control.fft.48, drift, diffusion) # prepares X axis stuff
 
 vars.fft.48.both <- matrix(0, control.fft.48$nx, 2) # low resolution
 vars.fft.48.both[seq_len(ext.fft.48.both$ndat[2]),2] <- dnorm(ext.fft.48.both$x[[2]], 0.0, sd)
@@ -853,7 +853,7 @@ args.fft.48.2dt.both <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of 
 pars.48.2dt.both <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
-ext.fft.48.2dt.both <- quasse.extent(control.fft.48.2dt, drift, diffusion) # prepares X axis stuff
+ext.fft.48.2dt.both <- quasse.extent.debug(control.fft.48.2dt, drift, diffusion) # prepares X axis stuff
 
 vars.fft.48.2dt.both <- matrix(0, control.fft.48.2dt$nx, 2) # low resolution
 vars.fft.48.2dt.both[seq_len(ext.fft.48.2dt.both$ndat[2]),2] <- dnorm(ext.fft.48.2dt.both$x[[2]], 0.0, sd)
@@ -892,7 +892,7 @@ args.fft.48.2dt.both <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of 
 pars.48.2dt.both <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
-ext.fft.48.2dt.both <- quasse.extent(control.fft.48.2dt, drift, diffusion) # prepares X axis stuff
+ext.fft.48.2dt.both <- quasse.extent.debug(control.fft.48.2dt, drift, diffusion) # prepares X axis stuff
 
 vars.fft.48.2dt.both <- matrix(0, control.fft.48.2dt$nx * 4, 2) # high resolution
 vars.fft.48.2dt.both[seq_len(ext.fft.48.2dt.both$ndat[1]),2] <- dnorm(ext.fft.48.2dt.both$x[[1]], 0.0, sd)
@@ -940,14 +940,14 @@ make.cache.quasse.debug <- function (tree, states, states.sd, lambda, mu, contro
     tmp <- diversitree:::check.states.quasse(tree, states, states.sd)
     states <- tmp$states
     states.sd <- tmp$states.sd
-    control <- check.control.quasse(control, tree, states)
-    cache <- make.cache(tree)
+    control <- diversitree:::check.control.quasse(control, tree, states)
+    cache <- diversitree:::make.cache(tree)
     cache$states <- states
     cache$states.sd <- states.sd
     cache$control <- control
     if (!for.split) {
-        n.lambda <- check.f.quasse(lambda)
-        n.mu <- check.f.quasse(mu)
+        n.lambda <- diversitree:::check.f.quasse(lambda)
+        n.mu <- diversitree:::check.f.quasse(mu)
         n.args <- n.lambda + n.mu + 2
         args <- list(lambda = seq_len(n.lambda), mu = seq_len(n.mu) +
             n.lambda, drift = n.lambda + n.mu + 1, diffusion = n.lambda +
@@ -955,10 +955,10 @@ make.cache.quasse.debug <- function (tree, states, states.sd, lambda, mu, contro
         cache$lambda <- lambda
         cache$mu <- mu
         cache$args <- args
-        sampling.f <- check.sampling.f(sampling.f, 1)
+        sampling.f <- diversitree:::check.sampling.f(sampling.f, 1)
         cache$sampling.f <- sampling.f
     }
-    cache$info <- make.info.quasse(lambda, mu, tree)
+    cache$info <- diversitree:::make.info.quasse(lambda, mu, tree)
     cache
 }
 
@@ -1209,7 +1209,7 @@ all.branches.list.debug <- function (pars, cache, initial.conditions, branches, 
     list(init = branch.init, base = branch.base, lq = lq, vals = y.in)
 }
 
-make.initial.conditions.quasse.debug <- function() {
+make.initial.conditions.quasse.debug <- function(control) {
     tc <- control$tc
     r <- control$r
     nx.lo <- control$nx
@@ -1262,7 +1262,7 @@ make.pars.quasse.debug <- function (cache) {
         drift <- pars[args$drift]
         diffusion <- pars[args$diffusion]
         ext <- quasse.extent.debug(cache$control, drift, diffusion)
-        pars <- expand.pars.quasse(cache$lambda, cache$mu, args,
+        pars <- diversitree:::expand.pars.quasse(cache$lambda, cache$mu, args,
             ext, pars)
         diversitree:::check.pars.quasse(pars$hi$lambda, pars$hi$mu, drift,
             diffusion)
@@ -1271,7 +1271,7 @@ make.pars.quasse.debug <- function (cache) {
 }
 
 make.quasse.debug <- function (tree, states, states.sd, lambda, mu, control = NULL, sampling.f = NULL) {
-    cache <- make.cache.quasse(tree, states, states.sd, lambda, mu, control, sampling.f)
+    cache <- make.cache.quasse.debug(tree, states, states.sd, lambda, mu, control, sampling.f)
 
     print("cache$control")
     print(cache$control)
@@ -1290,7 +1290,7 @@ make.quasse.debug <- function (tree, states, states.sd, lambda, mu, control = NU
         root.f = NULL, intermediates = FALSE) {
         pars2 <- f.pars(pars)
         ans <- all.branches(pars2, intermediates) # list containing numbers we care about
-        rootfunc.debug(ans, pars2, condition.surv, root, root.f, intermediates)
+        rootfunc(ans, pars2, condition.surv, root, root.f, intermediates)
     }
     class(ll) <- c("quasse", "dtlik", "function")
     ll
@@ -1343,8 +1343,8 @@ rootfunc.debug <- function(cache) {
 
 ## in C
 
-control.C.1 <- list(tc=0.009,
-                    dt.max=0.01,
+control.C.1 <- list(tc=0.005,
+                    dt.max=0.005,
                     nx=32,
                     dx=0.01,
                     r=4L,

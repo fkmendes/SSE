@@ -8,6 +8,7 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jtransforms.fft.DoubleFFT_1D;
 
 @Description("Specifies a quantitative trait(s) state-dependent speciation and" +
@@ -25,9 +26,17 @@ public abstract class QuaSSEProcess extends Distribution {
     final public Input<RealParameter> diffusionInput = new Input<>("diffusion", "Diffusion term of quantitative trait diffusion process.", Input.Validate.REQUIRED);
     final public Input<RealParameter> flankWidthScalerInput = new Input<>("flankWidthScaler", "Multiplier of normal standard deviation when determining number of flanking bins.", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> highLowRatioInput = new Input<>("hiLoRatio", "Scale nX by this when at high resolution.", Input.Validate.REQUIRED);
+    final public Input<String> priorProbAtRootTypeInput = new Input<>("priorProbAtRootType", "Type of root prior probabilities for D's", "Observed", Input.Validate.REQUIRED);
+    final public Input<RealParameter> priorProbsAtRootInput = new Input<>("givenPriorProbsAtRoot", "Root prior probabilities for D's", Input.Validate.XOR, priorProbAtRootTypeInput);
 
     protected Tree tree;
     protected RealParameter quTraits;
+
+    // dealing with prior probability at root
+    protected static final String FLAT = "Flat";
+    protected static final String OBS = "Observed";
+    protected double[] givenPriorProbsAtRoot;
+    protected String rootPriorType;
 
     // state for dimensioning things and setting up resolution of integration
     protected boolean dynamicallyAdjustDt;
@@ -47,6 +56,9 @@ public abstract class QuaSSEProcess extends Distribution {
     public void initAndValidate() {
 
         tree = treeInput.get();
+        rootPriorType = priorProbAtRootTypeInput.get();
+        givenPriorProbsAtRoot = ArrayUtils.toPrimitive(priorProbsAtRootInput.get().getValues()); // unboxing only at initialization
+        // TODO: once number of D's in low-res is calculated, needs to check if this has the same length; if not, throw RuntimeException
         // quTraits = quTraitsInput.get();
 
         nLeftNRightFlanksLo = new int[2];
@@ -186,6 +198,12 @@ public abstract class QuaSSEProcess extends Distribution {
      *
      */
     protected abstract void populateTipsEsDs(int nDimensionsFFT, int nXbins, boolean ignoreRefresh);
+
+    /*
+     * The D's at the root must be multiplied by a prior probability array.
+     * This method populates it in place depending on what the user wants.
+     */
+    protected abstract void populatePriorProbAtRoot(String rootPriorType);
 
     /*
      *

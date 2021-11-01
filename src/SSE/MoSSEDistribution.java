@@ -47,7 +47,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         nSitePat = algn.getPatternCount();
 
         int dtRes = 1;
-        instRateMat = new double[4*4];
+        instRateMat = new double[4 * 4];
 
         int nDimensionsFFT = 5; // E, and 4 D's (one for each nuc)
         initializeEsDs(tree.getNodeCount(), nSitePat, nDimensionsFFT, nXbinsLo, nXbinsHi);
@@ -62,6 +62,11 @@ public class MoSSEDistribution extends QuaSSEDistribution {
 
     @Override
     public void populateTipsEsDs(int nDimensionsFFT, int nUsefulXbinsHi, boolean ignoreRefresh) {
+        ;
+    }
+
+    @Override
+    public void populatePriorProbAtRoot(String rootPriorType) {
         ;
     }
 
