@@ -20,14 +20,14 @@ public abstract class QuaSSEProcess extends Distribution {
     final public Input<BooleanParameter> dynamicDtInput = new Input<>("dynDt", "If interval over which to carry out integration should be dynamically adjusted to maximize accuracy.", Input.Validate.REQUIRED);
     final public Input<RealParameter> tcInput = new Input<>("tc", "Time (backwards, i.e., present=0.0) when integration happens with discretization at low resolution.", Input.Validate.OPTIONAL);
     final public Input<IntegerParameter> nXbinsInput = new Input<>("nX", "Total number of quantitative trait bins after discretization at low resolution.", Input.Validate.REQUIRED);
-    final public Input<RealParameter> dXBinInput = new Input<>("dX", "Width of quantitative trait bins.", Input.Validate.REQUIRED);
+    final public Input<RealParameter> dXBinInput = new Input<>("dX", "Width of quantitative trait bins at low resolution.", Input.Validate.REQUIRED);
     final public Input<RealParameter> xMidInput = new Input<>("xMid", "Midpoint to center the quantitative trait space.", Input.Validate.REQUIRED);
     final public Input<RealParameter> driftInput = new Input<>("drift", "Drift term of quantitative trait diffusion process.", Input.Validate.REQUIRED);
     final public Input<RealParameter> diffusionInput = new Input<>("diffusion", "Diffusion term of quantitative trait diffusion process.", Input.Validate.REQUIRED);
     final public Input<RealParameter> flankWidthScalerInput = new Input<>("flankWidthScaler", "Multiplier of normal standard deviation when determining number of flanking bins.", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> highLowRatioInput = new Input<>("hiLoRatio", "Scale nX by this when at high resolution.", Input.Validate.REQUIRED);
-    final public Input<String> priorProbAtRootTypeInput = new Input<>("priorProbAtRootType", "Type of root prior probabilities for D's", "Observed", Input.Validate.REQUIRED);
-    final public Input<RealParameter> priorProbsAtRootInput = new Input<>("givenPriorProbsAtRoot", "Root prior probabilities for D's", Input.Validate.XOR, priorProbAtRootTypeInput);
+    final public Input<String> priorProbAtRootTypeInput = new Input<>("priorProbAtRootType", "Type of root prior probabilities for D's.", Input.Validate.REQUIRED);
+    final public Input<RealParameter> priorProbsAtRootInput = new Input<>("givenPriorProbsAtRoot", "Root prior probabilities for D's at high resolution.", Input.Validate.XOR, priorProbAtRootTypeInput);
 
     protected Tree tree;
     protected RealParameter quTraits;
@@ -35,10 +35,12 @@ public abstract class QuaSSEProcess extends Distribution {
     // dealing with prior probability at root
     protected static final String FLAT = "Flat";
     protected static final String OBS = "Observed";
-    protected double[] givenPriorProbsAtRoot;
+    protected double[] priorProbsAtRoot;
     protected String rootPriorType;
 
     // state for dimensioning things and setting up resolution of integration
+    protected boolean got2LowRes; // if the pruning got to do low-resolution integrated (set in startRecursionAtRootNode())
+    protected boolean providedPriorAtRoot = false;
     protected boolean dynamicallyAdjustDt;
     protected double dtMax, tc;
     protected double dXbin, flankWidthScaler, xMinLo, xMinHi, xMid;
@@ -57,7 +59,11 @@ public abstract class QuaSSEProcess extends Distribution {
 
         tree = treeInput.get();
         rootPriorType = priorProbAtRootTypeInput.get();
-        givenPriorProbsAtRoot = ArrayUtils.toPrimitive(priorProbsAtRootInput.get().getValues()); // unboxing only at initialization
+
+        if (priorProbsAtRootInput.get() != null) {
+            priorProbsAtRoot = ArrayUtils.toPrimitive(priorProbsAtRootInput.get().getValues()); // unboxing only at initialization
+            providedPriorAtRoot = true;
+        }
         // TODO: once number of D's in low-res is calculated, needs to check if this has the same length; if not, throw RuntimeException
         // quTraits = quTraitsInput.get();
 
@@ -203,12 +209,17 @@ public abstract class QuaSSEProcess extends Distribution {
      * The D's at the root must be multiplied by a prior probability array.
      * This method populates it in place depending on what the user wants.
      */
-    protected abstract void populatePriorProbAtRoot(String rootPriorType);
+    protected abstract void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nUsefulXbinAtRightRes, String rootPriorType);
 
     /*
      *
      */
-    protected abstract void integrateBranch(Node aNode);
+    protected abstract void integrateBranch(Node aNode, boolean normalize);
+
+    /*
+     *
+     */
+    protected abstract void mergeChildrenNodes(Node aNode);
 
     /*
      *
@@ -244,7 +255,7 @@ public abstract class QuaSSEProcess extends Distribution {
      * This method looks at the relevant objects in state,
      * computes the log-likelihood, and returns it
      */
-    protected abstract double getLogPFromRelevantObjects();
+    protected abstract double getLogPFromRelevantObjects(double[][] esDsAtRoot, double sumOfLogNormalizationFactors, double[] birthRates, double dXAtRightRes);
 
     /*
      * Getters, setters and helper methods below
@@ -282,4 +293,16 @@ public abstract class QuaSSEProcess extends Distribution {
         else return xHi;
     }
 
+    public double getdXbin() {
+        return dXbin;
+    }
+
+    public double[] getPriorProbsAtRoot(String rootPriorType) {
+        return priorProbsAtRoot;
+    }
+
+    // for debugging
+    public void initializePriorProbAtRoot(int nxBinAtRightRes) {
+        priorProbsAtRoot = new double[nxBinAtRightRes];
+    }
 }

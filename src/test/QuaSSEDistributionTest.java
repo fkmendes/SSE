@@ -47,7 +47,8 @@ public class QuaSSEDistributionTest {
     static RealParameter quTraitrp, quTraitRp;
     static RealParameter dtrp, twoDtrp, tcrp, diffusionrp;
     static IntegerParameter hiLoRatiorp, nXbins1024Ip, nXbins48Ip, nXbins32Ip;
-    static BooleanParameter dynDtbp;
+    static BooleanParameter dynDtbpTrue, dynDtbpFalse;
+    static String rootPriorType;
 
     static double dt, dtLarger;
     static Double[] x0, y1, y0, r;
@@ -85,8 +86,10 @@ public class QuaSSEDistributionTest {
         twoDtrp = new RealParameter(largerDtD);
 
         // adjust dt dynamically to maximize accuracy and match diversitree
-        Boolean[] dynDt = new Boolean[] { true };
-        dynDtbp = new BooleanParameter(dynDt);
+        Boolean[] dynDtTrue = new Boolean[] { true };
+        Boolean[] dynDtFalse = new Boolean[] { false };
+        dynDtbpTrue = new BooleanParameter(dynDtTrue);
+        dynDtbpFalse = new BooleanParameter(dynDtFalse);
 
         Double[] tc = new Double[] { 100.0 };
         tcrp = new RealParameter(tc);
@@ -143,6 +146,8 @@ public class QuaSSEDistributionTest {
 
         Integer[] nXbins32 = new Integer[] { 32 };
         nXbins32Ip = new IntegerParameter(nXbins32);
+
+        rootPriorType = "Observed";
     }
 
     /*
@@ -153,40 +158,44 @@ public class QuaSSEDistributionTest {
     @Before
     public void setupQuaSSELiks() {
         q1024 = new QuaSSEDistribution();
-        q1024.initByName("dtMax", dtrp, "dynDt", dynDtbp,
+        q1024.initByName("dtMax", dtrp, "dynDt", dynDtbpTrue,
                 "tc", tcrp,
                 "nX", nXbins1024Ip, "dX", dxBin1024Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree,
-                "q2d", nfn);
+                "q2d", nfn,
+                "priorProbAtRootType", rootPriorType);
 
         q48 = new QuaSSEDistribution();
-        q48.initByName("dtMax", dtrp, "dynDt", dynDtbp,
+        q48.initByName("dtMax", dtrp, "dynDt", dynDtbpFalse,
                 "tc", tcrp,
                 "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree,
-                "q2d", nfn);
+                "q2d", nfn,
+                "priorProbAtRootType", rootPriorType);
 
         q48TwoDt = new QuaSSEDistribution();
-        q48TwoDt.initByName("dtMax", twoDtrp, "dynDt", dynDtbp,
+        q48TwoDt.initByName("dtMax", twoDtrp, "dynDt", dynDtbpTrue,
                 "tc", tcrp,
                 "nX", nXbins48Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree,
-                "q2d", nfn);
+                "q2d", nfn,
+                "priorProbAtRootType", rootPriorType);
 
         q32 = new QuaSSEDistribution();
-        q32.initByName("dtMax", dtrp, "dynDt", dynDtbp,
+        q32.initByName("dtMax", dtrp, "dynDt", dynDtbpTrue,
                 "tc", tcrp,
                 "nX", nXbins32Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", myTree2,
-                "q2d", nfn);
+                "q2d", nfn,
+                "priorProbAtRootType", rootPriorType);
     }
 
     /*
@@ -703,7 +712,7 @@ public class QuaSSEDistributionTest {
         esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsHiAtNode[1], esDsHiAtNode[1].length); // D
 
         // now we integrate over 2 dt's = 2 * 0.01 = 0.02, inside class!
-        q48TwoDt.integrateBranch(sp1Node);
+        q48TwoDt.integrateBranch(sp1Node, false);
         esDsHiAtNode = q48TwoDt.getEsDsAtNode(nodeIdx, false);
 
 
@@ -748,8 +757,80 @@ public class QuaSSEDistributionTest {
         System.out.println("Size of D's = " + esDsHiAtNode0[1].length);
         System.out.println("Initial D's for sp1 = " + Arrays.toString(esDsHiAtNodeInitial0[1]));
 
-        q32.integrateBranch(myTree.getNode(0));
+        // q32.integrateBranch(myTree.getNode(0));
+        double logLik = q32.calculateLogP();
+        System.out.println("logLik = " + logLik);
     }
+
+    /*
+     * Checks that method for populating the root prior probabilities (on D's)
+     * is doing the right thing when the chosen method is "Observed".
+     * This is the default in diversitree, and assigns as the prior probability
+     * for each bin of D the corresponding weight that D has with respect to the
+     * sum of all D's at the root.
+     */
+    @Test
+    public void testPriorProbAtRootObserved() {
+        double[] rootDs = new double[] { 0.00018796799892853, 0.000652323996995629, 0.00208976302754322, 0.00617994228898008, 0.0172224587375882, 0.0432568660344437, 0.10032094673411, 0.214834647775025, 0.424807938498692, 0.77563249137275, 1.30765720765056, 2.03566292055804, 2.92611473238602, 3.88373750798852, 4.75971484197075, 5.38621975823666, 5.62806110483008, 5.43006068809359, 4.83750315040033, 3.97420278211296, 3.01557745759573, 2.11220348336843, 1.36566891286188,
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+        int nUsefulXBinsLowRes = q32.getNUsefulTraitBins(true);
+        int nUsefulXBinsRightRes = q32.getnXbins(true); // not used in this test, but required by method
+        q32.initializePriorProbAtRoot(nUsefulXBinsLowRes); // initialize here so I don't have to do recursion
+        q32.setGot2LowRes();
+        q32.populatePriorProbAtRoot(rootDs, q32.getdXbin(), nUsefulXBinsRightRes, "Observed"); // calculate root prior
+
+        double[] priorProbAtRoot = q32.getPriorProbsAtRoot("Observed");
+        double[] expectedObservedPriorProbAtRoot = { 0.000389590603919484, 0.00135203492822908, 0.00433133323007142, 0.0128088156615784, 0.0356960128256011, 0.0896560513389879, 0.207929532934896, 0.445275582261879, 0.880475305652554, 1.60760944658659, 2.71030688283251, 4.21920300858367, 6.06479194451295, 8.04960232500694, 9.86519083215318, 11.1637120170245, 11.6649628512575, 11.2545786243019, 10.0264182444346, 8.23710456464766, 6.25021625791422, 4.37784428933156, 2.83054445197464 };
+
+        Assert.assertArrayEquals(expectedObservedPriorProbAtRoot, priorProbAtRoot, 1E-13);
+    }
+
+    /*
+     * Checks that method for populating the root prior probabilities (on D's)
+     * is doing the right thing when the chosen method is "Flat".
+     */
+    @Test
+    public void testPriorProbAtRootFlat() {
+        double[] rootDs = new double[] { 0.00018796799892853, 0.000652323996995629, 0.00208976302754322, 0.00617994228898008, 0.0172224587375882, 0.0432568660344437, 0.10032094673411, 0.214834647775025, 0.424807938498692, 0.77563249137275, 1.30765720765056, 2.03566292055804, 2.92611473238602, 3.88373750798852, 4.75971484197075, 5.38621975823666, 5.62806110483008, 5.43006068809359, 4.83750315040033, 3.97420278211296, 3.01557745759573, 2.11220348336843, 1.36566891286188,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        int nUsefulXBinsLowRes = q32.getNUsefulTraitBins(true);
+        int nXBinsLowRes = q32.getnXbins(true);
+        q32.initializePriorProbAtRoot(nUsefulXBinsLowRes); // initialize here so I don't have to do recursion
+        q32.populatePriorProbAtRoot(rootDs, q32.getdXbin(), nXBinsLowRes, "Flat"); // calculate root prior
+
+        double[] priorProbAtRoot = q32.getPriorProbsAtRoot("Flat");
+        double[] expectedFlatPriorProbAtRoot = { 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129, 3.2258064516129 };
+
+        Assert.assertArrayEquals(expectedFlatPriorProbAtRoot, priorProbAtRoot, 1E-14);
+    }
+
+    /*
+     * Checks correctness of calculations at the root after pruning is concluded.
+     * Values of D's and E's come from R example and are hardcoded.
+     * Prior probabilities at the root are computed by the likelihood class.
+     */
+    @Test
+    public void testRootCalcProcedure() {
+        double[] lambda = new double[] { 0.143168001652175, 0.14378234991142, 0.144398610945538, 0.145016600268752, 0.145636131276292, 0.146257015465625, 0.146879062662624, 0.147502081252106, 0.148125878412146, 0.148750260351579, 0.149375032550049, 0.15, 0.150624967449951, 0.151249739648421, 0.151874121587854, 0.152497918747894, 0.153120937337376, 0.153742984534375, 0.154363868723708, 0.154983399731248, 0.155601389054462, 0.15621765008858, 0.156831998347825 };
+        double[] rootDs = new double[] { 0.00018796799892853, 0.000652323996995629, 0.00208976302754322, 0.00617994228898008, 0.0172224587375882, 0.0432568660344437, 0.10032094673411, 0.214834647775025, 0.424807938498692, 0.77563249137275, 1.30765720765056, 2.03566292055804, 2.92611473238602, 3.88373750798852, 4.75971484197075, 5.38621975823666, 5.62806110483008, 5.43006068809359, 4.83750315040033, 3.97420278211296, 3.01557745759573, 2.11220348336843, 1.36566891286188,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] rootEs = new double[] { 0.000299740440744548, 0.000299739520470865, 0.000299738597335804, 0.00029973767161565, 0.00029973674351604, 0.000299735813477572, 0.000299734881700786, 0.000299733948472969, 0.000299733014082788, 0.000299732078820634, 0.000299731142977721, 0.000299730206846363, 0.000299729270718812, 0.000299728334887679, 0.000299727399644967, 0.00029972646528196, 0.000299725532089096, 0.000299724600354967, 0.000299723670366658, 0.000299722742324688, 0.000299721816669835, 0.000299720893607375, 0.000299719973413741,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[][] esDs = new double[2][rootDs.length];
+        esDs[0] = rootEs;
+        esDs[1] = rootDs;
+
+        int nUsefulXBinsLowRes = q32.getNUsefulTraitBins(true);
+        int nXBinsLowRes = q32.getnXbins(true); // not used in this test, but required by method
+        q32.initializePriorProbAtRoot(nUsefulXBinsLowRes); // initialize here so I don't have to do recursion
+        q32.populatePriorProbAtRoot(rootDs, q32.getdXbin(), nXBinsLowRes, "Observed"); // calculate root prior
+
+        double sumLogNormalizationFactors = -0.50994824280919;
+        double logLik = q32.getLogPFromRelevantObjects(esDs, sumLogNormalizationFactors, lambda, q32.getdXbin());
+
+        Assert.assertEquals(-6.43138, logLik, 1e-6); // R prints to this decimal precision...
+    }
+
 //    @Test
 //    public void testIntegrateOneBranchLoRes48BinsInsideClassBothXandT() {
 //        // we're going to look at sp1

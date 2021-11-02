@@ -21,6 +21,10 @@
 ## (12) testBothXandTPropagateMethodsInsideClassOneBranchLoRes48Bins
 ## (13) testBothXandTPropagateMethodsInsideClassOneBranchLoRes48BinsLargerDt
 ## (14) testIntegrateOneBranchHiRes48BinsInsideClassBothXandTTwoDt
+## (15) STILL BUILDING pruning test
+## (16) testPriorProbAtRootObserved
+## (17) testPriorProbAtRootFlat
+## (18) testRootCalcProcedure
 
 ## IMPORTANT: expectations (outputs from paste(xyz, collapse=", ") will vary depending on machine architecture; when dnorm() gets very small inputs (e.g., dx * nx are both large), the initial values of D will be tiny, and then the result of FFT on different machines will differ
 ##
@@ -1235,6 +1239,12 @@ make.initial.conditions.quasse.debug <- function(control) {
         ## init[[1]][j] is the D from child 1
         ## init[[2]][j] is the D from child 2
         ## and 0's for padding
+        print(paste0("nx = ", nx))
+        print(paste0("ndat = ", ndat))
+        print("merging:")
+        print(c(init[[1]][i], init[[1]][j] * init[[2]][j] * lambda,
+              rep.int(0, nx - ndat)))
+
         c(init[[1]][i], init[[1]][j] * init[[2]][j] * lambda,
             rep.int(0, nx - ndat))
     }
@@ -1284,7 +1294,7 @@ make.quasse.debug <- function (tree, states, states.sd, lambda, mu, control = NU
     ## in quasse.integrate.fftR()
     all.branches <- make.all.branches.quasse.debug(cache, cache$control)
 
-    rootfunc <- diversitree:::make.rootfunc.quasse(cache)
+    rootfunc <- make.rootfunc.quasse.debug(cache)
     f.pars <- make.pars.quasse.debug(cache)
     ll <- function(pars, condition.surv = TRUE, root = ROOT.OBS,
         root.f = NULL, intermediates = FALSE) {
@@ -1296,7 +1306,35 @@ make.quasse.debug <- function (tree, states, states.sd, lambda, mu, control = NU
     ll
 }
 
-rootfunc.debug <- function(cache) {
+root.p.quasse.debug <- function(d.root, pars, root, root.f) {
+    if (!is.null(root.f) && root != ROOT.GIVEN)
+        warning("Ignoring specified root state")
+    x <- pars$x
+    dx <- x[2] - x[1]
+    if (root == ROOT.FLAT) {
+        print("root d's =")
+        print(paste(d.root, collapse=", "))
+        p <- 1/((pars$nx - 1) * dx)
+        print("root p =")
+        print(paste(p, collapse=", "))
+    }
+    else if (root == ROOT.OBS) {
+        p <- d.root/(sum(d.root) * dx)
+        print(paste0("root d's (size=", length(d.root), ") ="))
+        print(paste(d.root, collapse=", "))
+        print("root p =")
+        print(paste(p, collapse=", "))
+    }
+    else if (root == ROOT.GIVEN) {
+        p <- root.f(x)
+    }
+    else {
+        stop("Unsupported root mode")
+    }
+    p
+}
+
+make.rootfunc.quasse.debug <- function(cache) {
     root.idx <- cache$root
     nx <- cache$control$nx
     dx <- cache$control$dx
@@ -1305,11 +1343,15 @@ rootfunc.debug <- function(cache) {
         vals <- matrix(res$vals, nx, 2)[seq_len(pars$lo$ndat),] # just making matrix
         lq <- res$lq # all normalizing factors for all nodes in tree
         d.root <- vals[, 2] # normalized D's at root
-        root.p <- root.p.quasse(d.root, pars$lo, root, root.f) # prior at root for each trait value bin (several options, user-defined); the default is the weighted sum, which is (d.root/sum(d.root) ==> returns a vector)
+        root.p <- root.p.quasse.debug(d.root, pars$lo, root, root.f) # prior at root for each trait value bin (several options, user-defined); the default is the weighted sum, which is (d.root/sum(d.root) ==> returns a vector)
 
         if (condition.surv) {
             lambda <- pars$lo$lambda
             e.root <- vals[, 1]
+
+            print("es = ")
+            print(paste(e.root, collapse=", "))
+
             ## param = lambda, mu
             ## data D = tree (fixed)
             ## tip states are boundary conditions
@@ -1318,6 +1360,8 @@ rootfunc.debug <- function(cache) {
             ## but what we want is P(D|params,tree_exists)
             ## so we need to d.root / P(tree_exists)
 
+            print(paste0("lambda (size=", length(lambda), ") = "))
+            print(paste(lambda, collapse=", "))
             d.root <- d.root /
                 sum(root.p * lambda * (1 - e.root)^2) * dx ## normalizing by this sum here accounts for conditioning for survival, P(tree_exists)
             ## e.root is the probability of extinction of a lineage starting at the root
@@ -1326,7 +1370,12 @@ rootfunc.debug <- function(cache) {
             ## multiply by lambda because we need a sp'n event at the root generating those two lineages
             ## multiply by root.p to account for the trait value states (those influence the extinction probability)
             ## * dx: multiplying by bin size converts densities (median of bin is a density) into probabilities
+
+            print(paste0("D's after conditioning on survival (size=", length(d.root), ") = "))
+            print(paste(d.root, collapse=", "))
         }
+
+        print(paste0("sum(lq) = ", sum(lq)))
 
         loglik <- log(sum(root.p * d.root) * dx) + sum(lq) # goes back to actual likelihood ("unnormalizing it")
 
@@ -1340,6 +1389,7 @@ rootfunc.debug <- function(cache) {
         loglik
     }
 }
+
 
 ## in C
 
@@ -1359,6 +1409,7 @@ control.C.1 <- list(tc=0.005,
 
 lik.C.1 <- make.quasse.debug(tr, tr$tip.state, sd, sigmoid.x, constant.x, control.C.1)
 (ll.C.1 <- lik.C.1(pars))
+## (ll.C.1 <- lik.C.1(pars, root=ROOT.FLAT))
 
 ## the above command will print a lot of things, some of those things are the unit tests expectations
 ## at the top, $sp1 and $sp2 correspond to the expectedEsDsAtTips

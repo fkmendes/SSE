@@ -66,12 +66,12 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void populatePriorProbAtRoot(String rootPriorType) {
+    public void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nXbinAtRightRes, String aRootPriorType) {
         ;
     }
 
     @Override
-    public void integrateBranch(Node aNode) {
+    public void integrateBranch(Node aNode, boolean normalize) {
 
         // TODO stuff
         doMoSSEIntegrateInPlace(esDsHi[0], scratch, 0.0, true, dtMax, true);

@@ -106,10 +106,33 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public void startRecursionAtRootNode(Node rootNode) {
-        processInternalNode(rootNode); // start recursion
+        int rootIdx = rootNode.getNr();
+        double rootHeight = rootNode.getHeight();
 
-        // do stuff after recursion is done
-        // TODO: stuff
+        // start recursion
+        processInternalNode(rootNode);
+
+        // we're done pruning, let's deal with the prior probs at root now
+        double[][] esDsAtRoot;
+        double dxAtRightRes;
+        int nXBinsRightRes, nUsefulXBinsRightRes;
+        if (rootHeight > tc) {
+            esDsAtRoot = esDsLo[rootIdx];
+            dxAtRightRes = dXbin;
+            nUsefulXBinsRightRes = nUsefulXbinsLo;
+            nXBinsRightRes = nXbinsLo;
+            got2LowRes = true;
+        } else {
+            esDsAtRoot = esDsHi[rootIdx];
+            dxAtRightRes = dXbin / hiLoRatio;
+            nUsefulXBinsRightRes = nUsefulXbinsHi;
+            nXBinsRightRes = nXbinsHi;
+            got2LowRes = false;
+        }
+
+        if (priorProbsAtRoot == null) priorProbsAtRoot = new double[nUsefulXBinsRightRes]; // if root prior probs not given, initialize it!
+
+        populatePriorProbAtRoot(esDsAtRoot[1], dxAtRightRes, nUsefulXBinsRightRes, rootPriorType); // ok, prior probs are set!
     }
 
     @Override
@@ -119,14 +142,17 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             for (Node childNode: aNode.getChildren()) {
                 processInternalNode(childNode); // recur
             }
+
+            // after recursion, prepare initial conditions for integrating this node
+            mergeChildrenNodes(aNode);
         }
 
-        // after recursion, do its own branch
-        integrateBranch(aNode);
+        // unless we're at the root, now we integrate this branch
+        if (!aNode.isRoot()) integrateBranch(aNode, true);
     }
 
     @Override
-    public void integrateBranch(Node aNode) {
+    public void integrateBranch(Node aNode, boolean normalize) {
         boolean lowRes = false;
         int nodeIdx = aNode.getNr();
 
@@ -179,14 +205,16 @@ public class QuaSSEDistribution extends QuaSSEProcess {
          * (since we have already gone through options 1 -- 3 above)
          */
         double normalizationFactorFromDs = 0.0;
-        if (lowRes) normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], dXbin);
-        else normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
-        logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
+        if (normalize) {
+            if (lowRes) normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], dXbin);
+            else normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
+            logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
 
-        for (int i=0; i<esDsAtNode[1].length; i++) {
-            esDsAtNode[1][i] /= normalizationFactorFromDs;
-            // there will be an additional step of normalization when in option 3
-            // as a result of integrating the tip-end part in high-res
+            for (int i = 0; i < esDsAtNode[1].length; i++) {
+                esDsAtNode[1][i] /= normalizationFactorFromDs;
+                // there will be an additional step of normalization when in option 3
+                // as a result of integrating the tip-end part in high-res
+            }
         }
 
         // debug
@@ -202,9 +230,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
                 doIntegrateInPlace(esDsAtNode, scratchAtNode, dtAtHi, false);
 
                 // one more normalization for this high-res stretch
-                normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
-                for (int j=0; j<esDsAtNode[1].length; j++) esDsAtNode[1][j] /= normalizationFactorFromDs;
-                logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
+                if (normalize) {
+                    normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
+                    for (int j = 0; j < esDsAtNode[1].length; j++) esDsAtNode[1][j] /= normalizationFactorFromDs;
+                    logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
+                }
 
                 // integration of the root-end in low res
                 esDsAtNode = esDsLo[nodeIdx];
@@ -216,6 +246,43 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             else {
                 doIntegrateInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
                 integrationTStart += dt;
+            }
+        }
+    }
+
+    @Override
+    public void mergeChildrenNodes(Node aNode) {
+        int nodeIdx = aNode.getNr();
+        double nodeHeight = aNode.getHeight();
+
+        List<Node> childrenNode = aNode.getChildren();
+        System.out.println("# of children = " + childrenNode.size());
+        Node leftChild = childrenNode.get(0);
+        int leftChildIdx = leftChild.getNr();
+        Node rightChild = childrenNode.get(1);
+        int rightChildIdx = rightChild.getNr();
+
+        double[][][] esDs;
+        double[] birthRatesAtRightRes;
+        int nUsefulXbinAtRightRes;
+        if (nodeHeight < tc) {
+            esDs = esDsHi;
+            nUsefulXbinAtRightRes = nUsefulXbinsHi;
+            birthRatesAtRightRes = birthRatesHi;
+        } else {
+            esDs = esDsLo;
+            nUsefulXbinAtRightRes = nUsefulXbinsLo;
+            birthRatesAtRightRes = birthRatesLo;
+        }
+
+        // proper merging
+        for (int i=0; i<(esDs[nodeIdx][0].length/2); ++i) {
+            if (i < nUsefulXbinAtRightRes) {
+                esDs[nodeIdx][0][i] = esDs[leftChildIdx][0][i]; // E's
+                esDs[nodeIdx][1][i] = esDs[leftChildIdx][1][i] * esDs[rightChildIdx][1][i] * birthRatesAtRightRes[i]; // D's
+            } else {
+                esDs[nodeIdx][0][i] = 0.0; // rest is 0's
+                esDs[nodeIdx][1][i] = 0.0;
             }
         }
     }
@@ -235,30 +302,51 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void populatePriorProbAtRoot(String rootPriorType) {
-        if (rootPriorType == FLAT) {
-            ;
+    public void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nXbinAtRightRes, String aRootPriorType) {
+        // making sure things have the right dimensions (dividing dsAtRoot by two because it carries real and imaginary parts)
+        if (providedPriorAtRoot && got2LowRes && ((priorProbsAtRoot.length / hiLoRatio) != nUsefulXbinsLo))
+            throw new RuntimeException("ERROR: You need to specify " + nUsefulXbinsHi + " prior probability values, but you specified " + priorProbsAtRoot.length + ". Exiting...");
+        else if (providedPriorAtRoot && !got2LowRes && (priorProbsAtRoot.length != nUsefulXbinsHi)) {
+            System.out.println("nUsefulXbinsHi = " + nUsefulXbinsHi);
+            System.out.println("priorProbsAtRoot.length = " + priorProbsAtRoot.length);
+            throw new RuntimeException("ERROR: The number of prior probabilities did not match the number of discrete quantitative bins at high resolution. Exiting...");
         }
-        else if (rootPriorType == OBS) {
-            ;
+
+        System.out.println("rootPriorType = " + aRootPriorType);
+        System.out.println("priorProbsAtRoot.length = " + priorProbsAtRoot.length);
+
+        // now we populate prior probs
+        if (aRootPriorType.equals(FLAT)) {
+            for (int i=0; i<priorProbsAtRoot.length; ++i) {
+                priorProbsAtRoot[i] = 1.0 / ((nXbinAtRightRes - 1) * dxAtRightRes);
+            }
         }
-        else if (givenPriorProbsAtRoot != null) {
-            // GIVEN!
+        else if (aRootPriorType.equals(OBS)) {
+            double sumOfDsAtRoot = 0.0;
+            for (int i=0; i<priorProbsAtRoot.length; ++i) {
+                sumOfDsAtRoot += dsAtRoot[i];
+            }
+
+            for (int i=0; i<priorProbsAtRoot.length; ++i) {
+                priorProbsAtRoot[i] = dsAtRoot[i] / (sumOfDsAtRoot * dxAtRightRes);
+            }
         }
-        else { throw new RuntimeException(); }
+        else { throw new RuntimeException("ERROR: You specified an invalid prior probability distribution for the root. Exiting..."); }
     }
 
     @Override
     public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes) {
 
         // debugging
-        System.out.println("esDsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
+        System.out.println("dsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[0]));
+        System.out.println("dsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
 
         // integrate over birth and death events (low or high resolution inside)
         propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
 
         // debugging
-        // System.out.println("esDsAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[1]));
+        System.out.println("esAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[0]));
+        System.out.println("dsAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[1]));
 
         // make normal kernel and FFTs it
         populatefY(true, true);
@@ -302,12 +390,48 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public double getLogPFromRelevantObjects() {
-        double denormalizationLogLik = 0.0;
-        for (double d: logNormalizationFactors) denormalizationLogLik += d;
+    public double getLogPFromRelevantObjects(double[][] esDsAtRoot, double sumOfLogNormalizationFactors, double[] birthRates, double dXAtRightRes) {
 
+        // debugging
+        // System.out.println("priorProbsAtRoot = " + Arrays.toString(priorProbsAtRoot));
 
-        return 0.0;
+        double[] esAtRoot = esDsAtRoot[0];
+        System.out.println("esAtRoot = " + Arrays.toString(esAtRoot));
+        double[] dsAtRoot = esDsAtRoot[1];
+
+        // debugging
+        System.out.println("dsAtRoot.length = " + dsAtRoot.length);
+        System.out.println("priorProbsAtRoot.length = " + priorProbsAtRoot.length);
+        System.out.println("birthRates.length = " + birthRates.length);
+
+        // debugging
+        System.out.println("birthRates = " + Arrays.toString(birthRates));
+        System.out.println("priorProbsAtRoot = " + Arrays.toString(priorProbsAtRoot));
+        System.out.println("esAtRoot = " + Arrays.toString(esAtRoot));
+
+        // conditioning on survival of lineages
+        double denomSumForConditioning = 0.0;
+        // priorProbsAtRoot.length should be = nUsefulXBins at the right resolution
+        for (int i=0; i<priorProbsAtRoot.length; ++i)
+            denomSumForConditioning += (priorProbsAtRoot[i] * birthRates[i] * Math.pow(1 - esAtRoot[i], 2));
+
+        // priorProbsAtRoot.length should be = nUsefulXBins at the right resolution
+        for (int i=0; i<priorProbsAtRoot.length; ++i) {
+            dsAtRoot[i] = dsAtRoot[i] / denomSumForConditioning * dXAtRightRes;
+        }
+
+        // debugging
+        System.out.println("dsAtRoot after conditioning on survival = " + Arrays.toString(dsAtRoot));
+
+        // incorporating prior probabilities at root
+        double prodSumPriorDs = 0.0;
+        for (int i=0; i<priorProbsAtRoot.length; ++i) {
+            prodSumPriorDs += (priorProbsAtRoot[i] * dsAtRoot[i]);
+        }
+
+        double thisLogLik = Math.log(prodSumPriorDs * dXAtRightRes) + sumOfLogNormalizationFactors; // denormalizing by adding sumOfLogNormalizationFactors
+
+        return thisLogLik;
     }
 
     @Override
@@ -316,14 +440,32 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // refreshing parameters
         populateMacroevolParams(false);
 
-        // refreshing tree
+        // refreshing tree and root
         tree = treeInput.get();
+        Node rootNode = tree.getRoot();
+        int rootIdx = rootNode.getNr();
 
         // start recursion for likelihood calculation
-        startRecursionAtRootNode(tree.getRoot());
+        startRecursionAtRootNode(rootNode);
 
         // put it all together
-        double myLogP = getLogPFromRelevantObjects();
+        double sumOfLogNormalizationFactors = 0.0;
+        for (double d: logNormalizationFactors) sumOfLogNormalizationFactors += d;
+        double[][] esDsAtRootAtRightRes;
+        double[] birthRatesAtRightRes;
+        double dxAtRightRes;
+        if (got2LowRes) {
+            esDsAtRootAtRightRes = esDsLo[rootIdx]; // low res
+            birthRatesAtRightRes = birthRatesLo;
+            dxAtRightRes = dtMax;
+        }
+        else {
+            esDsAtRootAtRightRes = esDsHi[rootIdx]; // high res
+            birthRatesAtRightRes = birthRatesHi;
+            dxAtRightRes = dtMax / hiLoRatio;
+        }
+
+        double myLogP = getLogPFromRelevantObjects(esDsAtRootAtRightRes, sumOfLogNormalizationFactors, birthRatesAtRightRes, dxAtRightRes);
 
         return myLogP;
     }
@@ -372,10 +514,17 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         else return nUsefulXbinsHi;
     }
 
+    // for debugging
     public void setEsDsAtNodeElementAtDim(int nodeIdx, int dimIdx, int eleIdx, double val, boolean lowRes) {
         if (lowRes) esDsLo[nodeIdx][dimIdx][eleIdx] = val;
         else esDsHi[nodeIdx][dimIdx][eleIdx] = val;
     }
+
+    // for debugging
+    public void setGot2LowRes() {
+        got2LowRes = true;
+    }
+
     @Override
     public List<String> getArguments() {
         return null;
