@@ -732,6 +732,11 @@ quasse.integrate.fftR.3 <- function (vars, lambda, mu, drift, diffusion, nstep, 
     print(paste0(Re(fy), collapse=", "))
 
     for (i in seq_len(nstep)) {
+        print("E's before propagate in t")
+        print(paste(vars[,1], collapse=", "))
+        print("D's before propagate in t")
+        print(paste(vars[,2], collapse=", "))
+
         vars = diversitree:::fftR.propagate.t(vars, lambda, mu, dt, ndat)
 
         print("E's after propagate in t")
@@ -1019,7 +1024,7 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
         y[y < 0] <- 0
         y <- matrix(y, nx0, 2) # if in low-res, this re-sizes it
 
-        print("y inside combine.branches before changes = ")
+        print("y inside combine.branches before normalization = ")
         print(y)
 
         q0 <- sum(y[, 2]) * dx0 # calculating normalization factor from D's
@@ -1028,8 +1033,8 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
 
         y[, 2] <- y[, 2]/q0 # normalizing D's, before we integrate
 
-        print("y inside combine.branches after changes = ")
-        print(y)
+        print("y inside combine.branches after normalization = ")
+        print(paste(y[,2], collapse=", "))
 
         lq0 <- log(q0) # will be added at the very end
 
@@ -1053,7 +1058,7 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
 
             ans <- careful(f.hi, y, len, pars$hi, t0, dt.max) # integrate
 
-            print("ans at hi, prior to adding log-normalization factor")
+            print("option 2: ans at hi, prior to adding log-normalization factor")
             print(ans)
         }
 
@@ -1062,10 +1067,12 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
         ## resized to low-res
         else {
 
-            print("y inside combine.branches for hi = ")
+            print("option 3: y inside combine.branches for hi = ")
             print(y)
 
             len.hi <- tc - t0 # this first stretch in high-res
+
+            print(paste0("len.hi = ", len.hi))
 
             ans.hi <- careful(f.hi, y, len.hi, pars$hi, t0, dt.max) # integrate first stretch at high-res
 
@@ -1073,12 +1080,18 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
             ## y.lo will be the first elements inside the low-res y -- the rest will be 0's (see below)
             y.lo <- ans.hi[[2]][pars$tr, ]
 
+            ## NOT RENORMALIZING!
             lq0 <- lq0 + ans.hi[[1]] # we add the high-res normalization factor to the total normalization factor
 
             ## why would nrow(y.lo) < nx (nx here is the low-res nx)?
             ## we're putting 0's after the y.lo
+            print("pars$tr = ")
+            print(paste(pars$tr, collapse=", "))
+            print("expectedHiLoIdxs4Transfer = ")
+            print(paste(pars$tr-1, collapse=", "))
             if (nrow(y.lo) < nx) y.lo <- rbind(y.lo, matrix(0, nx - length(pars$tr), 2))
 
+            print(paste0("len - len.hi = ", len - len.hi))
             ans <- careful(f.lo, y.lo, len - len.hi, pars$lo, tc, dt.max) # integrate remaining stretch at low-res
 
             print("ans at hi, but interval < dt, prior to adding log-normalization factor")
@@ -1141,7 +1154,12 @@ initial.tip.quasse.debug <- function(cache, control, x) {
             mean, sd), rep(0, npad)), cache$states, cache$states.sd,
             SIMPLIFY = FALSE)
 
-        print("else: y inside initial.tip.quasse = ");  print(y)
+        print("else: y inside initial.tip.quasse = ");
+        print(paste(y, collapse=", "))
+        ## print("esDsHiAtNodeInitial0[1] = ")
+        ## print(paste(y$sp1[129:231], collapse=", "))
+        ## print("esDsHiAtNodeInitial1[1] = ")
+        ## print(paste(y$sp2[129:231], collapse=", "))
 
         diversitree:::dt.tips.ordered(y, cache$tips, cache$len[cache$tips])
     }
@@ -1422,6 +1440,12 @@ lik.C.1 <- make.quasse.debug(tr, tr$tip.state, sd, sigmoid.x, constant.x, contro
 ## (ll.R.1 <- lik.R.1(pars)) # -28.43912
 
 ## diversitree:::make.quasse
+
+## testPruneTree32Bins
+
+## esDsHiAtNodeInitial0[1] = 0.308986942687903, 0.350566009871371, 0.396747087835907, 0.447890605896858, 0.504364398303888, 0.566540754832024, 0.634793036713348, 0.709491856924629, 0.791000831787404, 0.879671919608544, 0.975840371583655, 1.07981933026376, 1.19189412137632, 1.31231629549353, 1.44129748672436, 1.57900316601788, 1.72554637653023, 1.88098154753774, 2.04529849127956, 2.21841669358911, 2.40018001393971, 2.59035191331783, 2.7886113289072, 2.9945493127149, 3.20766654683839, 3.42737184095615, 3.65298170778044, 3.88372109966426, 4.11872537439949, 4.35704354065101, 4.59764281368466, 4.83941449038287, 5.08118112938378, 5.3217049979751, 5.55969772261993, 5.79383105522966, 6.02274864309609, 6.24507866733522, 6.45944719335828, 6.66449205783599, 6.85887710038768, 7.04130653528599, 7.21053924923296, 7.36540280606647, 7.50480693833876, 7.62775630921048, 7.73336233605698, 7.82085387950912, 7.88958661815778, 7.93905094954024, 7.96887828189528, 7.97884560802865, 7.96887828189528, 7.93905094954024, 7.88958661815778, 7.82085387950912, 7.73336233605698, 7.62775630921048, 7.50480693833876, 7.36540280606647, 7.21053924923296, 7.04130653528599, 6.85887710038768, 6.66449205783599, 6.45944719335828, 6.24507866733522, 6.02274864309609, 5.79383105522965, 5.55969772261993, 5.32170499797509, 5.08118112938378, 4.83941449038287, 4.59764281368466, 4.35704354065101, 4.11872537439949, 3.88372109966426, 3.65298170778044, 3.42737184095615, 3.20766654683839, 2.9945493127149, 2.7886113289072, 2.59035191331783, 2.40018001393971, 2.21841669358911, 2.04529849127956, 1.88098154753774, 1.72554637653023, 1.57900316601788, 1.44129748672436, 1.31231629549353, 1.19189412137632, 1.07981933026376, 0.975840371583655, 0.879671919608544, 0.791000831787404, 0.709491856924628, 0.634793036713349, 0.566540754832024, 0.504364398303888, 0.447890605896858, 0.396747087835907, 0.350566009871371, 0.308986942687903
+
+## esDsHiAtNodeInitial1[1] = 0.000254946647636669, 0.000319674822138109, 0.000399835934138456, 0.000498849425801072, 0.000620828141157003, 0.000770703934841743, 0.000954372730824099, 0.0011788613551308, 0.00145251860604505, 0.00178523314354266, 0.00218868086879601, 0.00267660451529771, 0.00326512817532484, 0.00397310942785545, 0.00482253160451986, 0.0058389385158292, 0.00705191364734891, 0.00849560541101504, 0.0102092994868837, 0.0122380386022755, 0.0146332892566062, 0.0174536539009152, 0.0207656259132282, 0.0246443833694604, 0.0291746160933349, 0.0344513787810736, 0.0405809611459954, 0.0476817640292969, 0.0558851682975889, 0.0653363811239983, 0.0761952419644361, 0.08863696823876, 0.102852818461079, 0.119050648395517, 0.137455333812279, 0.158309031659599, 0.181871250031821, 0.208418696288452, 0.238244872152104, 0.271659384673712, 0.308986942687903, 0.350566009871371, 0.396747087835906, 0.447890605896858, 0.504364398303888, 0.566540754832024, 0.634793036713348, 0.709491856924629, 0.791000831787404, 0.879671919608544, 0.975840371583655, 1.07981933026376, 1.19189412137632, 1.31231629549353, 1.44129748672436, 1.57900316601788, 1.72554637653023, 1.88098154753774, 2.04529849127956, 2.21841669358911, 2.40018001393971, 2.59035191331783, 2.7886113289072, 2.9945493127149, 3.20766654683839, 3.42737184095615, 3.65298170778044, 3.88372109966426, 4.11872537439949, 4.35704354065101, 4.59764281368466, 4.83941449038287, 5.08118112938378, 5.32170499797509, 5.55969772261993, 5.79383105522965, 6.02274864309609, 6.24507866733522, 6.45944719335828, 6.66449205783599, 6.85887710038768, 7.04130653528599, 7.21053924923296, 7.36540280606647, 7.50480693833876, 7.62775630921048, 7.73336233605698, 7.82085387950912, 7.88958661815778, 7.93905094954024, 7.96887828189528, 7.97884560802865, 7.96887828189528, 7.93905094954024, 7.88958661815778, 7.82085387950912, 7.73336233605698, 7.62775630921048, 7.50480693833876, 7.36540280606647, 7.21053924923296, 7.04130653528599, 6.85887710038768
 
 ###################
 

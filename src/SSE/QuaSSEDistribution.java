@@ -137,6 +137,10 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public void processInternalNode(Node aNode) {
+
+        // debugging
+        System.out.println("\nDoing node " + aNode.getID());
+
         // recur if internal node or sampled ancestor
         if (!aNode.isLeaf()) {
             for (Node childNode: aNode.getChildren()) {
@@ -148,11 +152,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         }
 
         // unless we're at the root, now we integrate this branch
-        if (!aNode.isRoot()) integrateBranch(aNode, true);
+        if (!aNode.isRoot()) processBranch(aNode, true);
     }
 
     @Override
-    public void integrateBranch(Node aNode, boolean normalize) {
+    public void processBranch(Node aNode, boolean normalize) {
         boolean lowRes = false;
         int nodeIdx = aNode.getNr();
 
@@ -160,17 +164,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         double startTime = aNode.getHeight(); // we're going backwards in time, toward the root
         double endTime = aNode.getParent().getHeight();
         double branchLength2Integrate = endTime - startTime;
-
-        // dealing with dt
-        double dt, nIntervals, nonIntegratedDt;
-        if (dynamicallyAdjustDt) {
-            nIntervals = Math.ceil(branchLength2Integrate / dtMax);
-            dt = branchLength2Integrate / nIntervals; // dynamically adjusted dt
-        } else {
-            nIntervals = Math.floor(branchLength2Integrate / dtMax);
-            dt = dtMax;
-            nonIntegratedDt = branchLength2Integrate % dtMax;
-        }
 
         /*
          * Sorting out E's and D's prior to integration
@@ -182,72 +175,114 @@ public class QuaSSEDistribution extends QuaSSEProcess {
          */
         double[][] esDsAtNode, scratchAtNode;
 
+//        // option 0: (rare) branch starts at tc (all low-res)
+//        if (startTime == tc) {
+//            for (int ithDim=0; ithDim<nDimensions; ithDim++)
+//                SSEUtils.hiToLoTransferInPlace(esDsHi[nodeIdx][ithDim], esDsLo[nodeIdx][ithDim], hiLoIdxs4Transfer);
+//            esDsAtNode = esDsLo[nodeIdx];
+//            scratchAtNode = scratchLo[nodeIdx];
+//        }
         // option 1: entire branch might already be > tc (all low-res)
-        if (startTime >= tc) {
-            lowRes = true;
+        // note that here the high to low res transfer should have already happened
+        if (startTime > tc) {
             esDsAtNode = esDsLo[nodeIdx];
             scratchAtNode = scratchLo[nodeIdx];
-            // debug
+
+            // debugging
+            System.out.println("OPTION 1: E's size should be 2 * low-res = " + esDsAtNode[0].length);
             // System.out.println("Unnormalized D's at low-res = " + Arrays.toString(esDsAtNode[1]));
+
+            // normalize and record normalization factor
+            if (normalize) logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin); // normalize D's and returns factor, which we record
+
+            // now integrate whole branch
+            integrateLength(esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, true);
         }
         // option 2: entire branch < tc (all high-res)
+        else if ((startTime + branchLength2Integrate) < tc) {
+            esDsAtNode = esDsHi[nodeIdx];
+            scratchAtNode = scratchHi[nodeIdx];
+
+            // debugging
+            System.out.println("OPTION 2: E's size should be 4 * low-res = " + esDsAtNode[0].length);
+            // System.out.println("Unnormalized D's at low-res = " + Arrays.toString(esDsAtNode[1]));
+
+            // normalize and record normalization factor
+            if (normalize) logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
+
+            // now integrate whole branch
+            integrateLength(esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, false);
+        }
         // option 3: tc happens inside branch (tip-end part in high-res, root-end part in low-res)
         else {
             esDsAtNode = esDsHi[nodeIdx];
             scratchAtNode = scratchHi[nodeIdx];
-            // debug
+
+            // debugging
+            System.out.println("OPTION 3: E's size should be 2 * 4 * low-res = " + esDsAtNode[0].length);
             // System.out.println("Unnormalized D's at high-res = " + Arrays.toString(esDsAtNode[1]));
+
+            // normalize and record normalization factor
+            if (normalize) logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
+
+            // high res part
+            double lenHi = branchLength2Integrate - tc;
+
+            // debugging
+            System.out.println("high-res part, lenHi = " + lenHi);
+
+            integrateLength(esDsAtNode, scratchAtNode, lenHi, dynamicallyAdjustDt, dtMax, false);
+
+            // normalize and record normalization factor
+            logNormalizationFactors[nodeIdx] += calculateNormalizationFactor(esDsAtNode[1], dXbin/hiLoRatio);
+
+            // transferring high-res esDs to low-res esDs
+            for (int ithDim=0; ithDim<nDimensions; ithDim++)
+                SSEUtils.hiToLoTransferInPlace(esDsHi[nodeIdx][ithDim], esDsLo[nodeIdx][ithDim], hiLoIdxs4Transfer);
+            esDsAtNode = esDsLo[nodeIdx];
+            scratchAtNode = scratchLo[nodeIdx];
+
+            // low res part
+            double lenLo = branchLength2Integrate - lenHi;
+
+            // debugging
+            System.out.println("low-res part, lenLo = " + lenLo);
+
+            integrateLength(esDsAtNode, scratchAtNode, lenLo, dynamicallyAdjustDt, dtMax, true);
         }
+    }
 
-        /*
-         * Normalizing D's to avoid underflow
-         * This is done prior to integration, at the right resolution already
-         * (since we have already gone through options 1 -- 3 above)
-         */
-        double normalizationFactorFromDs = 0.0;
-        if (normalize) {
-            if (lowRes) normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], dXbin);
-            else normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
-            logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
-
-            for (int i = 0; i < esDsAtNode[1].length; i++) {
-                esDsAtNode[1][i] /= normalizationFactorFromDs;
-                // there will be an additional step of normalization when in option 3
-                // as a result of integrating the tip-end part in high-res
-            }
+    @Override
+    public void integrateLength(double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes) {
+        // dealing with dt
+        double dt, nIntervals, nonIntegratedDt;
+        if (dynamicallyAdjust) {
+            nIntervals = Math.ceil(aLength / maxDt);
+            dt = aLength / nIntervals; // dynamically adjusted dt
+        } else {
+            nIntervals = Math.floor(aLength / maxDt);
+            dt = maxDt;
+            nonIntegratedDt = aLength % maxDt;
         }
-
-        // debug
-        // System.out.println("Normalized D's at either low or high-res = " + Arrays.toString(esDsAtNode[1]));
 
         // integrating!
-        double integrationTStart = startTime;
         for (int i=0; i<nIntervals; i++) {
-            // tc happens inside branch (tip-end part in high-res, root-end part in low-res)
-            if ((integrationTStart + dt) >= tc) {
-                // integration of this tip-end in high res
-                double dtAtHi = tc - integrationTStart;
-                doIntegrateInPlace(esDsAtNode, scratchAtNode, dtAtHi, false);
-
-                // one more normalization for this high-res stretch
-                if (normalize) {
-                    normalizationFactorFromDs = calculateNormalizationFactor(esDsAtNode[1], (dXbin / hiLoRatio));
-                    for (int j = 0; j < esDsAtNode[1].length; j++) esDsAtNode[1][j] /= normalizationFactorFromDs;
-                    logNormalizationFactors[nodeIdx] = normalizationFactorFromDs; // storing normalization factors for when returning log-lik we can de-normalize it
-                }
-
-                // integration of the root-end in low res
-                esDsAtNode = esDsLo[nodeIdx];
-                scratchAtNode = scratchLo[nodeIdx];
-                double dtAtLo = integrationTStart + dt - tc;
-                doIntegrateInPlace(esDsAtNode, scratchAtNode, dtAtLo, true);
-            }
-            // otherwise
-            else {
-                doIntegrateInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
-                integrationTStart += dt;
-            }
+            doIntegrateInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
         }
+    }
+
+    @Override
+    public double normalizeDs(double[] dsAtNode, double dxAtRightRes) {
+        double logNormalizationFactorFromDs;
+        logNormalizationFactorFromDs = calculateNormalizationFactor(dsAtNode, dxAtRightRes);
+
+        for (int i = 0; i < dsAtNode.length; i++) {
+            dsAtNode[i] /= logNormalizationFactorFromDs;
+            // there will be an additional step of normalization when in option 3
+            // as a result of integrating the tip-end part in high-res
+        }
+
+        return logNormalizationFactorFromDs;
     }
 
     @Override
@@ -256,7 +291,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         double nodeHeight = aNode.getHeight();
 
         List<Node> childrenNode = aNode.getChildren();
-        System.out.println("# of children = " + childrenNode.size());
         Node leftChild = childrenNode.get(0);
         int leftChildIdx = leftChild.getNr();
         Node rightChild = childrenNode.get(1);
@@ -274,6 +308,13 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             nUsefulXbinAtRightRes = nUsefulXbinsLo;
             birthRatesAtRightRes = birthRatesLo;
         }
+
+        // debugging
+        System.out.println("\nMerging children");
+        System.out.println("E's before merging = " + Arrays.toString(esDs[leftChildIdx][0]));
+        System.out.println("D's left before merging = " + Arrays.toString(esDs[leftChildIdx][1]));
+        System.out.println("D's right before merging = " + Arrays.toString(esDs[rightChildIdx][1]));
+        System.out.println("Birth rates = " + Arrays.toString(birthRatesAtRightRes));
 
         // proper merging
         for (int i=0; i<(esDs[nodeIdx][0].length/2); ++i) {
@@ -298,7 +339,9 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     private double calculateNormalizationFactor(double[] dS, double binSize) {
         double normalizationFactorFromDs = 0.0;
         for (double d: dS) normalizationFactorFromDs += d;
-        return (normalizationFactorFromDs *= binSize);
+
+        normalizationFactorFromDs *= binSize;
+        return normalizationFactorFromDs;
     }
 
     @Override
@@ -338,7 +381,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes) {
 
         // debugging
-        System.out.println("dsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[0]));
+        System.out.println("esAtNode before propagate in t = " + Arrays.toString(esDsAtNode[0]));
         System.out.println("dsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
 
         // integrate over birth and death events (low or high resolution inside)
@@ -352,11 +395,13 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         populatefY(true, true);
 
         // integrate over diffusion of quantitative trait
-        // propagateXInPlace(esDsAtNode, lowRes);
+        // debugging
+        // System.out.println("D's length before propagating in X = " + esDsAtNode[1].length);
         propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
 
         // debugging
-        // System.out.println("esDsAtNode after propagate in t and x = " + Arrays.toString(esDsAtNode[1]));
+        System.out.println("esAtNode after propagate in t and x = " + Arrays.toString(esDsAtNode[0]));
+        System.out.println("dsAtNode after propagate in t and x = " + Arrays.toString(esDsAtNode[1]));
     }
 
     @Override
@@ -376,6 +421,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             }
         }
 
+        // debugging
         // System.out.println("esDsAtNode[1] = " + Arrays.toString(esDsAtNode[1]));
         // System.out.println("scratch[1] = " + Arrays.toString(scratch[1]));
 
@@ -393,21 +439,19 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     public double getLogPFromRelevantObjects(double[][] esDsAtRoot, double sumOfLogNormalizationFactors, double[] birthRates, double dXAtRightRes) {
 
         // debugging
-        // System.out.println("priorProbsAtRoot = " + Arrays.toString(priorProbsAtRoot));
+        System.out.println("\nProcessing quantitites at root");
 
         double[] esAtRoot = esDsAtRoot[0];
-        System.out.println("esAtRoot = " + Arrays.toString(esAtRoot));
         double[] dsAtRoot = esDsAtRoot[1];
 
         // debugging
-        System.out.println("dsAtRoot.length = " + dsAtRoot.length);
-        System.out.println("priorProbsAtRoot.length = " + priorProbsAtRoot.length);
-        System.out.println("birthRates.length = " + birthRates.length);
-
-        // debugging
-        System.out.println("birthRates = " + Arrays.toString(birthRates));
         System.out.println("priorProbsAtRoot = " + Arrays.toString(priorProbsAtRoot));
         System.out.println("esAtRoot = " + Arrays.toString(esAtRoot));
+        System.out.println("dsAtRoot = " + Arrays.toString(dsAtRoot));
+        System.out.println("esAtRoot.length = " + dsAtRoot.length);
+        System.out.println("priorProbsAtRoot.length = " + priorProbsAtRoot.length);
+        System.out.println("birthRates = " + Arrays.toString(birthRates));
+        System.out.println("birthRates.length = " + birthRates.length);
 
         // conditioning on survival of lineages
         double denomSumForConditioning = 0.0;

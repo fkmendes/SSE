@@ -104,7 +104,7 @@ public class PropagatesQuaSSETest {
         }
         fftForKern = new DoubleFFT_1D(nXbins);
         fftForKern.realForwardFull(fftFY);
-        everyOtherInPlace(fftFY, realFftFy, nXbins, 0, 0, 1.0);
+        everyOtherInPlace(fftFY, realFftFy, nXbins, 0, 0, 2, 1.0);
         // System.out.println("fft fY = " + Arrays.toString(realFftFy));
 
         // ifft
@@ -112,7 +112,7 @@ public class PropagatesQuaSSETest {
             ifftFY[i] = fftFY[i];
         }
         fftForKern.complexInverse(ifftFY, false);
-        everyOtherInPlace(ifftFY, realIfftFy, nXbins, 0, 0, 1.0);
+        everyOtherInPlace(ifftFY, realIfftFy, nXbins, 0, 0, 2, 1.0);
         // System.out.println("ifft fY =" + Arrays.toString(realIfftFy));
 
         double[] expectedFy = new double[] { 0.986703287028858, 0.00664835445182386, 2.03374705433156e-09, 2.82445649260927e-20, 1.78085279698565e-35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.78085279698565e-35, 2.82445649260927e-20, 2.03374705433156e-09, 0.00664835445182386 };
@@ -159,8 +159,8 @@ public class PropagatesQuaSSETest {
             unnormalizedDs[j] = scratch[1][i];
         }
 
-        everyOtherInPlace(scratch[0], esDs[0], nXbins, 0, 0, 1.0/nXbins); // E's: grabbing real part and scaling by 1/nXbins
-        everyOtherInPlace(scratch[1], esDs[1], nXbins, 0, 0, 1.0/nXbins); // D's: grabbing real part and scaling by 1/nXbins
+        everyOtherInPlace(scratch[0], esDs[0], nXbins, 0, 0, 2, 1.0/nXbins); // E's: grabbing real part and scaling by 1/nXbins
+        everyOtherInPlace(scratch[1], esDs[1], nXbins, 0, 0, 2, 1.0/nXbins); // D's: grabbing real part and scaling by 1/nXbins
 
         double[] expectedDsUnnormalized = new double[] { 0.280447809353859, 0.58934289318654, 1.18632299309589, 2.29444263475988, 4.26373864030165, 7.61277219718136, 13.0597170956171, 21.5259924869188, 34.090305996801, 51.8724486751153, 75.8369022635638, 106.527631278782, 143.774440226047, 186.439841249409, 232.29148807448, 278.077162458051, 319.841447837597, 353.46100325742, 375.306060575871, 382.883752104488, 375.306060575871, 353.46100325742, 319.841447837597, 278.077162458051, 232.29148807448, 186.439841249409, 143.774440226047, 106.527631278782, 75.8369022635638, 51.8724486751154, 34.090305996801, 21.5259924869189, 13.0597170956171, 7.61277219718137, 4.26373864030163, 2.29444263475987, 1.18632299309587, 0.589342893186554, 0.280447809353873, 0.00186332917266441, 5.70054226045613e-10, 0, 2.8421709430404e-14, 0, 5.6843418860808e-14, 0, 5.70025804336183e-10, 0.00186332917272125 };
         double[] expectedEs = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };

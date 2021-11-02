@@ -11,6 +11,8 @@ import beast.evolution.tree.Tree;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jtransforms.fft.DoubleFFT_1D;
 
+import java.util.Arrays;
+
 @Description("Specifies a quantitative trait(s) state-dependent speciation and" +
         "extinction birth-death process.")
 public abstract class QuaSSEProcess extends Distribution {
@@ -47,6 +49,7 @@ public abstract class QuaSSEProcess extends Distribution {
     protected int nXbinsLo, nUsefulXbinsLo, nXbinsHi, nUsefulXbinsHi, hiLoRatio;
     protected int[] nUsefulXbins, nLeftNRightFlanksHi, nLeftNRightFlanksLo;
     protected double[] xLo, xHi; // x rulers
+    protected int[] hiLoIdxs4Transfer;
 
     // quantitative trait evolution
     protected double changeInXNormalMean; // (=diversitree's drift)
@@ -86,6 +89,13 @@ public abstract class QuaSSEProcess extends Distribution {
         prepareDimensionsInPlace(); // in parent class
         prepareXRulers(); // in parent class
 
+        // getting indices for transferring high- to low-res E's and D's during pruning
+        hiLoIdxs4Transfer = new int[nUsefulXbinsLo];
+        populateIndicesHiLo(hiLoIdxs4Transfer, hiLoRatio, nUsefulXbinsLo); // populates hiLoIdxs4Transfer
+
+        // debugging
+        // System.out.println("hiLoIdxs4Transfer = " + Arrays.toString(hiLoIdxs4Transfer));
+
         fftForEandDLo = new DoubleFFT_1D(nXbinsLo);
         fftForEandDHi = new DoubleFFT_1D(nXbinsHi);
 
@@ -100,7 +110,6 @@ public abstract class QuaSSEProcess extends Distribution {
      * that will not contribute to... (fill this out later)
      */
     protected void prepareDimensionsInPlace() {
-
         // left flank bins
         nLeftNRightFlanksLo[0] = (int)(Math.ceil(-(changeInXNormalMean - flankWidthScaler * changeInXNormalSd) / dXbin));
         nLeftNRightFlanksHi[0] = hiLoRatio * nLeftNRightFlanksLo[0];
@@ -116,13 +125,16 @@ public abstract class QuaSSEProcess extends Distribution {
         nUsefulXbins[0] = nUsefulXbinsLo;
         nUsefulXbins[1] = nUsefulXbinsHi;
 
-        // uncomment to check things
-        System.out.println("\n\nSetting dimensions of QuaSSEProcess");
-        System.out.println("nXbinsLo = " + nXbinsLo + " nXbinsHi = " + nXbinsHi);
-        System.out.println("nLeftFlankLo = " + nLeftNRightFlanksLo[0] + " nRightFlankLo = " + nLeftNRightFlanksLo[1]);
-        System.out.println("nUsefulXbinsLo = " + nUsefulXbinsLo);
-        System.out.println("nLeftFlankHi = " + nLeftNRightFlanksHi[0] + " nRightFlankHi = " + nLeftNRightFlanksHi[1]);
-        System.out.println("nUsefulXbinsHi = " + nUsefulXbinsHi);
+        // debugging
+        // System.out.println("\n\nSetting dimensions of QuaSSEProcess");
+        // System.out.println("changeInXNormalMean = " + changeInXNormalMean + " changeInXNormalSd = " + changeInXNormalSd);
+        // System.out.println("flankWidthScaler = " + flankWidthScaler + " dXbin = " + dXbin);
+        // System.out.println("nLeftNRightFlanksLo[0] = " + nLeftNRightFlanksLo[0]);
+        // System.out.println("nXbinsLo = " + nXbinsLo + " nXbinsHi = " + nXbinsHi);
+        // System.out.println("nLeftFlankLo = " + nLeftNRightFlanksLo[0] + " nRightFlankLo = " + nLeftNRightFlanksLo[1]);
+        // System.out.println("nUsefulXbinsLo = " + nUsefulXbinsLo);
+        // System.out.println("nLeftFlankHi = " + nLeftNRightFlanksHi[0] + " nRightFlankHi = " + nLeftNRightFlanksHi[1]);
+        // System.out.println("nUsefulXbinsHi = " + nUsefulXbinsHi);
     }
 
     /*
@@ -134,7 +146,7 @@ public abstract class QuaSSEProcess extends Distribution {
         xMinHi = xMinLo - dXbin * (1.0 - 1.0 / hiLoRatio);
 
         // debugging
-        System.out.println("xMinLo = " + xMinLo + " xMinHi = " + xMinHi);
+        // System.out.println("xMinLo = " + xMinLo + " xMinHi = " + xMinHi);
 
         // preparing x rulers
         xLo = new double[nUsefulXbinsLo];
@@ -200,6 +212,16 @@ public abstract class QuaSSEProcess extends Distribution {
      */
     protected abstract void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsLo, int nXbinsHi);
 
+    protected void populateIndicesHiLo(int[] toArray, int ratioFromTo, int careAboutNTo) {
+        int nElementsCopied = 0;
+        int i = ratioFromTo - 1;
+        while (nElementsCopied < careAboutNTo) {
+            toArray[nElementsCopied] = i;
+            i += ratioFromTo;
+            nElementsCopied++;
+        }
+    }
+
     /*
      *
      */
@@ -214,7 +236,17 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void integrateBranch(Node aNode, boolean normalize);
+    protected abstract void processBranch(Node aNode, boolean normalize);
+
+    /*
+     *
+     */
+    protected abstract void integrateLength(double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes);
+
+    /*
+     *
+     */
+    protected abstract double normalizeDs(double[] dsAtNode, double dxAtRightRes);
 
     /*
      *
@@ -295,6 +327,10 @@ public abstract class QuaSSEProcess extends Distribution {
 
     public double getdXbin() {
         return dXbin;
+    }
+
+    public int[] getHiLoIdxs4Transfer() {
+        return hiLoIdxs4Transfer;
     }
 
     public double[] getPriorProbsAtRoot(String rootPriorType) {

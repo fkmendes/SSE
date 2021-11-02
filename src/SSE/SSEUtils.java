@@ -50,7 +50,6 @@ public class SSEUtils {
      * @return  no return, leaves result in 'esDs' and 'scratch'
      */
     public static void propagateEandDinTQuaSSEInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
-
         // iterating over all continuous character bins (total # = nx), to update E and D for each of those bins
         for (int i = 0; i < nUsefulTraitBins; ++i) {
             double ithLambda = birthRate[i];
@@ -140,7 +139,7 @@ public class SSEUtils {
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
 
             // System.out.println("ithDim = " + ithDim);
-            everyOtherInPlace(scratchAtNode[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, scaleBy); // grabbing real part and scaling by 1/nXbins
+            everyOtherInPlace(scratchAtNode[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
 
             for (int i=0; i<nXbins; ++i) {
                 // if negative value, set to 0.0
@@ -280,8 +279,8 @@ public class SSEUtils {
     }
 
     /*
-     * Populate outArray in place, getting every other element from
-     * in Array.
+     * Populate toArray in place, getting every other element from
+     * fromArray.
      *
      * @param   inArray source array
      * @param   outArray result array to receive every other element from source array
@@ -290,21 +289,28 @@ public class SSEUtils {
      * @param   skipLastN  number of discrete quantitative trait bins on the right-side of E and D that are not affected by 'propagateEandDinXQuaLike'
      * @param   scaleBy will scale every other element by this
      */
-    public static void everyOtherInPlace(double[] inArray, double[] outArray, int nXbins, int skipFirstN, int skipLastN, double scaleBy) {
-
+    public static void everyOtherInPlace(double[] fromArray, double[] toArray, int nXbins, int skipFirstN, int skipLastN, int everyOther, double scaleBy) {
         // move these checks to initAndValidate later
         if (skipFirstN == 0 && skipLastN == 0) skipLastN = -1; // this should only happen in debugging, where there are no elements to skip at the start or end
-        if (inArray.length != outArray.length) throw new RuntimeException("Arrays of different size. Exiting...");
-        if (outArray.length/nXbins != 2.0) throw new RuntimeException("Size of arrays must be double the number of quantitative ch bins. Exiting...");
+        if (fromArray.length != toArray.length) throw new RuntimeException("Arrays of different size. Exiting...");
+        if (toArray.length/nXbins != 2.0) throw new RuntimeException("Size of arrays must be double the number of quantitative ch bins. Exiting...");
         // TODO: instead of multiple of 4, it's actually a power of 2
         if ((2 * nXbins) % 4 != 0.0) throw new RuntimeException("Number of quantitative character bins must be a multiple of 4. Exiting...");
         if ((nXbins - skipLastN - (skipFirstN + skipLastN)) <= skipFirstN) throw new RuntimeException("There are no useful bins left after pushing left and right flanks to the end, on top of right flank. Exiting...");
 
-        for (int i=skipFirstN * 2, j=skipFirstN; i <= (inArray.length-2); i+=2, j++) {
+        for (int i=skipFirstN * 2, j=skipFirstN; i <= (fromArray.length-2); i+=everyOther, j++) {
             // if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) { // working
             if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {
-                outArray[j] = inArray[i] * scaleBy;
+                toArray[j] = fromArray[i] * scaleBy;
             }
+        }
+    }
+
+    public static void hiToLoTransferInPlace(double[] fromArray, double[] toArray, int[] idxs4Transfer) {
+        int i = 0;
+        for (int j: idxs4Transfer) {
+            toArray[i] = fromArray[j];
+            i++;
         }
     }
 }

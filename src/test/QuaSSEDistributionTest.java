@@ -38,19 +38,19 @@ public class QuaSSEDistributionTest {
     final static Double EPSILON2 = 1e-16;
     final static Double EPSILON3 = 1e-14;
 
-    static QuaSSEDistribution q1024, q48, q48TwoDt, q32;
+    static QuaSSEDistribution q1024, q48, q48TwoDt, q32, q32Smaller;
     static Tree myTree, myTree2;
 
     static List<Double> data;
     static RealParameter driftRp, xMidrp, flankWidthScalerrp;
     static RealParameter dxBin48Rp, dxBin1024Rp;
     static RealParameter quTraitrp, quTraitRp;
-    static RealParameter dtrp, twoDtrp, tcrp, diffusionrp;
+    static RealParameter dtrp, twoDtrp, smallerDtrp, tcrp, smallerTcrp, diffusionrp;
     static IntegerParameter hiLoRatiorp, nXbins1024Ip, nXbins48Ip, nXbins32Ip;
     static BooleanParameter dynDtbpTrue, dynDtbpFalse;
     static String rootPriorType;
 
-    static double dt, dtLarger;
+    static double dt, dtLarger, dtSmaller;
     static Double[] x0, y1, y0, r;
     static LogisticFunction lfn;
     static ConstantLinkFn cfn;
@@ -80,10 +80,13 @@ public class QuaSSEDistributionTest {
         // dimension stuff
         dt = 0.01;
         dtLarger = 0.02;
+        dtSmaller = 0.005;
         Double[] dtD = new Double[] { 0.01 };
         Double[] largerDtD = new Double[] { 0.02 };
+        Double[] smallerDtD = new Double[] { 0.005 };
         dtrp = new RealParameter(dtD);
         twoDtrp = new RealParameter(largerDtD);
+        smallerDtrp = new RealParameter(smallerDtD);
 
         // adjust dt dynamically to maximize accuracy and match diversitree
         Boolean[] dynDtTrue = new Boolean[] { true };
@@ -92,7 +95,9 @@ public class QuaSSEDistributionTest {
         dynDtbpFalse = new BooleanParameter(dynDtFalse);
 
         Double[] tc = new Double[] { 100.0 };
+        Double[] smallerTc = new Double[] { 0.005 };
         tcrp = new RealParameter(tc);
+        smallerTcrp = new RealParameter(smallerTc);
 
         // logistic realparameter's for lambda
         x0 = new Double[] { 0.0 };
@@ -190,6 +195,16 @@ public class QuaSSEDistributionTest {
         q32 = new QuaSSEDistribution();
         q32.initByName("dtMax", dtrp, "dynDt", dynDtbpTrue,
                 "tc", tcrp,
+                "nX", nXbins32Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
+                "drift", driftRp, "diffusion", diffusionrp,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", myTree2,
+                "q2d", nfn,
+                "priorProbAtRootType", rootPriorType);
+
+        q32Smaller = new QuaSSEDistribution();
+        q32Smaller.initByName("dtMax", smallerDtrp, "dynDt", dynDtbpTrue,
+                "tc", smallerTcrp,
                 "nX", nXbins32Ip, "dX", dxBin48Rp, "xMid", xMidrp, "flankWidthScaler", flankWidthScalerrp, "hiLoRatio", hiLoRatiorp,
                 "drift", driftRp, "diffusion", diffusionrp,
                 "q2mLambda", lfn, "q2mMu", cfn,
@@ -376,7 +391,7 @@ public class QuaSSEDistributionTest {
          */
         double[] fftedfY = q48.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
-        everyOtherInPlace(fftedfY, realFFTedfY, q48.getnXbins(true),0, 0, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY, realFFTedfY, q48.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
@@ -434,7 +449,7 @@ public class QuaSSEDistributionTest {
          */
         double[] fftedfY = q1024.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
-        everyOtherInPlace(fftedfY, realFFTedfY, q1024.getnXbins(true),0, 0, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY, realFFTedfY, q1024.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
@@ -491,7 +506,7 @@ public class QuaSSEDistributionTest {
         // just propagate in x, in place
         double[] fftedfY = q1024.getfY(false);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
-        everyOtherInPlace(fftedfY, realFFTedfY, q1024.getnXbins(false),0, 0, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY, realFFTedfY, q1024.getnXbins(false),0, 0, 2, 1.0); // getting real part for assert below
 
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = q1024.getScratchAtNode(nodeIdx, false); // sp1
@@ -572,7 +587,7 @@ public class QuaSSEDistributionTest {
         q48.populatefY(true, true);
         double[] fftedfY = q48.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
-        everyOtherInPlace(fftedfY, realFFTedfY, q48.getnXbins(true),0, 0, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY, realFFTedfY, q48.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
@@ -655,7 +670,7 @@ public class QuaSSEDistributionTest {
         q48TwoDt.populatefY(true, true);
         double[] fftedfY = q48TwoDt.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
-        everyOtherInPlace(fftedfY, realFFTedfY, q48TwoDt.getnXbins(true),0, 0, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY, realFFTedfY, q48TwoDt.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
@@ -712,7 +727,7 @@ public class QuaSSEDistributionTest {
         esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsHiAtNode[1], esDsHiAtNode[1].length); // D
 
         // now we integrate over 2 dt's = 2 * 0.01 = 0.02, inside class!
-        q48TwoDt.integrateBranch(sp1Node, false);
+        q48TwoDt.processBranch(sp1Node, false);
         esDsHiAtNode = q48TwoDt.getEsDsAtNode(nodeIdx, false);
 
 
@@ -732,15 +747,23 @@ public class QuaSSEDistributionTest {
         Assert.assertArrayEquals(expectedSp1DsAfterPropTandXLater10, Arrays.copyOfRange(esDsHiAtNode[1], 146, 156), 1E-14);
     }
 
+    /*
+     *
+     */
     @Test
     public void testPruneTree32Bins() {
 
         /*
+         * Indices for high to low res transfer
+         */
+        int[] hiLoIdxs4Transfer = q32Smaller.getHiLoIdxs4Transfer();
+
+        /*
          * let us grab the E's and D's before integration
          */
-        double[][] esDsHiAtNode0, esDsHiAtNode1, esDsHiAtNode2;
-        esDsHiAtNode0 = q32.getEsDsAtNode(0, false); // sp1
-        esDsHiAtNode1 = q32.getEsDsAtNode(1, false); // sp2
+        double[][] esDsHiAtNode0, esDsHiAtNode1;
+        esDsHiAtNode0 = q32Smaller.getEsDsAtNode(0, false); // sp1
+        esDsHiAtNode1 = q32Smaller.getEsDsAtNode(1, false); // sp2
 
         /*
          * we are going to have a look at (make a deep copy of) the initial D's
@@ -754,12 +777,20 @@ public class QuaSSEDistributionTest {
         esDsHiAtNodeInitial1[0] = Arrays.copyOf(esDsHiAtNode1[0], esDsHiAtNode1[0].length); // E
         esDsHiAtNodeInitial1[1] = Arrays.copyOf(esDsHiAtNode1[1], esDsHiAtNode1[1].length); // D
 
-        System.out.println("Size of D's = " + esDsHiAtNode0[1].length);
         System.out.println("Initial D's for sp1 = " + Arrays.toString(esDsHiAtNodeInitial0[1]));
 
-        // q32.integrateBranch(myTree.getNode(0));
-        double logLik = q32.calculateLogP();
+        int[] expectedHiLoIdxs4Transfer = new int[] { 3, 7, 11, 15, 19, 23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63, 67, 71, 75, 79, 83, 87, 91, 95, 99 };
+        double[] expectedDsHiAtNodeInitialSp1 = new double[] { 0.308986942687903, 0.350566009871371, 0.396747087835907, 0.447890605896858, 0.504364398303888, 0.566540754832024, 0.634793036713348, 0.709491856924629, 0.791000831787404, 0.879671919608544, 0.975840371583655, 1.07981933026376, 1.19189412137632, 1.31231629549353, 1.44129748672436, 1.57900316601788, 1.72554637653023, 1.88098154753774, 2.04529849127956, 2.21841669358911, 2.40018001393971, 2.59035191331783, 2.7886113289072, 2.9945493127149, 3.20766654683839, 3.42737184095615, 3.65298170778044, 3.88372109966426, 4.11872537439949, 4.35704354065101, 4.59764281368466, 4.83941449038287, 5.08118112938378, 5.3217049979751, 5.55969772261993, 5.79383105522966, 6.02274864309609, 6.24507866733522, 6.45944719335828, 6.66449205783599, 6.85887710038768, 7.04130653528599, 7.21053924923296, 7.36540280606647, 7.50480693833876, 7.62775630921048, 7.73336233605698, 7.82085387950912, 7.88958661815778, 7.93905094954024, 7.96887828189528, 7.97884560802865, 7.96887828189528, 7.93905094954024, 7.88958661815778, 7.82085387950912, 7.73336233605698, 7.62775630921048, 7.50480693833876, 7.36540280606647, 7.21053924923296, 7.04130653528599, 6.85887710038768, 6.66449205783599, 6.45944719335828, 6.24507866733522, 6.02274864309609, 5.79383105522965, 5.55969772261993, 5.32170499797509, 5.08118112938378, 4.83941449038287, 4.59764281368466, 4.35704354065101, 4.11872537439949, 3.88372109966426, 3.65298170778044, 3.42737184095615, 3.20766654683839, 2.9945493127149, 2.7886113289072, 2.59035191331783, 2.40018001393971, 2.21841669358911, 2.04529849127956, 1.88098154753774, 1.72554637653023, 1.57900316601788, 1.44129748672436, 1.31231629549353, 1.19189412137632, 1.07981933026376, 0.975840371583655, 0.879671919608544, 0.791000831787404, 0.709491856924628, 0.634793036713349, 0.566540754832024, 0.504364398303888, 0.447890605896858, 0.396747087835907, 0.350566009871371, 0.308986942687903 };
+        double[] expectedDsHiAtNodeInitialSp2 = new double[] { 0.000254946647636669, 0.000319674822138109, 0.000399835934138456, 0.000498849425801072, 0.000620828141157003, 0.000770703934841743, 0.000954372730824099, 0.0011788613551308, 0.00145251860604505, 0.00178523314354266, 0.00218868086879601, 0.00267660451529771, 0.00326512817532484, 0.00397310942785545, 0.00482253160451986, 0.0058389385158292, 0.00705191364734891, 0.00849560541101504, 0.0102092994868837, 0.0122380386022755, 0.0146332892566062, 0.0174536539009152, 0.0207656259132282, 0.0246443833694604, 0.0291746160933349, 0.0344513787810736, 0.0405809611459954, 0.0476817640292969, 0.0558851682975889, 0.0653363811239983, 0.0761952419644361, 0.08863696823876, 0.102852818461079, 0.119050648395517, 0.137455333812279, 0.158309031659599, 0.181871250031821, 0.208418696288452, 0.238244872152104, 0.271659384673712, 0.308986942687903, 0.350566009871371, 0.396747087835906, 0.447890605896858, 0.504364398303888, 0.566540754832024, 0.634793036713348, 0.709491856924629, 0.791000831787404, 0.879671919608544, 0.975840371583655, 1.07981933026376, 1.19189412137632, 1.31231629549353, 1.44129748672436, 1.57900316601788, 1.72554637653023, 1.88098154753774, 2.04529849127956, 2.21841669358911, 2.40018001393971, 2.59035191331783, 2.7886113289072, 2.9945493127149, 3.20766654683839, 3.42737184095615, 3.65298170778044, 3.88372109966426, 4.11872537439949, 4.35704354065101, 4.59764281368466, 4.83941449038287, 5.08118112938378, 5.32170499797509, 5.55969772261993, 5.79383105522965, 6.02274864309609, 6.24507866733522, 6.45944719335828, 6.66449205783599, 6.85887710038768, 7.04130653528599, 7.21053924923296, 7.36540280606647, 7.50480693833876, 7.62775630921048, 7.73336233605698, 7.82085387950912, 7.88958661815778, 7.93905094954024, 7.96887828189528, 7.97884560802865, 7.96887828189528, 7.93905094954024, 7.88958661815778, 7.82085387950912, 7.73336233605698, 7.62775630921048, 7.50480693833876, 7.36540280606647, 7.21053924923296, 7.04130653528599, 6.85887710038768 };
+
+        double logLik = q32Smaller.calculateLogP();
         System.out.println("logLik = " + logLik);
+
+
+
+        Assert.assertArrayEquals(expectedHiLoIdxs4Transfer, hiLoIdxs4Transfer);
+        Assert.assertArrayEquals(expectedDsHiAtNodeInitialSp1, Arrays.copyOfRange(esDsHiAtNodeInitial0[1], 0, 103), 1E-13);
+        Assert.assertArrayEquals(expectedDsHiAtNodeInitialSp2, Arrays.copyOfRange(esDsHiAtNodeInitial1[1], 0, 103), 1E-13);
     }
 
     /*
