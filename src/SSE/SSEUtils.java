@@ -313,4 +313,20 @@ public class SSEUtils {
             i++;
         }
     }
+
+    public static double calculateNormalizationFactor(double[] dS, double binSize) {
+        double normalizationFactorFromDs = 0.0;
+        for (int i=0; i<dS.length; ++i) normalizationFactorFromDs += dS[i];
+
+        // debugging
+        // System.out.println("normalizationFactorFromDs inside calculateNormalizationFactor = " + normalizationFactorFromDs);
+        // System.out.println("binSize inside calculateNormalizationFactor = " + binSize);
+
+        normalizationFactorFromDs *= binSize;
+
+        // debugging
+        // System.out.println("normalizationFactorFromDs * binSize = " + normalizationFactorFromDs);
+
+        return normalizationFactorFromDs;
+    }
 }

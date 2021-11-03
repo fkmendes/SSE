@@ -21,10 +21,10 @@
 ## (12) testBothXandTPropagateMethodsInsideClassOneBranchLoRes48Bins
 ## (13) testBothXandTPropagateMethodsInsideClassOneBranchLoRes48BinsLargerDt
 ## (14) testIntegrateOneBranchHiRes48BinsInsideClassBothXandTTwoDt
-## (15) STILL BUILDING pruning test
-## (16) testPriorProbAtRootObserved
-## (17) testPriorProbAtRootFlat
-## (18) testRootCalcProcedure
+## (15) testPriorProbAtRootObserved
+## (16) testPriorProbAtRootFlat
+## (17) testRootCalcProcedure
+## (18) testPruneTree32Bins
 
 ## IMPORTANT: expectations (outputs from paste(xyz, collapse=", ") will vary depending on machine architecture; when dnorm() gets very small inputs (e.g., dx * nx are both large), the initial values of D will be tiny, and then the result of FFT on different machines will differ
 ##
@@ -787,16 +787,21 @@ make.pde.quasse.fftR.3 <- function (nx, dx, dt.max, nd) {
         if (!is.matrix(y))
             y <- matrix(y, nx, nd)
 
+        ## y comes in normalized from combine.branches.quasse
+        ## line: y[, 2] <- y[, 2]/q0 (the y here is normalized by q0 in that function)
         ans = quasse.integrate.fftR.3(y, pars$lambda, pars$mu,
             pars$drift, pars$diffusion, nt, dt, nx, ndat, dx,
             padding[1], padding[2])
 
         q = sum(ans[, 2]) * dx
 
+        print("Normalization factor in make.pde.quasse.fftR = ")
+        print(q)
+
         # print(ans[,1]) # E's
         # print(ans[,2]) ## FKM: D's that are returned from fftR.propagate.t
 
-        # ans[,2] <- ans[,2]/q ## FKM: D's are normalized before returning
+        ans[,2] <- ans[,2]/q ## FKM: D's are normalized again before returning
 
         list(log(q), ans)
     }
@@ -905,22 +910,30 @@ ext.fft.48.2dt.both <- quasse.extent.debug(control.fft.48.2dt, drift, diffusion)
 
 vars.fft.48.2dt.both <- matrix(0, control.fft.48.2dt$nx * 4, 2) # high resolution
 vars.fft.48.2dt.both[seq_len(ext.fft.48.2dt.both$ndat[1]),2] <- dnorm(ext.fft.48.2dt.both$x[[1]], 0.0, sd)
-print(paste(vars.fft.48.2dt.both[1:10,2], collapse=", ")) # 0.00705191364734891, 0.00849560541101504, 0.0102092994868837, 0.0122380386022755, 0.0146332892566062, 0.0174536539009152, 0.0207656259132282, 0.0246443833694604, 0.0291746160933349, 0.0344513787810736
-print(paste(vars.fft.48.2dt.both[147:156,2], collapse=", ")) # 0.0146332892566062, 0.0122380386022755, 0.0102092994868837, 0.00849560541101504, 0.00705191364734891, 0, 0, 0, 0, 0
+
+print(paste(vars.fft.48.2dt.both[1:10,2], collapse=", ")) # expectedInitialDsFirst10 = 0.00705191364734891, 0.00849560541101504, 0.0102092994868837, 0.0122380386022755, 0.0146332892566062, 0.0174536539009152, 0.0207656259132282, 0.0246443833694604, 0.0291746160933349, 0.0344513787810736
+print(paste(vars.fft.48.2dt.both[147:156,2], collapse=", ")) # expectedInitialDsLater10 = 0.0146332892566062, 0.0122380386022755, 0.0102092994868837, 0.00849560541101504, 0.00705191364734891, 0, 0, 0, 0, 0
+
+## have to normalize it to match behavior inside likelihood class
+vars.fft.48.2dt.both[,2] <- vars.fft.48.2dt.both[,2] / (sum(vars.fft.48.2dt.both[,2]) * 0.01 / 4) #
+print(paste(vars.fft.48.2dt.both[1:10,2], collapse=", ")) # 0.00705304040908636, 0.00849696284725042, 0.0102109307388535, 0.0122399940081877, 0.0146356273780371, 0.0174564426629985, 0.0207689438654755, 0.0246483210734104, 0.0291792776423502, 0.0344568834564503
+print(paste(vars.fft.48.2dt.both[147:156,2], collapse=", ")) # 0.0146356273780371, 0.0122399940081877, 0.0102109307388535, 0.00849696284725042, 0.00705304040908636, 0, 0, 0, 0, 0
 
 pars.fft.48.2dt.both <- expand.pars.quasse(lambda, mu, args.fft.48.2dt.both, ext.fft.48.2dt.both, pars.48.2dt.both)
 
 pde.fftR.48.2dt.both <- with(control.fft.48.2dt, make.pde.quasse.fftR.3(48 * 4, dx, dt.max, 2L)) # note the 48 * 4 to do high res
 
 ans.fftR.48.2dt.both <- pde.fftR.48.2dt.both(vars.fft.48.2dt.both, control.fft.48.2dt$dt.max, pars.fft.48.2dt.both$hi, 0)
+ans.fftR.48.2dt.both[[2]][,2] <- ans.fftR.48.2dt.both[[2]][,2] * exp(ans.fftR.48.2dt.both[[1]]) # unnormalizing it from what make.pde.quasse.fftR.3 does
+ans.fftR.48.2dt.both[[2]][,2] <- ans.fftR.48.2dt.both[[2]][,2] / (sum(ans.fftR.48.2dt.both[[2]][,2]) * 0.0025) # re-normalize it to match the java class
 
 ## E's
 paste(ans.fftR.48.2dt.both.hi[[2]][1:10,1], collapse=", ") # first 10 after t and x = 0.000598990518590012, 0.000598989632470972, 0.000598988745094367, 0.000598987856474924, 0.000598986966627531, 0.000598986075566877, 0.000598985183308093, 0.000598984289866083, 0.000598983395256048, 0.000598982499493234
 paste(ans.fftR.48.2dt.both.hi[[2]][147:156,1], collapse=", ") # first 10 after t and x = 0.000598856349949292, 0.000598855460362313, 0.000598854572006534, 0.000598853684896709, 0.000598852799047445, 0, 0, 0, 0, 0
 
 ## D's
-paste(ans.fftR.48.2dt.both.hi[[2]][1:10,2], collapse=", ") # first 10 after t and x = 0.00702820159929666, 0.00846701389122616, 0.0101749104601223, 0.0121967797643638, 0.0145839118185068, 0.0173947078706217, 0.0206954327177744, 0.0245610056719514, 0.0290758246777289, 0.0343346164011134
-paste(ans.fftR.48.2dt.both.hi[[2]][147:156,2], collapse=", ") # first 10 after t and x = 0.0145775495535427, 0.0121913864192371, 0.0101703507995081, 0.00846316941698422, 0.00702496883741221, 0, 0, 0, 0, 0
+paste(ans.fftR.48.2dt.both[[2]][1:10,2], collapse=", ") # expectedSp1DsAfterPropTandXFirst10 = 0.00705472178566115, 0.00849896328584349, 0.0102133044244718, 0.0122428030418449, 0.0146389426900442, 0.0174603449881642, 0.0207735247765771, 0.0246536840674864, 0.0291855392723177, 0.0344641744982804
+paste(ans.fftR.48.2dt.both[[2]][147:156,2], collapse=", ") # expectedSp1DsAfterPropTandXLater10 = 0.0146325564177363, 0.0122373893454924, 0.0102087275584534, 0.0084951043048786, 0.0070514768252866, 0, 0, 0, 0, 0
 
 
 
@@ -1031,12 +1044,13 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
         if (q0 <= 0)
             stop("No positive D values")
 
-        y[, 2] <- y[, 2]/q0 # normalizing D's, before we integrate
+        y[, 2] <- y[, 2]/q0 # normalizing D's, before we integrate (NOT LOG-fied!!!!)
 
         print("y inside combine.branches after normalization = ")
         print(paste(y[,2], collapse=", "))
 
         lq0 <- log(q0) # will be added at the very end
+        print(paste0("log-normalization factor starts at ", log(q0)))
 
         ## option 1: initial time is already past tc, low-res
         if (t0 >= tc) {
@@ -1044,6 +1058,7 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
             print("y inside combine.branches for lo = ")
             print(y)
 
+            ## ans[[1]] carries the log(sum(D's * dx)), the log-normalization factor
             ans <- careful(f.lo, y, len, pars$lo, t0, dt.max) # integrate
 
             print("ans at lo, prior to adding log-normalization factor")
@@ -1074,14 +1089,17 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
 
             print(paste0("len.hi = ", len.hi))
 
+            ## ans.hi[[1]] carries the log(sum(D's * dx)), the log-normalization factor
             ans.hi <- careful(f.hi, y, len.hi, pars$hi, t0, dt.max) # integrate first stretch at high-res
 
             ## but then here we grab just every r-th element in ans.hi (as given by a vector of indices separated by r in pars$tr)
             ## y.lo will be the first elements inside the low-res y -- the rest will be 0's (see below)
             y.lo <- ans.hi[[2]][pars$tr, ]
 
-            ## NOT RENORMALIZING!
+            ## I believe ans.hi[[1]] here was normalized and log-fied inside the function that generated ans.hi
             lq0 <- lq0 + ans.hi[[1]] # we add the high-res normalization factor to the total normalization factor
+            print(paste0("added ", ans.hi[[1]], " to log-normalization factor"))
+            print(paste0("log-normalization factor is now ", lq0))
 
             ## why would nrow(y.lo) < nx (nx here is the low-res nx)?
             ## we're putting 0's after the y.lo
@@ -1092,6 +1110,8 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
             if (nrow(y.lo) < nx) y.lo <- rbind(y.lo, matrix(0, nx - length(pars$tr), 2))
 
             print(paste0("len - len.hi = ", len - len.hi))
+
+            ## ans[[1]] carries the log(sum(D's * dx)), the log-normalization factor
             ans <- careful(f.lo, y.lo, len - len.hi, pars$lo, tc, dt.max) # integrate remaining stretch at low-res
 
             print("ans at hi, but interval < dt, prior to adding log-normalization factor")
@@ -1227,6 +1247,8 @@ all.branches.list.debug <- function (pars, cache, initial.conditions, branches, 
 
     branch.init[[root]] <- y.in
 
+    print(paste0("Log-normalizing factors = ", paste(lq, collapse=", ")))
+
     ## return with answer we care: lq (normalizing factors for all nodes in the tree) and y.in (normalized D of root)
     list(init = branch.init, base = branch.base, lq = lq, vals = y.in)
 }
@@ -1260,6 +1282,10 @@ make.initial.conditions.quasse.debug <- function(control) {
         print(paste0("nx = ", nx))
         print(paste0("ndat = ", ndat))
         print("merging:")
+        print(paste0("E's at merge = ", paste(init[[1]][i], collapse=", ")))
+        print(paste0("Left D's at merge = ", paste(init[[1]][j], collapse=", ")))
+        print(paste0("Right D's at merge = ", paste(init[[2]][j], collapse=", ")))
+        print(paste0("Lambdas at merge = ", paste(lambda, collapse=", ")))
         print(c(init[[1]][i], init[[1]][j] * init[[2]][j] * lambda,
               rep.int(0, nx - ndat)))
 
@@ -1337,6 +1363,9 @@ root.p.quasse.debug <- function(d.root, pars, root, root.f) {
         print(paste(p, collapse=", "))
     }
     else if (root == ROOT.OBS) {
+        print("getting prior at root")
+        print(paste0("denominator = ", (sum(d.root) * dx)))
+        print(paste0("dx = ", dx))
         p <- d.root/(sum(d.root) * dx)
         print(paste0("root d's (size=", length(d.root), ") ="))
         print(paste(d.root, collapse=", "))
@@ -1367,7 +1396,7 @@ make.rootfunc.quasse.debug <- function(cache) {
             lambda <- pars$lo$lambda
             e.root <- vals[, 1]
 
-            print("es = ")
+            print("root e's = ")
             print(paste(e.root, collapse=", "))
 
             ## param = lambda, mu
@@ -1389,6 +1418,8 @@ make.rootfunc.quasse.debug <- function(cache) {
             ## multiply by root.p to account for the trait value states (those influence the extinction probability)
             ## * dx: multiplying by bin size converts densities (median of bin is a density) into probabilities
 
+            print(paste0("Denominator sum for conditioning on survival = ", sum(root.p * lambda * (1 - e.root)^2)))
+            print(paste0("dx = ", dx))
             print(paste0("D's after conditioning on survival (size=", length(d.root), ") = "))
             print(paste(d.root, collapse=", "))
         }
@@ -1409,7 +1440,9 @@ make.rootfunc.quasse.debug <- function(cache) {
 }
 
 
-## in C
+##
+##
+##
 
 control.C.1 <- list(tc=0.005,
                     dt.max=0.005,
@@ -1427,7 +1460,9 @@ control.C.1 <- list(tc=0.005,
 
 lik.C.1 <- make.quasse.debug(tr, tr$tip.state, sd, sigmoid.x, constant.x, control.C.1)
 (ll.C.1 <- lik.C.1(pars))
+
 ## (ll.C.1 <- lik.C.1(pars, root=ROOT.FLAT))
+## paste(rep("3.2258064516129", 25), collapse=", ")
 
 ## the above command will print a lot of things, some of those things are the unit tests expectations
 ## at the top, $sp1 and $sp2 correspond to the expectedEsDsAtTips

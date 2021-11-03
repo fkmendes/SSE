@@ -231,17 +231,17 @@ public abstract class QuaSSEProcess extends Distribution {
      * The D's at the root must be multiplied by a prior probability array.
      * This method populates it in place depending on what the user wants.
      */
-    protected abstract void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nUsefulXbinAtRightRes, String rootPriorType);
+    protected abstract void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nXbinAtRightRes, int nUsefulXbinAtRightRes, String rootPriorType);
 
     /*
      *
      */
-    protected abstract void processBranch(Node aNode, boolean normalize);
+    protected abstract void processBranch(Node aNode);
 
     /*
      *
      */
-    protected abstract void integrateLength(double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes);
+    protected abstract void integrateLength(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes);
 
     /*
      *
