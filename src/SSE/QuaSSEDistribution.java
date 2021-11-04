@@ -175,6 +175,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
          */
         double[][] esDsAtNode, scratchAtNode;
 
+        // Debugging
+        // System.out.println("Log-normalization factor at start of branch = " + logNormalizationFactors[nodeIdx]);
 //        // option 0: (rare) branch starts at tc (all low-res)
 //        if (startTime == tc) {
 //            for (int ithDim=0; ithDim<nDimensions; ithDim++)
@@ -210,7 +212,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             // normalize and record normalization factor before integration
             logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
 
-            // now integrate whole branch
+            // now integrate whole branch (again, normalization and adding to logNormalizationFactors inside)
             integrateLength(nodeIdx, esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, false);
         }
         // option 3: tc happens inside branch (tip-end part in high-res, root-end part in low-res)
@@ -226,15 +228,16 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
 
             // high res part
-            double lenHi = branchLength2Integrate - tc;
+            double lenHi = tc - startTime;
 
             // debugging
             // System.out.println("high-res part, lenHi = " + lenHi);
 
+            // again, normalization and adding to logNormalizationFactors inside
             integrateLength(nodeIdx, esDsAtNode, scratchAtNode, lenHi, dynamicallyAdjustDt, dtMax, false);
 
             // normalize and record normalization factor before integration at low res
-            logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin/hiLoRatio);
+            // logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin/hiLoRatio);
 
             // debugging
             // System.out.println("Log-normalization factors after high-res part = " + logNormalizationFactors[nodeIdx]);
@@ -274,10 +277,10 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         }
 
         // normalization that happens in make.pde.quasse.fftR
-        // System.out.println("Prior to normalization = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("Prior to normalization inside integrateLength (lowRes=" + lowRes + ") = " + Arrays.toString(esDsAtNode[1]));
         if (lowRes) logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin);
         else logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin / hiLoRatio);
-        // System.out.println("After normalization = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("After normalization inside integrateLength (lowRes=" + lowRes + ") = " + Arrays.toString(esDsAtNode[1]));
     }
 
     @Override
@@ -297,7 +300,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         }
 
         // debugging
-        // System.out.println("Log-normalization factor inside normalizeDs= " + Math.log(normalizationFactorFromDs));
+        // System.out.println("Log-normalization factor inside normalizeDs = " + Math.log(normalizationFactorFromDs));
 
         return Math.log(normalizationFactorFromDs); // the equivalent of ans[[1]] in diversitree (or ans.hi[[1]])
     }
@@ -517,6 +520,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             dxAtRightRes = dXbin / hiLoRatio;
         }
 
+        // debugging
+        // System.out.println("logNormalizationFactors = " + Arrays.toString(logNormalizationFactors));
         double myLogP = getLogPFromRelevantObjects(esDsAtRootAtRightRes, sumOfLogNormalizationFactors, birthRatesAtRightRes, dxAtRightRes);
 
         return myLogP;

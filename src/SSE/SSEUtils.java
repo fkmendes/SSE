@@ -316,7 +316,7 @@ public class SSEUtils {
 
     public static double calculateNormalizationFactor(double[] dS, double binSize) {
         double normalizationFactorFromDs = 0.0;
-        for (int i=0; i<dS.length; ++i) normalizationFactorFromDs += dS[i];
+        for (int i=0; i<dS.length/2; ++i) normalizationFactorFromDs += dS[i]; // dS is 2 * as large as it should be because it needs to hold complex parts resulting from FFTs
 
         // debugging
         // System.out.println("normalizationFactorFromDs inside calculateNormalizationFactor = " + normalizationFactorFromDs);
