@@ -268,16 +268,24 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public void integrateLength(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes) {
+
         // dealing with dt
-        double dt, nIntervals, nonIntegratedDt;
+        double dt, nIntervals;
+        boolean dtChanged = false;
+        // double nonIntegratedDt;
+
         if (dynamicallyAdjust) {
             nIntervals = Math.ceil(aLength / maxDt);
             dt = aLength / nIntervals; // dynamically adjusted dt
+            dtChanged = true;
         } else {
             nIntervals = Math.floor(aLength / maxDt);
             dt = maxDt;
-            nonIntegratedDt = aLength % maxDt;
+            // nonIntegratedDt = aLength % maxDt; // maybe later we do something with this when we fix dt at dtMax
         }
+
+        // updating fY if necessary
+        populatefY(dt,false, dtChanged, true, lowRes);
 
         // integrating!
         for (int i=0; i<nIntervals; i++) {
@@ -360,8 +368,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
      * Math-y methods start below
      */
     @Override
-    public void populatefY(double aDt, boolean ignoreRefresh, boolean doFFT, boolean lowRes) {
-        super.populatefY(aDt, ignoreRefresh, doFFT, lowRes);
+    public void populatefY(double aDt, boolean forceRecalcKernel, boolean didRefreshNowMustRecalcKernel, boolean doFFT, boolean lowRes) {
+        super.populatefY(aDt, forceRecalcKernel, didRefreshNowMustRecalcKernel, doFFT, lowRes);
     }
 
     @Override
@@ -410,7 +418,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // System.out.println("dsAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[1]));
 
         // make normal kernel and FFTs it
-        populatefY(aDt, true, true, lowRes);
+        // populatefY(aDt, true, true, lowRes);
 
         // integrate over diffusion of quantitative trait
         // debugging
@@ -432,11 +440,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     @Override
     public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
 
-        // TODO: check if this should not be moved into SSEUtils
+        // transposing esDs to scratch
         for (int ithDim=0; ithDim < nDimensions; ithDim++) {
-            for (int i=0; i < esDsAtNode[ithDim].length; i++) {
-                scratchAtNode[ithDim][i] = esDsAtNode[ithDim][i];
-            }
+             for (int i=0; i < esDsAtNode[ithDim].length; i++) {
+                 scratchAtNode[ithDim][i] = esDsAtNode[ithDim][i];
+             }
         }
 
         // debugging

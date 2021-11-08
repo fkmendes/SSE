@@ -141,10 +141,39 @@ public class SSEUtils {
             // System.out.println("ithDim = " + ithDim);
             everyOtherInPlace(scratchAtNode[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
 
+            // System.out.println("esDsAtNode[ithDim] after reordering and scaling: " + Arrays.toString(esDsAtNode[ithDim]));
             for (int i=0; i<nXbins; ++i) {
                 // if negative value, set to 0.0
                 // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
                 if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
+            }
+        }
+
+        // System.out.println("esDsAtNode[1] after convolve and scaling: " + Arrays.toString(esDsAtNode[1]));
+    }
+
+    public static void tmpPropagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratchAtNode, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+
+        // fY is already FFTed (in QuaSSEDistribution -> populatefY()), then FFT scratch, inverse-FFT scratch, result is left in scratch
+        convolveInPlace(esDsAtNode, fY, nDimensionsE, nDimensionsD, fft);
+
+        // System.out.println("esDsAtNode[1] after convolve: " + Arrays.toString(esDsAtNode[1]));
+
+        int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
+        // System.out.println("nItems2Copy=" + nItems2Copy);
+        double scaleBy = 1.0 / nXbins;
+
+        // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+
+            // System.out.println("ithDim = " + ithDim);
+            everyOtherInPlace(esDsAtNode[ithDim], scratchAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
+
+            // System.out.println("scratchAtNode[ithDim] after reordering and scaling: " + Arrays.toString(scratchAtNode[ithDim]));
+            for (int i=0; i<nXbins; ++i) {
+                // if negative value, set to 0.0
+                // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
+                if (scratchAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) scratchAtNode[ithDim][i] = 0.0;
             }
         }
 

@@ -466,6 +466,7 @@ public class QuaSSEDistributionTest {
          * here we are just grabbing it to verify its values in the asserts
          * below
          */
+        q48Dt001.populatefY(0.01, true, false, true, true);
         double[] fftedfY = q48Dt001.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q48Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
@@ -524,6 +525,8 @@ public class QuaSSEDistributionTest {
          * here we are just grabbing it to verify its values in the asserts
          * below
          */
+        double aDt = 0.01;
+        q1024.populatefY(aDt, true, false, true, true);
         double[] fftedfY = q1024.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q1024.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
@@ -581,6 +584,8 @@ public class QuaSSEDistributionTest {
         esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsHiAtNode[1], esDsHiAtNode[1].length); // D
 
         // just propagate in x, in place
+        double aDt = 0.01;
+        q1024.populatefY(aDt, true, true, true, false);
         double[] fftedfY = q1024.getfY(false);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q1024.getnXbins(false),0, 0, 2, 1.0); // getting real part for assert below
@@ -662,7 +667,7 @@ public class QuaSSEDistributionTest {
         // propagating in x
         // getting fY
         double aDt = 0.001;
-        q48Dt001.populatefY(aDt, true, true, true);
+        q48Dt001.populatefY(aDt, true, false, true, true);
         double[] fftedfY = q48Dt001.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q48Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
@@ -746,7 +751,7 @@ public class QuaSSEDistributionTest {
         // propagating in x
         // getting fY
         double aDt = 0.02;
-        q48Dt002.populatefY(aDt, true, true, true);
+        q48Dt002.populatefY(aDt, true, false, true, true);
         double[] fftedfY = q48Dt002.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q48Dt002.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
@@ -940,7 +945,6 @@ public class QuaSSEDistributionTest {
         double[] expectedDsHiAtNodeInitialSp2 = new double[] { 0.000254946647636669, 0.000319674822138109, 0.000399835934138456, 0.000498849425801072, 0.000620828141157003, 0.000770703934841743, 0.000954372730824099, 0.0011788613551308, 0.00145251860604505, 0.00178523314354266, 0.00218868086879601, 0.00267660451529771, 0.00326512817532484, 0.00397310942785545, 0.00482253160451986, 0.0058389385158292, 0.00705191364734891, 0.00849560541101504, 0.0102092994868837, 0.0122380386022755, 0.0146332892566062, 0.0174536539009152, 0.0207656259132282, 0.0246443833694604, 0.0291746160933349, 0.0344513787810736, 0.0405809611459954, 0.0476817640292969, 0.0558851682975889, 0.0653363811239983, 0.0761952419644361, 0.08863696823876, 0.102852818461079, 0.119050648395517, 0.137455333812279, 0.158309031659599, 0.181871250031821, 0.208418696288452, 0.238244872152104, 0.271659384673712, 0.308986942687903, 0.350566009871371, 0.396747087835906, 0.447890605896858, 0.504364398303888, 0.566540754832024, 0.634793036713348, 0.709491856924629, 0.791000831787404, 0.879671919608544, 0.975840371583655, 1.07981933026376, 1.19189412137632, 1.31231629549353, 1.44129748672436, 1.57900316601788, 1.72554637653023, 1.88098154753774, 2.04529849127956, 2.21841669358911, 2.40018001393971, 2.59035191331783, 2.7886113289072, 2.9945493127149, 3.20766654683839, 3.42737184095615, 3.65298170778044, 3.88372109966426, 4.11872537439949, 4.35704354065101, 4.59764281368466, 4.83941449038287, 5.08118112938378, 5.32170499797509, 5.55969772261993, 5.79383105522965, 6.02274864309609, 6.24507866733522, 6.45944719335828, 6.66449205783599, 6.85887710038768, 7.04130653528599, 7.21053924923296, 7.36540280606647, 7.50480693833876, 7.62775630921048, 7.73336233605698, 7.82085387950912, 7.88958661815778, 7.93905094954024, 7.96887828189528, 7.97884560802865, 7.96887828189528, 7.93905094954024, 7.88958661815778, 7.82085387950912, 7.73336233605698, 7.62775630921048, 7.50480693833876, 7.36540280606647, 7.21053924923296, 7.04130653528599, 6.85887710038768 };
 
         double logLik = q32Dt0005.calculateLogP();
-        System.out.println("logLik = " + logLik);
 
         Assert.assertArrayEquals(expectedHiLoIdxs4Transfer, hiLoIdxs4Transfer);
         Assert.assertArrayEquals(expectedDsHiAtNodeInitialSp1, Arrays.copyOfRange(esDsHiAtNodeInitial0[1], 0, 103), 1E-13);

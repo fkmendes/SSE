@@ -216,6 +216,67 @@ public class PropagatesQuaSSETest {
         assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, nXbins), 1E-14);
     }
 
+    @Test
+    public void tmpTest() {
+
+        nDimensionsE = nDimensionsD = 1;
+        nLeftFlankBins = nRightFlankBins = 4;
+        nXbins = 48;
+        drift = 0.0;
+        diffusion = 0.001;
+
+        esDs = new double[2][nXbins * 2];
+        scratch = new double[2][nXbins * 2];
+        double[][] esDsTmp = new double[2][nXbins * 2];
+        double[][] scratchTmp = new double[2][nXbins * 2];
+
+        // number of bins must be multiple of 4
+        fftForEandD = new DoubleFFT_1D(nXbins);
+
+        fY = new double[nXbins * 2];
+        SSEUtils.makeNormalKernelInPlace(fY, (dt * drift), Math.sqrt(dt * diffusion), nXbins, nLeftFlankBins, nRightFlankBins, dx48); // normalizes inside already
+        fftForEandD.realForwardFull(fY); // first FFT the Normal kernel
+
+        esDs = new double[2][nXbins * 2];
+        scratch = new double[2][nXbins * 2];
+        double[] initialValues = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        for (int i=0; i<esDs[0].length/2; i++) {
+            esDs[0][i] = 0.0;
+            scratch[0][i] = 0.0;
+            esDs[1][i] = initialValues[i];
+            scratch[1][i] = initialValues[i];
+        }
+
+        propagateEandDinXQuaLike(esDs, scratch, fY, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD);
+
+        System.out.println("\nNormal function");
+        System.out.println("D's = " + Arrays.toString(esDs[1]));
+        System.out.println("(useless) D's = " + Arrays.toString(scratch[1]) + "\n");
+
+        initialValues = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        for (int i=0; i<esDs[0].length/2; i++) {
+            esDsTmp[0][i] = 0.0;
+            scratchTmp[0][i] = 0.0;
+            esDsTmp[1][i] = initialValues[i];
+            scratchTmp[1][i] = initialValues[i];
+        }
+
+        tmpPropagateEandDinXQuaLike(esDsTmp, scratchTmp, fY, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD); // scratch has what we want
+
+        System.out.println("\ntmp function before pointer swap");
+        System.out.println("D's = " + Arrays.toString(esDsTmp[1]));
+        System.out.println("(useless) D's = " + Arrays.toString(scratchTmp[1]) + "\n");
+
+        double[][] tmp;
+        tmp = scratchTmp;
+        scratchTmp = esDsTmp;
+        esDsTmp = tmp;
+
+        System.out.println("\ntmp function after pointer swap");
+        System.out.println("D's = " + Arrays.toString(esDsTmp[1]));
+        System.out.println("(useless) D's = " + Arrays.toString(scratchTmp[1]) + "\n");
+    }
+
     /*
      * Test for propagating in x (quantitative trait value)
      *

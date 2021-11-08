@@ -102,8 +102,8 @@ public abstract class QuaSSEProcess extends Distribution {
         fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
         fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
 
-        populatefY(dtMax, true, true, false); // force populate fY, and do FFT
-        populatefY(dtMax, true, true, true); // force populate fY, and do FFT
+        // populatefY(dtMax, true, false, true, true); // force populate fY, and do FFT
+        // populatefY(dtMax, true, false, true, false); // force populate fY, and do FFT
     }
 
     /*
@@ -177,21 +177,19 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected void populatefY(double aDt, boolean ignoreRefresh, boolean doFFT, boolean lowRes) {
-
-        boolean refreshedSomething = false;
-        if (!ignoreRefresh || dynamicallyAdjustDt) {
-            if (driftInput.get().somethingIsDirty() || dynamicallyAdjustDt) {
-                changeInXNormalMean = driftInput.get().getValue() * -aDt;
-                refreshedSomething = true;
-            }
-            if (diffusionInput.get().somethingIsDirty() || dynamicallyAdjustDt) {
-                changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * aDt);
-                refreshedSomething = true;
-            }
+    protected void populatefY(double aDt, boolean forceRecalcKernel, boolean dtChanged, boolean doFFT, boolean lowRes) {
+        // finding out if we need to recalculate fY or not
+        boolean didRefreshNowMustRecalcKernel = false;
+        if (dtChanged || driftInput.get().somethingIsDirty()) {
+            changeInXNormalMean = driftInput.get().getValue() * -aDt;
+            didRefreshNowMustRecalcKernel = true;
+        }
+        if (dtChanged || diffusionInput.get().somethingIsDirty()) {
+            changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * aDt);
+            didRefreshNowMustRecalcKernel = true;
         }
 
-        if (ignoreRefresh || refreshedSomething) {
+        if (forceRecalcKernel || didRefreshNowMustRecalcKernel) {
             if (lowRes) {
                 SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
 
