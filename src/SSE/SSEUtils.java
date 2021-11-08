@@ -196,8 +196,8 @@ public class SSEUtils {
         }
 
         // looking at things
-        // System.out.println(Arrays.toString(scratch[0]));
-        // System.out.println(Arrays.toString(scratch[1]));
+        // System.out.println(Arrays.toString(scratchAtNode[0]));
+        // System.out.println(Arrays.toString(scratchAtNode[1]));
     }
 
     /*
@@ -243,7 +243,7 @@ public class SSEUtils {
         }
 
         // System.out.println("Unormalized fY = " + Arrays.toString(yValues));
-        // System.out.println("Total=" + total);
+        // System.out.println("Total = " + total);
 
         for (int i = 0; i <= nRightFlankBins; i++) yValues[i] /= total;
         for (int i = (nXbins - nLeftFlankBins); i < nXbins; i++) yValues[i] /= total;

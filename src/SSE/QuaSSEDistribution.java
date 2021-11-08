@@ -89,10 +89,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
                     for (int j=0; j < nXbinsLo; j++) esDsLo[nodeIdx][i][j] = 0.0; // E's = 1.0 - sampling.f
                 }
 
-                // D's
-                /*
-                 * TODO: if tips are not contemporanous (at present moment), but instead fossil, then we need to initialize esDsLo if t > tc
-                 */
+                // D's (initialize both just in case tip is non-contemporaneous and t > tc)
                 else {
                     // high res
                     esDsHi[nodeIdx][i] = q2d.getY(xHi, esDsHi[nodeIdx][i], nLeftNRightFlanksHi, tipName, ignoreRefresh);
@@ -101,6 +98,17 @@ public class QuaSSEDistribution extends QuaSSEProcess {
                     esDsLo[nodeIdx][i] = q2d.getY(xLo, esDsLo[nodeIdx][i], nLeftNRightFlanksLo, tipName, ignoreRefresh);
                 }
             }
+
+            double dsSumLo = 0.0;
+            double dsSumHi = 0.0;
+            for (double d: esDsHi[nodeIdx][1]) dsSumHi += d;
+            for (double d: esDsLo[nodeIdx][1]) dsSumLo += d;
+            if (dsSumHi == 0.0 || dsSumLo == 0.0)
+                throw new RuntimeException("ERROR: Initial D's were all 0.0 for species " + tipName + ". " +
+                        "This can happen when the trait value standard deviation" +
+                        "(of the normal centered at the observed trait value)" +
+                        "is too small relative to trait value bin sizes." +
+                        " Try increasing the standard deviation.");
         }
     }
 
@@ -352,8 +360,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
      * Math-y methods start below
      */
     @Override
-    public void populatefY(boolean ignoreRefresh, boolean doFFT) {
-        super.populatefY(ignoreRefresh, doFFT);
+    public void populatefY(double aDt, boolean ignoreRefresh, boolean doFFT, boolean lowRes) {
+        super.populatefY(aDt, ignoreRefresh, doFFT, lowRes);
     }
 
     @Override
@@ -388,21 +396,21 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes) {
+    public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double aDt, boolean lowRes) {
 
         // debugging
         // System.out.println("esAtNode before propagate in t = " + Arrays.toString(esDsAtNode[0]));
         // System.out.println("dsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
 
         // integrate over birth and death events (low or high resolution inside)
-        propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
+        propagateTInPlace(esDsAtNode, scratchAtNode, aDt, lowRes);
 
         // debugging
         // System.out.println("esAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[0]));
         // System.out.println("dsAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[1]));
 
         // make normal kernel and FFTs it
-        populatefY(true, true);
+        populatefY(aDt, true, true, lowRes);
 
         // integrate over diffusion of quantitative trait
         // debugging

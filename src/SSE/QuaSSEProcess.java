@@ -102,7 +102,8 @@ public abstract class QuaSSEProcess extends Distribution {
         fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
         fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
 
-        populatefY(true, true); // force populate fY, and do FFT
+        populatefY(dtMax, true, true, false); // force populate fY, and do FFT
+        populatefY(dtMax, true, true, true); // force populate fY, and do FFT
     }
 
     /*
@@ -176,35 +177,40 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected void populatefY(boolean ignoreRefresh, boolean doFFT) {
+    protected void populatefY(double aDt, boolean ignoreRefresh, boolean doFFT, boolean lowRes) {
 
         boolean refreshedSomething = false;
-        if (!ignoreRefresh) {
-            if (driftInput.get().somethingIsDirty()) {
-                changeInXNormalMean = driftInput.get().getValue() * -dtMax;
+        if (!ignoreRefresh || dynamicallyAdjustDt) {
+            if (driftInput.get().somethingIsDirty() || dynamicallyAdjustDt) {
+                changeInXNormalMean = driftInput.get().getValue() * -aDt;
                 refreshedSomething = true;
             }
-            if (diffusionInput.get().somethingIsDirty()) {
-                changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dtMax);
+            if (diffusionInput.get().somethingIsDirty() || dynamicallyAdjustDt) {
+                changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * aDt);
                 refreshedSomething = true;
             }
         }
 
         if (ignoreRefresh || refreshedSomething) {
-            SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
-            SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin); // normalizes inside already
+            if (lowRes) {
+                SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
+
+                // FFTs normal kernel
+                if (doFFT) fftForEandDLo.realForwardFull(fYLo);
+            }
+            else {
+                SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin/hiLoRatio); // normalizes inside already
+
+                // FFTs normal kernel
+                if (doFFT) fftForEandDHi.realForwardFull(fYHi);
+            }
         }
 
+        // debugging
+        // System.out.println("fYHi (kernel + FFT) = " + Arrays.toString(fYHi));
 //        for (int i=0; i<fYHi.length; i++) {
-//            System.out.println("i = "  + i + " " + fYHi[i]);
+//            System.out.println("fYHi["  + i + "] = " + fYHi[i]);
 //        }
-
-        // FFTs normal kernel
-        // TODO: think if the FFTs below should maybe be inside the previous if block together with making the kernel
-        if (doFFT) {
-            fftForEandDLo.realForwardFull(fYLo);
-            fftForEandDHi.realForwardFull(fYHi);
-        }
     }
 
     /*

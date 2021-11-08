@@ -53,11 +53,13 @@ fftR.make.kern.debug <- function(mean, sd, nx, dx, nkl, nkr) {
   xkern <- (-nkl:nkr)*dx
   ikern <- c((nx - nkl + 1):nx, 1:(nkr + 1))
 
-  ## print("xkern=")
-  ## print(xkern)
-  ## print(paste0("mean=", mean, " sd=", sd))
-  ## print("dnorm=")
-  ## print(dnorm(xkern, mean, sd))
+  print("inside fftR.make.kern")
+  print(paste0("dx = ", dx))
+  print("xkern = ")
+  print(xkern)
+  print(paste0("mean = ", mean, " sd = ", sd))
+  print("dnorm = ")
+  print(dnorm(xkern, mean, sd))
 
   kern[ikern] <- normalise(dnorm(xkern, mean, sd))
   kern
@@ -88,12 +90,17 @@ fftR.propagate.t.debug <- function(vars, lambda, mu, dt, ndat) {
 
 fftR.propagate.x.debug <- function(vars, nx, fy, nkl, nkr) {
 
-    print(paste("nkl=", nkl, " nkr=", nkl, " nx=", nx))
-    print("vars="); print(vars)
+    ## print(paste("nkl=", nkl, " nkr=", nkl, " nx=", nx))
+    ## print("vars="); print(vars)
 
+    ## print("first FFT of quant trait = "); print(apply(vars, 2, fft))
+    ## print("kernel = "); print(fy)
+    ## print("first FFT of quant trait * kernel = "); print(apply(vars, 2, fft) * fy)
+    ## print("after FFT -> *fy -> ifft (before scaling)"); print(apply(apply(vars, 2, fft) * fy, 2, ifft))
+    ## print(paste0("scaling uses 1/nx, with nx being ", nx))
     vars.out <- Re(apply(apply(vars, 2, fft) * fy, 2, ifft))/nx
 
-    print("vars after fft-ing, multiplying by fy kernel, i-ffting, and normalizing"); print(vars.out)
+    print("vars after fft-ing, multiplying by fy kernel, i-ffting, and scaling"); print(vars.out)
     ndat <- nx - (nkl + 1 + nkr) # this plus 1 here is confusing, need to ask Xia
     i.prev.l <- 1:nkl
     i.prev.r <- (ndat-nkr+1):ndat
@@ -105,7 +112,7 @@ fftR.propagate.x.debug <- function(vars, nx, fy, nkl, nkr) {
     vars.out[i.zero,] <- 0
     vars.out[vars.out < 0] <- 0
 
-    print("vars after rearranging it"); print(vars.out)
+    ## print("vars after rearranging it"); print(vars.out)
 
     vars.out
 }
@@ -446,8 +453,12 @@ quasse.integrate.fftR.debug2 <- function (vars, lambda, mu, drift, diffusion, ns
     print("nkl"); print(nkl)
     print("nkr"); print(nkr)
 
-    kern = diversitree:::fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
+    print("before fftR.make.kern.debug")
+    print(paste0("sd = sqrt(dt * diffusion) = ", sqrt(dt * diffusion)))
+    kern = fftR.make.kern.debug(-dt * drift, sqrt(dt * diffusion),
         nx, dx, nkl, nkr)
+
+    print("kern = "); print(kern)
 
     fy = fft(kern)
 
@@ -467,7 +478,7 @@ quasse.integrate.fftR.debug2 <- function (vars, lambda, mu, drift, diffusion, ns
         print("D's after propagate in t")
         print(paste(vars[,2], collapse=", "))
 
-        vars = diversitree:::fftR.propagate.x(vars, nx, fy, nkl, nkr)
+        vars = fftR.propagate.x.debug(vars, nx, fy, nkl, nkr)
 
         print("E's after propagate in t and x")
         print(paste(vars[,1], collapse=", "))
@@ -574,7 +585,8 @@ initial.tip.quasse.debug <- function(cache, control, x) {
             SIMPLIFY = FALSE)
 
         print("else: y inside initial.tip.quasse = ");
-        print(paste(y, collapse=", "))
+        print(y)
+        ## print(paste(y, collapse=", "))
         ## print("esDsHiAtNodeInitial0[1] = ")
         ## print(paste(y$sp1[129:231], collapse=", "))
         ## print("esDsHiAtNodeInitial1[1] = ")

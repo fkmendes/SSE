@@ -7,7 +7,6 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import beast.util.TreeParser;
-import org.fest.assertions.AssertExtension;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -32,29 +31,35 @@ import static SSE.SSEUtils.everyOtherInPlace;
  * very tiny values as a result of both dx and nx being large), FFT outputs
  * will differ between machines with different CPU architectures. I tried
  * to avoid this by decreasing dx to 0.0005 in the 1024 and 4096 unit tests.
+ *
+ * These differences can be very large. After convolution,
+ * the same D bin might have a positive value under one architecture, and a
+ * negative value under another. These differences add up!
  */
 public class QuaSSEDistributionTest {
 
     final static Double EPSILON = 1e-6;
     final static Double EPSILON2 = 1e-14;
 
-    static QuaSSEDistribution q1024, q32TrifTreeDt0005, q48Dt001, q48Dt002, q32Dt0006, q32Dt0005;
-    static Tree bifTreeHeight002, bifTreeHeight001, trifTreeHeight002;
+    static QuaSSEDistribution q1024, q32FifteenSp, q32ThreeSpTreeDt0005, q48Dt001, q48Dt002, q32Dt0006, q32Dt0005;
+    static Tree bifTreeHeight002, bifTreeHeight001, threeSpTreeHeight002, fifteenSpTree;
 
-    static List<Double> data2Sp, data3Sp;
-    static RealParameter driftRp, xMidRp, flankWidthScalerRp;
-    static RealParameter dxBin001Rp, dxBin00005Rp;
-    static RealParameter quTrait2SpRp, quTrait3SpRp;
-    static RealParameter dt001Rp, dt002Rp, dt0005Rp, tc100Rp, tc0005Rp, diffusionRp;
+    static List<Double> data2Sp, data3Sp, data15Sp;
+    static RealParameter driftRp, xMid00Rp, xMidFifteenSpRp, flankWidthScaler10Rp, flankWidthScaler5Rp;
+    static RealParameter dxBin001Rp, dxBin00005Rp, dxBinFifteenSpRp;
+    static RealParameter quTrait2SpRp, quTrait3SpRp, quTrait15SpRp;
+    static RealParameter dt01Rp, dt001Rp, dt002Rp, dt0005Rp;
+    static RealParameter tc100Rp, tc0005Rp, tcFifteenSpRp;
+    static RealParameter diffusionRp0001, diffusionRp001;
     static IntegerParameter hiLoRatioRp, nXbins1024Ip, nXbins128Ip, nXbins48Ip, nXbins32Ip;
     static BooleanParameter dynDtbpTrue, dynDtbpFalse;
     static String rootPriorType;
 
-    static double dt, dtLarger, dtSmaller;
+    static double dt01, dt001, dt002, dt0005;
     static Double[] x0, y1, y0, r;
     static LogisticFunction lfn;
     static ConstantLinkFn cfn;
-    static NormalCenteredAtObservedLinkFn nfn2Sp, nfn3Sp;
+    static NormalCenteredAtObservedLinkFn nfn2Sp, nfn3Sp, nfn15Sp;
 
     @BeforeClass
     public static void setupParameters() {
@@ -62,37 +67,50 @@ public class QuaSSEDistributionTest {
         String bifTreeStr001 = "(sp1:0.01,sp2:0.01);";
         String bifTreeStr002 = "(sp1:0.02,sp2:0.02);";
         String trifTreeStr002 = "((sp2:0.01,sp3:0.01):0.01,sp1:0.02);";
+        String fifteenTreeStr = "(sp2:13.77320255,(sp1:12.76688384,((((sp12:1.170387028,sp13:1.170387028)nd16:0.9837720325,sp9:2.154159061)nd11:5.451401092,((sp5:4.311645343,(sp14:0.8910055279,sp15:0.8910055279)nd14:3.420639815)nd9:2.536663776,((sp16:0.3011866125,sp17:0.3011866125)nd12:4.264383667,(sp6:3.95083843,sp7:3.95083843)nd13:0.6147318498)nd10:2.282738839)nd8:0.7572510339)nd5:2.554739141,((sp10:2.059478202,sp11:2.059478202)nd15:0.4198789018,sp8:2.479357104)nd6:7.68094219)nd4:2.60658455)nd3:1.006318707)nd1;";
         bifTreeHeight001 = new TreeParser(bifTreeStr001, false, false, true, 0);
         bifTreeHeight002 = new TreeParser(bifTreeStr002, false, false, true, 0);
-        trifTreeHeight002 = new TreeParser(trifTreeStr002, false, false, true, 0);
+        threeSpTreeHeight002 = new TreeParser(trifTreeStr002, false, false, true, 0);
+        fifteenSpTree = new TreeParser(fifteenTreeStr, false, false, true, 0);
 
         // qu trait data
         String spNames2Sp = "sp1 sp2";
         String spNames3Sp = "sp1 sp2 sp3";
+        String spNames15Sp = "sp1 sp2 sp5 sp6 sp7 sp8 sp9 sp10 sp11 sp12 sp13 sp14 sp15 sp16 sp17";
         data2Sp = Arrays.asList(0.0, 0.1);
         data3Sp = Arrays.asList(0.0, 0.1, 0.2);
+        data15Sp = Arrays.asList(-0.05384594, -0.37091896, 0.59169195, 0.14947513, 0.46156791,
+                0.27345680, 1.73358959, 0.38883347, 0.42233625, 1.55011787,
+                1.17169681, 0.72422971, 0.84092251, 0.19645523, 0.48495092);
         quTrait2SpRp = new RealParameter();
         quTrait2SpRp.initByName("value", data2Sp, "keys", spNames2Sp);
         quTrait3SpRp = new RealParameter();
         quTrait3SpRp.initByName("value", data3Sp, "keys", spNames3Sp);
+        quTrait15SpRp = new RealParameter();
+        quTrait15SpRp.initByName("value", data15Sp, "keys", spNames15Sp);
 
         // qu trait stuff
         Double[] drift = new Double[] { 0.0 };
         driftRp = new RealParameter(drift);
 
-        Double[] diffusion = new Double[] { 0.001 };
-        diffusionRp = new RealParameter(diffusion);
+        Double[] diffusion0001 = new Double[] { 0.001 };
+        Double[] diffusion001 = new Double[] { 0.01 };
+        diffusionRp0001 = new RealParameter(diffusion0001);
+        diffusionRp001 = new RealParameter(diffusion001);
 
         // dimension stuff
-        dtSmaller = 0.005;
-        dt = 0.01;
-        dtLarger = 0.02;
-        Double[] smallerDtD = new Double[] { 0.005 };
-        Double[] dtD = new Double[] { 0.01 };
-        Double[] largerDtD = new Double[] { 0.02 };
-        dt001Rp = new RealParameter(dtD);
-        dt002Rp = new RealParameter(largerDtD);
-        dt0005Rp = new RealParameter(smallerDtD);
+        dt0005 = 0.005;
+        dt001 = 0.01;
+        dt002 = 0.02;
+        dt01 = 0.1;
+        Double[] dtD00005 = new Double[] { 0.005 };
+        Double[] dtD001 = new Double[] { 0.01 };
+        Double[] dtD002 = new Double[] { 0.02 };
+        Double[] dtD01 = new Double[] { 0.1 };
+        dt01Rp = new RealParameter(dtD01);
+        dt001Rp = new RealParameter(dtD001);
+        dt002Rp = new RealParameter(dtD002);
+        dt0005Rp = new RealParameter(dtD00005);
 
         // adjust dt dynamically to maximize accuracy and match diversitree
         Boolean[] dynDtTrue = new Boolean[] { true };
@@ -100,10 +118,13 @@ public class QuaSSEDistributionTest {
         dynDtbpTrue = new BooleanParameter(dynDtTrue);
         dynDtbpFalse = new BooleanParameter(dynDtFalse);
 
-        Double[] tc = new Double[] { 100.0 };
-        Double[] smallerTc = new Double[] { 0.005 };
-        tc100Rp = new RealParameter(tc);
-        tc0005Rp = new RealParameter(smallerTc);
+        Double[] tc100 = new Double[] { 100.0 };
+        Double[] tc0005 = new Double[] { 0.005 };
+        // Double[] tcFifteenSp = new Double[] { 1.0 };
+        Double[] tcFifteenSp = new Double[] { 1.37732 };
+        tc100Rp = new RealParameter(tc100);
+        tc0005Rp = new RealParameter(tc0005);
+        tcFifteenSpRp = new RealParameter(tcFifteenSp);
 
         // logistic realparameter's for lambda
         x0 = new Double[] { 0.0 };
@@ -127,17 +148,27 @@ public class QuaSSEDistributionTest {
 
         // link function for D's
 
-        Double[] sdNormaQuTraitValue = new Double[] { 0.05 };
-        RealParameter sdNormaQuTraitValueRp = new RealParameter(sdNormaQuTraitValue);
+        Double[] sdNormaQuTraitValue002 = new Double[] { 0.02 };
+        Double[] sdNormaQuTraitValue005 = new Double[] { 0.05 };
+        Double[] sdNormaQuTraitValue0005 = new Double[] { 0.005 };
+        RealParameter sdNormaQuTraitValue002Rp = new RealParameter(sdNormaQuTraitValue002);
+        RealParameter sdNormaQuTraitValue005Rp = new RealParameter(sdNormaQuTraitValue005);
+        RealParameter sdNormaQuTraitValue0005Rp = new RealParameter(sdNormaQuTraitValue0005);
         nfn2Sp = new NormalCenteredAtObservedLinkFn();
-        nfn2Sp.initByName("quTraits", quTrait3SpRp, "sdNormalQuTrValue", sdNormaQuTraitValueRp);
+        nfn2Sp.initByName("quTraits", quTrait3SpRp, "sdNormalQuTrValue", sdNormaQuTraitValue005Rp);
         nfn3Sp = new NormalCenteredAtObservedLinkFn();
-        nfn3Sp.initByName("quTraits", quTrait3SpRp, "sdNormalQuTrValue", sdNormaQuTraitValueRp);
+        nfn3Sp.initByName("quTraits", quTrait3SpRp, "sdNormalQuTrValue", sdNormaQuTraitValue005Rp);
+        nfn15Sp = new NormalCenteredAtObservedLinkFn();
+        nfn15Sp.initByName("quTraits", quTrait15SpRp, "sdNormalQuTrValue", sdNormaQuTraitValue002Rp);
+
         // nfn2 = new NormalCenteredAtObservedLinkFn();
         // nfn2.initByName("quTraits", quTraitRp, "sdNormalQuTrValue", sdNormaQuTraitValuerp);
 
-        Double[] xMid = new Double[] { 0.0 };
-        xMidRp = new RealParameter(xMid);
+        Double[] xMid00 = new Double[] { 0.0 };
+        // Double[] xMidFifteenSp = new Double[] { 0.0 };
+        Double[] xMidFifteenSp = new Double[] { 0.6813353 };
+        xMid00Rp = new RealParameter(xMid00);
+        xMidFifteenSpRp = new RealParameter(xMidFifteenSp);
 
         Double[] dxBin001 = new Double[] { 0.01 };
         dxBin001Rp = new RealParameter(dxBin001);
@@ -145,8 +176,15 @@ public class QuaSSEDistributionTest {
         Double[] dxBin00005 = new Double[] { 0.0005 };
         dxBin00005Rp = new RealParameter(dxBin00005);
 
-        Double[] flankWidthScaler = new Double[] { 10.0 };
-        flankWidthScalerRp = new RealParameter(flankWidthScaler);
+//        Double[] dxBinFifteenSpD = new Double[] { 0.1 };
+//        dxBinFifteenSpRp = new RealParameter(dxBinFifteenSpD);
+        Double[] dxBinFifteenSpD = new Double[] { 0.01027592 };
+        dxBinFifteenSpRp = new RealParameter(dxBinFifteenSpD);
+
+        Double[] flankWidthScaler10 = new Double[] { 10.0 };
+        Double[] flankWidthScaler5 = new Double[] { 5.0 };
+        flankWidthScaler10Rp = new RealParameter(flankWidthScaler10);
+        flankWidthScaler5Rp = new RealParameter(flankWidthScaler5);
 
         Integer[] hiLoRatio = new Integer[] { 4 };
         hiLoRatioRp = new IntegerParameter(hiLoRatio);
@@ -176,28 +214,38 @@ public class QuaSSEDistributionTest {
         q1024 = new QuaSSEDistribution();
         q1024.initByName("dtMax", dt001Rp, "dynDt", dynDtbpTrue,
                 "tc", tc100Rp,
-                "nX", nXbins1024Ip, "dX", dxBin00005Rp, "xMid", xMidRp, "flankWidthScaler", flankWidthScalerRp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp,
+                "nX", nXbins1024Ip, "dX", dxBin00005Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight002,
                 "q2d", nfn2Sp,
                 "priorProbAtRootType", rootPriorType);
 
-        q32TrifTreeDt0005 = new QuaSSEDistribution();
-        q32TrifTreeDt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
-                "tc", tc0005Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMidRp, "flankWidthScaler", flankWidthScalerRp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp,
+        q32FifteenSp = new QuaSSEDistribution();
+        q32FifteenSp.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
+                "tc", tcFifteenSpRp,
+                "nX", nXbins1024Ip, "dX", dxBinFifteenSpRp, "xMid", xMidFifteenSpRp, "flankWidthScaler", flankWidthScaler5Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp001,
                 "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", trifTreeHeight002,
+                "tree", fifteenSpTree,
+                "q2d", nfn15Sp,
+                "priorProbAtRootType", rootPriorType);
+
+        q32ThreeSpTreeDt0005 = new QuaSSEDistribution();
+        q32ThreeSpTreeDt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
+                "tc", tc0005Rp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", threeSpTreeHeight002,
                 "q2d", nfn3Sp,
                 "priorProbAtRootType", rootPriorType);
 
         q48Dt001 = new QuaSSEDistribution();
         q48Dt001.initByName("dtMax", dt001Rp, "dynDt", dynDtbpFalse,
                 "tc", tc100Rp,
-                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMidRp, "flankWidthScaler", flankWidthScalerRp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp,
+                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight002,
                 "q2d", nfn2Sp,
@@ -206,8 +254,8 @@ public class QuaSSEDistributionTest {
         q48Dt002 = new QuaSSEDistribution();
         q48Dt002.initByName("dtMax", dt002Rp, "dynDt", dynDtbpTrue,
                 "tc", tc100Rp,
-                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMidRp, "flankWidthScaler", flankWidthScalerRp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp,
+                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight002,
                 "q2d", nfn2Sp,
@@ -216,8 +264,8 @@ public class QuaSSEDistributionTest {
         q32Dt0006 = new QuaSSEDistribution();
         q32Dt0006.initByName("dtMax", dt001Rp, "dynDt", dynDtbpTrue,
                 "tc", tc100Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMidRp, "flankWidthScaler", flankWidthScalerRp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight001,
                 "q2d", nfn2Sp,
@@ -226,8 +274,8 @@ public class QuaSSEDistributionTest {
         q32Dt0005 = new QuaSSEDistribution();
         q32Dt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
                 "tc", tc0005Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMidRp, "flankWidthScaler", flankWidthScalerRp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight001,
                 "q2d", nfn2Sp,
@@ -360,7 +408,7 @@ public class QuaSSEDistributionTest {
         }
 
         // just propagate in t, in place
-        q48Dt001.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt,true);
+        q48Dt001.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt001,true);
 
         esDsLoAtNode = q48Dt001.getEsDsAtNode(nodeIdx, true);
         double[] esHiAtNode = esDsLoAtNode[0];
@@ -548,10 +596,10 @@ public class QuaSSEDistributionTest {
         // System.out.println("Final D's: " + Arrays.toString(dsLoAtNode));
 
         double[] expectedInitialDsFirst48 = new double[] { 0.000353647683540531, 0.000357627448646487, 0.000361649739618714, 0.000365714984190948, 0.000369823614096463, 0.000373976065102163, 0.000378172777042955, 0.000382414193856355, 0.000386700763617376, 0.000391032938573662, 0.000395411175180895, 0.000399835934138456, 0.000404307680425366, 0.000408826883336479, 0.000413394016518956, 0.00041800955800901, 0.000422673990268911, 0.00042738780022428, 0.000432151479301657, 0.000436965523466329, 0.000441830433260469, 0.000446746713841521, 0.000451714875020898, 0.000456735431302938, 0.000461808901924177, 0.00046693581089287, 0.000472116687028841, 0.000477352064003592, 0.000482642480380733, 0.000487988479656683, 0.000493390610301674, 0.000498849425801072, 0.000504365484696964, 0.000509939350630071, 0.000515571592381964, 0.000521262783917567, 0.00052701350442799, 0.000532824338373647, 0.000538695875527712, 0.000544628711019852, 0.000550623445380317, 0.000556680684584297, 0.000562801040096648, 0.000568985128916886, 0.000575233573624552, 0.000581547002424852, 0.000587926049194663, 0.000594371353528846 };
-        double[] expectedFFTedfY = new double[] { 1, 0.999952939166244, 0.999811769952891, 0.999576532217434, 0.999247292368191, 0.998824143333056, 0.998307204515792, 0.997696621739869, 0.996992567179915, 0.996195239280797, 0.995304862664403, 0.994321688024177, 0.993245992007481, 0.992078077085863, 0.990818271413312, 0.989466928672585, 0.988024427909734, 0.986491173356906, 0.984867594243561, 0.983154144596211, 0.981351303026827, 0.979459572510042, 0.977479480149295, 0.975411576932071, 0.973256437474405, 0.971014659754794, 0.968686864837709, 0.966273696586883, 0.963775821368548, 0.961193927744829, 0.958528726157476, 0.955780948602156, 0.952951348293497, 0.950040699321108, 0.947049796296786, 0.943979453993153, 0.940830506973933, 0.937603809216109, 0.934300233724213, 0.930920672136968, 0.92746603432656, 0.92393724799076, 0.920335258238176, 0.916661027166888, 0.912915533436717, 0.909099771835414, 0.905214752839018, 0.90126150216667 };
+        double[] expectedFFTedfY = new double[] { 1, 0.999247292368191, 0.996992567179915, 0.993245992007481, 0.988024427909734, 0.981351303026827, 0.973256437474405, 0.963775821368549, 0.952951348293497, 0.940830506973933, 0.92746603432656, 0.912915533436717, 0.897241060330147, 0.880508683684162, 0.862788021843104, 0.844151761668242, 0.824675163860569, 0.804435559446082, 0.783511842107391, 0.761983960984176, 0.739932418450195, 0.717437777209001, 0.694580180837756, 0.671438891652661, 0.64809184947515, 0.624615254550175, 0.601083177512084, 0.577567198915383, 0.554136080452835, 0.530855469577789, 0.507787638837061, 0.484991260810779, 0.462521219151724, 0.440428455824044, 0.418759854264325, 0.39755815783139, 0.376861922578424, 0.356705503075537, 0.3371190697353, 0.318128655850257, 0.299756232341542, 0.282019808042489, 0.264933553200873, 0.248507943778199, 0.232749924053504, 0.217663085001486, 0.203247855908884, 0.189501706717032 };
         double[] expectedSp1EsAfterPropX = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         double[] expectedSp1DsFirst48AfterPropX = new double[] { 0.000353647683540531, 0.000357627448646487, 0.000361649739618714, 0.000365714984190948, 0.000369823614096463, 0.000373976065102163, 0.000378172777042955, 0.000382414193856355, 0.000386700763617376, 0.000391032938573662, 0.000395411175180895, 0.000399835934138456, 0.000404307680425366, 0.000408826883336479, 0.000413394016518956, 0.00041800955800901, 0.000422673990268911, 0.00042738780022428, 0.000432151479301657, 0.000436965523466329, 0.000441830433260469, 0.000446746713841521, 0.000451714875020898, 0.000456735431302938, 0.000461808901924177, 0.00046693581089287, 0.000472116687028841, 0.000477352064003592, 0.000482642480380733, 0.000487988479656683, 0.000493390610301674, 0.000498849425801072, 0.000504365484696964, 0.000509939350630071, 0.000515571592381964, 0.000521262783917567, 0.00052701350442799, 0.000532824338373647, 0.000538695875527712, 0.000544628711019852, 0.000550623445380317, 0.000556680684584297, 0.000562801040096648, 0.000568985128916886, 0.000575233573624552, 0.000581547002424852, 0.000587926049194663, 0.000594371353528846 };
-        double[] expectedSp1DsLater48AfterPropX = new double[] { 1.12964601442883, 1.13523957985681, 1.14085371385815, 1.14648844781881, 1.1521438128928, 1.15781984000018, 1.16351655982519, 1.16923400281429, 1.17497219917421, 1.18073117887008, 1.18651097162341, 1.19231160691021, 1.19813311395904, 1.20397552174904, 1.20983885900802, 1.21572315421049, 1.22162843557575, 1.22755473106588, 1.23350206838385, 1.23947047497152, 1.24545997800775, 1.25147060440637, 1.25750238081428, 1.26355533360948, 1.26962948889911, 1.27572487251749, 1.28184151002416, 1.28797942670193, 1.29413864755491, 1.30031919730656, 1.30652110039772, 1.31274438098464, 1.31898906293703, 1.32525516983611, 1.33154272497262, 1.33785175134486, 1.34418227165675, 1.35053430831583, 1.35690788343134, 1.36330301881221, 1.36971973596514, 1.37615805609261, 1.38261800009092, 1.38909958854822, 1.39560284174258, 1.40212777963999, 1.40867442189243, 1.41524278783588 };
+        double[] expectedSp1DsLater48AfterPropX = new double[] { 1.13579683037393, 1.14139979445304, 1.14702325798403, 1.15266725177838, 1.15833180641492, 1.16401695223792, 1.16972271935522, 1.17544913763623, 1.18119623671012, 1.18696404596383, 1.19275259454019, 1.19856191133597, 1.20439202499999, 1.21024296393119, 1.21611475627669, 1.22200742992987, 1.22792101252845, 1.23385553145257, 1.23981101382282, 1.24578748649837, 1.25178497607497, 1.25780350888308, 1.26384311098589, 1.26990380817741, 1.27598562598051, 1.28208858964501, 1.28821272414573, 1.29435805418053, 1.30052460416843, 1.30671239824758, 1.31292146027342, 1.31915181381665, 1.32540348216137, 1.33167648830306, 1.33797085494669, 1.34428660450477, 1.35062375909539, 1.35698234054031, 1.36336237036299, 1.36976386978664, 1.37618685973233, 1.38263136081698, 1.38909739335148, 1.39558497733871, 1.40209413247163, 1.40862487813131, 1.41517723338502, 1.42175121698428 };
 
         Assert.assertArrayEquals(expectedInitialDsFirst48, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 0, 48), 1E-16);
         Assert.assertArrayEquals(expectedFFTedfY, Arrays.copyOfRange(realFFTedfY, 0, 48), 1E-14);
@@ -598,7 +646,7 @@ public class QuaSSEDistributionTest {
         }
 
         // just propagate in t, in place
-        q48Dt001.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt, true);
+        q48Dt001.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt001, true);
 
         // grabbing intermediate to see if it's all good
         double[][] esDsLoAtNodeAfterPropT = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
@@ -613,7 +661,8 @@ public class QuaSSEDistributionTest {
 
         // propagating in x
         // getting fY
-        q48Dt001.populatefY(true, true);
+        double aDt = 0.001;
+        q48Dt001.populatefY(aDt, true, true, true);
         double[] fftedfY = q48Dt001.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q48Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
@@ -681,7 +730,7 @@ public class QuaSSEDistributionTest {
         }
 
         // just propagate in t, in place
-        q48Dt002.propagateTInPlace(esDsLoAtNode, scratchAtNode, dtLarger,true);
+        q48Dt002.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt002,true);
 
         // grabbing intermediate to see if it's all good
         double[][] esDsLoAtNodeAfterPropT = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
@@ -696,7 +745,8 @@ public class QuaSSEDistributionTest {
 
         // propagating in x
         // getting fY
-        q48Dt002.populatefY(true, true);
+        double aDt = 0.02;
+        q48Dt002.populatefY(aDt, true, true, true);
         double[] fftedfY = q48Dt002.getfY(true);
         double[] realFFTedfY = new double[fftedfY.length]; // just for test, not used in propagate in X
         everyOtherInPlace(fftedfY, realFFTedfY, q48Dt002.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
@@ -764,8 +814,8 @@ public class QuaSSEDistributionTest {
         double[] expectedInitialDsLater10 = new double[] { 0.0146332892566062, 0.0122380386022755, 0.0102092994868837, 0.00849560541101504, 0.00705191364734891, 0, 0, 0, 0, 0 };
         double[] expectedSp1EsAfterPropTandXFirst10 = new double[] { 0.000598990518590012, 0.000598989632470972, 0.000598988745094367, 0.000598987856474924, 0.000598986966627531, 0.000598986075566877, 0.000598985183308093, 0.000598984289866083, 0.000598983395256048, 0.000598982499493234 };
         double[] expectedSp1EsAfterPropTandXLater10 = new double[] { 0.000598856349949292, 0.000598855460362313, 0.000598854572006534, 0.000598853684896709, 0.000598852799047445, 0, 0, 0, 0, 0 };
-        double[] expectedSp1DsAfterPropTandXFirst10 = new double[] { 0.00705472178566115, 0.00849896328584349, 0.0102133044244718, 0.0122428030418449, 0.0146389426900442, 0.0174603449881642, 0.0207735247765771, 0.0246536840674864, 0.0291855392723177, 0.0344641744982804 };
-        double[] expectedSp1DsAfterPropTandXLater10 = new double[] { 0.0146325564177363, 0.0122373893454924, 0.0102087275584534, 0.0084951043048786, 0.0070514768252866, 0, 0, 0, 0, 0 };
+        double[] expectedSp1DsAfterPropTandXFirst10 = new double[] { 0.00705600449088285, 0.00850050858627021, 0.0102151614302211, 0.0122450290555513, 0.0146416043751963, 0.0174635196669636, 0.0207773018651021, 0.0246581666552126, 0.0291908458520468, 0.0344704408512187 };
+        double[] expectedSp1DsAfterPropTandXLater10 = new double[] { 0.0146352169417221, 0.0122396143748685, 0.0102105837320268, 0.00849664890365682, 0.00705275894050238, 0, 0, 0, 0, 0 };
 
 
         Assert.assertArrayEquals(expectedInitialDsFirst10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 0, 10), 1E-14);
@@ -890,18 +940,38 @@ public class QuaSSEDistributionTest {
         double[] expectedDsHiAtNodeInitialSp2 = new double[] { 0.000254946647636669, 0.000319674822138109, 0.000399835934138456, 0.000498849425801072, 0.000620828141157003, 0.000770703934841743, 0.000954372730824099, 0.0011788613551308, 0.00145251860604505, 0.00178523314354266, 0.00218868086879601, 0.00267660451529771, 0.00326512817532484, 0.00397310942785545, 0.00482253160451986, 0.0058389385158292, 0.00705191364734891, 0.00849560541101504, 0.0102092994868837, 0.0122380386022755, 0.0146332892566062, 0.0174536539009152, 0.0207656259132282, 0.0246443833694604, 0.0291746160933349, 0.0344513787810736, 0.0405809611459954, 0.0476817640292969, 0.0558851682975889, 0.0653363811239983, 0.0761952419644361, 0.08863696823876, 0.102852818461079, 0.119050648395517, 0.137455333812279, 0.158309031659599, 0.181871250031821, 0.208418696288452, 0.238244872152104, 0.271659384673712, 0.308986942687903, 0.350566009871371, 0.396747087835906, 0.447890605896858, 0.504364398303888, 0.566540754832024, 0.634793036713348, 0.709491856924629, 0.791000831787404, 0.879671919608544, 0.975840371583655, 1.07981933026376, 1.19189412137632, 1.31231629549353, 1.44129748672436, 1.57900316601788, 1.72554637653023, 1.88098154753774, 2.04529849127956, 2.21841669358911, 2.40018001393971, 2.59035191331783, 2.7886113289072, 2.9945493127149, 3.20766654683839, 3.42737184095615, 3.65298170778044, 3.88372109966426, 4.11872537439949, 4.35704354065101, 4.59764281368466, 4.83941449038287, 5.08118112938378, 5.32170499797509, 5.55969772261993, 5.79383105522965, 6.02274864309609, 6.24507866733522, 6.45944719335828, 6.66449205783599, 6.85887710038768, 7.04130653528599, 7.21053924923296, 7.36540280606647, 7.50480693833876, 7.62775630921048, 7.73336233605698, 7.82085387950912, 7.88958661815778, 7.93905094954024, 7.96887828189528, 7.97884560802865, 7.96887828189528, 7.93905094954024, 7.88958661815778, 7.82085387950912, 7.73336233605698, 7.62775630921048, 7.50480693833876, 7.36540280606647, 7.21053924923296, 7.04130653528599, 6.85887710038768 };
 
         double logLik = q32Dt0005.calculateLogP();
+        System.out.println("logLik = " + logLik);
 
         Assert.assertArrayEquals(expectedHiLoIdxs4Transfer, hiLoIdxs4Transfer);
         Assert.assertArrayEquals(expectedDsHiAtNodeInitialSp1, Arrays.copyOfRange(esDsHiAtNodeInitial0[1], 0, 103), 1E-13);
         Assert.assertArrayEquals(expectedDsHiAtNodeInitialSp2, Arrays.copyOfRange(esDsHiAtNodeInitial1[1], 0, 103), 1E-13);
-        Assert.assertEquals( -6.389642, logLik, 1e-3);
+        Assert.assertEquals( -6.389642, logLik, 1e-6);
     }
 
+    /*
+     * Checks log-likelihood and other internal quantities
+     * for tree with 3 species (height = 0.02), with 32 quantitative trait
+     * bins, and dtMax = 0.005.
+     */
     @Test
-    public void testPruneTrifTree32Bins() {
-        double logLik = q32TrifTreeDt0005.calculateLogP();
+    public void testPruneThreeSpTree32Bins() {
+        double logLik = q32ThreeSpTreeDt0005.calculateLogP();
 
-        Assert.assertEquals( -9.085542, logLik, 1e-2);
+        Assert.assertEquals( -9.085542, logLik, 1e-6);
     }
 
+    /*
+     * Checks log-likelihood and other internal quantities
+     * for tree with 15 species, with 1024 quantitative trait
+     * bins.
+     *
+     * This is shows decisively that this implementation
+     * is correct.
+     */
+    @Test
+    public void testPruneFifteenSpTree1024Bins() {
+        double logLik = q32FifteenSp.calculateLogP();
+
+        Assert.assertEquals( -61.27245, logLik, 1e-5);
+    }
 }
