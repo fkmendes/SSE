@@ -48,20 +48,20 @@ public class PropagatesQuaSSETest {
     @Test
     public void testPropagateTimeOneChQuaSSETest() {
 
-        esDs = new double[2][96];
-        scratch = new double[2][96];
-        birthRate = new double[48];
-        deathRate = new double[48];
+        esDs = new double[2][64];
+        scratch = new double[2][64];
+        birthRate = new double[32];
+        deathRate = new double[32];
         nDimensionsE = nDimensionsD = 1;
 
-        double[] randNumbers = new double[] { 8.50976807665641, 10.103792974434, 9.08976088347418, 11.847721337896, 8.51254745547751, 9.91650581983555, 8.95019918832521, 9.30609468137578, 11.0775496365384, 10.7639029400606, 10.9164931483932, 9.83064984974005, 11.7045125626528, 11.3382431919839, 8.94185500956388, 7.30298759647754, 11.1167065386435, 9.76891399488789, 9.76676261926709, 9.10540040702707, 8.93655752085786, 10.2580116547857, 10.2552822093573, 8.85921172559191, 11.0314684537514, 10.8738197102994, 10.4638936963999, 9.68617874031991, 8.35885856359494, 10.8426829704597, 7.66894489549493, 8.23694434625264, 11.1384877145132, 9.40550089155345, 9.97880581995152, 11.4504630996011, 10.3369599590198, 10.3149165707367, 10.3046840297378, 8.32290274946024, 9.46368095367558, 8.81487516662079, 9.83971439912364, 11.886850507066, 11.6196319895886, 10.7171936473579, 9.00153746682918, 9.44772548737688 };
+        double[] randNumbers = new double[] { 8.50976807665641, 10.103792974434, 9.08976088347418, 11.847721337896, 8.51254745547751, 9.91650581983555, 8.95019918832521, 9.30609468137578, 11.0775496365384, 10.7639029400606, 10.9164931483932, 9.83064984974005, 11.7045125626528, 11.3382431919839, 8.94185500956388, 7.30298759647754, 11.1167065386435, 9.76891399488789, 9.76676261926709, 9.10540040702707, 8.93655752085786, 10.2580116547857, 10.2552822093573, 8.85921172559191, 11.0314684537514, 10.8738197102994, 10.4638936963999, 9.68617874031991, 8.35885856359494, 10.8426829704597, 7.66894489549493, 8.23694434625264 };
         for (int i=0; i<esDs[0].length/2; i++) {
             esDs[0][i] = 0.0001;
             esDs[1][i] = randNumbers[i];
             birthRate[i] = 1.0;
             deathRate[i] = 0.5;
         }
-        nUsefulTraitBins = 48 - 4 - 4;
+        nUsefulTraitBins = 32 - 2 - 2;
 
         // propagating in place, result left in esDs
         propagateEandDinTQuaSSEInPlace(esDs, scratch, birthRate, deathRate, dt, nUsefulTraitBins, nDimensionsD);
@@ -69,10 +69,10 @@ public class PropagatesQuaSSETest {
         // System.out.println(Arrays.toString(esDs[0]));
         // System.out.println(Arrays.toString(esDs[1]));
 
-        double[] expectedEs = new double[] { 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285, 0.005061285 };
-        double[] expectedDs = new double[] { 8.383508, 9.953882, 8.954895, 11.671936, 8.386246, 9.769374, 8.817404, 9.168019, 10.913191, 10.604198 };
-        assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0], 0, 10), EPSILON);
-        assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, 10), EPSILON);
+        double[] expectedEs = new double[] { 0.00506128508712536, 0.00506128508712536, 0.00506128508712536, 0.00506128508712536, 0.00506128508712536, 0.00506128508712536, 0.00506128508712536, 0.00506128508712536, 0.00506128508712536, 0.00506128508712536 };
+        double[] expectedDs = new double[] { 8.38350785732404, 9.95388205964182, 8.95489525699789, 11.6719355960008, 8.38624599824343, 9.7693737019512, 8.8174042516822, 9.16801929024715, 10.913191003709, 10.604197912398 };
+        assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0], 0, 10), 1e-13);
+        assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, 10), 1e-13);
     }
 
     /*
@@ -83,45 +83,41 @@ public class PropagatesQuaSSETest {
 
         drift = 0.0;
         diffusion = 0.001;
-        nLeftFlankBins = nRightFlankBins = 4;
-        nXbins = 48;
+        nLeftFlankBins = nRightFlankBins = 2;
+        nXbins = 32;
 
         double[] fY = new double[nXbins];
-
         double[] fftFY = new double[nXbins * 2];
-        double[] realFftFy = new double[nXbins * 2];
-
         double[] ifftFY = new double[nXbins * 2];
-        double[] realIfftFy = new double[nXbins * 2];
 
         // prepare fY
         SSEUtils.makeNormalKernelInPlace(fY, dt * drift, Math.sqrt(dt * diffusion), nXbins, nLeftFlankBins, nRightFlankBins, dx48); // normalizes inside already
-        // System.out.println("fY = " + Arrays.toString(fY));
 
-        // fft
+        // forward fft fY
         for (int i=0; i<fY.length; i++) {
             fftFY[i] = fY[i];
         }
         fftForKern = new DoubleFFT_1D(nXbins);
-        fftForKern.realForwardFull(fftFY);
-        everyOtherInPlace(fftFY, realFftFy, nXbins, 0, 0, 2, 1.0);
-        // System.out.println("fft fY = " + Arrays.toString(realFftFy));
+        fftForKern.realForwardFull(fftFY); // real complex real complex...
 
-        // ifft
+        // inverse fft fY
         for (int i=0; i<fftFY.length; i++) {
             ifftFY[i] = fftFY[i];
         }
-        fftForKern.complexInverse(ifftFY, false);
-        everyOtherInPlace(ifftFY, realIfftFy, nXbins, 0, 0, 2, 1.0);
-        // System.out.println("ifft fY =" + Arrays.toString(realIfftFy));
+        fftForKern.complexInverse(ifftFY, false); // still real complex real complex...
 
-        double[] expectedFy = new double[] { 0.986703287028858, 0.00664835445182386, 2.03374705433156e-09, 2.82445649260927e-20, 1.78085279698565e-35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.78085279698565e-35, 2.82445649260927e-20, 2.03374705433156e-09, 0.00664835445182386 };
-        double[] expectedFftFY = new double[] { 1, 0.999886244673461, 0.999546925086093, 0.998987847110852, 0.998218576759891, 0.997252276505192, 0.996105480062091, 0.994797809489411, 0.993351639446935, 0.991791714355113 };
-        double[] expectedIfftFY = new double[] { 47.3617577773852, 0.319121013687545, 9.76198587343688e-08, 7.45931094670027e-17, -4.44089209850063e-16, 1.51614216742138e-16, 4.05992386804242e-16, -1.43599463769065e-16, -4.44089209850063e-16, -5.17654502592123e-16 };
+        // System.out.println("fft fY = " + Arrays.toString(fftFY));
+        everyOtherInPlace(fftFY, nXbins, 0, 0, 2, 1.0); // real real real real...
+        everyOtherInPlace(ifftFY, nXbins, 0, 0, 2, 1.0); // real real real real...
+
+        // real real real real...
+        double[] expectedFy = new double[] { 0.986703287028858, 0.00664835445182386, 2.03374705433156e-09, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.03374705433156e-09, 0.00664835445182386 };
+        double[] expectedFftFY = new double[] { 1, 0.999744507157237, 0.998987847110852, 0.997759097982437, 0.996105480062091, 0.994090541136289, 0.991791714355113, 0.989297342492751, 0.986703282961364, 0.984109224049216 };
+        double[] expectedIfftFY = new double[] { 31.5745051849235, 0.212747342458364, 6.50799056989047e-08, 1.52655665885959e-16, -4.44089209850063e-16, -2.35784152995104e-16, -4.15496150260171e-16, -2.91433543964104e-16, -8.88178419700125e-16, 8.15320033709099e-17 };
 
         assertArrayEquals(expectedFy, fY, EPSILON);
-        assertArrayEquals(expectedFftFY, Arrays.copyOfRange(realFftFy, 0, 10), EPSILON);
-        assertArrayEquals(expectedIfftFY, Arrays.copyOfRange(realIfftFy, 0, 10), EPSILON);
+        assertArrayEquals(expectedFftFY, Arrays.copyOfRange(fftFY, 0, 10), EPSILON);
+        assertArrayEquals(expectedIfftFY, Arrays.copyOfRange(ifftFY, 0, 10), EPSILON);
     }
 
     /*
@@ -131,8 +127,8 @@ public class PropagatesQuaSSETest {
     public void testConvolve() {
 
         nDimensionsE = nDimensionsD = 1;
-        nLeftFlankBins = nRightFlankBins = 4;
-        nXbins = 48;
+        nLeftFlankBins = nRightFlankBins = 2;
+        nXbins = 32;
         drift = 0.0;
         diffusion = 0.001;
 
@@ -147,28 +143,29 @@ public class PropagatesQuaSSETest {
         // preparing input
         esDs = new double[2][nXbins * 2];
         scratch = new double[2][nXbins * 2];
-        double[] initialValues = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] initialValues = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 0, 0, 0, 0 };
         for (int i=0; i<esDs[0].length/2; i++) {
             esDs[0][i] = scratch[0][i] = 0.0;
             esDs[1][i] = scratch[1][i] = initialValues[i];
         }
 
-        SSEUtils.convolveInPlace(scratch, fY, 1, 1, fftForEandD);
-        double[] unnormalizedDs = new double[scratch[1].length];
-        for (int i=0, j=0; i<scratch[1].length; i+=2, j++) {
-            unnormalizedDs[j] = scratch[1][i];
+        SSEUtils.convolveInPlace(esDs, fY, 1, 1, fftForEandD);
+
+        double[] unnormalizedDs = new double[esDs[1].length];
+        for (int i=0, j=0; i<(esDs[1].length); i+=2, j++) {
+            unnormalizedDs[j] = esDs[1][i];
         }
 
-        everyOtherInPlace(scratch[0], esDs[0], nXbins, 0, 0, 2, 1.0/nXbins); // E's: grabbing real part and scaling by 1/nXbins
-        everyOtherInPlace(scratch[1], esDs[1], nXbins, 0, 0, 2, 1.0/nXbins); // D's: grabbing real part and scaling by 1/nXbins
+        everyOtherInPlace(esDs[0], nXbins, 0, 0, 2, 1.0/nXbins); // E's: grabbing real part and scaling by 1/nXbins
+        everyOtherInPlace(esDs[1], nXbins, 0, 0, 2, 1.0/nXbins); // D's: grabbing real part and scaling by 1/nXbins
 
-        double[] expectedDsUnnormalized = new double[] { 0.280447809353859, 0.58934289318654, 1.18632299309589, 2.29444263475988, 4.26373864030165, 7.61277219718136, 13.0597170956171, 21.5259924869188, 34.090305996801, 51.8724486751153, 75.8369022635638, 106.527631278782, 143.774440226047, 186.439841249409, 232.29148807448, 278.077162458051, 319.841447837597, 353.46100325742, 375.306060575871, 382.883752104488, 375.306060575871, 353.46100325742, 319.841447837597, 278.077162458051, 232.29148807448, 186.439841249409, 143.774440226047, 106.527631278782, 75.8369022635638, 51.8724486751154, 34.090305996801, 21.5259924869189, 13.0597170956171, 7.61277219718137, 4.26373864030163, 2.29444263475987, 1.18632299309587, 0.589342893186554, 0.280447809353873, 0.00186332917266441, 5.70054226045613e-10, 0, 2.8421709430404e-14, 0, 5.6843418860808e-14, 0, 5.70025804336183e-10, 0.00186332917272125 };
-        double[] expectedEs = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-        double[] expectedDs = new double[] { 0.00584266269487207, 0.0122779769413863, 0.0247150623561643, 0.0478008882241642, 0.0888278883396176, 0.158599420774612, 0.272077439492023, 0.448458176810809, 0.710214708266689, 1.0806760140649, 1.57993546382425, 2.21932565164128, 2.99530083804266, 3.88416335936269, 4.83940600155166, 5.79327421787606, 6.66336349661661, 7.36377090119626, 7.81887626199731, 7.97674483551017, 7.81887626199731, 7.36377090119626, 6.66336349661661, 5.79327421787606, 4.83940600155166, 3.88416335936269, 2.99530083804266, 2.21932565164129, 1.57993546382425, 1.0806760140649, 0.710214708266689, 0.44845817681081, 0.272077439492023, 0.158599420774612, 0.0888278883396172, 0.0478008882241639, 0.024715062356164, 0.0122779769413865, 0.00584266269487236, 3.88193577638418e-05, 1.18761297092836e-11, 0, 5.9211894646675e-16, 0, 1.1842378929335e-15, 0, 1.18755375903371e-11, 3.88193577650261e-05 };
+        double[] expectedDsUnnormalized = new double[] { 0.186965206235882, 0.392895262124355, 0.790881995397243, 1.52962842317328, 2.84249242686772, 5.0751814647876, 8.70647806374478, 14.3506616579459, 22.726870664534, 34.581632450077, 50.5579348423759, 71.0184208525211, 95.849626817365, 124.293227499606, 154.860992049653, 185.384774972034, 213.227631891732, 235.64066883828, 250.204040383914, 255.255834736325, 250.204040383914, 235.64066883828, 213.227631891732, 185.384774972034, 154.860992049653, 124.293227499606, 95.8496267146036, 70.6824920549429, 0.471962450911363, 1.44374375565803e-07, 3.80026676793932e-10, 0.00124221944851399 };
+        double[] expectedEs = new double[] { 0.0, 0.0, 0.0, 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 , 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+        double[] expectedDs = new double[] { 0.00584266269487133, 0.0122779769413861, 0.0247150623561638, 0.047800888224165, 0.0888278883396163, 0.158599420774613, 0.272077439492024, 0.448458176810811, 0.710214708266688, 1.0806760140649, 1.57993546382425, 2.21932565164129, 2.99530083804266, 3.8841633593627, 4.83940600155166, 5.79327421787606, 6.66336349661661, 7.36377090119626, 7.81887626199732, 7.97674483551017, 7.81887626199732, 7.36377090119626, 6.66336349661661, 5.79327421787606, 4.83940600155166, 3.88416335936269, 2.99530083483136, 2.20882787671697, 0.0147488265909801, 4.51169923643135e-09, 1.18758336498104e-11, 3.88193577660623e-05 };
 
-        assertArrayEquals(expectedDsUnnormalized, Arrays.copyOfRange(unnormalizedDs, 0, 48), EPSILON); // comes straight out of convolve
-        assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0],0, 48), EPSILON);
-        assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, 48), EPSILON);
+        assertArrayEquals(expectedDsUnnormalized, Arrays.copyOfRange(unnormalizedDs, 0, 32), 1e-12); // comes straight out of convolve
+        assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0],0, 32), 1e-12);
+        assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, 32), 1e-12);
     }
 
     /*
@@ -181,11 +178,11 @@ public class PropagatesQuaSSETest {
      * Using 48 quantitative trait bins, dx = 0.01, diffusion = 0.001.
      */
     @Test
-    public void testPropagateChOneCh48QuaSSETest() {
+    public void testPropagateChOneCh32QuaSSETest() {
 
         nDimensionsE = nDimensionsD = 1;
-        nLeftFlankBins = nRightFlankBins = 4;
-        nXbins = 48;
+        nLeftFlankBins = nRightFlankBins = 2;
+        nXbins = 32;
         drift = 0.0;
         diffusion = 0.001;
 
@@ -201,7 +198,7 @@ public class PropagatesQuaSSETest {
 
         esDs = new double[2][nXbins * 2];
         scratch = new double[2][nXbins * 2];
-        double[] initialValues = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] initialValues = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 0, 0, 0, 0 };
         for (int i=0; i<esDs[0].length/2; i++) {
             esDs[0][i] = scratch[0][i] = 0.0;
             esDs[1][i] = scratch[1][i] = initialValues[i];
@@ -209,72 +206,11 @@ public class PropagatesQuaSSETest {
 
         propagateEandDinXQuaLike(esDs, scratch, fY, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD);
 
-        double[] expectedEs = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        double[] expectedDs = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0888278883396176, 0.158599420774612, 0.272077439492023, 0.448458176810809, 0.710214708266689, 1.0806760140649, 1.57993546382425, 2.21932565164128, 2.99530083804266, 3.88416335936269, 4.83940600155166, 5.79327421787606, 6.66336349661661, 7.36377090119626, 7.81887626199731, 7.97674483551017, 7.81887626199731, 7.36377090119626, 6.66336349661661, 5.79327421787606, 4.83940600155166, 3.88416335936269, 2.99530083804266, 2.21932565164129, 1.57993546382425, 1.0806760140649, 0.710214708266689, 0.44845817681081, 0.272077439492023, 0.158599420774612, 0.0888278883396172, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedEs = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedDs = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0247150623561638, 0.047800888224165, 0.0888278883396163, 0.158599420774613, 0.272077439492024, 0.448458176810811, 0.710214708266688, 1.0806760140649, 1.57993546382425, 2.21932565164129, 2.99530083804266, 3.8841633593627, 4.83940600155166, 5.79327421787606, 6.66336349661661, 7.36377090119626, 7.81887626199732, 7.97674483551017, 7.81887626199732, 7.36377090119626, 6.66336349661661, 5.79327421787606, 4.83940600155166, 3.88372109966426, 2.9945493127149, 0, 0, 0, 0, 0 };
 
         assertArrayEquals(expectedEs, Arrays.copyOfRange(esDs[0], 0, nXbins), 1E-14);
         assertArrayEquals(expectedDs, Arrays.copyOfRange(esDs[1], 0, nXbins), 1E-14);
-    }
-
-    @Test
-    public void tmpTest() {
-
-        nDimensionsE = nDimensionsD = 1;
-        nLeftFlankBins = nRightFlankBins = 4;
-        nXbins = 48;
-        drift = 0.0;
-        diffusion = 0.001;
-
-        esDs = new double[2][nXbins * 2];
-        scratch = new double[2][nXbins * 2];
-        double[][] esDsTmp = new double[2][nXbins * 2];
-        double[][] scratchTmp = new double[2][nXbins * 2];
-
-        // number of bins must be multiple of 4
-        fftForEandD = new DoubleFFT_1D(nXbins);
-
-        fY = new double[nXbins * 2];
-        SSEUtils.makeNormalKernelInPlace(fY, (dt * drift), Math.sqrt(dt * diffusion), nXbins, nLeftFlankBins, nRightFlankBins, dx48); // normalizes inside already
-        fftForEandD.realForwardFull(fY); // first FFT the Normal kernel
-
-        esDs = new double[2][nXbins * 2];
-        scratch = new double[2][nXbins * 2];
-        double[] initialValues = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        for (int i=0; i<esDs[0].length/2; i++) {
-            esDs[0][i] = 0.0;
-            scratch[0][i] = 0.0;
-            esDs[1][i] = initialValues[i];
-            scratch[1][i] = initialValues[i];
-        }
-
-        propagateEandDinXQuaLike(esDs, scratch, fY, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD);
-
-        System.out.println("\nNormal function");
-        System.out.println("D's = " + Arrays.toString(esDs[1]));
-        System.out.println("(useless) D's = " + Arrays.toString(scratch[1]) + "\n");
-
-        initialValues = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        for (int i=0; i<esDs[0].length/2; i++) {
-            esDsTmp[0][i] = 0.0;
-            scratchTmp[0][i] = 0.0;
-            esDsTmp[1][i] = initialValues[i];
-            scratchTmp[1][i] = initialValues[i];
-        }
-
-        tmpPropagateEandDinXQuaLike(esDsTmp, scratchTmp, fY, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD); // scratch has what we want
-
-        System.out.println("\ntmp function before pointer swap");
-        System.out.println("D's = " + Arrays.toString(esDsTmp[1]));
-        System.out.println("(useless) D's = " + Arrays.toString(scratchTmp[1]) + "\n");
-
-        double[][] tmp;
-        tmp = scratchTmp;
-        scratchTmp = esDsTmp;
-        esDsTmp = tmp;
-
-        System.out.println("\ntmp function after pointer swap");
-        System.out.println("D's = " + Arrays.toString(esDsTmp[1]));
-        System.out.println("(useless) D's = " + Arrays.toString(scratchTmp[1]) + "\n");
     }
 
     /*

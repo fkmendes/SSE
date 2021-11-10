@@ -74,7 +74,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     public void processBranch(Node aNode) {
 
         // TODO stuff
-        doMoSSEIntegrateInPlace(esDsHi[0], scratch, 0.0, true, dtMax, true);
+        doMoSSEIntegrateInPlace(aNode.getNr(), esDsHi[0], scratch, 0.0, true, dtMax, true);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
      * we need start times, and need to deal with the first dt in a different way.
      * MoSSE will thus have its special 'doIntegrateInPlace'.
      */
-    private void doMoSSEIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, double dt, boolean lowRes) {
+    private void doMoSSEIntegrateInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, double dt, boolean lowRes) {
 
         // integrate over birth and death events (either at low or high resolution inside)
         this.propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
@@ -118,7 +118,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         propagateSubst(esDsAtNode, startTime, dtMax, isFirstDt, lowRes);
 
         // integrate over diffusion of substitution rate
-        this.propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
+        this.propagateXInPlace(nodeIdx, esDsAtNode, scratchAtNode, lowRes);
 
         // return null;
     }
@@ -131,8 +131,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
-        super.propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
+    public void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+        super.propagateXInPlace(nodeIdx, esDsAtNode, scratchAtNode, lowRes);
     }
 
     public void propagateSubst(double[][] esDsAtNode, double startTime, double aDt, boolean isFirstDt, boolean lowRes) {
@@ -151,11 +151,6 @@ public class MoSSEDistribution extends QuaSSEDistribution {
                 if (isFirstDt) likelihoodCore.updatePartialInPlaceFirstDt(esDsAtNodeAtBin, aDt); // first dt deals with missing data
                 else likelihoodCore.updatePartialInPlace(esDsAtNodeAtBin, aDt);
             }
-
-    }
-
-    @Override
-    public void convolve() {
 
     }
 

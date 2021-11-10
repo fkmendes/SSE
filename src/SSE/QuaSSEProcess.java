@@ -250,7 +250,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract double normalizeDs(double[] dsAtNode, double dxAtRightRes);
+    protected abstract double normalizeDs(int nodeIdx, boolean lowRes);
 
     /*
      *
@@ -270,7 +270,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      * Does integration in time and character space in place
      */
-    protected abstract void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes);
+    protected abstract void doIntegrateInPlace(int nodeIdx, double[][] scratchAtNode, double dt, boolean lowRes);
 
     /*
      *
@@ -280,12 +280,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
-
-    /*
-     *
-     */
-    protected abstract void convolve();
+    protected abstract void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
 
     /*
      * This method looks at the relevant objects in state,

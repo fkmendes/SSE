@@ -31,47 +31,44 @@ public class OtherUtilsTest {
         assertArrayEquals(expected, anArray, EPSILON);
     }
 
-    /*
-     * Test for void function that copies every other element in place.
-     *
-     * Note that everyOtherInPlace copies elements whose index are
-     * < (nXbins - skipFirstN - skipLastN - 1), where each copied element is
-     * separated by a non-copied element. We also ignore the first (every other)
-     * 'skipFirstN' elements in 'inArray'
-     *
-     * e.g., if nXbins=8, and skipFirstN = skipLastN = 1, then we
-     * copy all elements whose indices are < (8 - 1 - 1 - 1) = 5, so up to
-     * the 5-th element (index=4) in 'inArray', ignoring the 0-th element in
-     * 'inArray'
-     *
-     * e.g., if nXbins=12, and skipFirstN = skipLastN = 2, then we
-     * copy all elements whose indices are < (12 - 2 - 2 - 1) = 7, so up to
-     * the 6-th element (index=5) in 'inArray', ignoring the 0-th and 2nd element
-     * in 'inArray'
-     */
     @Test
     public void testGetEveryOtherElement() {
-
         // input arrays
         double[] fromArray1 = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
-                                           9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
+                9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
         double[] fromArray2 = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0,
-                                           13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0 };
-        double[] toArray1 = new double[16];
-        double[] toArray2 = new double[24];
+                13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0 };
 
         // expected arrays
+        /*
+         * 0 = 1.0 (whatever was there), (skipped source 1.0), then ignore (2.0)
+         * 1 = get (3.0), then ignore (4.0)
+         * 2 = get (5.0), then ignore (6.0)
+         * 3 = get (7.0), then ignore (8.0)
+         * 4 = get (9.0)
+         * 5... = 6.0... whatever was there
+         */
         double[] toArrayExpected1 = new double[] {
-                0.0, 3.0, 5.0, 7.0, 0.0, 0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+                1.0, 3.0, 5.0, 7.0, 9.0, 6.0, 7.0, 8.0,
+                9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
+        /*
+         * 0 = 1.0 (whatever was there), (skipped source 1.0)
+         * 1 = 2.0 (whatever was there), (skipped source 3.0)
+         * 2 = get (5.0), then ignore (6.0)
+         * 3 = get (7.0), then ignore (8.0)
+         * 4 = get (9.0), then ignore (10.0)
+         * 5 = get (11.0),
+         * 6... = 7.0... whatever was there
+         */
         double[] toArrayExpected2 = new double[] {
-                0.0, 0.0, 5.0, 7.0, 9.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+                1.0, 2.0, 5.0, 7.0, 9.0, 11.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0,
+                13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0 };
 
-        SSEUtils.everyOtherInPlace(fromArray1, toArray1, 8, 1, 1, 2, 1.0);
-        SSEUtils.everyOtherInPlace(fromArray2, toArray2, 12, 2, 2, 2, 1.0);
-        assertArrayEquals(toArrayExpected1, toArray1, 0.0);
-        assertArrayEquals(toArrayExpected2, toArray2, 0.0);
+        SSEUtils.everyOtherInPlace(fromArray1, 8, 1, 1, 2, 1.0);
+        SSEUtils.everyOtherInPlace(fromArray2, 12, 2, 2, 2, 1.0);
+
+        assertArrayEquals(toArrayExpected1, fromArray1, 0.0);
+        assertArrayEquals(toArrayExpected2, fromArray2, 0.0);
     }
 
     /*
@@ -87,7 +84,7 @@ public class OtherUtilsTest {
         // output arrays
         double[] outArray = new double[16];
 
-        SSEUtils.everyOtherInPlace(inArray, outArray, 8, 2, 2, 2, 1.0);
+        SSEUtils.everyOtherInPlace(inArray, 8, 2, 2, 2, 1.0);
     }
 
     /*

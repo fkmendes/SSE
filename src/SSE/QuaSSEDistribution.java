@@ -26,6 +26,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     // state that matters directly for calculateLogP
     private double[][][] esDsLo, esDsHi; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
     private double[][][] scratchLo, scratchHi;
+    private double[][] tmpLo, tmpHi;
     private double[] logNormalizationFactors;
 
     @Override
@@ -49,6 +50,9 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         scratchLo = new double[nNodes][nDimensions][2 * nXbinsLo]; // for real and complex part after FFT
         scratchHi = new double[nNodes][nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
+
+        tmpLo = new double[nDimensions][2 * nXbinsLo]; // for real and complex part after FFT
+        tmpHi = new double[nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
 
         populateMacroevolParams(true);
 
@@ -165,7 +169,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public void processBranch(Node aNode) {
-        boolean lowRes = false;
         int nodeIdx = aNode.getNr();
 
         // dealing with branch lengths
@@ -203,7 +206,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             // System.out.println("Unnormalized D's at low-res = " + Arrays.toString(esDsAtNode[1]));
 
             // normalize and record normalization factor before integration
-            logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin); // normalize D's and returns factor, which we record
+            // logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin); // normalize D's and returns factor, which we record
+            logNormalizationFactors[nodeIdx] = normalizeDs(nodeIdx, true); // normalize D's and returns factor, which we record
 
             // now integrate whole branch
             integrateLength(nodeIdx, esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, true);
@@ -218,14 +222,15 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             // System.out.println("Unnormalized D's at low-res = " + Arrays.toString(esDsAtNode[1]));
 
             // normalize and record normalization factor before integration
-            logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
+            // logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
+            logNormalizationFactors[nodeIdx] = normalizeDs(nodeIdx, true); // normalize D's and returns factor, which we record
 
             // now integrate whole branch (again, normalization and adding to logNormalizationFactors inside)
             integrateLength(nodeIdx, esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, false);
         }
         // option 3: tc happens inside branch (tip-end part in high-res, root-end part in low-res)
         else {
-            esDsAtNode = esDsHi[nodeIdx];
+            esDsAtNode = esDsHi[nodeIdx]; // copying address, so whatever happens to esDsAtNode, happens to esDsHi[nodeIdx]
             scratchAtNode = scratchHi[nodeIdx];
 
             // debugging
@@ -233,7 +238,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             // System.out.println("Unnormalized D's at high-res = " + Arrays.toString(esDsAtNode[1]));
 
             // normalize and record normalization factor before integration
-            logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
+            // logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
+            logNormalizationFactors[nodeIdx] = normalizeDs(nodeIdx, false); // normalize D's and returns factor, which we record
 
             // high res part
             double lenHi = tc - startTime;
@@ -289,20 +295,31 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         // integrating!
         for (int i=0; i<nIntervals; i++) {
-            doIntegrateInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
+            doIntegrateInPlace(nodeIdx, scratchAtNode, dt, lowRes);
         }
 
         // normalization that happens in make.pde.quasse.fftR
         // System.out.println("Prior to normalization inside integrateLength (lowRes=" + lowRes + ") = " + Arrays.toString(esDsAtNode[1]));
-        if (lowRes) logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin);
-        else logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin / hiLoRatio);
+        //if (lowRes) logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin);
+        //else logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin / hiLoRatio);
+        logNormalizationFactors[nodeIdx] += normalizeDs(nodeIdx, lowRes);
         // System.out.println("After normalization inside integrateLength (lowRes=" + lowRes + ") = " + Arrays.toString(esDsAtNode[1]));
     }
 
     @Override
-    public double normalizeDs(double[] dsAtNode, double dxAtRightRes) {
+    public double normalizeDs(int nodeIdx, boolean lowRes) {
+        double dx;
+        double[] dsAtNode;
+        if (lowRes) {
+            dsAtNode = esDsLo[nodeIdx][1];
+            dx = dXbin;
+        } else {
+            dsAtNode = esDsHi[nodeIdx][1];
+            dx = dXbin / hiLoRatio;
+        }
+
         double normalizationFactorFromDs;
-        normalizationFactorFromDs = SSEUtils.calculateNormalizationFactor(dsAtNode, dxAtRightRes);
+        normalizationFactorFromDs = SSEUtils.calculateNormalizationFactor(dsAtNode, dx);
 
         // debugging
         // System.out.println("D's prior to normalization inside normalizeDs = " + Arrays.toString(dsAtNode));
@@ -404,11 +421,17 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void doIntegrateInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double aDt, boolean lowRes) {
+    public void doIntegrateInPlace(int nodeIdx, double[][] scratchAtNode, double aDt, boolean lowRes) {
+
+        double[][] esDsAtNode;
+        if (lowRes) esDsAtNode = esDsLo[nodeIdx];
+        else esDsAtNode = esDsHi[nodeIdx];
 
         // debugging
         // System.out.println("esAtNode before propagate in t = " + Arrays.toString(esDsAtNode[0]));
         // System.out.println("dsAtNode before propagate in t = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode[0] before propagate in t = " + Arrays.toString(scratchAtNode[0]));
+        // System.out.println("scratchAtNode[1] before propagate in t = " + Arrays.toString(scratchAtNode[1]));
 
         // integrate over birth and death events (low or high resolution inside)
         propagateTInPlace(esDsAtNode, scratchAtNode, aDt, lowRes);
@@ -416,6 +439,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // debugging
         // System.out.println("esAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[0]));
         // System.out.println("dsAtNode after propagate in t and before x = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode[0] after propagate in t and before x = " + Arrays.toString(scratchAtNode[0]));
+        // System.out.println("scratchAtNode[1] after propagate in t and before x = " + Arrays.toString(scratchAtNode[1]));
 
         // make normal kernel and FFTs it
         // populatefY(aDt, true, true, lowRes);
@@ -423,29 +448,33 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // integrate over diffusion of quantitative trait
         // debugging
         // System.out.println("D's length before propagating in X = " + esDsAtNode[1].length);
-        propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
+        propagateXInPlace(nodeIdx, esDsAtNode, scratchAtNode, lowRes);
 
         // debugging
         // System.out.println("esAtNode after propagate in t and x = " + Arrays.toString(esDsAtNode[0]));
         // System.out.println("dsAtNode after propagate in t and x = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode[0] after propagate in t and x = " + Arrays.toString(scratchAtNode[0]));
+        // System.out.println("scratchAtNode[1] after propagate in t and x = " + Arrays.toString(scratchAtNode[1]));
     }
 
     @Override
     public void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes) {
         // grab scratch, dt and nDimensions from QuaSSEDistribution state
-        if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
-        else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
+        // if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
+        // else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
+        if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, tmpLo, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
+        else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, tmpHi, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
     }
 
     @Override
-    public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+    public void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
 
         // transposing esDs to scratch
-        for (int ithDim=0; ithDim < nDimensions; ithDim++) {
-             for (int i=0; i < esDsAtNode[ithDim].length; i++) {
-                 scratchAtNode[ithDim][i] = esDsAtNode[ithDim][i];
-             }
-        }
+//        for (int ithDim=0; ithDim < nDimensions; ithDim++) {
+//            for (int i=0; i < esDsAtNode[ithDim].length; i++) {
+//                scratchAtNode[ithDim][i] = esDsAtNode[ithDim][i];
+//            }
+//        }
 
         // debugging
         // System.out.println("esDsAtNode[1] = " + Arrays.toString(esDsAtNode[1]));
@@ -454,11 +483,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // grab dt and nDimensions from state
         if (lowRes) SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYLo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
         else SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
-    }
-
-    @Override
-    public void convolve() {
-
     }
 
     @Override

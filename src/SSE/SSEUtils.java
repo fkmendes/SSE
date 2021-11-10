@@ -116,7 +116,7 @@ public class SSEUtils {
      *
      * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
      * @param   scratch 2D-array for storing/restoring flanking values and other math terms
-     * @param   fY  Normal kernel giving the density for changes in value of the quantitative trait
+     * @param   fY  Normal kernel (already FFT-ed) giving the density for changes in value of the quantitative trait
      * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
      * @param   nLeftFlankBins  how many bins on the right side of kernel are non-zero
      * @param   nRightFlankBins  how many bins on the left side of kernel are non-zero
@@ -126,36 +126,30 @@ public class SSEUtils {
      */
     public static void propagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratchAtNode, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
 
-        // fY is already FFTed (in QuaSSEDistribution -> populatefY()), then FFT scratch, inverse-FFT scratch, result is left in scratch
-        convolveInPlace(scratchAtNode, fY, nDimensionsE, nDimensionsD, fft);
+        // debugging
+        // System.out.println("\nEntering propagateEandDinXQuaLike");
+        // System.out.println("esDsAtNode = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
 
-        // System.out.println("scratchAtNode[1] after convolve: " + Arrays.toString(scratchAtNode[1]));
+        // recording the first nLeftFlankBins and the last nRightFlankBins to put them back later
+        int nPad = nLeftFlankBins + nRightFlankBins + 1;
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j=0; j<nLeftFlankBins; ++j) scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
 
-        int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
-        // System.out.println("nItems2Copy=" + nItems2Copy);
-        double scaleBy = 1.0 / nXbins;
-
-        // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
-        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-
-            // System.out.println("ithDim = " + ithDim);
-            everyOtherInPlace(scratchAtNode[ithDim], esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
-
-            // System.out.println("esDsAtNode[ithDim] after reordering and scaling: " + Arrays.toString(esDsAtNode[ithDim]));
-            for (int i=0; i<nXbins; ++i) {
-                // if negative value, set to 0.0
-                // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
-                if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
-            }
-        }
-
-        // System.out.println("esDsAtNode[1] after convolve and scaling: " + Arrays.toString(esDsAtNode[1]));
-    }
-
-    public static void tmpPropagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratchAtNode, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+        // debugging
+        // System.out.println("After copying left and right flanks");
+        // System.out.println("esDsAtNode = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
 
         // fY is already FFTed (in QuaSSEDistribution -> populatefY()), then FFT scratch, inverse-FFT scratch, result is left in scratch
         convolveInPlace(esDsAtNode, fY, nDimensionsE, nDimensionsD, fft);
+
+        // debugging
+        // System.out.println("After convolve");
+        // System.out.println("esDsAtNode = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
 
         // System.out.println("esDsAtNode[1] after convolve: " + Arrays.toString(esDsAtNode[1]));
 
@@ -165,19 +159,26 @@ public class SSEUtils {
 
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-
-            // System.out.println("ithDim = " + ithDim);
-            everyOtherInPlace(esDsAtNode[ithDim], scratchAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
+            everyOtherInPlace(esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
 
             // System.out.println("scratchAtNode[ithDim] after reordering and scaling: " + Arrays.toString(scratchAtNode[ithDim]));
             for (int i=0; i<nXbins; ++i) {
                 // if negative value, set to 0.0
                 // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
-                if (scratchAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) scratchAtNode[ithDim][i] = 0.0;
+                if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
             }
         }
 
-        // System.out.println("esDsAtNode[1] after convolve and scaling: " + Arrays.toString(esDsAtNode[1]));
+        // putting back the first nLeftFlankBins and the last nRightFlankBins
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j=0; j<nLeftFlankBins; ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+
+        // debugging
+        // System.out.println("After scaling and zero-ing");
+        // System.out.println("esDsAtNode = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
     }
 
     /*
@@ -188,37 +189,34 @@ public class SSEUtils {
      *
      * Function leaves results in scratch (after moving all real elements to the first half of each row of esDs)
      *
-     * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
+     * @param   esDsAtNode    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
      * @param   scratchAtNode 2D-array for storing/restoring flanking values and other math terms (from a node)
      * @param   fY  Normal kernel giving the density for changes in value of the quantitative trait
      * @param   nDimensionsE number of E equations (dimensions in plan) to solve for each quantitative ch
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
      */
-    public static void convolveInPlace(double[][] scratchAtNode, double[] fY, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
-
-        //  fft.realForwardFull(fY); // first FFT the Normal kernel
-
+    public static void convolveInPlace(double[][] esDsAtNode, double[] fY, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
         // doing E's and D's
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
 
             // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
             // System.out.println("Before FFT scratchAtNode[" + ithDim + "] = " + Arrays.toString(scratchAtNode[ithDim]));
 
-            fft.realForwardFull(scratchAtNode[ithDim]); // FFT for each E and D dimension
+            fft.realForwardFull(esDsAtNode[ithDim]); // FFT for each E and D dimension
 
             // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
             // System.out.println("After FFT scratchAtNode[" + ithDim + "] = " + Arrays.toString(scratchAtNode[ithDim]));
 
             for (int i = 0; i < fY.length; i += 2) {
-                scratchAtNode[ithDim][i] *= fY[i]; // real part
-                scratchAtNode[ithDim][i + 1] *= fY[i]; // complex part
+                esDsAtNode[ithDim][i] *= fY[i]; // real part
+                esDsAtNode[ithDim][i + 1] *= fY[i]; // complex part
             }
 
             // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
             // System.out.println("After FFT and * fY scratchAtNode[" + ithDim + "] = " + Arrays.toString(scratchAtNode[ithDim]));
 
-            fft.complexInverse(scratchAtNode[ithDim], false); // inverse FFT for each E and D dimension
+            fft.complexInverse(esDsAtNode[ithDim], false); // inverse FFT for each E and D dimension
 
             // uncomment for testIntegrateOneBranchHiResOutsideClassJustX
             // System.out.println("After iFFT scratchAtNode[" + ithDim + "] = " + Arrays.toString(scratchAtNode[ithDim]));
@@ -308,29 +306,27 @@ public class SSEUtils {
     }
 
     /*
-     * Populate toArray in place, getting every other element from
-     * fromArray.
+     * Move 'everyOther' items of an array to its head, skipping the first 'skipFirstN'
+     * and the last 'skipLastN'
      *
-     * @param   inArray source array
-     * @param   outArray result array to receive every other element from source array
+     * @param   anArray source and destination array
      * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
      * @param   skipFirstN  number of discrete quantitative trait bins on the left-side of E and D that are not affected by 'propagateEandDinXQuaLike'
      * @param   skipLastN  number of discrete quantitative trait bins on the right-side of E and D that are not affected by 'propagateEandDinXQuaLike'
+     * @param   everyOther  every other 'everyOther' elements (skipping the first skipFirstN and the last skipLastN) will be moved to the head of the array
      * @param   scaleBy will scale every other element by this
      */
-    public static void everyOtherInPlace(double[] fromArray, double[] toArray, int nXbins, int skipFirstN, int skipLastN, int everyOther, double scaleBy) {
+    public static void everyOtherInPlace(double[] anArray, int nXbins, int skipFirstN, int skipLastN, int everyOther, double scaleBy) {
         // move these checks to initAndValidate later
-        if (skipFirstN == 0 && skipLastN == 0) skipLastN = -1; // this should only happen in debugging, where there are no elements to skip at the start or end
-        if (fromArray.length != toArray.length) throw new RuntimeException("Arrays of different size. Exiting...");
-        if (toArray.length/nXbins != 2.0) throw new RuntimeException("Size of arrays must be double the number of quantitative ch bins. Exiting...");
+        //if (skipFirstN == 0 && skipLastN == 0) skipLastN = -1; // this should only happen in debugging, where there are no elements to skip at the start or end
+        //if (anArray.length/nXbins != 2.0) throw new RuntimeException("Size of arrays must be double the number of quantitative ch bins. Exiting...");
         // TODO: instead of multiple of 4, it's actually a power of 2
-        if ((2 * nXbins) % 4 != 0.0) throw new RuntimeException("Number of quantitative character bins must be a multiple of 4. Exiting...");
-        if ((nXbins - skipLastN - (skipFirstN + skipLastN)) <= skipFirstN) throw new RuntimeException("There are no useful bins left after pushing left and right flanks to the end, on top of right flank. Exiting...");
-
-        for (int i=skipFirstN * 2, j=skipFirstN; i <= (fromArray.length-2); i+=everyOther, j++) {
-            // if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) { // working
-            if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {
-                toArray[j] = fromArray[i] * scaleBy;
+        //if ((2 * nXbins) % 4 != 0.0) throw new RuntimeException("Number of quantitative character bins must be a multiple of 4. Exiting...");
+        //if ((nXbins - skipLastN - (skipFirstN + skipLastN)) <= skipFirstN) throw new RuntimeException("There are no useful bins left after pushing left and right flanks to the end, on top of right flank. Exiting...");
+        for (int i=skipFirstN * 2, j=skipFirstN; i <= (anArray.length-2); i+=everyOther, j++) {
+            // first implementation if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {
+            if (j <= (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {
+                anArray[j] = anArray[i] * scaleBy;
             }
         }
     }
