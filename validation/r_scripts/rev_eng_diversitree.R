@@ -396,11 +396,11 @@ combine.branches.quasse.debug <- function (f.hi, f.lo, control) {
 
 quasse.integrate.fftR.debug <- function (vars, lambda, mu, drift, diffusion, nstep, dt, nx,
     ndat, dx, nkl, nkr) {
-    kern <- fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
+    kern <- diversitree:::fftR.make.kern(-dt * drift, sqrt(dt * diffusion),
         nx, dx, nkl, nkr)
     fy <- fft(kern)
     for (i in seq_len(nstep)) {
-        vars <- fftR.propagate.t(vars, lambda, mu, dt, ndat)
+        vars <- diversitree:::fftR.propagate.t(vars, lambda, mu, dt, ndat)
         # print(paste("nx = ", nx, " length(fy)=", length(fy)))
         # vars <- fftR.propagate.x(vars, nx, fy, nkl, nkr) # ignoring propagate X
     }
