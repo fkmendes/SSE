@@ -39,9 +39,8 @@ import static SSE.SSEUtils.everyOtherInPlace;
 public class QuaSSEDistributionTest {
 
     final static Double EPSILON = 1e-6;
-    final static Double EPSILON2 = 1e-14;
 
-    static QuaSSEDistribution q1024, q32FifteenSp, q48Dt001, q48Dt002, q32ThreeSpTreeDt0005, q32BifTree0025HeightDt0005, q32Dt001, q32Dt0005;
+    static QuaSSEDistribution q1024, q32Dt002, q32Dt001, q32Dt0005, q32BifTree0025HeightDt0005, q32ThreeSpTreeDt0005, q32FifteenSp;
     static Tree bifTreeHeight0025, bifTreeHeight002, bifTreeHeight001, threeSpTreeHeight002, fifteenSpTree;
 
     static List<Double> data2Sp, data3Sp, data15Sp;
@@ -223,24 +222,34 @@ public class QuaSSEDistributionTest {
                 "q2d", nfn2Sp,
                 "priorProbAtRootType", rootPriorType);
 
-        q32FifteenSp = new QuaSSEDistribution();
-        q32FifteenSp.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
-                "tc", tcFifteenSpRp,
-                "nX", nXbins1024Ip, "dX", dxBinFifteenSpRp, "xMid", xMidFifteenSpRp, "flankWidthScaler", flankWidthScaler5Rp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp001,
+        q32Dt001 = new QuaSSEDistribution();
+        q32Dt001.initByName("dtMax", dt001Rp, "dynDt", dynDtbpTrue,
+                "tc", tc100Rp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", fifteenSpTree,
-                "q2d", nfn15Sp,
+                "tree", bifTreeHeight001,
+                "q2d", nfn2Sp,
                 "priorProbAtRootType", rootPriorType);
 
-        q32ThreeSpTreeDt0005 = new QuaSSEDistribution();
-        q32ThreeSpTreeDt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
+        q32Dt002 = new QuaSSEDistribution();
+        q32Dt002.initByName("dtMax", dt002Rp, "dynDt", dynDtbpTrue,
+                "tc", tc100Rp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", bifTreeHeight002,
+                "q2d", nfn2Sp,
+                "priorProbAtRootType", rootPriorType);
+
+        q32Dt0005 = new QuaSSEDistribution();
+        q32Dt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
                 "tc", tc0005Rp,
                 "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", threeSpTreeHeight002,
-                "q2d", nfn3Sp,
+                "tree", bifTreeHeight001,
+                "q2d", nfn2Sp,
                 "priorProbAtRootType", rootPriorType);
 
         q32BifTree0025HeightDt0005 = new QuaSSEDistribution();
@@ -253,44 +262,24 @@ public class QuaSSEDistributionTest {
                 "q2d", nfn2Sp,
                 "priorProbAtRootType", rootPriorType);
 
-        q48Dt001 = new QuaSSEDistribution();
-        q48Dt001.initByName("dtMax", dt001Rp, "dynDt", dynDtbpFalse,
-                "tc", tc100Rp,
-                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp0001,
-                "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", bifTreeHeight002,
-                "q2d", nfn2Sp,
-                "priorProbAtRootType", rootPriorType);
-
-        q48Dt002 = new QuaSSEDistribution();
-        q48Dt002.initByName("dtMax", dt002Rp, "dynDt", dynDtbpTrue,
-                "tc", tc100Rp,
-                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp0001,
-                "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", bifTreeHeight002,
-                "q2d", nfn2Sp,
-                "priorProbAtRootType", rootPriorType);
-
-        q32Dt001 = new QuaSSEDistribution();
-        q32Dt001.initByName("dtMax", dt001Rp, "dynDt", dynDtbpTrue,
-                "tc", tc100Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
-                "drift", driftRp, "diffusion", diffusionRp0001,
-                "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", bifTreeHeight001,
-                "q2d", nfn2Sp,
-                "priorProbAtRootType", rootPriorType);
-
-        q32Dt0005 = new QuaSSEDistribution();
-        q32Dt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
+        q32ThreeSpTreeDt0005 = new QuaSSEDistribution();
+        q32ThreeSpTreeDt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
                 "tc", tc0005Rp,
                 "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
-                "tree", bifTreeHeight001,
-                "q2d", nfn2Sp,
+                "tree", threeSpTreeHeight002,
+                "q2d", nfn3Sp,
+                "priorProbAtRootType", rootPriorType);
+
+        q32FifteenSp = new QuaSSEDistribution();
+        q32FifteenSp.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
+                "tc", tcFifteenSpRp,
+                "nX", nXbins1024Ip, "dX", dxBinFifteenSpRp, "xMid", xMidFifteenSpRp, "flankWidthScaler", flankWidthScaler5Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp001,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", fifteenSpTree,
+                "q2d", nfn15Sp,
                 "priorProbAtRootType", rootPriorType);
     }
 
@@ -646,7 +635,7 @@ public class QuaSSEDistributionTest {
         /*
          * we'll test the integration outside the class
          */
-        esDsLoAtNode = q48Dt001.getEsDsAtNode(nodeIdx, true);
+        esDsLoAtNode = q32Dt001.getEsDsAtNode(nodeIdx, true);
 
         /*
          * we are going to have a look at (make a deep copy of) the initial D's
@@ -662,7 +651,7 @@ public class QuaSSEDistributionTest {
         double[][] scratchAtNode = new double[2][esDsLoAtNode[0].length];
 
         // just propagate in t, in place
-        q48Dt001.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt001, true);
+        q32Dt001.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt001, true);
 
         // grabbing intermediate to see if it's all good
         double[][] esDsLoAtNodeAfterPropT = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
@@ -682,37 +671,37 @@ public class QuaSSEDistributionTest {
          * below
          */
         double aDt = 0.001;
-        q48Dt001.populatefY(aDt, true, false, true, true);
-        double[] fftedfY = q48Dt001.getfY(true);
+        q32Dt001.populatefY(aDt, true, false, true, true);
+        double[] fftedfY = q32Dt001.getfY(true);
 
         // copying fY for assert (leaving original one inside class untouched)
         double[] fftedfY4Assert = new double[fftedfY.length]; // just for test, not used in propagate in X
         for (int i=0; i < fftedfY.length; i++) fftedfY4Assert[i] = fftedfY[i];
-        everyOtherInPlace(fftedfY4Assert, q48Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY4Assert, q32Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        q48Dt001.propagateXInPlace(nodeIdx, esDsLoAtNode, scratchAtNode, true);
-        esDsLoAtNode = q48Dt001.getEsDsAtNode(nodeIdx, true);
+        q32Dt001.propagateXInPlace(nodeIdx, esDsLoAtNode, scratchAtNode, true);
+        esDsLoAtNode = q32Dt001.getEsDsAtNode(nodeIdx, true);
 
 
-        double[] expectedInitialDs = new double[] { 0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694604, 0.0122380386022755, 0.0058389385158292, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        double[] expectedFFTedfY = new double[] { 1, 0.999886244673461, 0.999546925086093, 0.998987847110852, 0.998218576759891, 0.997252276505192, 0.996105480062091, 0.994797809489411, 0.993351639446935, 0.991791714355113, 0.990144725007753, 0.988438851882212, 0.986703282961364, 0.984967714317709, 0.983261842004857, 0.981614853950298, 0.980054930543287, 0.978608762462816, 0.977301093995625, 0.976154299658014, 0.97518800136532, 0.97441873269917, 0.97385965601673, 0.973520337242051, 0.973406582192705, 0.973520337242051, 0.97385965601673, 0.97441873269917, 0.97518800136532, 0.976154299658014, 0.977301093995625, 0.978608762462816, 0.980054930543287, 0.981614853950298, 0.983261842004857, 0.984967714317709, 0.986703282961364, 0.988438851882212, 0.990144725007753, 0.991791714355113, 0.993351639446935, 0.994797809489411, 0.996105480062091, 0.997252276505192, 0.998218576759891, 0.998987847110852, 0.999546925086093, 0.999886244673461 };
-
-        // note how first nkl (=4) and last nkr (=4) are the same
-        double[] expectedSp1EsAfterPropT = new double[] { 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.000299744087825142, 0.000299743181686865, 0.000299742271619522, 0.000299741357883741, 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0.000299719056361739, 0.000299718142720333, 0.000299717232754363, 0.000299716326724287, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        double[] expectedSp1EsAfterPropTandX = new double[] { 0.00029974766804671, 0.000299746780132305, 0.000299745887296174, 0.000299744989778572, 0.00029974408779732, 0.000299743181660744, 0.000299742271595132, 0.000299741357861114, 0.00029974044072366, 0.000299739520451864, 0.000299738597318595, 0.000299737671600252, 0.000299736743576341, 0.000299735813529336, 0.000299734881744068, 0.000299733948507617, 0.000299733014108822, 0.000299732078837909, 0.000299731142986375, 0.000299730206846234, 0.000299729270710011, 0.000299728334870154, 0.000299727399618708, 0.000299726465247143, 0.000299725532045626, 0.000299724600302962, 0.000299723670306136, 0.000299722742340082, 0.000299721816686999, 0.00029972089362645, 0.000299719973434657, 0.000299719056384414, 0.000299718142744768, 0.00029971723278053, 0.000299716326752154, 0.000299715424885881, 0.000299714527489882, 0.000299713634781839, 0.00029971274700187, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedInitialDs = new double[] { 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522966, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522966, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedFFTedfY = new double[] { 1, 0.999744507157237, 0.998987847110852, 0.997759097982437, 0.996105480062091, 0.994090541136289, 0.991791714355113, 0.989297342492751, 0.986703282961364, 0.984109224049216, 0.981614853950298, 0.979316029808302, 0.977301093995625, 0.975647479188405, 0.97441873269917, 0.973662074416229, 0.973406582192705, 0.973662074416229, 0.97441873269917, 0.975647479188405, 0.977301093995625, 0.979316029808302, 0.981614853950298, 0.984109224049216, 0.986703282961364, 0.989297342492751, 0.991791714355113, 0.994090541136289, 0.996105480062091, 0.997759097982437, 0.998987847110852, 0.999744507157237 };
 
         // note how first nkl (=4) and last nkr (=4) are the same
-        double[] expectedSp1DsAfterPropT = new double[] { 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.0884858018341865, 0.158038086959484, 0.271192794627236, 0.447118602442875, 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052117, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0.447052058075915, 0.271149126249059, 0.158010719780681, 0.0884694089104536, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        double[] expectedSp1DsAfterPropTandX = new double[] { 0.00582911973804044, 0.0122173866829305, 0.0246026489190146, 0.0476007314229174, 0.08867639188041, 0.15832797168282, 0.271610119667664, 0.447685177240542, 0.708986186416951, 1.07880005021062, 1.57718311562593, 2.21544576526305, 2.99004586159941, 3.87732490267096, 4.83085571964462, 5.78300263831972, 6.65150777531997, 7.35062312893061, 7.80486719135139, 7.96240319031702, 7.80476971649718, 7.35043955518597, 6.65125867066457, 5.78271397425439, 4.83055444185051, 3.87703489789509, 2.98978512541793, 2.21522515007474, 1.57700658374745, 1.07866601799939, 0.708889397846809, 0.447618584199003, 0.271566407577905, 0.158300569088559, 0.0886599725440681, 0.0475913399553493, 0.0245975002358219, 0.0122146843473713, 0.00582776134335783, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1EsAfterPropT = new double[] { 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1EsAfterPropTandX = new double[] { 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743576341, 0.000299735813529336, 0.000299734881744068, 0.000299733948507616, 0.000299733014108822, 0.000299732078837909, 0.000299731142986375, 0.000299730206846234, 0.000299729270710011, 0.000299728334870154, 0.000299727399618708, 0.000299726465247143, 0.000299725532045626, 0.000299724600302962, 0.000299723670306136, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        Assert.assertArrayEquals(expectedInitialDs, Arrays.copyOfRange(esDsLoAtNodeInitial[1], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedFFTedfY, Arrays.copyOfRange(fftedfY4Assert, 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[0], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[1], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1EsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[0], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
+        // note how first nkl (=4) and last nkr (=4) are the same
+        double[] expectedSp1DsAfterPropT = new double[] { 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052118, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1DsAfterPropTandX = new double[] { 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.99004586159941, 3.87732490267096, 4.83085571964462, 5.78300263831972, 6.65150777531997, 7.35062312893061, 7.80486719135139, 7.96240319031702, 7.80476971649718, 7.35043955518597, 6.65125867066456, 5.78271397425439, 4.83055444185051, 3.87703489789509, 2.98978512541793, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        Assert.assertArrayEquals(expectedInitialDs, Arrays.copyOfRange(esDsLoAtNodeInitial[1], 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedFFTedfY, Arrays.copyOfRange(fftedfY4Assert, 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[0], 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[1], 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedSp1EsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[0], 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 32), 1E-14);
     }
 
     /*
@@ -724,7 +713,7 @@ public class QuaSSEDistributionTest {
      * and nXbins = 48 (low res). The trait value of "sp1" is set to 0.0.
      */
     @Test
-    public void testBothXandTPropagateMethodsInsideClassOneBranchLoRes48BinsLargerDt() {
+    public void testBothXandTPropagateMethodsInsideClassOneBranchLoRes32BinsDt002() {
         // we're going to look at sp1
         int nodeIdx = 0; // sp1
         double[][] esDsLoAtNode;
@@ -732,7 +721,7 @@ public class QuaSSEDistributionTest {
         /*
          * we'll test the integration outside the class
          */
-        esDsLoAtNode = q48Dt002.getEsDsAtNode(nodeIdx, true);
+        esDsLoAtNode = q32Dt002.getEsDsAtNode(nodeIdx, true);
 
         /*
          * we are going to have a look at (make a deep copy of) the initial D's
@@ -742,13 +731,12 @@ public class QuaSSEDistributionTest {
         esDsLoAtNodeInitial[0] = Arrays.copyOf(esDsLoAtNode[0], esDsLoAtNode[0].length); // E
         esDsLoAtNodeInitial[1] = Arrays.copyOf(esDsLoAtNode[1], esDsLoAtNode[1].length); // D
 
-
         // propagating in t
         // preparing scratch for propagate in t
         double[][] scratchAtNode = new double[2][esDsLoAtNode[0].length];
 
         // just propagate in t, in place
-        q48Dt002.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt002,true);
+        q32Dt002.propagateTInPlace(esDsLoAtNode, scratchAtNode, dt002,true);
 
         // grabbing intermediate to see if it's all good
         double[][] esDsLoAtNodeAfterPropT = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
@@ -759,8 +747,6 @@ public class QuaSSEDistributionTest {
             }
         }
 
-
-
         // propagating in x
         /*
          * fY is computed and FFTed in initialization, by QuaSSEProcess;
@@ -768,37 +754,37 @@ public class QuaSSEDistributionTest {
          * below
          */
         double aDt = 0.02;
-        q48Dt002.populatefY(aDt, true, false, true, true);
-        double[] fftedfY = q48Dt002.getfY(true);
+        q32Dt002.populatefY(aDt, true, false, true, true);
+        double[] fftedfY = q32Dt002.getfY(true);
 
         // copying fY for assert (leaving original one inside class untouched)
         double[] fftedfY4Assert = new double[fftedfY.length]; // just for test, not used in propagate in X
         for (int i=0; i < fftedfY.length; i++) fftedfY4Assert[i] = fftedfY[i];
-        everyOtherInPlace(fftedfY4Assert, q48Dt002.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
+        everyOtherInPlace(fftedfY4Assert, q32Dt002.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        q48Dt002.propagateXInPlace(nodeIdx, esDsLoAtNode, scratchAtNode, true);
-        esDsLoAtNode = q48Dt002.getEsDsAtNode(nodeIdx, true);
+        q32Dt002.propagateXInPlace(nodeIdx, esDsLoAtNode, scratchAtNode, true);
+        esDsLoAtNode = q32Dt002.getEsDsAtNode(nodeIdx, true);
 
 
-        double[] expectedInitialDs = new double[] { 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.1583090316596, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522966, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0.447890605896858, 0.271659384673712, 0.158309031659599, 0.08863696823876, 0.0476817640292968, 0.0246443833694603, 0.0122380386022755, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        double[] expectedFFTedfY = new double[] { 1, 0.998791000226283, 0.995184822859046, 0.989243568247244, 0.981069525480477, 0.970803379084231, 0.958621745686731, 0.944734086634627, 0.92937905384229, 0.91282033618305, 0.895342082276453, 0.87724398244744, 0.858836097834951, 0.840433528062905, 0.822351010557628, 0.80489754454845, 0.788371131106066, 0.773053717371028, 0.759206428540079, 0.747065165363734, 0.736836638024787, 0.728694899474875, 0.722778432760492, 0.719187837716992, 0.717984152783717, 0.719187837716992, 0.722778432760492, 0.728694899474875, 0.736836638024787, 0.747065165363734, 0.759206428540079, 0.773053717371028, 0.788371131106066, 0.80489754454845, 0.822351010557628, 0.840433528062905, 0.858836097834951, 0.87724398244744, 0.895342082276454, 0.91282033618305, 0.92937905384229, 0.944734086634627, 0.958621745686731, 0.970803379084231, 0.981069525480477, 0.989243568247244, 0.995184822859046, 0.998791000226283 };
-
-        // note how first nkl (=5) and last nkr (=5) are the same
-        double[] expectedSp1EsAfterPropT = new double[] { 0.000598987856474924, 0.000598984289866083, 0.000598980704570308, 0.000598977101569278, 0.000598973481865553, 0.000598969846481545, 0.000598966196458183, 0.000598962532854178, 0.000598958856744621, 0.000598955169219663, 0.000598951471383546, 0.000598947764353066, 0.000598944049256322, 0.000598940327231526, 0.000598936599425321, 0.000598932866991505, 0.000598929131089762, 0.000598925392884107, 0.000598921653541243, 0.000598917914229581, 0.000598914176117241, 0.000598910440370952, 0.000598906708154486, 0.000598902980627182, 0.000598899258942585, 0.000598895544247008, 0.000598891837677968, 0.000598888140363113, 0.000598884453418597, 0.000598880777947923, 0.000598877115040413, 0.000598873465770468, 0.000598869831195672, 0.000598866212356192, 0.000598862610273333, 0.000598859025948505, 0.000598855460362313, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        double[] expectedSp1EsAfterPropTandX = new double[] { 0.000598987856474924, 0.000598984289866083, 0.000598980704570308, 0.000598977101569278, 0.000598973481865553, 0.00059896984544713, 0.000598966195498576, 0.000598962531970537, 0.00059895885593801, 0.000598955168491078, 0.000598951470733874, 0.000598947763783104, 0.000598944048766786, 0.000598940326823012, 0.000598936599098334, 0.000598932866746461, 0.000598929130926968, 0.000598925392803752, 0.000598921653543447, 0.000598917914314325, 0.000598914176284426, 0.000598910440620369, 0.000598906708485822, 0.000598902981040027, 0.000598899259436428, 0.000598895544821229, 0.000598891838331867, 0.00059888814109588, 0.000598884454229337, 0.000598880778835635, 0.000598877116004042, 0.000598873466808826, 0.000598869831195672, 0.000598866212356192, 0.000598862610273333, 0.000598859025948505, 0.000598855460362313, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedInitialDs = new double[] { 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedFFTedfY = new double[] { 1, 0.997284635663215, 0.989243568247244, 0.976187735593861, 0.958621745686731, 0.937224046438699, 0.91282033618305, 0.886351315420652, 0.858836097834951, 0.831332753409919, 0.80489754454845, 0.780544437378578, 0.759206428540079, 0.741700129042481, 0.728694899474875, 0.720687643959832, 0.717984152783717, 0.720687643959832, 0.728694899474875, 0.741700129042481, 0.759206428540079, 0.780544437378578, 0.80489754454845, 0.831332753409919, 0.858836097834951, 0.886351315420652, 0.91282033618305, 0.937224046438699, 0.958621745686731, 0.976187735593861, 0.989243568247244, 0.997284635663215 };
 
         // note how first nkl (=5) and last nkr (=5) are the same
-        double[] expectedSp1DsAfterPropT = new double[] { 0.0121967797643638, 0.0245610056719514, 0.0475198764133255, 0.0883349677000203, 0.15776773954185, 0.270727236150491, 0.446348310766164, 0.707040094708608, 1.07607462857111, 1.57350796410007, 2.2106689156898, 2.98405395410774, 3.87006132459304, 4.82233340368848, 5.77330938669844, 6.64080371901192, 7.33913154877464, 7.79286078082761, 7.95018769794391, 7.79266608851656, 7.33876489743091, 6.64030620874454, 5.77273291052126, 4.82173179361502, 3.86948229161728, 2.98353343056498, 2.21022855749815, 1.5731556614014, 1.07580719581128, 0.706847016883081, 0.446215500932528, 0.270640082416696, 0.157713119885317, 0.0883022505584118, 0.0475011328396031, 0.0245507298846628, 0.0121913864192371, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        double[] expectedSp1DsAfterPropTandX = new double[] { 0.0121967797643638, 0.0245610056719514, 0.0475198764133255, 0.0883349677000203, 0.15776773954185, 0.275155027270175, 0.452359435761905, 0.714695461673121, 1.08514694006539, 1.58338053088545, 2.22029371795898, 2.99201095412974, 3.87474275820035, 4.82224125131593, 5.76741044168543, 6.62885082364537, 7.32184914756387, 7.77191831137883, 7.92794195899393, 7.77172522522963, 7.32148540005609, 6.62835697979005, 5.76683776896088, 4.8216430122779, 3.8741662641039, 2.9914919608128, 2.21985391738919, 1.5830280032418, 1.08487876446248, 0.714501388583886, 0.4522255935314, 0.275066946374052, 0.157713119885317, 0.0883022505584118, 0.0475011328396031, 0.0245507298846628, 0.0121913864192371, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1EsAfterPropT = new double[] { 0.000598958856744621, 0.000598955169219663, 0.000598951471383546, 0.000598947764353066, 0.000598944049256322, 0.000598940327231526, 0.000598936599425321, 0.000598932866991505, 0.000598929131089762, 0.000598925392884107, 0.000598921653541243, 0.000598917914229581, 0.000598914176117241, 0.000598910440370952, 0.000598906708154486, 0.000598902980627182, 0.000598899258942585, 0.000598895544247008, 0.000598891837677968, 0.000598888140363113, 0.000598884453418597, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1EsAfterPropTandX = new double[] { 0.000598958856744621, 0.000598955169219663, 0.000598951471383546, 0.000598947764353066, 0.000598944049256322, 0.000598940326823012, 0.000598936599098334, 0.000598932866746461, 0.000598929130926967, 0.000598925392803752, 0.000598921653543447, 0.000598917914314325, 0.000598914176284426, 0.000598910440620369, 0.000598906708485821, 0.000598902981040026, 0.000598899258942585, 0.000598895544247008, 0.000598891837677968, 0.000598888140363113, 0.000598884453418597, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-        Assert.assertArrayEquals(expectedInitialDs, Arrays.copyOfRange(esDsLoAtNodeInitial[1], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedFFTedfY, Arrays.copyOfRange(fftedfY4Assert, 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[0], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[1], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1EsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[0], 0, 48), 1E-14);
-        Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 48), 1E-14);
+        // note how first nkl (=5) and last nkr (=5) are the same
+        double[] expectedSp1DsAfterPropT = new double[] { 1.07607462857111, 1.57350796410007, 2.2106689156898, 2.98405395410774, 3.87006132459304, 4.82233340368848, 5.77330938669843, 6.64080371901192, 7.33913154877464, 7.79286078082761, 7.95018769794391, 7.79266608851656, 7.33876489743091, 6.64030620874454, 5.77273291052126, 4.82173179361503, 3.86948229161728, 2.98353343056498, 2.21022855749815, 1.5731556614014, 1.07580719581128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1DsAfterPropTandX = new double[] { 1.07607462857111, 1.57350796410007, 2.2106689156898, 2.98405395410774, 3.87006132459304, 4.82224125131593, 5.76741044168543, 6.62885082364537, 7.32184914756387, 7.77191831137883, 7.92794195899393, 7.77172522522963, 7.3214854000561, 6.62835697979005, 5.76683776896087, 4.8216430122779, 3.86948229161728, 2.98353343056498, 2.21022855749815, 1.5731556614014, 1.07580719581128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        Assert.assertArrayEquals(expectedInitialDs, Arrays.copyOfRange(esDsLoAtNodeInitial[1], 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedFFTedfY, Arrays.copyOfRange(fftedfY4Assert, 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedSp1EsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[0], 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedSp1EsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[0], 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropT, Arrays.copyOfRange(esDsLoAtNodeAfterPropT[1], 0, 32), 1E-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropTandX, Arrays.copyOfRange(esDsLoAtNode[1], 0, 32), 1E-14);
     }
 
     /*
@@ -811,7 +797,7 @@ public class QuaSSEDistributionTest {
      * The trait value of "sp1" is set to 0.0.
      */
     @Test
-    public void testIntegrateOneBranchHiRes48BinsInsideClassBothXandTTwoDt() {
+    public void testIntegrateOneBranchHiRes32BinsInsideClassBothXandTDt002() {
         // we're going to look at sp1
         int nodeIdx = 0; // sp1
         Node sp1Node = bifTreeHeight002.getNode(nodeIdx);
@@ -820,7 +806,7 @@ public class QuaSSEDistributionTest {
          * let us grab the E's and D's before integration
          */
         double[][] esDsHiAtNode;
-        esDsHiAtNode = q48Dt002.getEsDsAtNode(nodeIdx, false);
+        esDsHiAtNode = q32Dt002.getEsDsAtNode(nodeIdx, false);
 
         /*
          * we are going to have a look at (make a deep copy of) the initial D's
@@ -831,24 +817,22 @@ public class QuaSSEDistributionTest {
         esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsHiAtNode[1], esDsHiAtNode[1].length); // D
 
         // now we integrate over 2 dt's = 2 * 0.01 = 0.02, inside class!
-        q48Dt002.processBranch(sp1Node);
-        esDsHiAtNode = q48Dt002.getEsDsAtNode(nodeIdx, false);
+        q32Dt002.processBranch(sp1Node);
+        esDsHiAtNode = q32Dt002.getEsDsAtNode(nodeIdx, false);
 
-
-        double[] expectedInitialDsFirst10 = new double[] { 0.00705191364734891, 0.00849560541101504, 0.0102092994868837, 0.0122380386022755, 0.0146332892566062, 0.0174536539009152, 0.0207656259132282, 0.0246443833694604, 0.0291746160933349, 0.0344513787810736 };
-        double[] expectedInitialDsLater10 = new double[] { 0.0146332892566062, 0.0122380386022755, 0.0102092994868837, 0.00849560541101504, 0.00705191364734891, 0, 0, 0, 0, 0 };
-        double[] expectedSp1EsAfterPropTandXFirst10 = new double[] { 0.000598990518590012, 0.000598989632470972, 0.000598988745094367, 0.000598987856474924, 0.000598986966627531, 0.000598986075566877, 0.000598985183308093, 0.000598984289866083, 0.000598983395256048, 0.000598982499493234 };
-        double[] expectedSp1EsAfterPropTandXLater10 = new double[] { 0.000598856349949292, 0.000598855460362313, 0.000598854572006534, 0.000598853684896709, 0.000598852799047445, 0, 0, 0, 0, 0 };
-        double[] expectedSp1DsAfterPropTandXFirst10 = new double[] { 0.00705600449088285, 0.00850050858627021, 0.0102151614302211, 0.0122450290555513, 0.0146416043751963, 0.0174635196669636, 0.0207773018651021, 0.0246581666552126, 0.0291908458520468, 0.0344704408512187 };
-        double[] expectedSp1DsAfterPropTandXLater10 = new double[] { 0.0146352169417221, 0.0122396143748685, 0.0102105837320268, 0.00849664890365682, 0.00705275894050238, 0, 0, 0, 0, 0 };
-
+        double[] expectedInitialDsFirst10 = new double[] { 0.791000831787404, 0.879671919608544, 0.975840371583655, 1.07981933026376, 1.19189412137632, 1.31231629549353, 1.44129748672436, 1.57900316601788, 1.72554637653023, 1.88098154753774 };
+        double[] expectedInitialDsLater10 = new double[] { 1.88098154753774, 1.72554637653023, 1.57900316601788, 1.44129748672436, 1.31231629549353, 1.19189412137632, 1.07981933026376, 0.975840371583657, 0.879671919608545, 0.791000831787405 };
+        double[] expectedSp1EsAfterPropTandXFirst10 = new double[] { 0.000598961614956886, 0.000598960696294835, 0.000598959776885031, 0.000598958856744621, 0.00059895793589067, 0.000598957014340337, 0.000598956092110961, 0.000598955169219663, 0.000598954245683891, 0.000598953321520975 };
+        double[] expectedSp1EsAfterPropTandXLater10 = new double[] { 0.000598889987793744, 0.000598889063763026, 0.000598888140363113, 0.000598887217611451, 0.000598886295525308, 0.000598885374121974, 0.000598884453418597, 0.0005988835334325, 0.000598882614180599, 0.00059888169568006 };
+        double[] expectedSp1DsAfterPropTandXFirst10 = new double[] { 0.816826443231728, 0.908389791093209, 1.00769467468308, 1.11506438544145, 1.23079348607031, 1.35514165820029, 1.48832736122564, 1.63052138243079, 1.78184036871647, 1.9423404395558 };
+        double[] expectedSp1DsAfterPropTandXLater10 = new double[] { 1.94192952805763, 1.78145241269027, 1.63015631463554, 1.4879849556747, 1.35482154601338, 1.23049517164847, 1.11478726270473, 1.00743804313279, 0.908152871485605, 0.816608392676392 };
 
         Assert.assertArrayEquals(expectedInitialDsFirst10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 0, 10), 1E-14);
-        Assert.assertArrayEquals(expectedInitialDsLater10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 146, 156), 1E-14);
+        Assert.assertArrayEquals(expectedInitialDsLater10, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 77, 87), 1E-14);
         Assert.assertArrayEquals(expectedSp1EsAfterPropTandXFirst10, Arrays.copyOfRange(esDsHiAtNode[0], 0, 10), 1E-14);
-        Assert.assertArrayEquals(expectedSp1EsAfterPropTandXLater10, Arrays.copyOfRange(esDsHiAtNode[0], 146, 156), 1E-14); // OK til here
+        Assert.assertArrayEquals(expectedSp1EsAfterPropTandXLater10, Arrays.copyOfRange(esDsHiAtNode[0], 77, 87), 1E-14); // OK til here
         Assert.assertArrayEquals(expectedSp1DsAfterPropTandXFirst10, Arrays.copyOfRange(esDsHiAtNode[1], 0, 10), 1E-14);
-        Assert.assertArrayEquals(expectedSp1DsAfterPropTandXLater10, Arrays.copyOfRange(esDsHiAtNode[1], 146, 156), 1E-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropTandXLater10, Arrays.copyOfRange(esDsHiAtNode[1], 77, 87), 1E-14);
     }
 
     /*
@@ -1043,5 +1027,19 @@ public class QuaSSEDistributionTest {
         double logLik = q32FifteenSp.calculateLogP();
 
         Assert.assertEquals( -61.27245, logLik, 1e-5);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testPowerOf2() {
+
+        QuaSSEDistribution q48Dt001 = new QuaSSEDistribution();
+        q48Dt001.initByName("dtMax", dt001Rp, "dynDt", dynDtbpTrue,
+                "tc", tc100Rp,
+                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "drift", driftRp, "diffusion", diffusionRp0001,
+                "q2mLambda", lfn, "q2mMu", cfn,
+                "tree", bifTreeHeight001,
+                "q2d", nfn2Sp,
+                "priorProbAtRootType", rootPriorType);
     }
 }

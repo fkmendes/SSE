@@ -177,7 +177,7 @@ public class SSEUtils {
 
         // debugging
         // System.out.println("After scaling and zero-ing");
-        // System.out.println("esDsAtNode = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("esDsAtNode (D's) = " + Arrays.toString(esDsAtNode[1]));
         // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
     }
 
@@ -317,12 +317,7 @@ public class SSEUtils {
      * @param   scaleBy will scale every other element by this
      */
     public static void everyOtherInPlace(double[] anArray, int nXbins, int skipFirstN, int skipLastN, int everyOther, double scaleBy) {
-        // move these checks to initAndValidate later
         //if (skipFirstN == 0 && skipLastN == 0) skipLastN = -1; // this should only happen in debugging, where there are no elements to skip at the start or end
-        //if (anArray.length/nXbins != 2.0) throw new RuntimeException("Size of arrays must be double the number of quantitative ch bins. Exiting...");
-        // TODO: instead of multiple of 4, it's actually a power of 2
-        //if ((2 * nXbins) % 4 != 0.0) throw new RuntimeException("Number of quantitative character bins must be a multiple of 4. Exiting...");
-        //if ((nXbins - skipLastN - (skipFirstN + skipLastN)) <= skipFirstN) throw new RuntimeException("There are no useful bins left after pushing left and right flanks to the end, on top of right flank. Exiting...");
         for (int i=skipFirstN * 2, j=skipFirstN; i <= (anArray.length-2); i+=everyOther, j++) {
             // first implementation if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {
             if (j <= (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {

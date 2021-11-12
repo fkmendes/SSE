@@ -1,13 +1,15 @@
 package test;
 
 import SSE.SSEUtils;
+import static SSE.SSEUtils.*;
 import org.jtransforms.fft.DoubleFFT_1D;
 import org.junit.Test;
+import static org.junit.Assert.*;
 
 import java.util.Arrays;
 
-import static SSE.SSEUtils.*;
-import static org.junit.Assert.*;
+import com.sun.jna.Library;
+import com.sun.jna.Native;
 
 /*
  * Tests for functions used in methods from QuaSSEDistribution.

@@ -72,22 +72,6 @@ public class OtherUtilsTest {
     }
 
     /*
-     * Will change this later because these checks will happen
-     * in 'initAndValidate'. This verifies invalid inputs.
-     */
-    @Test(expected = RuntimeException.class)
-    public void testCopyingTooManyElements() {
-
-        // input arrays
-        double[] inArray = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
-
-        // output arrays
-        double[] outArray = new double[16];
-
-        SSEUtils.everyOtherInPlace(inArray, 8, 2, 2, 2, 1.0);
-    }
-
-    /*
      * Test for SSE function that copies elements from high-res array of E's or D's
      * to low-res array. This function requires an array of indices to make the copy,
      * which is initialized and populated by the likelihood class upon initialization.

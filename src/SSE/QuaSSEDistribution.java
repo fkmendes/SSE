@@ -34,6 +34,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         super.initAndValidate(); // read in all dimension-related stuff, populates fYLo and fYHi
 
+        checkDimensions();
+
         int nNodes = tree.getNodeCount();
 
         logNormalizationFactors = new double[nNodes];
@@ -51,15 +53,18 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         scratchLo = new double[nNodes][nDimensions][2 * nXbinsLo]; // for real and complex part after FFT
         scratchHi = new double[nNodes][nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
 
-        tmpLo = new double[nDimensions][2 * nXbinsLo]; // for real and complex part after FFT
-        tmpHi = new double[nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
-
         populateMacroevolParams(true);
 
         int nDimensionsFFT = nDimensions;
         initializeEsDs(nNodes, nDimensionsFFT, nXbinsLo, nXbinsHi);
 
         populateTipsEsDs(nDimensionsFFT, nXbinsHi, true);
+    }
+
+    private void checkDimensions() {
+        if (!((nXbinsLo & nXbinsLo-1) == 0)) throw new RuntimeException("Number of quantitative character bins must be a power of 2. It was " + nXbinsLo + ". Exiting...");
+        if ((nXbinsLo - nLeftNRightFlanksLo[1] - (nLeftNRightFlanksLo[0] + nLeftNRightFlanksLo[1])) <= nLeftNRightFlanksLo[0]) throw new RuntimeException("Left and right flanking bins were too many, leaving no useful bins between. Exiting...");
+        if (nLeftNRightFlanksLo[0] == 0 || nLeftNRightFlanksLo[0] == 1) throw new RuntimeException("Left and right flank bins were set to 0 (invalid). Exiting...");
     }
 
     @Override
@@ -424,8 +429,13 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     public void doIntegrateInPlace(int nodeIdx, double[][] scratchAtNode, double aDt, boolean lowRes) {
 
         double[][] esDsAtNode;
-        if (lowRes) esDsAtNode = esDsLo[nodeIdx];
-        else esDsAtNode = esDsHi[nodeIdx];
+        if (lowRes) {
+            esDsAtNode = esDsLo[nodeIdx];
+            scratchAtNode = scratchLo[nodeIdx];
+        } else {
+            esDsAtNode = esDsHi[nodeIdx];
+            scratchAtNode = scratchHi[nodeIdx];
+        }
 
         // debugging
         // System.out.println("esAtNode before propagate in t = " + Arrays.toString(esDsAtNode[0]));
@@ -462,8 +472,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // grab scratch, dt and nDimensions from QuaSSEDistribution state
         // if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
         // else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
-        if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, tmpLo, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
-        else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, tmpHi, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
+        if (lowRes) SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesLo, deathRatesLo, dt, nUsefulXbinsLo, nDimensionsD);
+        else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
     }
 
     @Override
