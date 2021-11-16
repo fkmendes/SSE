@@ -183,7 +183,10 @@ public class SSEUtils {
         // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
     }
 
-    public static void propagateEandDinXQuaLikeSST(double[][] esDsAtNode, ComplexArray fftFYCA, double[][] scratchAtNode, RealArray scratchRA, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+    /*
+     * Version for SST using ComplexArray and RealArray (see unit tests in PropagatesQuaSSETest)
+     */
+    public static void propagateEandDinXQuaLikeSSTExperiment(double[][] esDsAtNode, ComplexArray fftFYCA, double[][] scratchAtNode, RealArray scratchRA, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
         // recording the first nLeftFlankBins and the last nRightFlankBins to put them back later
         int nPad = nLeftFlankBins + nRightFlankBins + 1;
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
@@ -192,7 +195,7 @@ public class SSEUtils {
             for (int j = (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j)
                 scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
 
-        SSEUtils.convolveInPlaceSST(esDsAtNode, fftFYCA, scratchRA, nDimensionsE, nDimensionsD);
+        SSEUtils.convolveInPlaceSSTExperimenting(esDsAtNode, fftFYCA, scratchRA, nDimensionsE, nDimensionsD);
 
         int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
@@ -208,15 +211,15 @@ public class SSEUtils {
             for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
     }
 
-    public static void propagateEandDinXQuaLikeSST2(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, double[][] scratchAtNode, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, JavaFftService ffts) {
+    public static void propagateEandDinXQuaLikeSST(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, double[][] scratchAtNode, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, JavaFftService ffts) {
         // recording the first nLeftFlankBins and the last nRightFlankBins to put them back later
         int nPad = nLeftFlankBins + nRightFlankBins + 1;
         for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            // note the additional i index here (as compared to the JTransforms version) to feed into scratch without skipping every other...
+            // note the additional i index here (as compared to the JTransforms version) to grab every other in esDsAtNode
             for (int j=0, i=0; j < nLeftFlankBins; ++j, i+=2) scratchAtNode[ithDim][j] = esDsAtNode[ithDim][i];
         for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            // same as above with i index
-            for (int j=(nXbins - nPad - nRightFlankBins), i=(nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j, i+=2)
+            // same as above with i index; note that we multiply by 2 because esDsAtNode is twice the length of nXbins because it's real complex real complex
+            for (int j=(nXbins - nPad - nRightFlankBins), i=2 * (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j, i+=2)
                 scratchAtNode[ithDim][j] = esDsAtNode[ithDim][i];
 
         // debugging
@@ -225,7 +228,7 @@ public class SSEUtils {
         // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
 
         int[] nDims = new int[] { nXbins };
-        SSEUtils.convolveInPlaceSST2(esDsAtNode, fftEsDsAtNode, fftFY, nDimensionsE, nDimensionsD, nDims, ffts);
+        SSEUtils.convolveInPlaceSST(esDsAtNode, fftEsDsAtNode, fftFY, nDimensionsE, nDimensionsD, nDims, ffts);
 
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
@@ -298,7 +301,7 @@ public class SSEUtils {
         // System.out.println(Arrays.toString(scratchAtNode[1]));
     }
 
-    public static void convolveInPlaceSST(double[][] esDsAtNode, ComplexArray fY, RealArray scratchRA, int nDimensionsE, int nDimensionsD) {
+    public static void convolveInPlaceSSTExperimenting(double[][] esDsAtNode, ComplexArray fY, RealArray scratchRA, int nDimensionsE, int nDimensionsD) {
         int normalizingInverseFFTFactor = esDsAtNode[0].length;
 
         // doing E's and D's
@@ -314,8 +317,8 @@ public class SSEUtils {
         }
     }
 
-    public static void convolveInPlaceSST2(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, int nDimensionsE, int nDimensionsD, int[] nXbins, JavaFftService ffts) {
-        int normalizingInverseFFTFactor = esDsAtNode[0].length;
+    public static void convolveInPlaceSST(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, int nDimensionsE, int nDimensionsD, int[] nXbins, JavaFftService ffts) {
+        // int normalizingInverseFFTFactor = esDsAtNode[0].length;
 
         // doing E's and D's
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {

@@ -213,7 +213,7 @@ public class PropagatesQuaSSETest {
     }
 
     @Test
-    public void testConvolveSST() {
+    public void testConvolveSSTExperimenting() {
         nDimensionsE = nDimensionsD = 1;
         nLeftFlankBins = nRightFlankBins = 2;
         nXbins = 32;
@@ -236,7 +236,7 @@ public class PropagatesQuaSSETest {
             esDs[1][i] = scratch[1][i] = initialValues[i];
         }
 
-        SSEUtils.convolveInPlaceSST(esDs, fftFYCA, scratchRA, nDimensionsE, nDimensionsD);
+        SSEUtils.convolveInPlaceSSTExperimenting(esDs, fftFYCA, scratchRA, nDimensionsE, nDimensionsD);
         System.out.println(Arrays.toString(esDs[0]));
         System.out.println(Arrays.toString(esDs[1]));
 
@@ -245,7 +245,7 @@ public class PropagatesQuaSSETest {
     }
 
     @Test
-    public void testConvolveSST2() {
+    public void testConvolveSST() {
         nDimensionsE = nDimensionsD = 1;
         nLeftFlankBins = nRightFlankBins = 2;
         nXbins = 32;
@@ -278,7 +278,7 @@ public class PropagatesQuaSSETest {
         }
         // System.out.println("esDs[1] = " + Arrays.toString(esDs[1]));
 
-        SSEUtils.convolveInPlaceSST2(esDs, fftEsDs, fftFY, nDimensionsE, nDimensionsD, nDims, ffts);
+        SSEUtils.convolveInPlaceSST(esDs, fftEsDs, fftFY, nDimensionsE, nDimensionsD, nDims, ffts);
 
         /*
          * Note how differently from the original testConvolve that uses the implementation for JTransforms,
@@ -310,7 +310,7 @@ public class PropagatesQuaSSETest {
      * Using 48 quantitative trait bins, dx = 0.01, diffusion = 0.001.
      */
     @Test
-    public void testPropagateChOneCh32QuaSSETest() {
+    public void testPropagateChOneCh32QuaSSE() {
 
         nDimensionsE = nDimensionsD = 1;
         nLeftFlankBins = nRightFlankBins = 2;
@@ -355,7 +355,7 @@ public class PropagatesQuaSSETest {
      * Using 1024 quantitative trait bins, dx = 0.0005, diffusion = 0.001.
      */
     @Test
-    public void testPropagateChOneCh1024QuaSSETest() {
+    public void testPropagateChOneCh1024QuaSSE() {
 
         nDimensionsE = nDimensionsD = 1;
         nLeftFlankBins = nRightFlankBins = 64;
@@ -407,7 +407,7 @@ public class PropagatesQuaSSETest {
      * Using 4096 quantitative trait bins, dx = 0.0005, diffusion = 0.001.
      */
     @Test
-    public void testPropagateChOneCh4096QuaSSETest() {
+    public void testPropagateChOneCh4096QuaSSE() {
 
         nDimensionsE = nDimensionsD = 1;
         nLeftFlankBins = nRightFlankBins = 256;
@@ -459,7 +459,7 @@ public class PropagatesQuaSSETest {
      * on average.
      */
     @Test
-    public void testPropagateChOneCh4096QuaSSESSTTest() {
+    public void testPropagateChOneCh4096QuaSSESSTExperimenting() {
         nDimensionsE = nDimensionsD = 1;
         nLeftFlankBins = nRightFlankBins = 256;
         nXbins = 4096;
@@ -480,7 +480,7 @@ public class PropagatesQuaSSETest {
             esDs[1][i] = scratch[1][i] = initialValues[i];
         }
 
-        propagateEandDinXQuaLikeSST(esDs, fftFYCA, scratch, scratchRA, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD);
+        propagateEandDinXQuaLikeSSTExperiment(esDs, fftFYCA, scratch, scratchRA, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, fftForEandD);
 
         double[] expectedEs = new double[4096];
         double[] expectedDsFirst48 = new double[] { 0.000353647683540531, 0.000357627448646487, 0.000361649739618714, 0.000365714984190948, 0.000369823614096463, 0.000373976065102163, 0.000378172777042955, 0.000382414193856355, 0.000386700763617376, 0.000391032938573662, 0.000395411175180895, 0.000399835934138456, 0.000404307680425366, 0.000408826883336479, 0.000413394016518956, 0.00041800955800901, 0.000422673990268911, 0.00042738780022428, 0.000432151479301657, 0.000436965523466329, 0.000441830433260469, 0.000446746713841521, 0.000451714875020898, 0.000456735431302938, 0.000461808901924177, 0.00046693581089287, 0.000472116687028841, 0.000477352064003592, 0.000482642480380733, 0.000487988479656683, 0.000493390610301674, 0.000498849425801072, 0.000504365484696964, 0.000509939350630071, 0.000515571592381964, 0.000521262783917567, 0.00052701350442799, 0.000532824338373647, 0.000538695875527712, 0.000544628711019852, 0.000550623445380317, 0.000556680684584297, 0.000562801040096648, 0.000568985128916886, 0.000575233573624552, 0.000581547002424852, 0.000587926049194663, 0.000594371353528846 };
@@ -506,7 +506,7 @@ public class PropagatesQuaSSETest {
      * roughly twice as fast (as expected).
      */
     @Test
-    public void testPropagateChOneCh4096QuaSSESSTTest2() {
+    public void testPropagateChOneCh4096QuaSSESST() {
         nDimensionsE = nDimensionsD = 1;
         nLeftFlankBins = nRightFlankBins = 256;
         nXbins = 4096;
@@ -533,7 +533,7 @@ public class PropagatesQuaSSETest {
             esDs[1][i] = scratch[1][j] = initialValues[j];
         }
 
-        propagateEandDinXQuaLikeSST2(esDs, fftEsDs, fftFY, scratch, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, ffts);
+        propagateEandDinXQuaLikeSST(esDs, fftEsDs, fftFY, scratch, nXbins, nLeftFlankBins, nRightFlankBins, nDimensionsE, nDimensionsD, ffts);
 
         double[] expectedEs = new double[2 * 4096];
         double[] expectedDsFirst48 = new double[] { 0.000353647683540531, 0.000357627448646487, 0.000361649739618714, 0.000365714984190948, 0.000369823614096463, 0.000373976065102163, 0.000378172777042955, 0.000382414193856355, 0.000386700763617376, 0.000391032938573662, 0.000395411175180895, 0.000399835934138456, 0.000404307680425366, 0.000408826883336479, 0.000413394016518956, 0.00041800955800901, 0.000422673990268911, 0.00042738780022428, 0.000432151479301657, 0.000436965523466329, 0.000441830433260469, 0.000446746713841521, 0.000451714875020898, 0.000456735431302938, 0.000461808901924177, 0.00046693581089287, 0.000472116687028841, 0.000477352064003592, 0.000482642480380733, 0.000487988479656683, 0.000493390610301674, 0.000498849425801072, 0.000504365484696964, 0.000509939350630071, 0.000515571592381964, 0.000521262783917567, 0.00052701350442799, 0.000532824338373647, 0.000538695875527712, 0.000544628711019852, 0.000550623445380317, 0.000556680684584297, 0.000562801040096648, 0.000568985128916886, 0.000575233573624552, 0.000581547002424852, 0.000587926049194663, 0.000594371353528846 };

@@ -17,18 +17,19 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     final public Input<LinkFn> q2dInput = new Input<>("q2d", "Function converting quantitative trait into initial D values.", Input.Validate.REQUIRED);
 
     // dimension state
-    private int nDimensions = 2;
-    private int nDimensionsE = 1;
-    private int nDimensionsD = 1;
+    protected int nDimensions = 2;
+    protected int nDimensionsE = 1;
+    protected int nDimensionsD = 1;
 
     // macroevo state (for propagate in t)
     protected double[] birthRatesLo, deathRatesLo, birthRatesHi, deathRatesHi; // macroevol parameters
-    private LinkFn q2mLambda, q2mMu, q2d;
+    protected LinkFn q2mLambda, q2mMu, q2d;
 
     // state that matters directly for calculateLogP
-    private double[][][] esDsLo, esDsHi; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
-    private double[][][] scratchLo, scratchHi;
-    private double[] logNormalizationFactors;
+    protected double[][][] esDsLo, esDsHi; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
+    protected double[][][] fftBufferEsDsLo, fftBufferEsDsHi; // same as above, to be used in propagate in X (during convolution)
+    protected double[][][] scratchLo, scratchHi;
+    protected double[] logNormalizationFactors;
 
     @Override
     public void initAndValidate() {
@@ -59,7 +60,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         int nDimensionsFFT = nDimensions;
         initializeEsDs(nNodes, nDimensionsFFT, nXbinsLo, nXbinsHi);
 
-        populateTipsEsDs(nDimensionsFFT, nXbinsHi, true);
+        populateTipsEsDs(nDimensionsFFT, nXbinsHi, true, false);
     }
 
     private void checkDimensions() {
@@ -78,17 +79,15 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsLo, int nXbinsHi) {
-        // JTransforms version
-        // esDsLo = new double[nNodes][nDimensionsFFT][2 * nXbinsLo]; // 2 * for real and complex part after FFT
-        // esDsHi = new double[nNodes][nDimensionsFFT][2 * nXbinsHi];
+        esDsLo = new double[nNodes][nDimensionsFFT][2 * nXbinsLo]; // 2 * for real and complex part after FFT
+        esDsHi = new double[nNodes][nDimensionsFFT][2 * nXbinsHi];
 
-        // SST
-        esDsLo = new double[nNodes][nDimensionsFFT][nXbinsLo]; // just real
-        esDsHi = new double[nNodes][nDimensionsFFT][nXbinsHi]; // just real
+        fftBufferEsDsLo = new double[nNodes][nDimensionsFFT][2 * nXbinsLo]; // 2 * for real and complex part after FFT
+        fftBufferEsDsHi = new double[nNodes][nDimensionsFFT][2 * nXbinsHi];
     }
 
     @Override
-    public void populateTipsEsDs(int nDimensionsFFT, int nXbinsHi, boolean ignoreRefresh) {
+    public void populateTipsEsDs(int nDimensionsFFT, int nXbinsHi, boolean ignoreRefresh, boolean jtransforms) {
         for (Node tip: tree.getExternalNodes()) {
             String tipName = tip.getID();
             int nodeIdx = tip.getNr();
@@ -110,6 +109,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
                     // low res (just for debugging)
                     esDsLo[nodeIdx][i] = q2d.getY(xLo, esDsLo[nodeIdx][i], nLeftNRightFlanksLo, tipName, ignoreRefresh);
+
+                    if (!jtransforms) {
+                        SSEUtils.everyOtherExpandInPlace(esDsHi[nodeIdx][i]);
+                        SSEUtils.everyOtherExpandInPlace(esDsLo[nodeIdx][i]);
+                    }
                 }
             }
 
@@ -301,11 +305,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         }
 
         // updating fY if necessary
-        populatefY(dt,false, dtChanged, true, lowRes);
+        populatefY(dt,false, dtChanged, true, lowRes, false);
 
         // integrating!
         for (int i=0; i<nIntervals; i++) {
-            doIntegrateInPlace(nodeIdx, scratchAtNode, dt, lowRes);
+            doIntegrateInPlace(nodeIdx, dt, lowRes);
         }
 
         // normalization that happens in make.pde.quasse.fftR
@@ -395,8 +399,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
      * Math-y methods start below
      */
     @Override
-    public void populatefY(double aDt, boolean forceRecalcKernel, boolean didRefreshNowMustRecalcKernel, boolean doFFT, boolean lowRes) {
-        super.populatefY(aDt, forceRecalcKernel, didRefreshNowMustRecalcKernel, doFFT, lowRes);
+    public void populatefY(double aDt, boolean forceRecalcKernel, boolean didRefreshNowMustRecalcKernel, boolean doFFT, boolean lowRes, boolean jtransforms) {
+        super.populatefY(aDt, forceRecalcKernel, didRefreshNowMustRecalcKernel, doFFT, lowRes, jtransforms);
     }
 
     @Override
@@ -431,14 +435,17 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void doIntegrateInPlace(int nodeIdx, double[][] scratchAtNode, double aDt, boolean lowRes) {
+    public void doIntegrateInPlace(int nodeIdx, double aDt, boolean lowRes) {
 
-        double[][] esDsAtNode;
+        double[][] esDsAtNode, fftBufferEsDsAtNode;
+        double[][] scratchAtNode;
         if (lowRes) {
             esDsAtNode = esDsLo[nodeIdx];
+            fftBufferEsDsAtNode = fftBufferEsDsLo[nodeIdx];
             scratchAtNode = scratchLo[nodeIdx];
         } else {
             esDsAtNode = esDsHi[nodeIdx];
+            fftBufferEsDsAtNode = fftBufferEsDsHi[nodeIdx];
             scratchAtNode = scratchHi[nodeIdx];
         }
 
@@ -463,7 +470,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // integrate over diffusion of quantitative trait
         // debugging
         // System.out.println("D's length before propagating in X = " + esDsAtNode[1].length);
-        propagateXInPlace(esDsAtNode, scratchAtNode, lowRes); //
+        propagateXInPlace(esDsAtNode, fftBufferEsDsAtNode, scratchAtNode, lowRes); //
 
         // debugging
         // System.out.println("esAtNode after propagate in t and x = " + Arrays.toString(esDsAtNode[0]));
@@ -495,15 +502,26 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 //    }
 
     @Override
-    public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+    public void propagateXInPlace(double[][] esDsAtNode, double[][] fftBufferEsDsAtNode, double[][] scratchAtNode, boolean lowRes) {
 
         // debugging
         // System.out.println("esDsAtNode[1] = " + Arrays.toString(esDsAtNode[1]));
         // System.out.println("scratch[1] = " + Arrays.toString(scratch[1]));
 
         // grab dt and nDimensions from state
-        if (lowRes) SSEUtils.propagateEandDinXQuaLikeSST(esDsAtNode, fftFYCALo, scratchAtNode, scratchRALo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
-        else SSEUtils.propagateEandDinXQuaLikeSST(esDsAtNode, fftFYCAHi, scratchAtNode, scratchRAHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
+        if (lowRes) SSEUtils.propagateEandDinXQuaLikeSST(esDsAtNode, fftBufferEsDsAtNode, fftFYLo, scratchAtNode, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, jffts);
+        else SSEUtils.propagateEandDinXQuaLikeSST(esDsAtNode, fftBufferEsDsAtNode, fftFYHi, scratchAtNode, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, jffts);
+    }
+
+    public void propagateXInPlaceJTransforms(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+
+        // debugging
+        // System.out.println("esDsAtNode[1] = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratch[1] = " + Arrays.toString(scratch[1]));
+
+        // grab dt and nDimensions from state
+        if (lowRes) SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYLo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
+        else SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
     }
 
     @Override
@@ -605,6 +623,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     public double[] getfY(boolean lowRes) {
         if (lowRes) return fYLo;
         else return fYHi;
+    }
+
+    public double[] getfftFY(boolean lowRes) {
+        if (lowRes) return fftFYLo;
+        else return fftFYHi;
     }
 
     public double[][][] getEsDs(boolean lowRes) {

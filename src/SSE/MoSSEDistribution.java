@@ -62,7 +62,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void populateTipsEsDs(int nDimensionsFFT, int nUsefulXbinsHi, boolean ignoreRefresh) {
+    public void populateTipsEsDs(int nDimensionsFFT, int nUsefulXbinsHi, boolean ignoreRefresh, boolean jtransforms) {
         ;
     }
 
@@ -75,7 +75,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     public void processBranch(Node aNode) {
 
         // TODO stuff
-        doMoSSEIntegrateInPlace(aNode.getNr(), esDsHi[0], scratch, 0.0, true, dtMax, true);
+        doMoSSEIntegrateInPlace(aNode.getNr(), esDsHi[0], fftBufferEsDsHi[0], scratch, 0.0, true, dtMax, true);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
      * we need start times, and need to deal with the first dt in a different way.
      * MoSSE will thus have its special 'doIntegrateInPlace'.
      */
-    private void doMoSSEIntegrateInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, double dt, boolean lowRes) {
+    private void doMoSSEIntegrateInPlace(int nodeIdx, double[][] esDsAtNode, double[][] fftBufferEsDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, double dt, boolean lowRes) {
 
         // integrate over birth and death events (either at low or high resolution inside)
         this.propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
@@ -119,7 +119,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         propagateSubst(esDsAtNode, startTime, dtMax, isFirstDt, lowRes);
 
         // integrate over diffusion of substitution rate
-        this.propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
+        this.propagateXInPlace(esDsAtNode, fftBufferEsDsAtNode, scratchAtNode, lowRes);
 
         // return null;
     }
@@ -132,8 +132,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
-        super.propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
+    public void propagateXInPlace(double[][] esDsAtNode, double[][] fftBufferEsDs, double[][] scratchAtNode, boolean lowRes) {
+        super.propagateXInPlace(esDsAtNode, fftBufferEsDs, scratchAtNode, lowRes);
     }
 
     public void propagateSubst(double[][] esDsAtNode, double startTime, double aDt, boolean isFirstDt, boolean lowRes) {

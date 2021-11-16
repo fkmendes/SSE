@@ -61,7 +61,7 @@ public abstract class QuaSSEProcess extends Distribution {
     protected double[] fYLo, fYHi, fftFYLo, fftFYHi;
     protected DoubleFFT_1D fftForEandDLo, fftForEandDHi;
     // using SST library
-    JavaFftService jffs;
+    JavaFftService jffts;
 
     @Override
     public void initAndValidate() {
@@ -112,11 +112,13 @@ public abstract class QuaSSEProcess extends Distribution {
         // fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
 
         // SST
-        fYLo = new double[nXbinsLo]; // just real
-        fYHi = new double[nXbinsHi]; // just real
+        fYLo = new double[nXbinsLo * 2]; // just real
+        fYHi = new double[nXbinsHi * 2]; // just real
+        fftFYLo = new double[nXbinsLo * 2]; // just real
+        fftFYHi = new double[nXbinsHi * 2]; // just real
         nXbinsHiSST = new int[] { nXbinsHi };
         nXbinsLoSST = new int[] { nXbinsLo };
-        jffs = new JavaFftService();
+        jffts = new JavaFftService();
 
         // populatefY(dtMax, true, false, true, true); // force populate fY, and do FFT
         // populatefY(dtMax, true, false, true, false); // force populate fY, and do FFT
@@ -193,7 +195,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected void populatefY(double aDt, boolean forceRecalcKernel, boolean dtChanged, boolean doFFT, boolean lowRes) {
+    protected void populatefY(double aDt, boolean forceRecalcKernel, boolean dtChanged, boolean doFFT, boolean lowRes, boolean jtransforms) {
         // finding out if we need to recalculate fY or not
         boolean didRefreshNowMustRecalcKernel = false;
         if (dtChanged || driftInput.get().somethingIsDirty()) {
@@ -210,20 +212,20 @@ public abstract class QuaSSEProcess extends Distribution {
                 SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
 
                 // FFTs normal kernel
-                // if (doFFT) fftForEandDLo.realForwardFull(fYLo); // with JTransforms
-                if (doFFT) {
+                if (jtransforms && doFFT) fftForEandDLo.realForwardFull(fYLo); // with JTransforms
+                else if (doFFT) {
                     SSEUtils.everyOtherExpandInPlace(fYLo);
-                    jffs.fft(nXbinsLoSST, fYLo, fftFYLo); // result left in fftFYLo
+                    jffts.fft(nXbinsLoSST, fYLo, fftFYLo); // result left in fftFYLo
                 }
             }
             else {
                 SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin/hiLoRatio); // normalizes inside already
 
                 // FFTs normal kernel
-                // if (doFFT) fftForEandDHi.realForwardFull(fYHi); // with JTransforms
-                if (doFFT) {
+                if (jtransforms && doFFT) fftForEandDHi.realForwardFull(fYHi); // with JTransforms
+                else if (doFFT) {
                     SSEUtils.everyOtherExpandInPlace(fYHi);
-                    jffs.fft(nXbinsHiSST, fYHi, fftFYHi); // result left in fftFYLo
+                    jffts.fft(nXbinsHiSST, fYHi, fftFYHi); // result left in fftFYLo
                 }
             }
         }
@@ -253,7 +255,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void populateTipsEsDs(int nDimensionsFFT, int nXbins, boolean ignoreRefresh);
+    protected abstract void populateTipsEsDs(int nDimensionsFFT, int nXbins, boolean ignoreRefresh, boolean jtransforms);
 
     /*
      * The D's at the root must be multiplied by a prior probability array.
@@ -294,7 +296,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      * Does integration in time and character space in place
      */
-    protected abstract void doIntegrateInPlace(int nodeIdx, double[][] scratchAtNode, double dt, boolean lowRes);
+    protected abstract void doIntegrateInPlace(int nodeIdx, double dt, boolean lowRes);
 
     /*
      *
@@ -306,7 +308,7 @@ public abstract class QuaSSEProcess extends Distribution {
      */
     // JTransforms version
     // protected abstract void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
-    protected abstract void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
+    protected abstract void propagateXInPlace(double[][] esDsAtNode, double[][] fftBufferEsDsAtNode, double[][] scratchAtNode, boolean lowRes);
 
     /*
      * This method looks at the relevant objects in state,

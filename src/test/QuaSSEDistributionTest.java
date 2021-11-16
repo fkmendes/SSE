@@ -423,18 +423,20 @@ public class QuaSSEDistributionTest {
      * Checks that propagate methods in quantitative trait
      * value for E's and D's inside QuaSSE class are working.
      *
+     * Uses JTransforms.
+     *
      * Differs from 'testPropagateChOneCh1024QuaSSETest' inside
      * 'PropagatesQuaSSETest' because it relies on the QuaSSE class
      * correctly initializing all its dimensions and E's and D's.
      *
      * Test is done on a bifurcating tree over a single dt = 0.01,
-     * and nXbins = 48 (low res).
+     * and nXbins = 32 (low res).
      *
      * We look at just a single branch here, from 'sp1', whose trait value
      * is set to 0.0.
      */
     @Test
-    public void testIntegrateOneBranchLoRes32BinsOutsideClassJustX() {
+    public void testIntegrateOneBranchLoRes32BinsOutsideClassJustXJTransforms() {
         // we're going to look at sp1
         int nodeIdx = 0; // sp1
         double[][] esDsLoAtNode;
@@ -457,7 +459,7 @@ public class QuaSSEDistributionTest {
          * here we are just grabbing it to verify its values in the asserts
          * below
          */
-        q32Dt001.populatefY(0.01, true, false, true, true);
+        q32Dt001.populatefY(0.01, true, false, true, true, true);
         double[] fftedfY = q32Dt001.getfY(true);
 
         // copying fY for assert (leaving original one inside class untouched)
@@ -468,7 +470,7 @@ public class QuaSSEDistributionTest {
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = new double[2][esDsLoAtNode[0].length];
-        q32Dt001.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
+        q32Dt001.propagateXInPlaceJTransforms(esDsLoAtNode, scratchAtNode, true);
 
         // looking at 'sp1'
         esDsLoAtNode = q32Dt001.getEsDsAtNode(nodeIdx, true);
@@ -482,6 +484,76 @@ public class QuaSSEDistributionTest {
 
         Assert.assertArrayEquals(expectedInitialDs, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 0, 32), 1e-14);
         Assert.assertArrayEquals(expectedFFTedfY, Arrays.copyOfRange(fftedfY4Assert, 0, 32), 1e-14);
+        Assert.assertArrayEquals(expectedSp1EsAfterPropX, Arrays.copyOfRange(esLoAtNode, 0, 32), 1e-14);
+        Assert.assertArrayEquals(expectedSp1DsAfterPropX, Arrays.copyOfRange(dsLoAtNode, 0, 32), 1e-14);
+    }
+
+    /*
+     * Checks that propagate methods in quantitative trait
+     * value for E's and D's inside QuaSSE class are working.
+     *
+     * Uses SST.
+     *
+     * Differs from 'testPropagateChOneCh1024QuaSSETest' inside
+     * 'PropagatesQuaSSETest' because it relies on the QuaSSE class
+     * correctly initializing all its dimensions and E's and D's.
+     *
+     * Test is done on a bifurcating tree over a single dt = 0.01,
+     * and nXbins = 32 (low res).
+     *
+     * We look at just a single branch here, from 'sp1', whose trait value
+     * is set to 0.0.
+     */
+    @Test
+    public void testIntegrateOneBranchLoRes32BinsOutsideClassJustX() {
+        // we're going to look at sp1
+        int nodeIdx = 0; // sp1
+        double[][] esDsLoAtNode;
+
+        /*
+         * we'll test the integration outside the class
+         */
+        esDsLoAtNode = q32Dt001.getEsDsAtNode(nodeIdx, true);
+        double[][] fftBufferEsDsAtNode = new double[2][esDsLoAtNode[0].length];
+
+        /*
+         * we are going to have a look at (make a deep copy of) the initial D's
+         * in the assert below because they are used in propagate in x
+         */
+        double[][] esDsHiAtNodeInitial = new double[esDsLoAtNode.length][esDsLoAtNode[0].length];
+        esDsHiAtNodeInitial[0] = Arrays.copyOf(esDsLoAtNode[0], esDsLoAtNode[0].length); // E
+        esDsHiAtNodeInitial[1] = Arrays.copyOf(esDsLoAtNode[1], esDsLoAtNode[1].length); // D
+        SSEUtils.everyOtherToHeadInPlace(esDsHiAtNodeInitial[1], q32Dt001.getnXbins(true), 0, 0, 2, 1.0);
+
+        /*
+         * fY is computed and FFTed in initialization, by QuaSSEProcess;
+         * here we are just grabbing it to verify its values in the asserts
+         * below
+         */
+        q32Dt001.populatefY(0.01, true, false, true, true, false);
+        double[] fftedfY = q32Dt001.getfftFY(true);
+
+        // copying fY for assert (leaving original one inside class untouched)
+        double[] fftedfY4Assert = new double[fftedfY.length]; // just for test, not used in propagate in X
+        for (int i=0; i<fftedfY.length; i++) fftedfY4Assert[i] = fftedfY[i];
+        everyOtherToHeadInPlace(fftedfY4Assert, q32Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
+
+        // just propagate in x, in place
+        // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
+        double[][] scratchAtNode = new double[2][esDsLoAtNode[0].length];
+        q32Dt001.propagateXInPlace(esDsLoAtNode, fftBufferEsDsAtNode, scratchAtNode, true);
+
+        // looking at 'sp1'
+        esDsLoAtNode = q32Dt001.getEsDsAtNode(nodeIdx, true);
+        double[] esLoAtNode = esDsLoAtNode[0];
+        double[] dsLoAtNode = esDsLoAtNode[1];
+
+        double[] expectedInitialDs = new double[] { 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522966, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522966, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedFFTedfY = new double[] { 1, 0.999744507157237, 0.998987847110852, 0.997759097982437, 0.996105480062091, 0.994090541136289, 0.991791714355113, 0.989297342492751, 0.986703282961364, 0.984109224049216, 0.981614853950298, 0.979316029808302, 0.977301093995625, 0.975647479188405, 0.97441873269917, 0.973662074416229, 0.973406582192705, 0.973662074416229, 0.97441873269917, 0.975647479188405, 0.977301093995625, 0.979316029808302, 0.981614853950298, 0.984109224049216, 0.986703282961364, 0.989297342492751, 0.991791714355113, 0.994090541136289, 0.996105480062091, 0.997759097982437, 0.998987847110852, 0.999744507157237 };
+        double[] expectedSp1EsAfterPropX = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        double[] expectedSp1DsAfterPropX = new double[] { 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.99530083804265, 3.88416335936269, 4.83940600155165, 5.79327421787607, 6.66336349661662, 7.36377090119626, 7.81887626199731, 7.97674483551017, 7.81887626199731, 7.36377090119625, 6.66336349661661, 5.79327421787607, 4.83940600155166, 3.88416335936269, 2.99530083804265, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        Assert.assertArrayEquals(expectedInitialDs, Arrays.copyOfRange(esDsHiAtNodeInitial[1], 0, 32), 1e-14);
         Assert.assertArrayEquals(expectedFFTedfY, Arrays.copyOfRange(fftedfY4Assert, 0, 32), 1e-14);
         Assert.assertArrayEquals(expectedSp1EsAfterPropX, Arrays.copyOfRange(esLoAtNode, 0, 32), 1e-14);
         Assert.assertArrayEquals(expectedSp1DsAfterPropX, Arrays.copyOfRange(dsLoAtNode, 0, 32), 1e-14);
@@ -521,7 +593,7 @@ public class QuaSSEDistributionTest {
          * below
          */
         double aDt = 0.01;
-        q1024.populatefY(aDt, true, false, true, true);
+        q1024.populatefY(aDt, true, false, true, true, true);
         double[] fftedfY = q1024.getfY(true);
 
         // copying fY for assert (leaving original one inside class untouched)
@@ -532,7 +604,7 @@ public class QuaSSEDistributionTest {
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = q1024.getScratchAtNode(nodeIdx, true); // sp1
-        q1024.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
+        q1024.propagateXInPlaceJTransforms(esDsLoAtNode, scratchAtNode, true);
 
         esDsLoAtNode = q1024.getEsDsAtNode(nodeIdx, true);
         double[] esLoAtNode = esDsLoAtNode[0];
@@ -587,7 +659,7 @@ public class QuaSSEDistributionTest {
          * below
          */
         double aDt = 0.01;
-        q1024.populatefY(aDt, true, true, true, false);
+        q1024.populatefY(aDt, true, true, true, false, true);
         double[] fftedfY = q1024.getfY(false);
 
         // copying fY for assert (leaving original one inside class untouched)
@@ -597,7 +669,7 @@ public class QuaSSEDistributionTest {
 
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = q1024.getScratchAtNode(nodeIdx, false); // sp1
-        q1024.propagateXInPlace(esDsHiAtNode, scratchAtNode, false);
+        q1024.propagateXInPlaceJTransforms(esDsHiAtNode, scratchAtNode, false);
 
         esDsHiAtNode = q1024.getEsDsAtNode(nodeIdx, false);
         double[] esLoAtNode = esDsHiAtNode[0];
@@ -671,7 +743,7 @@ public class QuaSSEDistributionTest {
          * below
          */
         double aDt = 0.001;
-        q32Dt001.populatefY(aDt, true, false, true, true);
+        q32Dt001.populatefY(aDt, true, false, true, true, true);
         double[] fftedfY = q32Dt001.getfY(true);
 
         // copying fY for assert (leaving original one inside class untouched)
@@ -681,7 +753,7 @@ public class QuaSSEDistributionTest {
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        q32Dt001.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
+        q32Dt001.propagateXInPlaceJTransforms(esDsLoAtNode, scratchAtNode, true);
         esDsLoAtNode = q32Dt001.getEsDsAtNode(nodeIdx, true);
 
 
@@ -754,7 +826,7 @@ public class QuaSSEDistributionTest {
          * below
          */
         double aDt = 0.02;
-        q32Dt002.populatefY(aDt, true, false, true, true);
+        q32Dt002.populatefY(aDt, true, false, true, true, true);
         double[] fftedfY = q32Dt002.getfY(true);
 
         // copying fY for assert (leaving original one inside class untouched)
@@ -764,7 +836,7 @@ public class QuaSSEDistributionTest {
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        q32Dt002.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
+        q32Dt002.propagateXInPlaceJTransforms(esDsLoAtNode, scratchAtNode, true);
         esDsLoAtNode = q32Dt002.getEsDsAtNode(nodeIdx, true);
 
 
