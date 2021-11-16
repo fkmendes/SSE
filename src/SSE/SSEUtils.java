@@ -29,7 +29,9 @@ package SSE;
  */
 
 import org.jtransforms.fft.DoubleFFT_1D;
-import java.util.Arrays;
+import org.shared.array.ComplexArray;
+import org.shared.array.RealArray;
+import org.shared.fft.JavaFftService;
 
 public class SSEUtils {
 
@@ -159,7 +161,76 @@ public class SSEUtils {
 
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-            everyOtherInPlace(esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
+            everyOtherToHeadInPlace(esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
+
+            // System.out.println("scratchAtNode[ithDim] after reordering and scaling: " + Arrays.toString(scratchAtNode[ithDim]));
+            for (int i=0; i<nXbins; ++i) {
+                // if negative value, set to 0.0
+                // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
+                if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
+            }
+        }
+
+        // putting back the first nLeftFlankBins and the last nRightFlankBins
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j=0; j<nLeftFlankBins; ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+
+        // debugging
+        // System.out.println("After scaling and zero-ing");
+        // System.out.println("esDsAtNode (D's) = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
+    }
+
+    public static void propagateEandDinXQuaLikeSST(double[][] esDsAtNode, ComplexArray fftFYCA, double[][] scratchAtNode, RealArray scratchRA, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+        // recording the first nLeftFlankBins and the last nRightFlankBins to put them back later
+        int nPad = nLeftFlankBins + nRightFlankBins + 1;
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j = 0; j < nLeftFlankBins; ++j) scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j = (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j)
+                scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
+
+        SSEUtils.convolveInPlaceSST(esDsAtNode, fftFYCA, scratchRA, nDimensionsE, nDimensionsD);
+
+        int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int i=0; i<nXbins; ++i) {
+                if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
+            }
+        }
+
+        // putting back the first nLeftFlankBins and the last nRightFlankBins
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j=0; j<nLeftFlankBins; ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+    }
+
+    public static void propagateEandDinXQuaLikeSST2(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, double[][] scratchAtNode, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, JavaFftService ffts) {
+        // recording the first nLeftFlankBins and the last nRightFlankBins to put them back later
+        int nPad = nLeftFlankBins + nRightFlankBins + 1;
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            // note the additional i index here (as compared to the JTransforms version) to feed into scratch without skipping every other...
+            for (int j=0, i=0; j < nLeftFlankBins; ++j, i+=2) scratchAtNode[ithDim][j] = esDsAtNode[ithDim][i];
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
+            // same as above with i index
+            for (int j=(nXbins - nPad - nRightFlankBins), i=(nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j, i+=2)
+                scratchAtNode[ithDim][j] = esDsAtNode[ithDim][i];
+
+        // debugging
+        // System.out.println("After copying left and right flanks");
+        // System.out.println("esDsAtNode = " + Arrays.toString(esDsAtNode[1]));
+        // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
+
+        int[] nDims = new int[] { nXbins };
+        SSEUtils.convolveInPlaceSST2(esDsAtNode, fftEsDsAtNode, fftFY, nDimensionsE, nDimensionsD, nDims, ffts);
+
+        // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
+        int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            everyOtherToHeadInPlace(esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, 1.0); // grabbing real part and scaling by 1/nXbins
 
             // System.out.println("scratchAtNode[ithDim] after reordering and scaling: " + Arrays.toString(scratchAtNode[ithDim]));
             for (int i=0; i<nXbins; ++i) {
@@ -225,6 +296,42 @@ public class SSEUtils {
         // looking at things
         // System.out.println(Arrays.toString(scratchAtNode[0]));
         // System.out.println(Arrays.toString(scratchAtNode[1]));
+    }
+
+    public static void convolveInPlaceSST(double[][] esDsAtNode, ComplexArray fY, RealArray scratchRA, int nDimensionsE, int nDimensionsD) {
+        int normalizingInverseFFTFactor = esDsAtNode[0].length;
+
+        // doing E's and D's
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+
+            int jthElem = 0;
+            for (double v: esDsAtNode[ithDim]) {
+                scratchRA.set(v, jthElem);
+                jthElem++;
+            }
+
+            esDsAtNode[ithDim] = scratchRA.tocRe().fft().eMul(fY).ifft().torRe().values(); // already comes out normalized (unlike R version and JTransforms)
+        }
+    }
+
+    public static void convolveInPlaceSST2(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, int nDimensionsE, int nDimensionsD, int[] nXbins, JavaFftService ffts) {
+        int normalizingInverseFFTFactor = esDsAtNode[0].length;
+
+        // doing E's and D's
+        for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+
+            // fft-ing
+            ffts.fft(nXbins, esDsAtNode[ithDim], fftEsDsAtNode[ithDim]); // fftEsDsAtNode: real complex real complex...
+
+            // convolving
+            for (int i = 0; i < fftFY.length; i += 2) {
+                fftEsDsAtNode[ithDim][i] *= fftFY[i]; // real part
+                fftEsDsAtNode[ithDim][i + 1] *= fftFY[i]; // complex part
+            }
+
+            // ifft-ing
+            ffts.ifft(nXbins, fftEsDsAtNode[ithDim], esDsAtNode[ithDim]);
+        }
     }
 
     /*
@@ -316,13 +423,25 @@ public class SSEUtils {
      * @param   everyOther  every other 'everyOther' elements (skipping the first skipFirstN and the last skipLastN) will be moved to the head of the array
      * @param   scaleBy will scale every other element by this
      */
-    public static void everyOtherInPlace(double[] anArray, int nXbins, int skipFirstN, int skipLastN, int everyOther, double scaleBy) {
+    public static void everyOtherToHeadInPlace(double[] anArray, int nXbins, int skipFirstN, int skipLastN, int everyOther, double scaleBy) {
         //if (skipFirstN == 0 && skipLastN == 0) skipLastN = -1; // this should only happen in debugging, where there are no elements to skip at the start or end
         for (int i=skipFirstN * 2, j=skipFirstN; i <= (anArray.length-2); i+=everyOther, j++) {
             // first implementation if (j < (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {
             if (j <= (nXbins - skipLastN - (skipFirstN + skipLastN) - 1)) {
                 anArray[j] = anArray[i] * scaleBy;
             }
+        }
+    }
+
+    /*
+     * Simple function to take the first half of a double array and spread it
+     * through the entire array, skipping every other element (setting
+     * those to 0.0).
+     */
+    public static void everyOtherExpandInPlace(double[] anArray) {
+        for (int i=anArray.length/2-1, j=anArray.length-2; i>=0; i--, j-=2) {
+            anArray[j] = anArray[i];
+            anArray[j +1 ] = 0.0;
         }
     }
 

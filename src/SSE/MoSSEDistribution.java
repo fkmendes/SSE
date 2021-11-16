@@ -7,6 +7,7 @@ import beast.evolution.sitemodel.SiteModel;
 import beast.evolution.sitemodel.SiteModelInterface;
 import beast.evolution.substitutionmodel.SubstitutionModel;
 import beast.evolution.tree.Node;
+import org.shared.array.RealArray;
 
 import java.util.List;
 import java.util.Random;
@@ -118,7 +119,7 @@ public class MoSSEDistribution extends QuaSSEDistribution {
         propagateSubst(esDsAtNode, startTime, dtMax, isFirstDt, lowRes);
 
         // integrate over diffusion of substitution rate
-        this.propagateXInPlace(nodeIdx, esDsAtNode, scratchAtNode, lowRes);
+        this.propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
 
         // return null;
     }
@@ -131,8 +132,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
-        super.propagateXInPlace(nodeIdx, esDsAtNode, scratchAtNode, lowRes);
+    public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+        super.propagateXInPlace(esDsAtNode, scratchAtNode, lowRes);
     }
 
     public void propagateSubst(double[][] esDsAtNode, double startTime, double aDt, boolean isFirstDt, boolean lowRes) {

@@ -10,6 +10,9 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jtransforms.fft.DoubleFFT_1D;
+import org.shared.array.ComplexArray;
+import org.shared.array.RealArray;
+import org.shared.fft.JavaFftService;
 
 import java.util.Arrays;
 
@@ -47,6 +50,7 @@ public abstract class QuaSSEProcess extends Distribution {
     protected double dtMax, tc;
     protected double dXbin, flankWidthScaler, xMinLo, xMinHi, xMid;
     protected int nXbinsLo, nUsefulXbinsLo, nXbinsHi, nUsefulXbinsHi, hiLoRatio;
+    protected int[] nXbinsLoSST, nXbinsHiSST; // for SST JavaFftService, same as nXbinsLo and nXbinsHi
     protected int[] nUsefulXbins, nLeftNRightFlanksHi, nLeftNRightFlanksLo;
     protected double[] xLo, xHi; // x rulers
     protected int[] hiLoIdxs4Transfer;
@@ -54,8 +58,10 @@ public abstract class QuaSSEProcess extends Distribution {
     // quantitative trait evolution
     protected double changeInXNormalMean; // (=diversitree's drift)
     protected double changeInXNormalSd; // (=diversitree's diffusion)
-    protected double[] fYLo, fYHi;
+    protected double[] fYLo, fYHi, fftFYLo, fftFYHi;
     protected DoubleFFT_1D fftForEandDLo, fftForEandDHi;
+    // using SST library
+    JavaFftService jffs;
 
     @Override
     public void initAndValidate() {
@@ -76,13 +82,15 @@ public abstract class QuaSSEProcess extends Distribution {
 
         dynamicallyAdjustDt = dynamicDtInput.get().getValue();
         dtMax = dtMaxInput.get().getValue();
+        dXbin = dXBinInput.get().getValue();
         tc = tcInput.get().getValue();
 
-        dXbin = dXBinInput.get().getValue();
+        hiLoRatio = highLowRatioInput.get().getValue();
         nXbinsLo = nXbinsInput.get().getValue();
+        nXbinsHi = nXbinsLo * hiLoRatio;
+
         xMid = xMidInput.get().getValue();
         flankWidthScaler = flankWidthScalerInput.get().getValue();
-        hiLoRatio = highLowRatioInput.get().getValue();
         changeInXNormalMean = driftInput.get().getValue() * -dtMax;
         changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dtMax);
 
@@ -99,8 +107,16 @@ public abstract class QuaSSEProcess extends Distribution {
         fftForEandDLo = new DoubleFFT_1D(nXbinsLo);
         fftForEandDHi = new DoubleFFT_1D(nXbinsHi);
 
-        fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
-        fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
+        // JTransforms version
+        // fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
+        // fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
+
+        // SST
+        fYLo = new double[nXbinsLo]; // just real
+        fYHi = new double[nXbinsHi]; // just real
+        nXbinsHiSST = new int[] { nXbinsHi };
+        nXbinsLoSST = new int[] { nXbinsLo };
+        jffs = new JavaFftService();
 
         // populatefY(dtMax, true, false, true, true); // force populate fY, and do FFT
         // populatefY(dtMax, true, false, true, false); // force populate fY, and do FFT
@@ -119,7 +135,7 @@ public abstract class QuaSSEProcess extends Distribution {
         nLeftNRightFlanksLo[1] = (int)(Math.ceil(-(changeInXNormalMean - flankWidthScaler * changeInXNormalSd) / dXbin));
         nLeftNRightFlanksHi[1] = hiLoRatio * nLeftNRightFlanksLo[1];
 
-        nXbinsHi = hiLoRatio * nXbinsLo;
+        // nXbinsHi = hiLoRatio * nXbinsLo;
 
         nUsefulXbinsLo = nXbinsLo - (nLeftNRightFlanksLo[0] + 1 + nLeftNRightFlanksLo[1]);
         nUsefulXbinsHi = nXbinsHi - (nLeftNRightFlanksHi[0] + 1 + nLeftNRightFlanksHi[1]);
@@ -194,13 +210,21 @@ public abstract class QuaSSEProcess extends Distribution {
                 SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
 
                 // FFTs normal kernel
-                if (doFFT) fftForEandDLo.realForwardFull(fYLo);
+                // if (doFFT) fftForEandDLo.realForwardFull(fYLo); // with JTransforms
+                if (doFFT) {
+                    SSEUtils.everyOtherExpandInPlace(fYLo);
+                    jffs.fft(nXbinsLoSST, fYLo, fftFYLo); // result left in fftFYLo
+                }
             }
             else {
                 SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin/hiLoRatio); // normalizes inside already
 
                 // FFTs normal kernel
-                if (doFFT) fftForEandDHi.realForwardFull(fYHi);
+                // if (doFFT) fftForEandDHi.realForwardFull(fYHi); // with JTransforms
+                if (doFFT) {
+                    SSEUtils.everyOtherExpandInPlace(fYHi);
+                    jffs.fft(nXbinsHiSST, fYHi, fftFYHi); // result left in fftFYLo
+                }
             }
         }
 
@@ -280,7 +304,9 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
+    // JTransforms version
+    // protected abstract void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
+    protected abstract void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes);
 
     /*
      * This method looks at the relevant objects in state,

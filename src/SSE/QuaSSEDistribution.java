@@ -3,6 +3,8 @@ package SSE;
 import beast.core.Input;
 import beast.core.State;
 import beast.evolution.tree.Node;
+import org.shared.array.ComplexArray;
+import org.shared.array.RealArray;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,7 +28,6 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     // state that matters directly for calculateLogP
     private double[][][] esDsLo, esDsHi; // first dimension are nodes, second is Es and Ds, third is each E (or D) along X ruler
     private double[][][] scratchLo, scratchHi;
-    private double[][] tmpLo, tmpHi;
     private double[] logNormalizationFactors;
 
     @Override
@@ -50,8 +51,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         q2d = q2dInput.get();
 
-        scratchLo = new double[nNodes][nDimensions][2 * nXbinsLo]; // for real and complex part after FFT
-        scratchHi = new double[nNodes][nDimensions][2 * nXbinsHi]; // for real and complex part after FFT
+        scratchLo = new double[nNodes][nDimensions][2 * nXbinsLo]; // for real and complex part after FFT using JTransforms
+        scratchHi = new double[nNodes][nDimensions][2 * nXbinsHi]; // for real and complex part after FFT using JTransforms
 
         populateMacroevolParams(true);
 
@@ -77,9 +78,13 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
     @Override
     public void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsLo, int nXbinsHi) {
-        esDsLo = new double[nNodes][nDimensionsFFT][2 * nXbinsLo]; // 2 * for real and complex part after FFT
-        esDsHi = new double[nNodes][nDimensionsFFT][2 * nXbinsHi];
-        // do stuff with nDimensionsFFT
+        // JTransforms version
+        // esDsLo = new double[nNodes][nDimensionsFFT][2 * nXbinsLo]; // 2 * for real and complex part after FFT
+        // esDsHi = new double[nNodes][nDimensionsFFT][2 * nXbinsHi];
+
+        // SST
+        esDsLo = new double[nNodes][nDimensionsFFT][nXbinsLo]; // just real
+        esDsHi = new double[nNodes][nDimensionsFFT][nXbinsHi]; // just real
     }
 
     @Override
@@ -458,7 +463,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // integrate over diffusion of quantitative trait
         // debugging
         // System.out.println("D's length before propagating in X = " + esDsAtNode[1].length);
-        propagateXInPlace(nodeIdx, esDsAtNode, scratchAtNode, lowRes);
+        propagateXInPlace(esDsAtNode, scratchAtNode, lowRes); //
 
         // debugging
         // System.out.println("esAtNode after propagate in t and x = " + Arrays.toString(esDsAtNode[0]));
@@ -476,23 +481,29 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         else SSEUtils.propagateEandDinTQuaSSEInPlace(esDsAtNode, scratchAtNode, birthRatesHi, deathRatesHi, dt, nUsefulXbinsHi, nDimensionsD);
     }
 
-    @Override
-    public void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+    // JTransforms version
+//    @Override
+//    public void propagateXInPlace(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
+//
+//        // debugging
+//        // System.out.println("esDsAtNode[1] = " + Arrays.toString(esDsAtNode[1]));
+//        // System.out.println("scratch[1] = " + Arrays.toString(scratch[1]));
+//
+//        // grab dt and nDimensions from state
+//        if (lowRes) SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYLo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
+//        else SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
+//    }
 
-        // transposing esDs to scratch
-//        for (int ithDim=0; ithDim < nDimensions; ithDim++) {
-//            for (int i=0; i < esDsAtNode[ithDim].length; i++) {
-//                scratchAtNode[ithDim][i] = esDsAtNode[ithDim][i];
-//            }
-//        }
+    @Override
+    public void propagateXInPlace(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {
 
         // debugging
         // System.out.println("esDsAtNode[1] = " + Arrays.toString(esDsAtNode[1]));
         // System.out.println("scratch[1] = " + Arrays.toString(scratch[1]));
 
         // grab dt and nDimensions from state
-        if (lowRes) SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYLo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
-        else SSEUtils.propagateEandDinXQuaLike(esDsAtNode, scratchAtNode, fYHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
+        if (lowRes) SSEUtils.propagateEandDinXQuaLikeSST(esDsAtNode, fftFYCALo, scratchAtNode, scratchRALo, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, fftForEandDLo);
+        else SSEUtils.propagateEandDinXQuaLikeSST(esDsAtNode, fftFYCAHi, scratchAtNode, scratchRAHi, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, fftForEandDHi);
     }
 
     @Override

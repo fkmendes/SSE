@@ -1,9 +1,9 @@
 package test;
 
 import SSE.SSEUtils;
+import org.junit.Assert;
 import org.junit.Test;
 
-import javax.management.RuntimeErrorException;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -32,7 +32,7 @@ public class OtherUtilsTest {
     }
 
     @Test
-    public void testGetEveryOtherElement() {
+    public void testEveryOtherToHead() {
         // input arrays
         double[] fromArray1 = new double[] { 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0,
                 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0 };
@@ -64,11 +64,28 @@ public class OtherUtilsTest {
                 1.0, 2.0, 5.0, 7.0, 9.0, 11.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0,
                 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0 };
 
-        SSEUtils.everyOtherInPlace(fromArray1, 8, 1, 1, 2, 1.0);
-        SSEUtils.everyOtherInPlace(fromArray2, 12, 2, 2, 2, 1.0);
+        SSEUtils.everyOtherToHeadInPlace(fromArray1, 8, 1, 1, 2, 1.0);
+        SSEUtils.everyOtherToHeadInPlace(fromArray2, 12, 2, 2, 2, 1.0);
 
         assertArrayEquals(toArrayExpected1, fromArray1, 0.0);
         assertArrayEquals(toArrayExpected2, fromArray2, 0.0);
+    }
+
+    /*
+     * Simple test for static method in SSEUtils.
+     *
+     * This is used to spread fY, so it can be used
+     * in the convolution of a 'real complex real complex...'
+     * array.
+     */
+    @Test
+    public void testEveryOtherExpand() {
+        double[] anArray = new double[] { 1, 2, 3, 4, 0, 0, 0, 0 };
+        SSEUtils.everyOtherExpandInPlace(anArray);
+
+        double[] expected = new double[] { 1.0, 0.0, 2.0, 0.0, 3.0, 0.0, 4.0, 0.0 };
+
+        Assert.assertArrayEquals(expected, anArray, 0.0);
     }
 
     /*

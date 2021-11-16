@@ -15,7 +15,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static SSE.SSEUtils.everyOtherInPlace;
+import static SSE.SSEUtils.everyOtherToHeadInPlace;
 
 /*
  * Tests for the main methods in QuaSSEDistribution.
@@ -463,12 +463,12 @@ public class QuaSSEDistributionTest {
         // copying fY for assert (leaving original one inside class untouched)
         double[] fftedfY4Assert = new double[fftedfY.length]; // just for test, not used in propagate in X
         for (int i=0; i<fftedfY.length; i++) fftedfY4Assert[i] = fftedfY[i];
-        everyOtherInPlace(fftedfY4Assert, q32Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
+        everyOtherToHeadInPlace(fftedfY4Assert, q32Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = new double[2][esDsLoAtNode[0].length];
-        q32Dt001.propagateXInPlace(nodeIdx, esDsLoAtNode, scratchAtNode, true);
+        q32Dt001.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
 
         // looking at 'sp1'
         esDsLoAtNode = q32Dt001.getEsDsAtNode(nodeIdx, true);
@@ -527,12 +527,12 @@ public class QuaSSEDistributionTest {
         // copying fY for assert (leaving original one inside class untouched)
         double[] fftedfY4Assert = new double[fftedfY.length]; // just for test, not used in propagate in X
         for (int i=0; i<fftedfY.length; i++) fftedfY4Assert[i] = fftedfY[i];
-        everyOtherInPlace(fftedfY4Assert, q1024.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
+        everyOtherToHeadInPlace(fftedfY4Assert, q1024.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = q1024.getScratchAtNode(nodeIdx, true); // sp1
-        q1024.propagateXInPlace(nodeIdx, esDsLoAtNode, scratchAtNode, true);
+        q1024.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
 
         esDsLoAtNode = q1024.getEsDsAtNode(nodeIdx, true);
         double[] esLoAtNode = esDsLoAtNode[0];
@@ -593,11 +593,11 @@ public class QuaSSEDistributionTest {
         // copying fY for assert (leaving original one inside class untouched)
         double[] fftedfY4Assert = new double[fftedfY.length]; // just for test, not used in propagate in X
         for (int i=0; i < fftedfY.length; i++) fftedfY4Assert[i] = fftedfY[i];
-        everyOtherInPlace(fftedfY4Assert, q1024.getnXbins(false),0, 0, 2, 1.0); // getting real part for assert below
+        everyOtherToHeadInPlace(fftedfY4Assert, q1024.getnXbins(false),0, 0, 2, 1.0); // getting real part for assert below
 
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
         double[][] scratchAtNode = q1024.getScratchAtNode(nodeIdx, false); // sp1
-        q1024.propagateXInPlace(nodeIdx, esDsHiAtNode, scratchAtNode, false);
+        q1024.propagateXInPlace(esDsHiAtNode, scratchAtNode, false);
 
         esDsHiAtNode = q1024.getEsDsAtNode(nodeIdx, false);
         double[] esLoAtNode = esDsHiAtNode[0];
@@ -677,11 +677,11 @@ public class QuaSSEDistributionTest {
         // copying fY for assert (leaving original one inside class untouched)
         double[] fftedfY4Assert = new double[fftedfY.length]; // just for test, not used in propagate in X
         for (int i=0; i < fftedfY.length; i++) fftedfY4Assert[i] = fftedfY[i];
-        everyOtherInPlace(fftedfY4Assert, q32Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
+        everyOtherToHeadInPlace(fftedfY4Assert, q32Dt001.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        q32Dt001.propagateXInPlace(nodeIdx, esDsLoAtNode, scratchAtNode, true);
+        q32Dt001.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
         esDsLoAtNode = q32Dt001.getEsDsAtNode(nodeIdx, true);
 
 
@@ -760,11 +760,11 @@ public class QuaSSEDistributionTest {
         // copying fY for assert (leaving original one inside class untouched)
         double[] fftedfY4Assert = new double[fftedfY.length]; // just for test, not used in propagate in X
         for (int i=0; i < fftedfY.length; i++) fftedfY4Assert[i] = fftedfY[i];
-        everyOtherInPlace(fftedfY4Assert, q32Dt002.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
+        everyOtherToHeadInPlace(fftedfY4Assert, q32Dt002.getnXbins(true),0, 0, 2, 1.0); // getting real part for assert below
 
         // just propagate in x, in place
         // calling the actual method we want to test after making sure the FFTed fY and the initial D's are correct
-        q32Dt002.propagateXInPlace(nodeIdx, esDsLoAtNode, scratchAtNode, true);
+        q32Dt002.propagateXInPlace(esDsLoAtNode, scratchAtNode, true);
         esDsLoAtNode = q32Dt002.getEsDsAtNode(nodeIdx, true);
 
 
