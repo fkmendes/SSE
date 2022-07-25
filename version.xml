@@ -1,0 +1,5 @@
+<package name='beast-mosse' version='0.0.1'>
+  <depends on='beast2' atleast='2.6.6' atmost="2.6.9"/>
+  <depends on='BEASTLabs' atleast='1.9.6' atmost="1.9.9"/>
+  <depends on='biogeo' atleast='0.0.1' atmost="0.0.9"/>
+</package>
