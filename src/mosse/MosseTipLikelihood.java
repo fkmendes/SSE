@@ -1,3 +1,5 @@
+package mosse;
+
 import beast.core.CalculationNode;
 import beast.core.Description;
 import beast.core.Input;
