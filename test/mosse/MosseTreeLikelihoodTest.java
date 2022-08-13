@@ -19,7 +19,7 @@ import java.util.List;
 
 public class MosseTreeLikelihoodTest {
 
-    private Alignment getAlignment(int numLeaves, String[] sequences) {
+    public Alignment getAlignment(int numLeaves, String[] sequences) {
         List<Sequence> seqList = new ArrayList<Sequence>();
 
         for (int i = 0; i < numLeaves; i++) {
@@ -62,11 +62,24 @@ public class MosseTreeLikelihoodTest {
 
 
         TaxonSet taxonSet = new TaxonSet(alignment);
-        TraitSet traitData = new TraitSet();
-        traitData.initByName(
-                "traitname", "traits",
-                "taxa", taxonSet,
-                "value", "t0=1.0, t1=10.0");
+        int numTraits = 2;
+        // trait 0
+        TraitSet trait0 = new TraitSet();
+        String trait0Values = "t0=1.0, t1=10.0";
+        trait0.initByName(
+                "traitname", "trait0",
+                "taxa", new TaxonSet(alignment),
+                "value", trait0Values);
+        // trait 1
+        TraitSet trait1 = new TraitSet();
+        String trait1Values = "t0=15.0, t1=20.0";
+        trait1.initByName(
+                "traitname", "trait1",
+                "taxa", new TaxonSet(alignment),
+                "value", trait1Values);
+        List<TraitSet> traitsList = new ArrayList<>(numTraits);
+        traitsList.add(trait0);
+        traitsList.add(trait1);
 
         double startSubsRate = 1E-10;
         double endSubsRate = 1E-8;
@@ -78,7 +91,7 @@ public class MosseTreeLikelihoodTest {
                 "tree", tree,
                 "siteModel", siteModel,
                 "tipModel", tipModel,
-                "traits", traitData,
+                "traits", traitsList,
                 "startSubsRate", Double.toString(startSubsRate),
                 "endSubsRate", Double.toString(endSubsRate),
                 "numRateBins", Integer.toString(numBins)

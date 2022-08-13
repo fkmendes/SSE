@@ -14,31 +14,29 @@ import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Description("Mosse likelihood class calculates the probability of sequence and trait data on a tree")
 public class MosseTreeLikelihood extends TreeLikelihood {
 
-    final public Input<TraitSet> traitsInput = new Input<>("traits", "trait data for the beast tree", Input.Validate.REQUIRED);
-//    final public Input<MosseDistribution> treePriorInput = new Input<>("treePrior", "the tree prior model", Input.Validate.REQUIRED);
+    final public Input<List<TraitSet>> traitListInput = new Input<>("traits", "list of traits", new ArrayList<>());
     final public Input<MosseTipLikelihood> tipModelInput = new Input<>("tipModel", "model of tip probabilities", Input.Validate.REQUIRED);
     final public Input<RealParameter> startSubsRateInput = new Input<>("startSubsRate", "lower range for substitution rate", Input.Validate.REQUIRED);
     final public Input<RealParameter> endSubsRateInput = new Input<>("endSubsRate", "upper range for substitution rate", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> numRateBinsInput = new Input<>("numRateBins", "number of bins for substitution rate", Input.Validate.REQUIRED);
 
-    protected TraitSet traits;
-    protected MosseDistribution mosseDistribution;
+    protected List<TraitSet> traits;
     protected MosseTipLikelihood tipModel;
-
     protected double startSubsRate;
     protected double endSubsRate;
     protected int numRateBins;
 
     @Override
     public void initAndValidate() {
-        traits = traitsInput.get();
+        traits = traitListInput.get();
         tipModel = tipModelInput.get();
-//        mosseDistribution = treePriorInput.get();
         startSubsRate = startSubsRateInput.get().getValue();
         endSubsRate = endSubsRateInput.get().getValue();
         numRateBins = numRateBinsInput.get().getValue();
@@ -113,8 +111,9 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             Alignment data = dataInput.get();
             int states = data.getDataType().getStateCount();
             String taxonName = node.getID();
-            double trait0 = traits.getValue(taxonName); // get traits 0
-            double trait1 = traits.getValue(taxonName); // get traits 1 (may need to use traitSet List here)
+            // TODO: generalize to n number of traits
+            double trait0 = traits.get(0).getValue(taxonName); // get traits 0
+            double trait1 = traits.get(1).getValue(taxonName); // get traits 1
             double[] partials = new double[patternCount * states * numRateBins];
             int k = 0;
             int taxonIndex = data.getTaxonIndex(node.getID());
