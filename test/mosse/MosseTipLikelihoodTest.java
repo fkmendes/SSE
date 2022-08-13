@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
 
-public class TestMosseTipLikelihood {
+public class MosseTipLikelihoodTest {
 
     private static double DELTA = 1e-10;
 
