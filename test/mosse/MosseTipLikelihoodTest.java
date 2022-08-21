@@ -1,6 +1,10 @@
 package mosse;
 
+import beast.core.parameter.RealParameter;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static junit.framework.Assert.assertEquals;
 
@@ -14,20 +18,21 @@ public class MosseTipLikelihoodTest {
         double beta1 = 0.2;
         double epsilon = 0.01;
 
-        double trait0 = 1.0;
-        double trait1 = 1.0;
+        double[] traits = {1.0, 1.0};
         double a = -5.0;
         double b = 5.0;
 
+        Double[] betasArray = {beta0, beta1};
+        RealParameter betas = new RealParameter(betasArray);
+
         MosseTipLikelihood tipLikelihood = new MosseTipLikelihood();
         tipLikelihood.initByName(
-                "beta0", Double.toString(beta0),
-                "beta1", Double.toString(beta1),
+                "beta", betas,
                 "epsilon", Double.toString(epsilon)
         );
         tipLikelihood.initAndValidate();
 
-        double prob = tipLikelihood.getTipLikelihood(a, b, trait0, trait1);
+        double prob = tipLikelihood.getTipLikelihood(a, b, traits);
 
         assertEquals(1.0, prob, DELTA);
     }

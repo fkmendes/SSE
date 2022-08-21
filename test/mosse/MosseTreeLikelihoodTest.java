@@ -1,18 +1,15 @@
 package mosse;
 
+import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Sequence;
 import beast.evolution.alignment.TaxonSet;
-import beast.evolution.likelihood.TreeLikelihood;
 import beast.evolution.sitemodel.SiteModel;
 import beast.evolution.substitutionmodel.JukesCantor;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
-import beast.util.treeparser.NewickParser;
-import com.sun.xml.internal.bind.v2.model.core.EnumLeafInfo;
+
 import org.junit.Test;
-import test.beast.BEASTTestCase;
-import test.beast.evolution.tree.TraitSetTest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,17 +46,15 @@ public class MosseTreeLikelihoodTest {
                 "gammaCategoryCount", 1,
                 "substModel", JC);
 
-        double beta0 = 0.1;
-        double beta1 = 0.2;
+        Double[] betasArray = {0.1, 0.2};
         double epsilon = 0.01;
+
         MosseTipLikelihood tipModel = new MosseTipLikelihood();
         tipModel.initByName(
-                "beta0", Double.toString(beta0),
-                "beta1", Double.toString(beta1),
+                "beta", new RealParameter(betasArray),
                 "epsilon", Double.toString(epsilon)
         );
         tipModel.initAndValidate();
-
 
         TaxonSet taxonSet = new TaxonSet(alignment);
         int numTraits = 2;
@@ -91,6 +86,8 @@ public class MosseTreeLikelihoodTest {
                 "tree", tree,
                 "siteModel", siteModel,
                 "tipModel", tipModel,
+                "treeModel", new MosseDistribution(),
+                "traitModel", new BrownianMotion(),
                 "traits", traitsList,
                 "startSubsRate", Double.toString(startSubsRate),
                 "endSubsRate", Double.toString(endSubsRate),
