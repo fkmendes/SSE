@@ -11,6 +11,22 @@ import java.util.Random;
 @Description("Mosse tree prior model")
 public class MosseDistribution extends TreeDistribution {
 
+    static {
+        System.loadLibrary("test");
+    }
+
+    private native long makeMosseFFT(int nx, double dx, int[] array_nd, int flags);
+
+    private native void mosseFinalize(long obj_ptr);
+
+    public static void main(String[] args) {
+
+        MosseDistribution d = new MosseDistribution();
+        int arr[] = {1,2,3};
+        long ptr = d.makeMosseFFT(1024, 0.1, arr, 0);
+        d.mosseFinalize(ptr);
+    }
+
     private double[][] eProbs;
     private double[][] dProbs;
 
