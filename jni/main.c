@@ -24,6 +24,7 @@ JNIEXPORT jlong JNICALL Java_mosse_MosseDistribution_makeMosseFFT(
   jint *const_array_body = (*env)->GetIntArrayElements(env, array_nd, 0);
   int *local_nd = malloc(sizeof(int) * n_fft);
   assert(local_nd);
+  // copy java array to c array
   memcpy(local_nd, const_array_body, sizeof(int) * n_fft);
   (*env)->ReleaseIntArrayElements(env, array_nd, const_array_body, 0);
 
@@ -32,47 +33,127 @@ JNIEXPORT jlong JNICALL Java_mosse_MosseDistribution_makeMosseFFT(
   return (jlong)(obj);
 }
 
-// JNIEXPORT jlong JNICALL Java_mosse_MosseDistribution_doIntegrateMosse(
-//     JNIEnv *env, jobject thisObject, jlong mosse_ptr, SEXP lambda, SEXP mu,
-//     SEXP drift, SEXP diffusion, SEXP Q, SEXP nt, SEXP dt, SEXP padding) {
-//   mosse_fft *obj = (mosse_fft *)(mosse_ptr);
-//   assert(obj);
-
-//   int nkl = INTEGER(padding)[0], nkr = INTEGER(padding)[1];
-//   int ndat = LENGTH(lambda);
-//   double c_dt = REAL(dt)[0];
-//   int c_nt = INTEGER(nt)[0];
-//   double *c_lambda = REAL(lambda), *c_mu = REAL(mu);
-//   double c_drift = REAL(drift)[0], c_diffusion = REAL(diffusion)[0];
-//   int i, idx, nd;
-
-//   nd = LENGTH(vars) / obj->nx;
-
-//   idx = lookup(nd, obj->nd, obj->n_fft);
-//   if (idx < 0)
-//     error("Failed to find nd = %d\n", nd);
-
-//   qf_copy_x_mosse(obj, REAL(vars), nd, 1);
-
-//   obj->lambda = REAL(lambda);
-//   obj->mu = REAL(mu);
-//   obj->Q = REAL(Q);
-
-//   for (i = 0; i < ndat; i++)
-//     obj->z[i] = exp(c_dt * (c_lambda[i] - c_mu[i]));
-
-//   qf_setup_kern_mosse(obj, c_drift, c_diffusion, c_dt, nkl, nkr);
-
-//   do_integrate_mosse(obj, c_nt, idx);
-
-//   obj->lambda = NULL;
-//   obj->mu = NULL;
-
-//   PROTECT(ret = allocMatrix(REALSXP, obj->nx, nd));
-//   qf_copy_x_mosse(obj, REAL(ret), nd, 0);
-
-//   return ret;
+// JNIEXPORT void JNICALL Java_mosse_MosseDistribution_propagateT(JNIEnv *env, jobject thisObject, jlong obj_ptr) {
+//    mosse_fft *obj = (mosse_fft *)(obj_ptr);
+//    int idx = 0;
+//    propagate_t_mosse(obj, idx);
 // }
+
+JNIEXPORT jdoubleArray JNICALL Java_mosse_MosseDistribution_getX(JNIEnv *env, jobject thisObject, jlong obj_ptr) {
+   mosse_fft *obj = (mosse_fft*)(obj_ptr);
+   // convert c array to java array and return it
+   int size = (obj->max_nd) * (obj->nx);
+   jdoubleArray result = (*env)->NewDoubleArray(env, size);
+   // move c array structure to java structure 
+   (*env)->SetDoubleArrayRegion(env, result, 0, size, obj->x); 
+   return result;
+
+}
+
+JNIEXPORT jdoubleArray JNICALL Java_mosse_MosseDistribution_doIntegrateMosse(
+    JNIEnv *env, jobject thisObject, jlong mosse_ptr, jdoubleArray vars, jdoubleArray lambda, jdoubleArray mu,
+    jdouble drift, jdouble diffusion, jdoubleArray Q, jint nt, jdouble dt, jint pad_left, jint pad_right) {
+  
+  mosse_fft *obj = (mosse_fft *)(mosse_ptr);
+  assert(obj);
+
+  int nkl = pad_left;
+  int nkr = pad_right;
+  // int ndat = LENGTH(lambda);
+  int ndat = (int)((*env)->GetArrayLength(env, lambda));
+  double c_dt = dt;
+  int c_nt = nt;
+  // double *c_lambda = REAL(lambda);
+  // double *c_mu = REAL(mu);
+  double c_drift = drift;
+  double c_diffusion = diffusion;
+  int i, idx, nd;
+
+  int len_vars = (int)((*env)->GetArrayLength(env, vars));
+  nd = len_vars / obj->nx;
+
+  // setup c lambda array
+  jsize n_lambda = (int)((*env)->GetArrayLength(env, lambda));
+  jdouble *const_array_body_lambda = (*env)->GetDoubleArrayElements(env, lambda, 0);
+  double *c_lambda = malloc(sizeof(double) * n_lambda);
+  assert(c_lambda);
+  memcpy(c_lambda, const_array_body_lambda, sizeof(int) * n_lambda);
+  (*env)->ReleaseDoubleArrayElements(env, lambda, const_array_body_lambda, 0);
+
+  // setup c mu array
+  jsize n_mu = (int)((*env)->GetArrayLength(env, mu));
+  jdouble *const_array_body_mu = (*env)->GetDoubleArrayElements(env, mu, 0);
+  double *c_mu = malloc(sizeof(double) * n_mu);
+  assert(c_mu);
+  memcpy(c_mu, const_array_body_mu, sizeof(int) * n_mu);
+  (*env)->ReleaseDoubleArrayElements(env, mu, const_array_body_mu, 0);
+
+  // setup c vars array
+  jsize n_vars = (int)((*env)->GetArrayLength(env, vars));
+  jdouble *const_array_body_vars = (*env)->GetDoubleArrayElements(env, vars, 0);
+  double *c_vars = malloc(sizeof(double) * n_vars);
+  assert(c_vars);
+  memcpy(c_vars, const_array_body_vars, sizeof(int) * n_vars);
+  (*env)->ReleaseDoubleArrayElements(env, vars, const_array_body_vars, 0);
+
+  // setup Q c array
+  jsize n_Q = (int)((*env)->GetArrayLength(env, Q));
+  jdouble *const_array_body_Q = (*env)->GetDoubleArrayElements(env, Q, 0);
+  double *c_Q = malloc(sizeof(double) * n_Q);
+  assert(c_Q);
+  memcpy(c_Q, const_array_body_Q, sizeof(int) * n_Q);
+  (*env)->ReleaseDoubleArrayElements(env, Q, const_array_body_Q, 0);
+
+  idx = lookup(nd, obj->nd, obj->n_fft);
+  if (idx < 0) {
+    printf("Failed to find nd = %d\n", nd);
+    abort();
+  }
+
+  qf_copy_x_mosse(obj, c_vars, nd, 1);
+
+  obj->lambda = c_lambda;
+  obj->mu = c_mu;
+  obj->Q = c_Q;
+
+  for (i = 0; i < ndat; i++)
+    obj->z[i] = exp(c_dt * (c_lambda[i] - c_mu[i]));
+
+  qf_setup_kern_mosse(obj, c_drift, c_diffusion, c_dt, nkl, nkr);
+
+  do_integrate_mosse(obj, c_nt, idx);
+
+  obj->lambda = NULL;
+  obj->mu = NULL;
+
+  // PROTECT(ret = allocMatrix(REALSXP, obj->nx, nd));
+  int size = obj->nx * nd;
+  double *result = (double*)malloc(sizeof(double) * size); 
+  qf_copy_x_mosse(obj, result, nd, 0); // copy obj to result
+
+  // copy to java array
+  jdoubleArray j_result = (*env)->NewDoubleArray(env, size);
+  (*env)->SetDoubleArrayRegion(env, j_result, 0, size, result);
+
+  // free memory
+  free(c_lambda);
+  free(c_mu);
+  free(c_vars);
+  free(c_Q);
+
+  return j_result;
+}
+
+int lookup(int x, int *v, int len) {
+  int i, idx=-1;
+  for ( i = 0; i < len; i++ )
+    if ( v[i] == x ) {
+      idx = i;
+      break;
+    }
+
+  return idx;
+}
 
 double dnorm(double x, double mu, double sigma, int give_log) {
 
@@ -171,6 +252,7 @@ mosse_fft *make_mosse_fft(int n_fft, int nx, double dx, int *nd, int flags) {
 
   obj->x = fftw_malloc(max_nd * nx * sizeof(double));
   obj->y = fftw_malloc(max_nd * (ny + 1) * sizeof(fftw_complex));
+  obj->max_nd = max_nd;
 
   obj->z = (double *)calloc(nx, sizeof(double));
   obj->wrk = (double *)calloc(nx, sizeof(double));
@@ -224,10 +306,11 @@ JNIEXPORT void JNICALL Java_mosse_MosseDistribution_mosseFinalize(JNIEnv *env, j
 void qf_copy_x_mosse(mosse_fft *obj, double *x, int nd, int copy_in) {
   int i, n = obj->nx * nd;
   double *fft_x = obj->x;
-  if (copy_in)
-    for (i = 0; i < n; i++)
+  if (copy_in) {
+    for (i = 0; i < n; i++) {
       fft_x[i] = x[i];
-  else {
+    }
+  } else {
     for (i = 0; i < n; i++) {
       x[i] = fft_x[i];
     }

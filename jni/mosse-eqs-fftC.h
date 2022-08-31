@@ -17,6 +17,7 @@ typedef struct {
   double dx; /* distance between x's */
 
   int *nd;    /* number of dimensions for each plan */
+  int max_nd; /* max nd */
 
   /* Data */
   double *x;
