@@ -27,7 +27,6 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     // tip model, species diversification model and trait model
     final public Input<MosseTipLikelihood> tipModelInput = new Input<>("tipModel", "model of tip probabilities", Input.Validate.REQUIRED);
     final public Input<Distribution> treeModelInput = new Input<>("treeModel", "species diversification model", Input.Validate.REQUIRED);
-    final public Input<Distribution> traitModelInput = new Input<>("traitModel", "model of trait evolution (e.g., brownian motion)", Input.Validate.REQUIRED);
     // substitution rate parameters
     final public Input<RealParameter> startSubsRateInput = new Input<>("startSubsRate", "lower range for substitution rate", Input.Validate.REQUIRED);
     final public Input<RealParameter> endSubsRateInput = new Input<>("endSubsRate", "upper range for substitution rate", Input.Validate.REQUIRED);
@@ -36,7 +35,6 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     protected List<TraitSet> traits;
     protected MosseTipLikelihood tipModel;
     protected Distribution treeModel;
-    protected Distribution traitModel;
     protected double startSubsRate;
     protected double endSubsRate;
     protected int numRateBins;
@@ -46,7 +44,6 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         traits = traitListInput.get();
         tipModel = tipModelInput.get();
         treeModel = treeModelInput.get();
-        traitModel = traitModelInput.get();
 
         startSubsRate = startSubsRateInput.get().getValue();
         endSubsRate = endSubsRateInput.get().getValue();

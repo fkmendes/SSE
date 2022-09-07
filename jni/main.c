@@ -77,7 +77,7 @@ JNIEXPORT jdoubleArray JNICALL Java_mosse_MosseDistribution_doIntegrateMosse(
   jdouble *const_array_body_lambda = (*env)->GetDoubleArrayElements(env, lambda, 0);
   double *c_lambda = malloc(sizeof(double) * n_lambda);
   assert(c_lambda);
-  memcpy(c_lambda, const_array_body_lambda, sizeof(int) * n_lambda);
+  memcpy(c_lambda, const_array_body_lambda, sizeof(double) * n_lambda);
   (*env)->ReleaseDoubleArrayElements(env, lambda, const_array_body_lambda, 0);
 
   // setup c mu array
@@ -85,7 +85,7 @@ JNIEXPORT jdoubleArray JNICALL Java_mosse_MosseDistribution_doIntegrateMosse(
   jdouble *const_array_body_mu = (*env)->GetDoubleArrayElements(env, mu, 0);
   double *c_mu = malloc(sizeof(double) * n_mu);
   assert(c_mu);
-  memcpy(c_mu, const_array_body_mu, sizeof(int) * n_mu);
+  memcpy(c_mu, const_array_body_mu, sizeof(double) * n_mu);
   (*env)->ReleaseDoubleArrayElements(env, mu, const_array_body_mu, 0);
 
   // setup c vars array
@@ -93,7 +93,7 @@ JNIEXPORT jdoubleArray JNICALL Java_mosse_MosseDistribution_doIntegrateMosse(
   jdouble *const_array_body_vars = (*env)->GetDoubleArrayElements(env, vars, 0);
   double *c_vars = malloc(sizeof(double) * n_vars);
   assert(c_vars);
-  memcpy(c_vars, const_array_body_vars, sizeof(int) * n_vars);
+  memcpy(c_vars, const_array_body_vars, sizeof(double) * n_vars);
   (*env)->ReleaseDoubleArrayElements(env, vars, const_array_body_vars, 0);
 
   // setup Q c array
@@ -101,7 +101,7 @@ JNIEXPORT jdoubleArray JNICALL Java_mosse_MosseDistribution_doIntegrateMosse(
   jdouble *const_array_body_Q = (*env)->GetDoubleArrayElements(env, Q, 0);
   double *c_Q = malloc(sizeof(double) * n_Q);
   assert(c_Q);
-  memcpy(c_Q, const_array_body_Q, sizeof(int) * n_Q);
+  memcpy(c_Q, const_array_body_Q, sizeof(double) * n_Q);
   (*env)->ReleaseDoubleArrayElements(env, Q, const_array_body_Q, 0);
 
   idx = lookup(nd, obj->nd, obj->n_fft);
@@ -168,7 +168,7 @@ double dnorm(double x, double mu, double sigma, int give_log) {
   }
   if (sigma <= 0) {
     if (sigma < 0) {
-      printf("Error!");
+      printf("Error!\n");
       return NAN;
     }
     /* sigma == 0 */

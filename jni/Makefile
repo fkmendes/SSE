@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I. -lm -lfftw3 -g -O2 -I/usr/lib/jvm/java-8-openjdk-amd64/include/ -I/usr/lib/jvm/java-8-openjdk-amd64/include/linux/
+CFLAGS=-I. -lm -lfftw3 -g -O2 -I/usr/lib/jvm/java-8-openjdk-amd64/include/ -I/usr/lib/jvm/java-8-openjdk-amd64/include/linux/ -Werror
 DEPS = mosse-eqs-fftC.h quasse_eqs-fftC.h rfftw.h
 OBJ = main.o
 LFLAGS = -shared -fPIC

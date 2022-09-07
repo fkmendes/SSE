@@ -87,7 +87,6 @@ public class MosseTreeLikelihoodTest {
                 "siteModel", siteModel,
                 "tipModel", tipModel,
                 "treeModel", new MosseDistribution(),
-                "traitModel", new BrownianMotion(),
                 "traits", traitsList,
                 "startSubsRate", Double.toString(startSubsRate),
                 "endSubsRate", Double.toString(endSubsRate),
