@@ -5,6 +5,8 @@
 ##
 ## (1) testDimensions
 ## (2) testInitializationOfTips
+
+
 ## (8) testIntegrateOneBranchLoRes32BinsOutsideClassJustT
 ## (9) testIntegrateOneBranchLoRes32BinsOutsideClassJustX (see test (4))
 ## (10) testIntegrateOneBranchLoRes1024BinsOutsideClassJustX
@@ -71,113 +73,6 @@ print(paste(res[1:10,2], collapse=", "))
 
 
 
-## (2) testMakeNormalKernInPlaceAndFFT
-##
-## The normal kernel (fy) gives the probability of a change in quantitative
-## trait values; here, each x bin is the CHANGE in quantitative trait values
-## (not the quantitative trait values themselves!)
-##
-## Under BM, for example, this kernel is centered at 0.0
-##
-## This kernel (yValues) is later FFT-ed in the likelihood class, and then used
-## in the convolution function, and for reasons I do not fully understand,
-## this bell-shaped kernel needs to be cuts in two, with the left half being
-## placed at the (right-)tail end of the kernel, and the right half at the
-## (left-)head of the kernel
-
-drift <- 0.0
-diffusion <- 0.001
-nkl <- nkr <- 2
-nx <- 32
-
-# changed from 0.001 -> 0.01, updating!
-dx <- 0.01 # (dx * nx) gives the range of x values we're considering
-
-# '-' in -dt because we're going back in time
-kern <- fftR.make.kern.debug(-dt * drift, sqrt(dt * diffusion), nx, dx, nkl, nkr)
-
-paste(kern, collapse=", ") # expectedFy = 0.986703287028858, 0.00664835445182386, 2.03374705433156e-09, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2.03374705433156e-09, 0.00664835445182386
-
-## plot(kern)
-
-## x: the substitution rate
-## y: gives you the probability of changing from x to (x + delta.x) over time dt,
-## with delta.x being (dx * nkr) on the right-hand side of x, and (dx * nkl) on
-## the left-hand side of x
-##
-## (later, y will be fourier-transformed into fy)
-
-## worked example
-##
-## min x = 0.0
-## max x = 0.1 = 1/10
-## start x at rate = 0.01 = 1/100
-## dx = 0.001
-## nx = 100
-## nkl = nkr = 4
-##
-## x is at 10th bin, so we ignore anything beyond nkl and nkr bins away from 10th, meaning
-## x will influence from 5th - 15th bins
-##
-## the first bin gives the probability that x stays where it is
-## the 2nd - 6th bin give the probability x changes to 11th - 15th bins
-## the 95th - 100th bins give the probability x changes to the 9th - 5th
-
-fy <- fft(kern)
-
-## We don't immediately ifft fy in the likelihood calculation, this is being
-## done here for testing purposes
-ify <- ifft(fy)
-
-paste(Re(fy)[1:10], collapse=", ") # expectedFftFY = 1, 0.999744507157237, 0.998987847110852, 0.997759097982437, 0.996105480062091, 0.994090541136289, 0.991791714355113, 0.989297342492751, 0.986703282961364, 0.984109224049216
-
-paste(Re(ify)[1:10], collapse=", ") # expectedIfftFY = 31.5745051849235, 0.212747342458364, 6.50799056989047e-08, 1.52655665885959e-16, -4.44089209850063e-16, -2.35784152995104e-16, -4.15496150260171e-16, -2.91433543964104e-16, -8.88178419700125e-16, 8.15320033709099e-17
-
-
-
-## (3) testConvolve
-
-## see vars.fft.just.x below to see where this came from
-vars <- cbind(rep(0.0, 32), c(0.0058389385158292, 0.0122380386022755, 0.0246443833694604, 0.0476817640292969, 0.0886369682387602, 0.158309031659599, 0.271659384673712, 0.447890605896858, 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522965, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522965, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 0, 0, 0, 0))
-
-
-## convolve
-paste(Re(apply(apply(vars, 2, fft) * fy, 2, ifft))[,2], collapse=", ") # expectedDsUnnormalized = 0.186965206235882, 0.392895262124355, 0.790881995397243, 1.52962842317328, 2.84249242686772, 5.0751814647876, 8.70647806374478, 14.3506616579459, 22.726870664534, 34.581632450077, 50.5579348423759, 71.0184208525211, 95.849626817365, 124.293227499606, 154.860992049653, 185.384774972034, 213.227631891732, 235.64066883828, 250.204040383914, 255.255834736325, 250.204040383914, 235.64066883828, 213.227631891732, 185.384774972034, 154.860992049653, 124.293227499606, 95.8496267146036, 70.6824920549429, 0.471962450911363, 1.44374375565803e-07, 3.80026676793932e-10, 0.00124221944851399
-
-## same as above, but normalizing Es and Ds by the number of bins
-vars.out <- Re(apply(apply(vars, 2, fft) * fy, 2, ifft)) / nx
-paste(vars.out[,1], collapse=", ") # expectedEs = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-paste(vars.out[,2], collapse=", ")
-## expectedDs = 0.00584266269487133, 0.0122779769413861,
-##
-## 0.0247150623561638, 0.047800888224165, 0.0888278883396163, 0.158599420774613, 0.272077439492024, 0.448458176810811, 0.710214708266688, 1.0806760140649, 1.57993546382425, 2.21932565164129, 2.99530083804266, 3.8841633593627, 4.83940600155166, 5.79327421787606, 6.66336349661661, 7.36377090119626, 7.81887626199732, 7.97674483551017, 7.81887626199732, 7.36377090119626, 6.66336349661661, 5.79327421787606,
-##
-## (continuation of expectedDs)
-## 4.83940600155166, 3.88416335936269, 2.99530083483136, 2.20882787671697, 0.0147488265909801, 4.51169923643135e-09, 1.18758336498104e-11, 3.88193577660623e-05
-
-
-
-## (4) testPropagateChOneCh32QuaSSETest
-##
-## This test differs from (3) in that fftR.propagate.x.debug will manage flanking bins
-## (ignoring the leftmost and rightmost 2 bins), as it should be done during likelihood
-## calculation. Note how the middle bins match (3), though.
-##
-## nx = 32
-## nkl and nkr = 2
-res <- fftR.propagate.x.debug(vars, nx, fy, nkl, nkr)
-
-paste(res[,1], collapse=", ") # 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-paste(res[,2], collapse=", ")
-## expectedDs = 0.0058389385158292, 0.0122380386022755,
-##
-## 0.0247150623561638, 0.047800888224165, 0.0888278883396163, 0.158599420774613, 0.272077439492024, 0.448458176810811, 0.710214708266688, 1.0806760140649, 1.57993546382425, 2.21932565164129, 2.99530083804266, 3.8841633593627, 4.83940600155166, 5.79327421787606, 6.66336349661661, 7.36377090119626, 7.81887626199732, 7.97674483551017, 7.81887626199732, 7.36377090119626, 6.66336349661661, 5.79327421787606,
-##
-## (continuation of expectedDs)
-## 4.83940600155166, 3.88372109966426, 2.9945493127149, 0, 0, 0, 0, 0
-
-
-
 # (5) testLogistic
 
 ## The following code is inside quasse.extent
@@ -215,40 +110,63 @@ paste(ls.hi[3989:3999], collapse=", ")
 
 
 
-# (6) testDimensions
+# (1) testDimensions
 
-## Requires some variables from (5)
-# modifying some of them though...
-dt <- 0.01; dx <- 0.0005; diffusion <- 0.001; w <- 10
+dt <- 0.01
+dx <- 0.0005
+nx <- 1024
+hi.lo.ratio <- 4
+w <- 10
+drift <- 0.0
+diffusion <- 0.001
+death <- 0.03 # for constant link function
+r <- 2.5 # logistic link function
+xmid <- 0.0
+y0 <- 0.1 # base y ("y" shift)
+y1 <- 0.2 # max y
 
+mean4test <- drift * dt
 sd4test <- sqrt(diffusion * dt);
+
 nkleft <- max(ceiling(-(mean4test - w * sd4test)/dx)) * c(hi.lo.ratio, 1)
 nkright <- max(ceiling((mean4test + w * sd4test)/dx)) * c(hi.lo.ratio, 1)
 
 ndat <- nx * c(hi.lo.ratio, 1) - (nkleft + 1 + nkright)
-ndat.lo <- ndat[2]; ndat.lo
-ndat.hi <- ndat[1]; ndat.hi
+ndat.lo <- ndat[2]; ndat.lo # 895
+ndat.hi <- ndat[1]; ndat.hi # 3583
 
 xmin.lo <- xmid - dx * ceiling((ndat.lo - 1)/2) # x.02
 xmin.hi <- xmin.lo - dx * (1 - 1/hi.lo.ratio) # x.01
 x.lo <- seq(xmin.lo, length.out=ndat.lo, by = dx) # same as ext.fft$x[[2]]
 x.hi <- seq(xmin.hi, length.out=ndat.hi, by = dx/hi.lo.ratio) # same as ext.fft$x[[1]]
 
-paste(x.lo[1:10], collapse=", ") # expectedXLoFirst10 = -0.2235, -0.223, -0.2225, -0.222, -0.2215, -0.221, -0.2205, -0.22, -0.2195, -0.219
-paste(x.lo[886:895], collapse=", ") # expectedXLoLast10 = 0.219, 0.2195, 0.22, 0.2205, 0.221, 0.2215, 0.222, 0.2225, 0.223, 0.2235
+paste(x.lo[1:10], collapse=", ")
+## expectedXLoFirst10 = -0.2235, -0.223, -0.2225, -0.222, -0.2215, -0.221, -0.2205, -0.22, -0.2195, -0.219
 
-paste(x.hi[1:10], collapse=", ") # expectedXHiFirst10 = -0.223875, -0.22375, -0.223625, -0.2235, -0.223375, -0.22325, -0.223125, -0.223, -0.222875, -0.22275
-paste(x.hi[3574:3583], collapse=", ") # expectedXHiFirst10 = 0.22275, 0.222875, 0.223, 0.223125, 0.22325, 0.223375, 0.2235, 0.223625, 0.22375, 0.223875
+paste(x.lo[886:895], collapse=", ")
+## expectedXLoLast10 = 0.219, 0.2195, 0.22, 0.2205, 0.221, 0.2215, 0.222, 0.2225, 0.223, 0.2235
 
-lambda <- sigmoid.x
-mu <- constant.x
+paste(x.hi[1:10], collapse=", ")
+## expectedXHiFirst10 = -0.223875, -0.22375, -0.223625, -0.2235, -0.223375, -0.22325, -0.223125, -0.223, -0.222875, -0.22275
+
+paste(x.hi[3574:3583], collapse=", ")
+## expectedXHiFirst10 = 0.22275, 0.222875, 0.223, 0.223125, 0.22325, 0.223375, 0.2235, 0.223625, 0.22375, 0.223875
+
+lambda <- sigmoid.x # lambda is now a logistic function
+mu <- constant.x # mu is now a constant function
 
 # lambdas
-paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[1:10], collapse=", ") # expectedLambdaLoFirt10 = 0.13638367349015, 0.136412610857295, 0.13644155805569, 0.136470515067719, 0.136499481875741, 0.136528458462084, 0.136557444809052, 0.13658644089892, 0.136615446713936, 0.136644462236322
-paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[886:895], collapse=", ") # expectedLambdaLoLast10 = 0.163355537763678, 0.163384553286064, 0.16341355910108, 0.163442555190948, 0.163471541537916, 0.163500518124259, 0.163529484932281, 0.16355844194431, 0.163587389142705, 0.16361632650985
+paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[1:10], collapse=", ")
+## expectedLambdaLoFirt10 = 0.13638367349015, 0.136412610857295, 0.13644155805569, 0.136470515067719, 0.136499481875741, 0.136528458462084, 0.136557444809052, 0.13658644089892, 0.136615446713936, 0.136644462236322
 
-paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[1:10], collapse=", ") # expectedLambdaHiFirt10 = 0.136361976927131, 0.136369208498794, 0.136376440686558, 0.13638367349015, 0.136390906909294, 0.136398140943716, 0.136405375593141, 0.136412610857295, 0.136419846735901, 0.136427083228686
-paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[3574:3583], collapse=", ") # expectedLambdaHiLast10 = 0.163572916771314, 0.163580153264099, 0.163587389142705, 0.163594624406859, 0.163601859056284, 0.163609093090706, 0.16361632650985, 0.163623559313442, 0.163630791501206, 0.163638023072869
+paste(do.call(lambda, c(list(x.lo), c(y0, y1, xmid, r)))[886:895], collapse=", ")
+## expectedLambdaLoLast10 = 0.163355537763678, 0.163384553286064, 0.16341355910108, 0.163442555190948, 0.163471541537916, 0.163500518124259, 0.163529484932281, 0.16355844194431, 0.163587389142705, 0.16361632650985
+
+paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[1:10], collapse=", ")
+## expectedLambdaHiFirt10 = 0.136361976927131, 0.136369208498794, 0.136376440686558, 0.13638367349015, 0.136390906909294, 0.136398140943716, 0.136405375593141, 0.136412610857295, 0.136419846735901, 0.136427083228686
+
+paste(do.call(lambda, c(list(x.hi), c(y0, y1, xmid, r)))[3574:3583], collapse=", ")
+## expectedLambdaHiLast10 = 0.163572916771314, 0.163580153264099, 0.163587389142705, 0.163594624406859, 0.163601859056284, 0.163609093090706, 0.16361632650985, 0.163623559313442, 0.163630791501206, 0.163638023072869
 
 # mus
 paste(do.call(mu, c(list(x.lo), death))[1:10], collapse=", ") # expectedMuLoFirst10 = 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03
@@ -262,36 +180,46 @@ paste(do.call(mu, c(list(x.hi), death))[3574:3583], collapse=", ") # expectedMuH
 
 # (7) testInitializationOfTips
 
+dx <- 0.0005
+hi.lo.ratio <- 4
+w <- 10
 drift <- 0.0
 diffusion <- 0.001
-lambda <- function(x) sigmoid.x(x, 0.1, 0.2, 0, 2.5)
-mu <- function(x) constant.x(x, 0.03)
+death <- 0.03 # for constant link function
+r <- 2.5 # logistic link function
+xmid <- 0.0
+y0 <- 0.1 # base y ("y" shift)
+y1 <- 0.2 # max y
+lambda <- function(x) sigmoid.x(x, y0, y1, xmid, r)
+mu <- function(x) constant.x(x, death)
 
 char <- make.brownian.with.drift(drift, diffusion)
+
 set.seed(1)
 phy <- tree.quasse(c(lambda, mu, char), max.taxa=2, x0=0, single.lineage=FALSE, verbose=FALSE)
-pars <- c(.1, .2, 0, 2.5, .03, 0, .001) # 6th and 7th elements are drift and diffusion
+pars <- c(y0, y1, xmid, r, death, drift, diffusion) # 6th and 7th elements are drift and diffusion
 sd <- 1/20
 control.C.1 <- list(dt.max=0.01) # dt = 0.01
 phy$tip.state[1] <- 0.0
 phy$tip.state[2] <- 0.1
 
 cache <- diversitree:::make.cache.quasse(phy, phy$tip.state, sd, lambda, mu, control.C.1, NULL)
-cache$height[1] <- cache$height[2] <- 0.01 # setting things manually
-cache$depth[3] <- 0.01
+cache$height[1] <- cache$height[2] <- 0.01 # setting branch length (node height) manually
+cache$depth[3] <- 0.01 # setting depth of ancestral node "nd1"
 cache$edge.length <- c(0.01, 0.01)
 cache$len <- c(0.01, 0.01, NA)
 
 ## these four lines are to make this cache match the previous unit tests
 cache$args$drift <- 6
 cache$args$diffusion <- 7
-cache$control$dx <- 0.0005 ## to match unit test
-cache$control$xmid <- 0.0 ## to match unit test
-cache$control$w <- 10
+cache$control$dx <- dx ## to match unit test
+cache$control$xmid <- xmid ## to match unit test
+cache$control$w <- w
 
-## taking following lines from R/model-quasse.R, make.quasse()
-# all.branches <- make.all.branches.quasse(cache, cache$control) # all.branches is a function
-f.pars <- diversitree:::make.pars.quasse(cache)
+## From now on: taking following lines from R/model-quasse.R, make.quasse()
+
+## all.branches <- make.all.branches.quasse(cache, cache$control) # all.branches is a function
+f.pars <- diversitree:::make.pars.quasse(cache) # f.pars is a function
 pars2 <- f.pars(pars)
 
 # understanding tip initialization
@@ -313,14 +241,17 @@ identical(cache$y$y$sp1, sp1.y) # TRUE
 identical(cache$y$y$sp2, sp2.y) # TRUE
 identical(cache$y$y$sp1, sp2.y) # FALSE (just as a control)
 
-sp1.y.ds <- sp1.y[nx+1:(length(sp1.y)-nx)]
-sp2.y.ds <- sp2.y[nx+1:(length(sp2.y)-nx)]
+sp1.y.ds <- sp1.y[nx+1:(length(sp1.y)-nx)] # skipping the E's, grabbing second half (D's)
+sp2.y.ds <- sp2.y[nx+1:(length(sp2.y)-nx)] # skipping the E's, grabbing second half (D's)
 
-sp1.y.ds.exp <- sp1.y.ds[2001:2048]
-sp2.y.ds.exp <- sp2.y.ds[2001:2048]
+sp1.y.ds.exp <- sp1.y.ds[2001:2048] # 48 arbitrarily consecutive elements for checking against (if using JTransforms, which takes consecutive doubles at the head of array)
+sp2.y.ds.exp <- sp2.y.ds[2001:2048] # 48 arbitrarily consecutive elements for checking against  (if using JTransforms, which takes consecutive doubles at the head of array)
 
-paste(sp1.y.ds.exp, collapse=", ") # expectedSp1Ds = 6.96077358436849, 6.95166528584696, 6.94252551477923, 6.93335442671583, 6.92415217758908, 6.91491892370871, 6.90565482175746, 6.89636002878667, 6.88703470221182, 6.87767899980818, 6.86829307970631, 6.85887710038768, 6.84943122068018, 6.83995559975374, 6.83045039711584, 6.82091577260705, 6.81135188639661, 6.80175889897795, 6.79213697116422, 6.78248626408384, 6.772806939176, 6.76309915818623, 6.75336308316186, 6.74359887644761, 6.73380670068105, 6.72398671878815, 6.71413909397875, 6.70426398974212, 6.69436156984244, 6.68443199831428, 6.67447543945815, 6.66449205783599, 6.65448201826663, 6.64444548582134, 6.63438262581928, 6.62429360382306, 6.61417858563415, 6.60403773728847, 6.59387122505179, 6.58367921541529, 6.57346187509105, 6.5632193710075, 6.55295187030495, 6.54265954033109, 6.53234254863645, 6.52200106296994, 6.51163525127429, 6.50124528168164
-paste(sp2.y.ds.exp, collapse=", ") # expectedSp2Ds = 2.67859021074856, 2.68849414736158, 2.69841783805887, 2.70836123148143, 2.71832427571076, 2.72830691826807, 2.73830910611356, 2.74833078564564, 2.75837190270027, 2.76843240255022, 2.77851222990441, 2.78861132890721, 2.79872964313779, 2.80886711560949, 2.81902368876922, 2.82919930449678, 2.83939390410431, 2.84960742833573, 2.85983981736613, 2.87009101080125, 2.88036094767694, 2.89064956645866, 2.90095680504094, 2.91128260074695, 2.92162689032799, 2.93198960996305, 2.9423706952584, 2.95277008124712, 2.96318770238874, 2.97362349256884, 2.9840773850987, 2.9945493127149, 3.00503920757903, 3.01554700127736, 3.02607262482052, 3.03661600864323, 3.04717708260405, 3.05775577598507, 3.06835201749176, 3.07896573525268, 3.0895968568193, 3.10024530916586, 3.11091101868917, 3.12159391120842, 3.13229391196515, 3.14301094562307, 3.15374493626797, 3.16449580740766
+paste(sp1.y.ds.exp, collapse=", ")
+## (if using JTransforms) expectedSp1Ds = 6.96077358436849, 6.95166528584696, 6.94252551477923, 6.93335442671583, 6.92415217758908, 6.91491892370871, 6.90565482175746, 6.89636002878667, 6.88703470221182, 6.87767899980818, 6.86829307970631, 6.85887710038768, 6.84943122068018, 6.83995559975374, 6.83045039711584, 6.82091577260705, 6.81135188639661, 6.80175889897795, 6.79213697116422, 6.78248626408384, 6.772806939176, 6.76309915818623, 6.75336308316186, 6.74359887644761, 6.73380670068105, 6.72398671878815, 6.71413909397875, 6.70426398974212, 6.69436156984244, 6.68443199831428, 6.67447543945815, 6.66449205783599, 6.65448201826663, 6.64444548582134, 6.63438262581928, 6.62429360382306, 6.61417858563415, 6.60403773728847, 6.59387122505179, 6.58367921541529, 6.57346187509105, 6.5632193710075, 6.55295187030495, 6.54265954033109, 6.53234254863645, 6.52200106296994, 6.51163525127429, 6.50124528168164
+
+paste(sp2.y.ds.exp, collapse=", ")
+## (if using JTransforms) expectedSp2Ds = 2.67859021074856, 2.68849414736158, 2.69841783805887, 2.70836123148143, 2.71832427571076, 2.72830691826807, 2.73830910611356, 2.74833078564564, 2.75837190270027, 2.76843240255022, 2.77851222990441, 2.78861132890721, 2.79872964313779, 2.80886711560949, 2.81902368876922, 2.82919930449678, 2.83939390410431, 2.84960742833573, 2.85983981736613, 2.87009101080125, 2.88036094767694, 2.89064956645866, 2.90095680504094, 2.91128260074695, 2.92162689032799, 2.93198960996305, 2.9423706952584, 2.95277008124712, 2.96318770238874, 2.97362349256884, 2.9840773850987, 2.9945493127149, 3.00503920757903, 3.01554700127736, 3.02607262482052, 3.03661600864323, 3.04717708260405, 3.05775577598507, 3.06835201749176, 3.07896573525268, 3.0895968568193, 3.10024530916586, 3.11091101868917, 3.12159391120842, 3.13229391196515, 3.14301094562307, 3.15374493626797, 3.16449580740766
 
 
 

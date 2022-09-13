@@ -138,7 +138,7 @@ public class QuaSSEDistributionTest {
         RealParameter rrp = new RealParameter(r);
 
         lfn = new LogisticFunction();
-        lfn.initByName( "curveMaxBase", y0rp, "added2CurveMax", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
+        lfn.initByName( "curveYBaseValue", y0rp, "curveMaxY", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
 
         // constant realparameter's for mu
         Double[] yValue = new Double[] { 0.03 };
@@ -285,9 +285,12 @@ public class QuaSSEDistributionTest {
 
     /*
      * Checks that QuaSSE likelihood class it setting its own
-     * dimensions correctly, and then applying a logistic function
-     * on the quantitative trait for lambda, and a constant function
-     * for mu.
+     * dimensions correctly, and then
+     *
+     * (1) Applying a logistic function to convert the quantitative trait
+     * into the birth rate (lambda)
+     * (2) Applying a constant function to convert the quantitative trait
+     * into the death rate (mu)
      */
     @Test
     public void testDimensions() {
@@ -363,8 +366,22 @@ public class QuaSSEDistributionTest {
         double[] expectedSp1Ds = new double[] { 6.96077358436849, 6.95166528584696, 6.94252551477923, 6.93335442671583, 6.92415217758908, 6.91491892370871, 6.90565482175746, 6.89636002878667, 6.88703470221182, 6.87767899980818, 6.86829307970631, 6.85887710038768, 6.84943122068018, 6.83995559975374, 6.83045039711584, 6.82091577260705, 6.81135188639661, 6.80175889897795, 6.79213697116422, 6.78248626408384, 6.772806939176, 6.76309915818623, 6.75336308316186, 6.74359887644761, 6.73380670068105, 6.72398671878815, 6.71413909397875, 6.70426398974212, 6.69436156984244, 6.68443199831428, 6.67447543945815, 6.66449205783599, 6.65448201826663, 6.64444548582134, 6.63438262581928, 6.62429360382306, 6.61417858563415, 6.60403773728847, 6.59387122505179, 6.58367921541529, 6.57346187509105, 6.5632193710075, 6.55295187030495, 6.54265954033109, 6.53234254863645, 6.52200106296994, 6.51163525127429, 6.50124528168164 };
         double[] expectedSp2Ds = new double[] { 2.67859021074856, 2.68849414736158, 2.69841783805887, 2.70836123148143, 2.71832427571076, 2.72830691826807, 2.73830910611356, 2.74833078564564, 2.75837190270027, 2.76843240255022, 2.77851222990441, 2.78861132890721, 2.79872964313779, 2.80886711560949, 2.81902368876922, 2.82919930449678, 2.83939390410431, 2.84960742833573, 2.85983981736613, 2.87009101080125, 2.88036094767694, 2.89064956645866, 2.90095680504094, 2.91128260074695, 2.92162689032799, 2.93198960996305, 2.9423706952584, 2.95277008124712, 2.96318770238874, 2.97362349256884, 2.9840773850987, 2.9945493127149, 3.00503920757903, 3.01554700127736, 3.02607262482052, 3.03661600864323, 3.04717708260405, 3.05775577598507, 3.06835201749176, 3.07896573525268, 3.0895968568193, 3.10024530916586, 3.11091101868917, 3.12159391120842, 3.13229391196515, 3.14301094562307, 3.15374493626797, 3.16449580740766 };
 
-        Assert.assertArrayEquals(expectedSp1Ds, Arrays.copyOfRange(esDsHi[0][1], 2000, 2048), 1E-12);
-        Assert.assertArrayEquals(expectedSp2Ds, Arrays.copyOfRange(esDsHi[1][1], 2000, 2048), 1E-12);
+        double[] sp1DsSST = new double[48];
+        double[] sp2DsSST = new double[48];
+
+        int j = 0;
+        for (int i=0; i<48*2; i+=2) {
+            sp1DsSST[j] = esDsHi[0][1][4000 + i];
+            sp2DsSST[j] = esDsHi[1][1][4000 + i];
+            j += 1;
+        }
+
+        Assert.assertArrayEquals(expectedSp1Ds, sp1DsSST, 1E-12);
+        Assert.assertArrayEquals(expectedSp2Ds, sp2DsSST, 1E-12);
+
+        // if jtransforms flag in QuaSSEDistribution initialization is set to true
+        // Assert.assertArrayEquals(expectedSp1Ds, Arrays.copyOfRange(esDsHi[0][1], 2000, 2048), 1E-12);
+        // Assert.assertArrayEquals(expectedSp2Ds, Arrays.copyOfRange(esDsHi[1][1], 2000, 2048), 1E-12);
     }
 
     /*

@@ -1,23 +1,35 @@
 package SSE;
 
 import beast.core.BEASTObject;
+import beast.core.Description;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 
+/**
+ * This class implements a type of link function that is used
+ * by QuaSSE to convert an x value (continuous-trait value)
+ * into a y value (macroevolutionary parameter, e.g., birth rate)
+ *
+ * @author Fabio K. Mendes
+ */
+
+@Description("Logistic link function for converting x into y, " +
+        "where x is a continuous trait and y is a macroevolutionary" +
+        "parameter.")
 public class LogisticFunction extends BEASTObject implements LinkFn {
 
-    final public Input<RealParameter> curveMaxBaseInput = new Input<>("curveMaxBase", "Curve maximum base value.", Input.Validate.REQUIRED);
-    final public Input<RealParameter> added2CurveMaxInput = new Input<>("added2CurveMax", "How much is added to curve max base (after subtracting curve max base from this).", Input.Validate.REQUIRED);
+    final public Input<RealParameter> curveYBaseValueInput = new Input<>("curveYBaseValue", "Curve y base value.", Input.Validate.REQUIRED);
+    final public Input<RealParameter> curveMaxYInput = new Input<>("curveMaxY", "Curve maximum y value.", Input.Validate.REQUIRED);
     final public Input<RealParameter> sigmoidMidpointInput = new Input<>("sigmoidMidpoint", "Midpoint of sigmoid curve.", Input.Validate.REQUIRED);
     final public Input<RealParameter> logisticGrowthRateInput = new Input<>("logisticGrowthRate", "Growth rate of logistic curve.", Input.Validate.REQUIRED);
 
-    private double y0, y1, x0, r, curveMax;
+    private double y0, y1, x0, r, curveMaxMinusBaseValue;
     private static final String LINKFUNCTION = "logistic";
 
     @Override
     public void initAndValidate() {
-        y0 = curveMaxBaseInput.get().getValue();
-        y1 = added2CurveMaxInput.get().getValue();
+        y0 = curveYBaseValueInput.get().getValue();
+        y1 = curveMaxYInput.get().getValue();
         r = logisticGrowthRateInput.get().getValue();
         x0 = sigmoidMidpointInput.get().getValue();
     }
@@ -27,13 +39,13 @@ public class LogisticFunction extends BEASTObject implements LinkFn {
 
         boolean refreshedSomething = false;
 
-        if (curveMaxBaseInput.get().somethingIsDirty()) {
-            y0 = curveMaxBaseInput.get().getValue();
+        if (curveYBaseValueInput.get().somethingIsDirty()) {
+            y0 = curveYBaseValueInput.get().getValue();
             refreshedSomething = true;
         }
 
-        if (added2CurveMaxInput.get().somethingIsDirty()) {
-            y1 = added2CurveMaxInput.get().getValue();
+        if (curveMaxYInput.get().somethingIsDirty()) {
+            y1 = curveMaxYInput.get().getValue();
             refreshedSomething = true;
         }
 
@@ -63,8 +75,8 @@ public class LogisticFunction extends BEASTObject implements LinkFn {
             if (x.length != y.length) throw new RuntimeException("Sizes of x (qu trait) and y (macroevol param) differ. Exiting...");
 
             for (int i = 0; i < x.length; i++) {
-                curveMax = y1 - y0;
-                y[i] = y0 + curveMax / (1.0 + Math.exp(r * (x0 - x[i])));
+                curveMaxMinusBaseValue = y1 - y0;
+                y[i] = y0 + curveMaxMinusBaseValue / (1.0 + Math.exp(r * (x0 - x[i])));
             }
         }
 

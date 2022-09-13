@@ -110,15 +110,18 @@ public class SSEUtils {
     /*
      * Propagate E's and D's along the x-axis (quantitative trait).
      *
-     * The math work (FFTs/iFFts and convolution) is done all in convolveInPlace.
+     * The normal kernel (fftfY) comes in FFTed already.
+     * The math work (FFTs/iFFts and convolution) is done in convolveInPlace.
      * This function here basically reorganizes the arrays, keeping track
      * of the flanking bins (not letting those be affected by propagate in x),
      * squashing negative numbers back to 0.0, and setting the last
      * (nLeftFlankBins + nRightFlankBins) to 0.0.
      *
+     * Uses JTransforms for FFT/inverse-FFT
+     *
      * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
      * @param   scratch 2D-array for storing/restoring flanking values and other math terms
-     * @param   fY  Normal kernel (already FFT-ed) giving the density for changes in value of the quantitative trait
+     * @param   fftfY  Normal kernel (already FFT-ed) giving the density for changes in value of the quantitative trait
      * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
      * @param   nLeftFlankBins  how many bins on the right side of kernel are non-zero
      * @param   nRightFlankBins  how many bins on the left side of kernel are non-zero
@@ -126,7 +129,7 @@ public class SSEUtils {
      * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
      * @param   fft instance of DoubleFFT_1D that will carry out FFT and inverse-FFT
      */
-    public static void propagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratchAtNode, double[] fY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+    public static void propagateEandDinXQuaLike(double[][] esDsAtNode, double[][] scratchAtNode, double[] fftfY, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
 
         // debugging
         // System.out.println("\nEntering propagateEandDinXQuaLike");
@@ -135,10 +138,17 @@ public class SSEUtils {
 
         // recording the first nLeftFlankBins and the last nRightFlankBins to put them back later
         int nPad = nLeftFlankBins + nRightFlankBins + 1;
-        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            for (int j=0; j<nLeftFlankBins; ++j) scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
-        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int j = 0; j < nLeftFlankBins; ++j) {
+                scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
+            }
+        }
+
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int j = (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j) {
+                scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
+            }
+        }
 
         // debugging
         // System.out.println("After copying left and right flanks");
@@ -146,7 +156,7 @@ public class SSEUtils {
         // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
 
         // fY is already FFTed (in QuaSSEDistribution -> populatefY()), then FFT scratch, inverse-FFT scratch, result is left in scratch
-        convolveInPlace(esDsAtNode, fY, nDimensionsE, nDimensionsD, fft);
+        convolveInPlace(esDsAtNode, fftfY, nDimensionsE, nDimensionsD, fft);
 
         // debugging
         // System.out.println("After convolve");
@@ -172,10 +182,17 @@ public class SSEUtils {
         }
 
         // putting back the first nLeftFlankBins and the last nRightFlankBins
-        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            for (int j=0; j<nLeftFlankBins; ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
-        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int j = 0; j < nLeftFlankBins; ++j) {
+                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+            }
+        }
+
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int j = (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j) {
+                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+            }
+        }
 
         // debugging
         // System.out.println("After scaling and zero-ing");
@@ -186,7 +203,7 @@ public class SSEUtils {
     /*
      * Version for SST using ComplexArray and RealArray (see unit tests in PropagatesQuaSSETest)
      */
-    public static void propagateEandDinXQuaLikeSSTExperiment(double[][] esDsAtNode, ComplexArray fftFYCA, double[][] scratchAtNode, RealArray scratchRA, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
+    public static void propagateEandDinXQuaLikeSSTModalFftService(double[][] esDsAtNode, ComplexArray fftFYCA, double[][] scratchAtNode, RealArray scratchRA, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, DoubleFFT_1D fft) {
         // recording the first nLeftFlankBins and the last nRightFlankBins to put them back later
         int nPad = nLeftFlankBins + nRightFlankBins + 1;
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
@@ -195,7 +212,7 @@ public class SSEUtils {
             for (int j = (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j)
                 scratchAtNode[ithDim][j] = esDsAtNode[ithDim][j];
 
-        SSEUtils.convolveInPlaceSSTExperimenting(esDsAtNode, fftFYCA, scratchRA, nDimensionsE, nDimensionsD);
+        SSEUtils.convolveInPlaceSSTModalFftService(esDsAtNode, fftFYCA, scratchRA, nDimensionsE, nDimensionsD);
 
         int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
@@ -228,7 +245,7 @@ public class SSEUtils {
         // System.out.println("scratchAtNode = " + Arrays.toString(scratchAtNode[1]));
 
         int[] nDims = new int[] { nXbins };
-        SSEUtils.convolveInPlaceSST(esDsAtNode, fftEsDsAtNode, fftFY, nDimensionsE, nDimensionsD, nDims, ffts);
+        SSEUtils.convolveInPlaceSSTJavaFftService(esDsAtNode, fftEsDsAtNode, fftFY, nDimensionsE, nDimensionsD, nDims, ffts);
 
         // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
         int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
@@ -301,7 +318,15 @@ public class SSEUtils {
         // System.out.println(Arrays.toString(scratchAtNode[1]));
     }
 
-    public static void convolveInPlaceSSTExperimenting(double[][] esDsAtNode, ComplexArray fY, RealArray scratchRA, int nDimensionsE, int nDimensionsD) {
+    /*
+     * This convolution in place is done by calling methods of
+     * RealArray (which invokes ModalFftService, a class that
+     * initializes a JavaFftService instance)
+     *
+     * It works, but is a bit clunky. Below there is a cleaner
+     * alternative that calls JavaFftService directly
+     */
+    public static void convolveInPlaceSSTModalFftService(double[][] esDsAtNode, ComplexArray fY, RealArray scratchRA, int nDimensionsE, int nDimensionsD) {
         int normalizingInverseFFTFactor = esDsAtNode[0].length;
 
         // doing E's and D's
@@ -310,14 +335,30 @@ public class SSEUtils {
             int jthElem = 0;
             for (double v: esDsAtNode[ithDim]) {
                 scratchRA.set(v, jthElem);
+
                 jthElem++;
             }
 
+            /*
+             * We invoke the static ModalFftService (which implements interface FftService)
+             * fft and ifft methods
+             *
+             * ModalFftService's fft and ifft methods can be accessed as members of ArrayBase,
+             * called from within AbstractArray, which in turn is the superclass of AbstractComplexArray
+             * -- created here with the .tocre() call
+             *
+             * Once the fft result is returned, we do element-wise multiplication with eMul,
+             * inverse-fft, get the real part, and return the values
+             */
             esDsAtNode[ithDim] = scratchRA.tocRe().fft().eMul(fY).ifft().torRe().values(); // already comes out normalized (unlike R version and JTransforms)
         }
     }
 
-    public static void convolveInPlaceSST(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, int nDimensionsE, int nDimensionsD, int[] nXbins, JavaFftService ffts) {
+    /*
+     * This convolution in place is done by directly calling methods
+     * of the JavaFftService class
+     */
+    public static void convolveInPlaceSSTJavaFftService(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, int nDimensionsE, int nDimensionsD, int[] nXbins, JavaFftService ffts) {
         // int normalizingInverseFFTFactor = esDsAtNode[0].length;
 
         // doing E's and D's
@@ -353,11 +394,11 @@ public class SSEUtils {
      *
      * @param   yValues (= fY) where the result is left; gives the probability density of a given change in quantitative trait value
      * @param   mean    (= changeInXNormalMean = diversitree's drift * -dt) is the mean expected change in quantitative trait value
-     * @param   sd  (= changeInXNormalSd = squared root(diversitree's diffusion * dt)) is the standard deviation of the expected change in quantitative trait value
+     * @param   sd      (= changeInXNormalSd = squared root(diversitree's diffusion * dt)) is the standard deviation of the expected change in quantitative trait value
      * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
-     * @param   nLeftFlankBins  how many bins on the right side of kernel are non-zero
+     * @param   nLeftFlankBins   how many bins on the right side of kernel are non-zero
      * @param   nRightFlankBins  how many bins on the left side of kernel are non-zero
-     * @param   dx  size of each bin
+     * @param   dx               size of each bin
      */
     public static void makeNormalKernelInPlace(double[] yValues, double mean, double sd, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx) {
 

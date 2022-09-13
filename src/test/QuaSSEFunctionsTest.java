@@ -1,19 +1,10 @@
 package test;
 
 import SSE.ConstantLinkFn;
-import SSE.NormalCenteredAtObservedLinkFn;
-import SSE.QuaSSEDistribution;
-import beast.core.parameter.IntegerParameter;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.TreeParser;
 import SSE.LogisticFunction;
 import beast.core.parameter.RealParameter;
-import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import java.util.Arrays;
-import java.util.List;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -30,22 +21,36 @@ public class QuaSSEFunctionsTest {
     static ConstantLinkFn cfn;
 
     /*
-     * Applies logistic function to many x values, checks return
+     * Applies logistic function to many x (continuous trait)
+     * values, checks return.
      *
      * We're only looking at high resolution here.
      */
     @Test
     public void testLogistic() {
-
+        /*
+         * nUsefulBins is coming directly from the .R file (check there)
+         * In short, nUsefulBins will be a function of the BM parameters
+         * underlying the continuous trait, as well as dt (the slice size
+         * over which integration will happen)
+         */
         int[] nUsefulBins = new int[] { 999, 3999 }; // lo, hi
-        double x2Add; // x0 is xmid, x2Add is xmin
+
+        double hiLoRatio = 4.0;
+        double xMinHi; // x0 is xmid, x2Add is xmin
         xRuler = new double[nUsefulBins[1]];
         lambdaHi = new double[nUsefulBins[1]];
-        x2Add = -4.9975;
+
+        /*
+         * It's a function of the number of low-res bins (999)
+         * and high-to-low ratio (4)
+         */
+        xMinHi = -4.9975;
+
         dx = 0.01;
         for (int i=0; i<nUsefulBins[1]; i++) {
-            xRuler[i] = x2Add;
-            x2Add += (dx / 4.0); // high-res : low-res
+            xRuler[i] = xMinHi;
+            xMinHi += (dx / hiLoRatio); // high-res : low-res
         }
 
         // RealParameter x = new RealParameter(xRuler);
@@ -61,7 +66,7 @@ public class QuaSSEFunctionsTest {
         RealParameter rrp = new RealParameter(r);
 
         lfn = new LogisticFunction();
-        lfn.initByName( "curveMaxBase", y0rp, "added2CurveMax", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
+        lfn.initByName( "curveYBaseValue", y0rp, "curveMaxY", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
         double[] lfnOut = lfn.getY(xRuler, lambdaHi, true);
 
         double[] expectedLfnOut1to10 = new double[] { 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004, 0.1000004 };
@@ -74,17 +79,29 @@ public class QuaSSEFunctionsTest {
     }
 
     /*
-     * Applies constant function to many x values, checks return
+     * Applies constant function to many x (continuous trait)
+     * values, checks return.
      *
      * We're only looking at high resolution here.
      */
     @Test
     public void testConstant() {
+        /*
+         * nUsefulBins is coming directly from the .R file (check there)
+         * In short, nUsefulBins will be a function of the BM parameters
+         * underlying the continuous trait, as well as dt (the slice size
+         * over which integration will happen)
+         */
         int[] nUsefulBins = new int[] { 999, 3999 }; // lo, hi
         xRuler = new double[nUsefulBins[1]];
         lambdaHi = new double[nUsefulBins[1]];
 
+        /*
+         * It's a function of the number of low-res bins (999)
+         * and high-to-low ratio (4)
+         */
         double x2Add = -4.9975;
+
         dx = 0.01;
         for (int i=0; i<nUsefulBins[1]; i++) {
             xRuler[i] = x2Add;
@@ -93,13 +110,13 @@ public class QuaSSEFunctionsTest {
 
         // constant realparameter's
         Double[] yValue = new Double[] { 0.03 };
-        RealParameter yValuerp = new RealParameter(yValue);
+        RealParameter yValueRP = new RealParameter(yValue);
 
         cfn = new ConstantLinkFn();
-        cfn.initByName("yV", yValuerp);
+        cfn.initByName("yV", yValueRP);
         double[] cfnOut = cfn.getY(xRuler, lambdaHi, true);
 
-        double[] expectedCfn = new double[3999];
+        double[] expectedCfn = new double[3999]; // every element will be 0.03
         for (int i=0; i<expectedCfn.length; i++) {
             expectedCfn[i] = 0.03;
         }
@@ -108,12 +125,13 @@ public class QuaSSEFunctionsTest {
     }
 
     /*
-     * If we try to get the macroevolutionary parameters after applying
-     * the linking function (e.g., logistic) -- but forgetting to set
-     * the quantitative trait array (ruler) and the size of y (i.e.,
-     * the macroevol parameter array) -- we get an error.
+     * Check if exception inside LogisticFunction is correctly
+     * raised when the number of x (continuous trait values)
+     * and y (macroevolutionary parameter, e.g., birth rate)
+     * bins are different.
      *
-     * This setting is done by the QuaSSE likelihood in initialization.
+     * This exception is thrown upon initialization of the
+     * QuaSSE likelihood class.
      */
     @Test(expected = RuntimeException.class)
     public void testQu2MacroevolFailLogistic() {
@@ -142,17 +160,18 @@ public class QuaSSEFunctionsTest {
         RealParameter rrp = new RealParameter(r);
 
         LogisticFunction lfn = new LogisticFunction();
-        lfn.initByName( "curveMaxBase", y0rp, "added2CurveMax", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
+        lfn.initByName( "curveYBaseValue", y0rp, "curveMaxY", y1rp, "sigmoidMidpoint", x0rp, "logisticGrowthRate", rrp);
         double[] lfnOut = lfn.getY(xRuler, lambdaHi, true);
     }
 
     /*
-     * If we try to get the macroevolutionary parameters after applying
-     * the linking function (e.g., constant) -- but forgetting to set
-     * the quantitative trait array (ruler) and the size of y (i.e.,
-     * the macroevol parameter array) -- we get an error.
+     * Check if exception inside LogisticFunction is correctly
+     * raised when the number of x (continuous trait values)
+     * and y (macroevolutionary parameter, e.g., birth rate)
+     * bins are different.
      *
-     * This setting is done by the QuaSSE likelihood in initialization.
+     * This exception is thrown upon initialization of the
+     * QuaSSE likelihood class.
      */
     @Test(expected = RuntimeException.class)
     public void testQu2MacroevolFailConstant() {
