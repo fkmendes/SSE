@@ -73,7 +73,7 @@ public class MosseDistributionTest {
                 nx, dx, nd, 0,
                 vars, lambda, mu, drift, diffusion, Q, nt, dt_max,
                 pad_left, pad_right);
-        double logP = d.getLogP(result, nx, ncol, dx, ans);
+        double logP = d.calculateLogP(result, nx, ncol, dx, ans);
 
         double expected_ans_r = -0.2653163;
         assertEquals(expected_ans_r, logP, DELTA);

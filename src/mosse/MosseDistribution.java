@@ -3,16 +3,9 @@ package mosse;
 import beast.core.Description;
 import beast.core.State;
 import beast.evolution.tree.TreeDistribution;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
-import static org.junit.Assert.assertEquals;
 
 @Description("Mosse tree model")
 public class MosseDistribution extends TreeDistribution {
@@ -35,7 +28,7 @@ public class MosseDistribution extends TreeDistribution {
 
     }
 
-    public double getLogP(double[] array, int nx, int ncol, double dx, double[][] ans) {
+    public double calculateLogP(double[] array, int nx, int ncol, double dx, double[][] ans) {
 //        double[][] ans = new double[nx][ncol];
         double logP = logCompensation(nx, ncol, dx, array, ans);
         return logP; // return log compensated result
@@ -97,7 +90,7 @@ public class MosseDistribution extends TreeDistribution {
 
     @Override
     public void sample(State state, Random random) {
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException();
     }
 
 }
