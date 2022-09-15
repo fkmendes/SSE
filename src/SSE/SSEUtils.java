@@ -40,7 +40,9 @@ public class SSEUtils {
     /*
      * Propagates E's and D's, leaving the result in esDs.
      * Equivalent to Fitzjohn's fftR.propagate.t (R/model-quasse-fftR.R) and propagate_t (src/quasse-eqs-fftC.c)
+     *
      * Note: only the first nUsefulTraitBins elements in each row of esDs are used (and in birthRate and deathRate);
+     * This method is to be used whenever FFTing when propagating over x is carried out with JTransforms
      *
      * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
      * @param   scratchAtNode 2D-array for storing/restoring flanking values and other math terms
@@ -53,7 +55,7 @@ public class SSEUtils {
      */
     public static void propagateEandDinTQuaSSEInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
         // iterating over all continuous character bins (total # = nx), to update E and D for each of those bins
-        for (int i = 0; i < nUsefulTraitBins; ++i) {
+        for (int i=0; i < nUsefulTraitBins; ++i) {
             double ithLambda = birthRate[i];
             double ithMu = deathRate[i];
             double netDivRate = ithLambda - ithMu;
@@ -99,6 +101,81 @@ public class SSEUtils {
                     // System.out.println("Scr j=" + j + " scratchAtNode[0][j] = " + scratchAtNode[0][j] + " scratchAtNode[1][j] = " + scratchAtNode[1][j]);
                     // System.out.println("Bef j=" + j + " esDsAtNode[0][j] = " + esDsAtNode[0][j] + " esDsAtNode[1][j] = " + esDsAtNode[1][j]);
                     esDsAtNode[ithDim][j] *= scratchAtNode[1][j];
+
+                    // checking against R
+                    // System.out.println("Aft j=" + j + " esDsAtNode[0][j] = " + esDsAtNode[0][j] + " esDsAtNode[1][j] = " + esDsAtNode[1][j]);
+                }
+            }
+        }
+    }
+
+    /*
+     * Propagates E's and D's, leaving the result in esDs.
+     * Equivalent to Fitzjohn's fftR.propagate.t (R/model-quasse-fftR.R) and propagate_t (src/quasse-eqs-fftC.c)
+     *
+     * Note: only the first nUsefulTraitBins elements in each row of esDs are used (and in birthRate and deathRate);
+     * This method is to be used whenever FFTing when propagating over x is carried out with SST's library
+     * class JavaFftService (which requires that elements are placed on every other index of the input array)
+     *
+     * @param   esDs    2D-array containing E's followed by D's (e.g., for QuaSSE, esDs[0]=Es, esDs[1]=Ds)
+     * @param   scratchAtNode 2D-array for storing/restoring flanking values and other math terms
+     * @param   birthRate   birth rates (lambdas), one per quantitative ch useful bin
+     * @param   deathRate   death rates (mus), one per quantitative ch useful bin
+     * @param   dt  length of time slice over which to propagate
+     * @param   nUsefulTraitBins number of useful bins (i.e., excluding the # of flanking bins = npad = nLeftFlankBins + nRightFlankbins) in discretized pdf over change in quantitative ch values
+     * @param   nDimensionsD number of D equations (dimensions in plan) to solve for each quantitative ch
+     * @return  no return, leaves result in 'esDs' and 'scratch'
+     */
+    public static void propagateEandDinTQuaSSEInPlaceSSTJavaFftService(double[][] esDsAtNode, double[][] scratchAtNode, double[] birthRate, double[] deathRate, double dt, int nUsefulTraitBins, int nDimensionsD) {
+        // iterating over all continuous character bins (total # = nx), to update E and D for each of those bins
+        for (int i=0, j=0; i < nUsefulTraitBins; ++i, j+=2) {
+            double ithLambda = birthRate[i];
+            double ithMu = deathRate[i];
+            double netDivRate = ithLambda - ithMu;
+            double ithZ = Math.exp(dt * netDivRate);
+            double ithE = esDsAtNode[0][j]; // Ask Xia: note that because i starts at 0, we're grabbing E values in left-padding
+
+            double tmp1 = ithMu - ithLambda * ithE;
+            double tmp2 = ithZ * (ithE - 1);
+
+            /* Updating E's */
+            esDsAtNode[0][j] = (tmp1 + tmp2 * ithMu) / (tmp1 + tmp2 * ithLambda);
+
+            // checking against R
+            // System.out.println("ithMu = " + ithMu + " ithLambda = " + ithLambda + " ithE = " + ithE + " ithZ = " + ithZ);
+            // System.out.println("esDsAtNode[0][i] = " + esDsAtNode[0][i]);
+
+            // Saving values for updating D below
+            tmp1 = (ithLambda - ithMu) / (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE);
+
+            // checking against R
+            // System.out.println("i = " + i + " numerator (z * r * r) = " + (ithZ * Math.pow((ithLambda - ithMu), 2)));
+            // System.out.println("i = " + i + " denominator (z * lambda - mu + (1-z) * lambda * e0) = " + (ithZ * ithLambda - ithMu + (1 - ithZ) * ithLambda * ithE));
+
+            // NOTE: we're not skipping even-numbered indices when just caching things here in scratch!
+            // (so below, we use index i instead of j)
+            scratchAtNode[1][i] = ithZ * tmp1 * tmp1;
+
+            // checking against R
+            // System.out.println("i = " + i + " (numerator/denominator^2) = " + scratchAtNode[1][i]);
+        }
+
+        /* Updating D's */
+        // iterating over dimensions in plan to transform (total # = nd = number of equations for D, say, 4 if A C G and T)
+        // one quantitative ch: nd = 2 for QuaSSE (one eq for E, one for D), nd=5 for MoSSE (4 eqs for D, one for E)
+        // ithDim starts at 1 because esDs[0] are the E's
+
+        for (int ithDim=1; ithDim <= nDimensionsD; ithDim++) {
+            // int ithDimStartIdx = nUsefulTraitBins * ithDim; // skipping E's
+
+            // iterating over bins of this dimension
+            for (int i=0, j=0; i < nUsefulTraitBins; i++, j+=2) {
+                if (esDsAtNode[ithDim][j] < 0) esDsAtNode[ithDim][j] = 0;
+                else {
+                    // checking against R
+                    // System.out.println("Scr j=" + j + " scratchAtNode[0][j] = " + scratchAtNode[0][j] + " scratchAtNode[1][j] = " + scratchAtNode[1][j]);
+                    // System.out.println("Bef j=" + j + " esDsAtNode[0][j] = " + esDsAtNode[0][j] + " esDsAtNode[1][j] = " + esDsAtNode[1][j]);
+                    esDsAtNode[ithDim][j] *= scratchAtNode[1][i]; // have to use scratch's i-th element, not j-th!
 
                     // checking against R
                     // System.out.println("Aft j=" + j + " esDsAtNode[0][j] = " + esDsAtNode[0][j] + " esDsAtNode[1][j] = " + esDsAtNode[1][j]);
@@ -169,11 +246,15 @@ public class SSEUtils {
         // System.out.println("nItems2Copy=" + nItems2Copy);
         double scaleBy = 1.0 / nXbins;
 
-        // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
+        /*
+         * Note that while we are grabbing every other element (so we can get just the real parts)
+         * as we iterate over esDsAtNode, everyOtherToHeadInPlace moves these elements to the head
+         * of esDsAtNode without any skipping, i.e.,
+         * [ ... skipFirst_nLeftFlankBins ..., real1, real2, real3, ...]
+         */
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
             everyOtherToHeadInPlace(esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, scaleBy); // grabbing real part and scaling by 1/nXbins
 
-            // System.out.println("scratchAtNode[ithDim] after reordering and scaling: " + Arrays.toString(scratchAtNode[ithDim]));
             for (int i=0; i<nXbins; ++i) {
                 // if negative value, set to 0.0
                 // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
@@ -221,11 +302,17 @@ public class SSEUtils {
             }
         }
 
-        // putting back the first nLeftFlankBins and the last nRightFlankBins
-        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            for (int j=0; j<nLeftFlankBins; ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
-        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+        // restoring the original first nLeftFlankBins and the last nRightFlankBins, which were stored in the scratch array
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int j = 0; j < nLeftFlankBins; ++j) {
+                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+            }
+        }
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int j = (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j) {
+                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+            }
+        }
     }
 
     public static void propagateEandDinXQuaLikeSST(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, double[][] scratchAtNode, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, JavaFftService ffts) {
@@ -247,12 +334,26 @@ public class SSEUtils {
         int[] nDims = new int[] { nXbins };
         SSEUtils.convolveInPlaceSSTJavaFftService(esDsAtNode, fftEsDsAtNode, fftFY, nDimensionsE, nDimensionsD, nDims, ffts);
 
-        // move stuff from scratch to esDs, making sure left and right flanks keep the original esDs values (central elements come from scratch)
+        // number of real elements we will grab and move to the head of the array
         int nItems2Copy = nXbins - nLeftFlankBins - nRightFlankBins;
+
+        // scale and move real elements in place to the head of the array, ignoring flanking elements
         for (int ithDim = 0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            /*
+             * Note that while we are grabbing every other element (so we can get just the real parts)
+             * as we iterate over esDsAtNode, everyOtherToHeadInPlace moves these elements to the head
+             * of esDsAtNode without any skipping, i.e.,
+             * [ ... skipFirst_nLeftFlankBins ..., real1, real2, real3, ...]
+             */
+            // TODO: I believe we should not place the real elements consecutively in esDsAtNode
+            // but rather keep them at every other index when using SST's JavaFftService; this class
+            // requires alternating real elements any time FFT is done...
+            //
+            // this line below is not necessary (I added so I could pass unit tests, but instead
+            // should update unit tests and remove this line)
+
             everyOtherToHeadInPlace(esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, 1.0); // grabbing real part and scaling by 1/nXbins
 
-            // System.out.println("scratchAtNode[ithDim] after reordering and scaling: " + Arrays.toString(scratchAtNode[ithDim]));
             for (int i=0; i<nXbins; ++i) {
                 // if negative value, set to 0.0
                 // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
@@ -260,11 +361,19 @@ public class SSEUtils {
             }
         }
 
-        // putting back the first nLeftFlankBins and the last nRightFlankBins
-        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            for (int j=0; j<nLeftFlankBins; ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
-        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
-            for (int j=(nXbins-nPad-nRightFlankBins); j<(nXbins-nPad); ++j) esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+        // restoring the original first nLeftFlankBins and the last nRightFlankBins, which were stored in the scratch array
+        // TODO: this is atm identical to ModalFftService's analogous chunk, but we need to make it
+        // so scratch-cached flank elements are restored at every other index, so JavaFftService can be used
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int j = 0; j < nLeftFlankBins; ++j) {
+                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+            }
+        }
+        for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
+            for (int j = (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j) {
+                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+            }
+        }
 
         // debugging
         // System.out.println("After scaling and zero-ing");
@@ -401,7 +510,6 @@ public class SSEUtils {
      * @param   dx               size of each bin
      */
     public static void makeNormalKernelInPlace(double[] yValues, double mean, double sd, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx) {
-
         double total = 0.0;
 
         double x = 0.0;
@@ -411,7 +519,9 @@ public class SSEUtils {
             x += dx;
         }
 
-        for (int i = nRightFlankBins + 1; i < nXbins - nLeftFlankBins; i++) yValues[i] = 0;
+        for (int i = nRightFlankBins + 1; i < nXbins - nLeftFlankBins; i++) {
+            yValues[i] = 0;
+        }
 
         x = -nLeftFlankBins * dx;
         for (int i = nXbins - nLeftFlankBins; i < nXbins; i++) {
@@ -420,13 +530,8 @@ public class SSEUtils {
             x += dx;
         }
 
-        // System.out.println("Unormalized fY = " + Arrays.toString(yValues));
-        // System.out.println("Total = " + total);
-
         for (int i = 0; i <= nRightFlankBins; i++) yValues[i] /= total;
         for (int i = (nXbins - nLeftFlankBins); i < nXbins; i++) yValues[i] /= total;
-
-        // System.out.println("fY = " + Arrays.toString(yValues));
     }
 
     /*

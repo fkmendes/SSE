@@ -95,7 +95,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     private void doMoSSEIntegrateInPlace(int nodeIdx, double[][] esDsAtNode, double[][] fftBufferEsDsAtNode, double[][] scratchAtNode, double startTime, boolean isFirstDt, double dt, boolean lowRes) {
 
         // integrate over birth and death events (either at low or high resolution inside)
-        this.propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
+        boolean jtransforms = false;
+        this.propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes, jtransforms);
 
         /*
          * For the step below, I am working on the MoSSELikelihoodCore
@@ -125,8 +126,8 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes) {
-        super.propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes);
+    public void propagateTInPlace(double[][] esDsAtNode, double[][] scratchAtNode, double dt, boolean lowRes, boolean jtransforms) {
+        super.propagateTInPlace(esDsAtNode, scratchAtNode, dt, lowRes, false);
 
         // return null;
     }

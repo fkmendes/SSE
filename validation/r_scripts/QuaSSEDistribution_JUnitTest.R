@@ -5,9 +5,9 @@
 ##
 ## (1) testDimensions
 ## (2) testInitializationOfTips
+## (3) testIntegrateOneBranchLoRes32BinsOutsideClassJustT
 
 
-## (8) testIntegrateOneBranchLoRes32BinsOutsideClassJustT
 ## (9) testIntegrateOneBranchLoRes32BinsOutsideClassJustX (see test (4))
 ## (10) testIntegrateOneBranchLoRes1024BinsOutsideClassJustX
 ## (11) testIntegrateOneBranchHiRes4096BinsOutsideClassJustX (note that I'm using this in 4096 low res, but I'll co-opt 4096 high res in Java)
@@ -43,74 +43,7 @@ source("rev_eng_diversitree.R")
 
 ## Test expectations
 ##
-## (1) testPropagateTimeOneChQuaSSETest
-
-vars <- cbind(rep(0.0001,32),
-              c(8.50976807665641, 10.103792974434, 9.08976088347418, 11.847721337896, 8.51254745547751, 9.91650581983555, 8.95019918832521, 9.30609468137578, 11.0775496365384, 10.7639029400606, 10.9164931483932, 9.83064984974005, 11.7045125626528, 11.3382431919839, 8.94185500956388, 7.30298759647754, 11.1167065386435, 9.76891399488789, 9.76676261926709, 9.10540040702707, 8.93655752085786, 10.2580116547857, 10.2552822093573, 8.85921172559191, 11.0314684537514, 10.8738197102994, 10.4638936963999, 9.68617874031991, 8.35885856359494, 10.8426829704597, 7.66894489549493, 8.23694434625264))
-# vars <- data.frame(0.0, 1.0) # E and D
-lambda <- 1.0
-mu <- 0.5
-dt <- 0.01
-ndat <- 28 # just one useful quant ch bin
-
-#### eAndD
-
-res <- fftR.propagate.t.debug(vars, lambda, mu, dt, ndat)
-print(paste(res[1:10,1], collapse=", "))
-print(paste(res[1:10,2], collapse=", "))
-
-##              [,1]      [,2]
-##  [1,] 0.005061285  8.383508
-##  [2,] 0.005061285  9.953882
-##  [3,] 0.005061285  8.954895
-##  [4,] 0.005061285 11.671936
-##  [5,] 0.005061285  8.386246
-##  [6,] 0.005061285  9.769374
-##  [7,] 0.005061285  8.817404
-##  [8,] 0.005061285  9.168019
-##  [9,] 0.005061285 10.913191
-## [10,] 0.005061285 10.604198
-
-
-
-# (5) testLogistic
-
-## The following code is inside quasse.extent
-drift <- 0.0; diffusion <- 0.01
-nx <- 1024; dx <- 0.01; dt <- 0.05
-y0 <- 0.1; y1 <- 0.2; xmid <- 0; r <- 2.5; death <- 0.03
-hi.lo.ratio <- 4 # r=4L when making control.fft
-w <- 5
-
-mean4test <- drift * dt
-sd4test <- sqrt(diffusion * dt)
-nkleft <- max(ceiling(-(mean4test - w * sd4test)/dx)) * c(hi.lo.ratio, 1)
-nkright <- max(ceiling((mean4test + w * sd4test)/dx)) * c(hi.lo.ratio, 1)
-
-ndat <- nx * c(hi.lo.ratio, 1) - (nkleft + 1 + nkright)
-ndat.lo <- ndat[2];
-ndat.hi <- ndat[1];
-
-xmin.lo <- xmid - dx * ceiling((ndat.lo - 1)/2) # x.02
-xmin.hi <- xmin.lo - dx * (1 - 1/hi.lo.ratio) # x.01
-x.lo <- seq(xmin.lo, length.out=ndat.lo, by = dx) # same as ext.fft$x[[2]]
-x.hi <- seq(xmin.hi, length.out=ndat.hi, by = dx/hi.lo.ratio) # same as ext.fft$x[[1]]
-
-ls.hi <- sigmoid.x(x.hi, y0, y1, xmid, r) # same as pars.fft$hi$lambda
-ls.lo <- sigmoid.x(x.lo, y0, y1, xmid, r) # same as pars.fft$hi$lambda
-
-paste(ls.hi[1:10], collapse=", ")
-# "0.100000375000363, 0.100000377351446, 0.100000379717269, 0.100000382097925, 0.100000384493506, 0.100000386904106, 0.10000038932982, 0.100000391770742, 0.100000394226967, 0.100000396698591"
-
-paste(ls.hi[2501:2510], collapse=", ")
-# "0.195816352937447, 0.195841335181637, 0.195866174682834, 0.195890872179954, 0.195915428409005, 0.195939844103087, 0.19596411999239, 0.195988256804195, 0.196012255262877, 0.196036116089903"
-
-paste(ls.hi[3989:3999], collapse=", ")
-# "0.199999600814288, 0.199999603301409, 0.199999605773033, 0.199999608229258, 0.19999961067018, 0.199999613095894, 0.199999615506494, 0.199999617902075, 0.199999620282731, 0.199999622648554, 0.199999624999637"
-
-
-
-# (1) testDimensions
+## (1) testDimensions
 
 dt <- 0.01
 dx <- 0.0005
@@ -177,8 +110,7 @@ paste(do.call(mu, c(list(x.hi), death))[3574:3583], collapse=", ") # expectedMuH
 
 
 
-
-# (7) testInitializationOfTips
+# (2) testInitializationOfTips
 
 dx <- 0.0005
 hi.lo.ratio <- 4
@@ -255,15 +187,29 @@ paste(sp2.y.ds.exp, collapse=", ")
 
 
 
-# (8) testIntegrateOneBranchLoRes32BinsOutsideClassJustT
+# (3) testIntegrateOneBranchLoRes32BinsOutsideClassJustT
+
+dt <- 0.01
+dx <- 0.01
+w <- 10
+drift <- 0.0
+diffusion <- 0.001
+sd <- 0.05
+death <- 0.03 # for constant link function
+r <- 2.5 # logistic link function
+xmid <- 0.0
+y0 <- 0.1 # base y ("y" shift)
+y1 <- 0.2 # max y
+lambda <- sigmoid.x # lambda is now a function
+mu <- constant.x # mu is now a function
 
 control.fft.32 <- list(tc=100.0, # time point at which we go from high -> low resolution of X
-                    dt.max=0.01, # dt
+                    dt.max=dt, # dt
                     nx=32, # number of X bins
-                    dx=0.01, # size of each X bin
+                    dx=dx, # size of each X bin
                     r=4L, # high res of X = nx * r
                     xmid=0, # sp rate ~ X is a logistic regression, and xmid is the value of X at the inflection point
-                    w=10, # used to determine nkl and nkr (see quasse.extent)
+                    w=w, # used to determine nkl and nkr (see quasse.extent)
                     flags=0L, # FFT stuff below
                     verbose=0L,
                     atol=1e-6,
@@ -271,13 +217,8 @@ control.fft.32 <- list(tc=100.0, # time point at which we go from high -> low re
                     eps=1e-3,
                     method="fftC")
 
-lambda <- sigmoid.x
-mu <- constant.x
-diffusion <- 0.001
-sd <- 0.05
-
 args.fft.just.t <- list(lambda=1:4, mu=5, drift=6, diffusion=7) # index of each parameter in args
-pars.just.t <- c(.1, .2, 0, 2.5, .03, drift, diffusion) # specifies parameter values
+pars.just.t <- c(y0, y1, xmid, r, death, drift, diffusion) # specifies parameter values
 # note that y0=0.1, y1=0.2, xmid=0.0, and r=2.5 for the sigmoid function for lambda
 
 ext.fft.just.t <- quasse.extent.debug(control.fft.32, drift, diffusion) # prepares X axis stuff
@@ -285,21 +226,77 @@ ext.fft.just.t <- quasse.extent.debug(control.fft.32, drift, diffusion) # prepar
 
 pars.fft.just.t <- diversitree:::expand.pars.quasse(lambda, mu, args.fft.just.t, ext.fft.just.t, pars.just.t) # adds lambda and mu vectors to ext.fft.just.x
 
-# initialization
+## initialization
 vars.fft.just.t <- matrix(0, control.fft.32$nx, 2) # low resolution
-vars.fft.just.t[seq_len(ext.fft.just.t$ndat[2]),2] <- dnorm(ext.fft.just.t$x[[2]], 0.0, sd) # states are the qu character values observed at the tips (assuming observed state is 0.0), note that the last pars.fft.just.x$lo$padding should be 0.0
-paste(vars.fft.just.t[,2], collapse=", ") # expectedInitialDs = 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522966, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522966, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+## populating states in all bins, at tips, being drawn from a normal distribution centered at a species' observed value
+## which here is assumed to be 0.0
+##
+## also note that the number of left and right flanking bins is 4
+##
+## pars.fft.just.t$lo$padding
+## nkl nkr
+##   4   4
+##
+## and if you look at the last (4 + 4) rows
+## in vars.fft.just.r, should be 0.0
+vars.fft.just.t[seq_len(ext.fft.just.t$ndat[2]),2] <- dnorm(ext.fft.just.t$x[[2]], 0.0, sd)
+## states are the qu character values observed at the tips (assuming observed state is 0.0), note that the last pars.fft.just.x$lo$padding should be 0.0
+
+exp.sp1.initial.ds <- rep(0, length(vars.fft.just.t[,2])*2)
+idxs <- seq(1, length(vars.fft.just.t[,2])*2, by=2)
+j <- 1
+for (i in vars.fft.just.t[,2]) {
+    exp.sp1.initial.ds[idxs[j]] = i
+    j = j+1
+}
+
+paste(exp.sp1.initial.ds, collapse=", ")
+## expectedInitialDs = 0.709491856924629, 0, 1.07981933026376, 0, 1.57900316601788, 0, 2.21841669358911, 0, 2.9945493127149, 0, 3.88372109966426, 0, 4.83941449038287, 0, 5.79383105522966, 0, 6.66449205783599, 0, 7.36540280606647, 0, 7.82085387950912, 0, 7.97884560802865, 0, 7.82085387950912, 0, 7.36540280606647, 0, 6.66449205783599, 0, 5.79383105522966, 0, 4.83941449038287, 0, 3.88372109966426, 0, 2.9945493127149, 0, 2.21841669358911, 0, 1.57900316601788, 0, 1.07981933026376, 0, 0.709491856924629, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+## paste(vars.fft.just.t[,2], collapse=", ")
+## (if using JTransforms) expectedInitialDs = 0.709491856924629, 1.07981933026376, 1.57900316601788, 2.21841669358911, 2.9945493127149, 3.88372109966426, 4.83941449038287, 5.79383105522966, 6.66449205783599, 7.36540280606647, 7.82085387950912, 7.97884560802865, 7.82085387950912, 7.36540280606647, 6.66449205783599, 5.79383105522966, 4.83941449038287, 3.88372109966426, 2.9945493127149, 2.21841669358911, 1.57900316601788, 1.07981933026376, 0.709491856924629, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 vars.fft.just.t.tmp <- fftR.propagate.t.debug(vars.fft.just.t, pars.fft.just.t$lo$lambda, pars.fft.just.t$lo$mu, control.fft.32$dt.max, ext.fft.just.t$ndat[2])
-paste(vars.fft.just.t.tmp[,1], collapse=", ") # expectedSp1EsAfterPropT = 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0, 0, 0, 0, 0, 0, 0, 0, 0
-paste(vars.fft.just.t.tmp[,2], collapse=", ") # expectedSp1DsAfterPropT = 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052118, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+exp.sp1.es.after.prop.t <- rep(0, length(vars.fft.just.t.tmp[,1])*2)
+idxs <- seq(1, length(vars.fft.just.t.tmp[,1])*2, by=2)
+j <- 1
+for (i in vars.fft.just.t.tmp[,1]) {
+    exp.sp1.es.after.prop.t[idxs[j]] = i
+    j = j+1
+}
+
+paste(exp.sp1.es.after.prop.t, collapse=", ")
+## (if using SST) expectedSp1EsAfterPropT = 0.000299740440744498, 0, 0.000299739520470888, 0, 0.000299738597335782, 0, 0.00029973767161558, 0, 0.000299736743589792, 0, 0.000299735813540893, 0, 0.000299734881753716, 0, 0.000299733948515344, 0, 0.00029973301411462, 0, 0.00029973207884177, 0, 0.000299731142988294, 0, 0.000299730206846208, 0, 0.00029972927070804, 0, 0.000299728334866242, 0, 0.000299727399612858, 0, 0.000299726465239364, 0, 0.000299725532035927, 0, 0.000299724600291355, 0, 0.000299723670292635, 0, 0.000299722742324704, 0, 0.000299721816669763, 0, 0.000299720893607378, 0, 0.00029971997341377, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+## paste(vars.fft.just.t.tmp[,1], collapse=", ")
+## (if using JTransforms) expectedSp1EsAfterPropT = 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+exp.sp1.ds.after.prop.t <- rep(0, length(vars.fft.just.t.tmp[,2])*2)
+idxs <- seq(1, length(vars.fft.just.t.tmp[,2])*2, by=2)
+j <- 1
+for (i in vars.fft.just.t.tmp[,2]) {
+    exp.sp1.ds.after.prop.t[idxs[j]] = i
+    j = j+1
+}
+
+paste(exp.sp1.ds.after.prop.t, collapse=", ")
+## (if using SST) expectedSp1DsAfterPropT = 0.708264611249434, 0, 1.07794488915543, 0, 1.57625248872262, 0, 2.21453845459856, 0, 2.98929572353432, 0, 3.87688349797518, 0, 4.83086427268124, 0, 5.78355856417974, 0, 6.65263439389469, 0, 7.35225216820117, 0, 7.80684129110362, 0, 7.96450018578724, 0, 7.80674374052118, 0, 7.35206845754541, 0, 6.65238511637526, 0, 5.78326972079126, 0, 4.83056283595408, 0, 3.87659337350287, 0, 2.98903491521347, 0, 2.21431781312691, 0, 1.57607596745573, 0, 1.07781089197137, 0, 0.708167869605178, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+## paste(vars.fft.just.t.tmp[,2], collapse=", ")
+## (if using JTransforms) expectedSp1DsAfterPropT = 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052118, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 pde.fftR.just.t <- with(control.fft.32, make.pde.quasse.fftR.debug(nx, dx, dt.max, 2L))
 ans.fftR.just.t <- pde.fftR.just.t(vars.fft.just.t, control.fft.32$dt.max, pars.fft.just.t$lo, 0)
 
 ## same as above (just comparing)
-paste(ans.fftR.just.t[[2]][,1], collapse=", ") # (again, same expectedSp1EsAfterPropT =) 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0, 0, 0, 0, 0, 0, 0, 0, 0
-paste(ans.fftR.just.t[[2]][,2], collapse=", ") # (again, same expectedSp1DsAfterPropT =) 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052118, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0, 0, 0, 0, 0, 0, 0, 0, 0
+paste(ans.fftR.just.t[[2]][,1], collapse=", ")
+
+## (again, if using JTransforms, same expectedSp1EsAfterPropT =) 0.000299740440744498, 0.000299739520470888, 0.000299738597335782, 0.00029973767161558, 0.000299736743589792, 0.000299735813540893, 0.000299734881753716, 0.000299733948515344, 0.00029973301411462, 0.00029973207884177, 0.000299731142988294, 0.000299730206846208, 0.00029972927070804, 0.000299728334866242, 0.000299727399612858, 0.000299726465239364, 0.000299725532035927, 0.000299724600291355, 0.000299723670292635, 0.000299722742324704, 0.000299721816669763, 0.000299720893607378, 0.00029971997341377, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+paste(ans.fftR.just.t[[2]][,2], collapse=", ")
+## (again, if using JTransforms, same expectedSp1DsAfterPropT =) 0.708264611249434, 1.07794488915543, 1.57625248872262, 2.21453845459856, 2.98929572353432, 3.87688349797518, 4.83086427268124, 5.78355856417974, 6.65263439389469, 7.35225216820117, 7.80684129110362, 7.96450018578724, 7.80674374052118, 7.35206845754541, 6.65238511637526, 5.78326972079126, 4.83056283595408, 3.87659337350287, 2.98903491521347, 2.21431781312691, 1.57607596745573, 1.07781089197137, 0.708167869605178, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
 
 
