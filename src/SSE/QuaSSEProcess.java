@@ -209,22 +209,34 @@ public abstract class QuaSSEProcess extends Distribution {
 
         if (forceRecalcKernel || didRefreshNowMustRecalcKernel) {
             if (lowRes) {
-                SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
+                if (jtransforms) {
+                    SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
+                } else {
+                    SSEUtils.makeNormalKernelInPlaceSSTJavaFftService(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin);
+                }
+
+                // debugging
+                // System.out.println("pre-FFT fYLo = " + Arrays.toString(fYLo));
 
                 // FFTs normal kernel
                 if (jtransforms && doFFT) fftForEandDLo.realForwardFull(fYLo); // with JTransforms
                 else if (doFFT) {
-                    SSEUtils.everyOtherExpandInPlace(fYLo);
                     jffts.fft(nXbinsLoSST, fYLo, fftFYLo); // result left in fftFYLo
                 }
             }
             else {
-                SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin/hiLoRatio); // normalizes inside already
+                if (jtransforms) {
+                    SSEUtils.makeNormalKernelInPlace(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin / hiLoRatio); // normalizes inside already
+                } else {
+                    SSEUtils.makeNormalKernelInPlaceSSTJavaFftService(fYHi, changeInXNormalMean, changeInXNormalSd, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], dXbin / hiLoRatio); // normalizes inside already
+                }
+
+                // debugging
+                // System.out.println("pre-FFT fYHi = " + Arrays.toString(fYHi));
 
                 // FFTs normal kernel
                 if (jtransforms && doFFT) fftForEandDHi.realForwardFull(fYHi); // with JTransforms
                 else if (doFFT) {
-                    SSEUtils.everyOtherExpandInPlace(fYHi);
                     jffts.fft(nXbinsHiSST, fYHi, fftFYHi); // result left in fftFYLo
                 }
             }

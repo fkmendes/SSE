@@ -3,10 +3,7 @@ package SSE;
 import beast.core.Input;
 import beast.core.State;
 import beast.evolution.tree.Node;
-import org.shared.array.ComplexArray;
-import org.shared.array.RealArray;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -519,8 +516,12 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // System.out.println("scratch[1] = " + Arrays.toString(scratch[1]));
 
         // grab dt and nDimensions from state
-        if (lowRes) SSEUtils.propagateEandDinXQuaLikeSST(esDsAtNode, fftBufferEsDsAtNode, fftFYLo, scratchAtNode, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, jffts);
-        else SSEUtils.propagateEandDinXQuaLikeSST(esDsAtNode, fftBufferEsDsAtNode, fftFYHi, scratchAtNode, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, jffts);
+        if (lowRes) {
+            SSEUtils.propagateEandDinXQuaLikeSSTJavaFftService(esDsAtNode, fftBufferEsDsAtNode, fftFYLo, scratchAtNode, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], nDimensionsE, nDimensionsD, jffts);
+        }
+        else {
+            SSEUtils.propagateEandDinXQuaLikeSSTJavaFftService(esDsAtNode, fftBufferEsDsAtNode, fftFYHi, scratchAtNode, nXbinsHi, nLeftNRightFlanksHi[0], nLeftNRightFlanksHi[1], nDimensionsE, nDimensionsD, jffts);
+        }
     }
 
     public void propagateXInPlaceJTransforms(double[][] esDsAtNode, double[][] scratchAtNode, boolean lowRes) {

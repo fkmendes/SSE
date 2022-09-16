@@ -55,13 +55,16 @@ fftR.make.kern.debug <- function(mean, sd, nx, dx, nkl, nkr) {
 
   print("inside fftR.make.kern")
   print(paste0("dx = ", dx))
-  print("xkern = ")
+  print("delta.x = ")
   print(xkern)
   print(paste0("mean = ", mean, " sd = ", sd))
   print("dnorm = ")
   print(dnorm(xkern, mean, sd))
+  print(paste0("sum = ", sum(dnorm(xkern, mean, sd))))
 
   kern[ikern] <- normalise(dnorm(xkern, mean, sd))
+  print("kern = ")
+  print(kern)
   kern
 }
 

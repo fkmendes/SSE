@@ -33,6 +33,8 @@ import org.shared.array.ComplexArray;
 import org.shared.array.RealArray;
 import org.shared.fft.JavaFftService;
 
+import java.util.Arrays;
+
 public class SSEUtils {
 
     private static final double SQRT2PI = Math.sqrt(2 * Math.PI);
@@ -315,7 +317,7 @@ public class SSEUtils {
         }
     }
 
-    public static void propagateEandDinXQuaLikeSST(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, double[][] scratchAtNode, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, JavaFftService ffts) {
+    public static void propagateEandDinXQuaLikeSSTJavaFftService(double[][] esDsAtNode, double[][] fftEsDsAtNode, double[] fftFY, double[][] scratchAtNode, int nXbins, int nLeftFlankBins, int nRightFlankBins, int nDimensionsE, int nDimensionsD, JavaFftService ffts) {
         // recording the first nLeftFlankBins and the last nRightFlankBins to put them back later
         int nPad = nLeftFlankBins + nRightFlankBins + 1;
         for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++)
@@ -352,26 +354,39 @@ public class SSEUtils {
             // this line below is not necessary (I added so I could pass unit tests, but instead
             // should update unit tests and remove this line)
 
-            everyOtherToHeadInPlace(esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, 1.0); // grabbing real part and scaling by 1/nXbins
+            // everyOtherToHeadInPlace(esDsAtNode[ithDim], nXbins, nLeftFlankBins, nRightFlankBins, 2, 1.0); // grabbing real part and scaling by 1/nXbins
 
-            for (int i=0; i<nXbins; ++i) {
+            for (int i=0; i<(nXbins*2); i += 2) {
                 // if negative value, set to 0.0
                 // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
-                if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
+                if (esDsAtNode[ithDim][i] < 0.0 || i >= ((nItems2Copy-1)*2)) {
+                    esDsAtNode[ithDim][i] = 0.0;
+                }
             }
+
+            // passes tests in PropagatesQuaSSETest.java
+//            for (int i=0; i<nXbins; ++i) {
+//                // if negative value, set to 0.0
+//                // if at last (nLeftFlankBins + nRightFlankBins) items, set to 0.0
+//                if (esDsAtNode[ithDim][i] < 0.0 || i >= (nItems2Copy-1)) esDsAtNode[ithDim][i] = 0.0;
+//            }
         }
 
         // restoring the original first nLeftFlankBins and the last nRightFlankBins, which were stored in the scratch array
         // TODO: this is atm identical to ModalFftService's analogous chunk, but we need to make it
         // so scratch-cached flank elements are restored at every other index, so JavaFftService can be used
         for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-            for (int j = 0; j < nLeftFlankBins; ++j) {
-                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+            // for (int j=0; j < nLeftFlankBins; ++j) {
+            for (int i=0, j=0; i < nLeftFlankBins; ++i, j+=2) {
+                // esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][i];
             }
         }
         for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-            for (int j = (nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j) {
-                esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+            // for (int j=(nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j) {
+            for (int i=(nXbins - nPad - nRightFlankBins), j=(nXbins - nPad - nRightFlankBins)*2; i < (nXbins - nPad); ++i, j+=2) {
+                    // esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
+                    esDsAtNode[ithDim][j] = scratchAtNode[ithDim][i];
             }
         }
 
@@ -477,7 +492,7 @@ public class SSEUtils {
             ffts.fft(nXbins, esDsAtNode[ithDim], fftEsDsAtNode[ithDim]); // fftEsDsAtNode: real complex real complex...
 
             // convolving
-            for (int i = 0; i < fftFY.length; i += 2) {
+            for (int i=0; i < fftFY.length; i += 2) {
                 fftEsDsAtNode[ithDim][i] *= fftFY[i]; // real part
                 fftEsDsAtNode[ithDim][i + 1] *= fftFY[i]; // complex part
             }
@@ -500,6 +515,9 @@ public class SSEUtils {
      * 'nLeftFlankBins' and 'nRightFlankBins' are also the number of bins on the left-
      * side (and right-side, after skipping (nLeftFlankBins + nRightFlankBins))
      * of E and D that are not updated by 'propagateEandDinXQuaLike'
+     *
+     * To be used with values distributed over bins as required by JTransforms or ModalFftService,
+     * that is, elements should be placed consecutively
      *
      * @param   yValues (= fY) where the result is left; gives the probability density of a given change in quantitative trait value
      * @param   mean    (= changeInXNormalMean = diversitree's drift * -dt) is the mean expected change in quantitative trait value
@@ -532,6 +550,57 @@ public class SSEUtils {
 
         for (int i = 0; i <= nRightFlankBins; i++) yValues[i] /= total;
         for (int i = (nXbins - nLeftFlankBins); i < nXbins; i++) yValues[i] /= total;
+    }
+
+    /*
+     * Builds Normal distribution (yValues) where x is the CHANGE in quantitative trait values
+     * (not the quantitative trait values themselves!). Under BM, for example, this
+     * kernel is centered at 0.0
+     *
+     * Note: this kernel (yValues) is later FFT-ed in the likelihood class, and then used in the
+     * convolution function, and for reasons I do not fully understand, this bell-shaped kernel\
+     * needs to be cuts in two, with the left half being placed at the (right-)tail end of the kernel,
+     * and the right half at the (left-)head of the kernel
+     *
+     * 'nLeftFlankBins' and 'nRightFlankBins' are also the number of bins on the left-
+     * side (and right-side, after skipping (nLeftFlankBins + nRightFlankBins))
+     * of E and D that are not updated by 'propagateEandDinXQuaLike'
+     *
+     * To be used with values distributed over bins as required by SST's JavaFftService,
+     * that is, elements should be alternated, skipping even indices (that's why we multiply the
+     * index integers in loops by two)
+     *
+     * @param   yValues (= fY) where the result is left; gives the probability density of a given change in quantitative trait value
+     * @param   mean    (= changeInXNormalMean = diversitree's drift * -dt) is the mean expected change in quantitative trait value
+     * @param   sd      (= changeInXNormalSd = squared root(diversitree's diffusion * dt)) is the standard deviation of the expected change in quantitative trait value
+     * @param   nXbins  total number of bins resulting from discretizing quantitative trait-change normal kernel (fY and each row of esDs will have these many nXbins)
+     * @param   nLeftFlankBins   how many bins on the right side of kernel are non-zero
+     * @param   nRightFlankBins  how many bins on the left side of kernel are non-zero
+     * @param   dx               size of each bin
+     */
+    public static void makeNormalKernelInPlaceSSTJavaFftService(double[] yValues, double mean, double sd, int nXbins, int nLeftFlankBins, int nRightFlankBins, double dx) {
+        double total = 0.0;
+
+        double x = 0.0;
+        for (int i=0; i <= nRightFlankBins*2; i+=2) {
+            yValues[i] = getNormalDensity(x, mean, sd); // in diversitree's C code, this is further multiplied by dx (think this is unnecessary, b/c it doesn't change the result!)
+            total += yValues[i];
+            x += dx;
+        }
+
+        for (int i=(nRightFlankBins+1)*2; i < (nXbins - nLeftFlankBins)*2; i+=2) {
+            yValues[i] = 0;
+        }
+
+        x = -nLeftFlankBins * dx;
+        for (int i=(nXbins - nLeftFlankBins)*2; i < nXbins*2; i+=2) {
+            yValues[i] = getNormalDensity(x, mean, sd);
+            total += yValues[i];
+            x += dx;
+        }
+
+        for (int i=0; i <= nRightFlankBins*2; i+=2) yValues[i] /= total;
+        for (int i=(nXbins - nLeftFlankBins)*2; i < nXbins*2; i+=2) yValues[i] /= total;
     }
 
     /*
