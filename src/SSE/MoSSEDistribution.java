@@ -67,23 +67,23 @@ public class MoSSEDistribution extends QuaSSEDistribution {
     }
 
     @Override
-    public void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nXBinsAtRightRes, int nUsefulXBinsAtRightRes, String aRootPriorType) {
+    public void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nXBinsAtRightRes, int nUsefulXBinsAtRightRes, String aRootPriorType, boolean jtransforms) {
         ;
     }
 
     @Override
-    public void processBranch(Node aNode) {
+    public void processBranch(Node aNode, boolean jtransforms) {
 
         // TODO stuff
         doMoSSEIntegrateInPlace(aNode.getNr(), esDsHi[0], fftBufferEsDsHi[0], scratch, 0.0, true, dtMax, true);
     }
 
     @Override
-    public void processInternalNode(Node aNode) {
+    public void processInternalNode(Node aNode, boolean jtransforms) {
     }
 
     @Override
-    public void startRecursionAtRootNode(Node rootNode) {
+    public void startRecursionAtRootNode(Node rootNode, boolean jtransforms) {
 
     }
 

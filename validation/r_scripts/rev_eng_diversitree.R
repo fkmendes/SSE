@@ -155,6 +155,7 @@ make.rootfunc.quasse.debug <- function(cache) {
     root.idx <- cache$root
     nx <- cache$control$nx
     dx <- cache$control$dx
+
     function(res, pars, condition.surv, root, root.f, intermediates) {
         ## vals and lq come from all.branches.list
         vals <- matrix(res$vals, nx, 2)[seq_len(pars$lo$ndat),] # just making matrix

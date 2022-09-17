@@ -116,8 +116,8 @@ public abstract class QuaSSEProcess extends Distribution {
         fYHi = new double[nXbinsHi * 2]; // just real
         fftFYLo = new double[nXbinsLo * 2]; // just real
         fftFYHi = new double[nXbinsHi * 2]; // just real
-        nXbinsHiSST = new int[] { nXbinsHi };
         nXbinsLoSST = new int[] { nXbinsLo };
+        nXbinsHiSST = new int[] { nXbinsHi };
         jffts = new JavaFftService();
 
         // populatefY(dtMax, true, false, true, true); // force populate fY, and do FFT
@@ -237,7 +237,7 @@ public abstract class QuaSSEProcess extends Distribution {
                 // FFTs normal kernel
                 if (jtransforms && doFFT) fftForEandDHi.realForwardFull(fYHi); // with JTransforms
                 else if (doFFT) {
-                    jffts.fft(nXbinsHiSST, fYHi, fftFYHi); // result left in fftFYLo
+                    jffts.fft(nXbinsHiSST, fYHi, fftFYHi); // result left in fftFYHi
                 }
             }
         }
@@ -273,22 +273,22 @@ public abstract class QuaSSEProcess extends Distribution {
      * The D's at the root must be multiplied by a prior probability array.
      * This method populates it in place depending on what the user wants.
      */
-    protected abstract void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nXbinAtRightRes, int nUsefulXbinAtRightRes, String rootPriorType);
+    protected abstract void populatePriorProbAtRoot(double[] dsAtRoot, double dxAtRightRes, int nXbinAtRightRes, int nUsefulXbinAtRightRes, String rootPriorType, boolean jtransforms);
 
     /*
      *
      */
-    protected abstract void processBranch(Node aNode);
+    public abstract void processBranch(Node aNode, boolean jtransforms);
 
     /*
      *
      */
-    protected abstract void integrateLength(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes);
+    protected abstract void integrateLength(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes, boolean jtransforms);
 
     /*
      *
      */
-    protected abstract double normalizeDs(int nodeIdx, boolean lowRes);
+    protected abstract double normalizeDs(int nodeIdx, boolean lowRes, boolean jtransforms);
 
     /*
      *
@@ -298,12 +298,12 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void processInternalNode(Node aNode);
+    protected abstract void processInternalNode(Node aNode, boolean jtransforms);
 
     /*
      *
      */
-    protected abstract void startRecursionAtRootNode(Node rootNode);
+    protected abstract void startRecursionAtRootNode(Node rootNode, boolean jtransforms);
 
     /*
      * Does integration in time and character space in place
