@@ -99,13 +99,14 @@ public abstract class QuaSSEProcess extends Distribution {
 
         // getting indices for transferring high- to low-res E's and D's during pruning
         hiLoIdxs4Transfer = new int[nUsefulXbinsLo];
-        populateIndicesHiLo(hiLoIdxs4Transfer, hiLoRatio, nUsefulXbinsLo); // populates hiLoIdxs4Transfer
+        boolean jtransforms = false;
+        populateIndicesHiLo(hiLoIdxs4Transfer, hiLoRatio, nUsefulXbinsLo, jtransforms); // populates hiLoIdxs4Transfer
 
         // debugging
         // System.out.println("hiLoIdxs4Transfer = " + Arrays.toString(hiLoIdxs4Transfer));
 
-        fftForEandDLo = new DoubleFFT_1D(nXbinsLo);
-        fftForEandDHi = new DoubleFFT_1D(nXbinsHi);
+        // fftForEandDLo = new DoubleFFT_1D(nXbinsLo);
+        // fftForEandDHi = new DoubleFFT_1D(nXbinsHi);
 
         // JTransforms version
         // fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
@@ -196,8 +197,10 @@ public abstract class QuaSSEProcess extends Distribution {
      *
      */
     protected void populatefY(double aDt, boolean forceRecalcKernel, boolean dtChanged, boolean doFFT, boolean lowRes, boolean jtransforms) {
+
         // finding out if we need to recalculate fY or not
         boolean didRefreshNowMustRecalcKernel = false;
+        // TODO: move .somethingIsDirty() check outside of populatefY, check it at the very top, at calculateLogP so it's only done once
         if (dtChanged || driftInput.get().somethingIsDirty()) {
             changeInXNormalMean = driftInput.get().getValue() * -aDt;
             didRefreshNowMustRecalcKernel = true;
@@ -206,6 +209,7 @@ public abstract class QuaSSEProcess extends Distribution {
             changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * aDt);
             didRefreshNowMustRecalcKernel = true;
         }
+
 
         if (forceRecalcKernel || didRefreshNowMustRecalcKernel) {
             if (lowRes) {
@@ -241,12 +245,6 @@ public abstract class QuaSSEProcess extends Distribution {
                 }
             }
         }
-
-        // debugging
-        // System.out.println("fYHi (kernel + FFT) = " + Arrays.toString(fYHi));
-//        for (int i=0; i<fYHi.length; i++) {
-//            System.out.println("fYHi["  + i + "] = " + fYHi[i]);
-//        }
     }
 
     /*
@@ -254,11 +252,14 @@ public abstract class QuaSSEProcess extends Distribution {
      */
     protected abstract void initializeEsDs(int nNodes, int nDimensionsFFT, int nXbinsLo, int nXbinsHi);
 
-    protected void populateIndicesHiLo(int[] toArray, int ratioFromTo, int careAboutNTo) {
+    protected void populateIndicesHiLo(int[] toArray, int ratioFromTo, int careAboutNTo, boolean jtransforms) {
+        int multipl = 2; // SST's JavaFftService expects Es and Ds to be interdigitated
+        if (jtransforms) multipl = 1;
+
         int nElementsCopied = 0;
-        int i = ratioFromTo - 1;
+        int i = ratioFromTo - 1; // offset because of indexing
         while (nElementsCopied < careAboutNTo) {
-            toArray[nElementsCopied] = i;
+            toArray[nElementsCopied] = i * multipl;
             i += ratioFromTo;
             nElementsCopied++;
         }
@@ -293,7 +294,7 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void mergeChildrenNodes(Node aNode);
+    protected abstract void mergeChildrenNodes(Node aNode, boolean jtransforms);
 
     /*
      *
@@ -326,7 +327,7 @@ public abstract class QuaSSEProcess extends Distribution {
      * This method looks at the relevant objects in state,
      * computes the log-likelihood, and returns it
      */
-    protected abstract double getLogPFromRelevantObjects(double[][] esDsAtRoot, double sumOfLogNormalizationFactors, double[] birthRates, double dXAtRightRes);
+    protected abstract double getLogPFromRelevantObjects(double[][] esDsAtRoot, double sumOfLogNormalizationFactors, double[] birthRates, double dXAtRightRes, boolean jtransforms);
 
     /*
      * Getters, setters and helper methods below

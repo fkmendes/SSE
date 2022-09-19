@@ -101,7 +101,8 @@ public class OtherUtilsTest {
         double[] toArray = new double[4];
         int[] hiLoIdxs4Transfer = new int[] { 3, 7, 11, 15 };
 
-        SSEUtils.hiToLoTransferInPlace(fromArray, toArray, hiLoIdxs4Transfer);
+        boolean jtransforms = true;
+        SSEUtils.hiToLoTransferInPlace(fromArray, toArray, hiLoIdxs4Transfer, jtransforms);
 
         double[] toArrayExpected = new double[] { 4.0, 8.0, 12.0, 16.0 };
         assertArrayEquals(toArrayExpected, toArray, 0.0);

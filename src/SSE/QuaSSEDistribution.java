@@ -172,7 +172,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             }
 
             // after recursion, prepare initial conditions for integrating this node
-            mergeChildrenNodes(aNode);
+            mergeChildrenNodes(aNode, jtransforms);
         }
 
         // unless we're at the root, now we integrate this branch
@@ -254,6 +254,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
             // normalize and record normalization factor before integration
             // logNormalizationFactors[nodeIdx] = normalizeDs(esDsAtNode[1], dXbin/hiLoRatio); // normalize D's and returns factor, which we record
+
+            // System.out.println("calling normalize before integration");
             logNormalizationFactors[nodeIdx] = normalizeDs(nodeIdx, false, jtransforms); // normalize D's and returns factor, which we record
 
             // high res part
@@ -261,9 +263,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
             // debugging
             // System.out.println("high-res part, lenHi = " + lenHi);
-
-            // again, normalization and adding to logNormalizationFactors inside
-            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, lenHi, dynamicallyAdjustDt, dtMax, false, jtransforms);
+            // System.out.println("calling normalize inside integration in high res");
+            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, lenHi, dynamicallyAdjustDt, dtMax, false, jtransforms); // normalization and adding to logNormalizationFactors inside
 
             // normalize and record normalization factor before integration at low res
             // logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin/hiLoRatio);
@@ -273,8 +274,9 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
             // transferring high-res esDs to low-res esDs
             for (int ithDim=0; ithDim<nDimensions; ithDim++)
-                SSEUtils.hiToLoTransferInPlace(esDsHi[nodeIdx][ithDim], esDsLo[nodeIdx][ithDim], hiLoIdxs4Transfer);
-            esDsAtNode = esDsLo[nodeIdx];
+                SSEUtils.hiToLoTransferInPlace(esDsHi[nodeIdx][ithDim], esDsLo[nodeIdx][ithDim], hiLoIdxs4Transfer, jtransforms);
+
+            esDsAtNode = esDsLo[nodeIdx]; // copying address, so whatever happens to esDsAtNode, happens to esDsHi[nodeIdx]
             scratchAtNode = scratchLo[nodeIdx];
 
             // low res part
@@ -282,7 +284,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
             // debugging
             // System.out.println("low-res part, lenLo = " + lenLo);
-
+            // System.out.println("calling normalize after integration in low res");
             integrateLength(nodeIdx, esDsAtNode, scratchAtNode, lenLo, dynamicallyAdjustDt, dtMax, true, jtransforms);
         }
     }
@@ -315,10 +317,15 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         // normalization that happens in make.pde.quasse.fftR
         // System.out.println("Prior to normalization inside integrateLength (lowRes=" + lowRes + ") = " + Arrays.toString(esDsAtNode[1]));
-        //if (lowRes) logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin);
-        //else logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin / hiLoRatio);
-        logNormalizationFactors[nodeIdx] += normalizeDs(nodeIdx, lowRes, jtransforms);
         // System.out.println("After normalization inside integrateLength (lowRes=" + lowRes + ") = " + Arrays.toString(esDsAtNode[1]));
+
+        // if (lowRes) logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin);
+        // else logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin / hiLoRatio);
+
+        // debugging
+        logNormalizationFactors[nodeIdx] += normalizeDs(nodeIdx, lowRes, jtransforms);
+        // System.out.println("    log-normalization factor total, for node " + nodeIdx + " = " + logNormalizationFactors[nodeIdx]);
+
     }
 
     @Override
@@ -338,7 +345,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             normalizationFactorFromDs = SSEUtils.calculateNormalizationFactor(dsAtNode, dx);
 
             // debugging
-            System.out.println("D's prior to normalization inside normalizeDs = " + Arrays.toString(dsAtNode));
+            // System.out.println("D's prior to normalization inside normalizeDs = " + Arrays.toString(dsAtNode));
 
             for (int i=0; i < dsAtNode.length; i += 2) {
                 dsAtNode[i] /= normalizationFactorFromDs;
@@ -358,14 +365,14 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         }
 
         // debugging
-        // System.out.println("Normalization factor inside normalizeDs = " + normalizationFactorFromDs);
-        System.out.println("Log-normalization factor inside normalizeDs = " + Math.log(normalizationFactorFromDs));
+        // System.out.println("    normalization factor inside normalizeDs, for node " + nodeIdx + " = " + normalizationFactorFromDs);
+        // System.out.println("    log-normalization factor inside normalizeDs, for node " + nodeIdx + " = " + Math.log(normalizationFactorFromDs));
 
         return Math.log(normalizationFactorFromDs); // the equivalent of ans[[1]] in diversitree (or ans.hi[[1]])
     }
 
     @Override
-    public void mergeChildrenNodes(Node aNode) {
+    public void mergeChildrenNodes(Node aNode, boolean jtransforms) {
         int nodeIdx = aNode.getNr();
         double nodeHeight = aNode.getHeight();
 
@@ -396,13 +403,25 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // System.out.println("Birth rates = " + Arrays.toString(birthRatesAtRightRes));
 
         // proper merging
-        for (int i=0; i<(esDs[nodeIdx][0].length/2); ++i) {
+        for (int i=0, j=0; i<(esDs[nodeIdx][0].length/2); ++i, j+=2) {
             if (i < nUsefulXbinAtRightRes) {
-                esDs[nodeIdx][0][i] = esDs[leftChildIdx][0][i]; // E's
-                esDs[nodeIdx][1][i] = esDs[leftChildIdx][1][i] * esDs[rightChildIdx][1][i] * birthRatesAtRightRes[i]; // D's
-            } else {
-                esDs[nodeIdx][0][i] = 0.0; // rest is 0's
-                esDs[nodeIdx][1][i] = 0.0;
+                if (jtransforms) {
+                    esDs[nodeIdx][0][i] = esDs[leftChildIdx][0][i]; // E's
+                    esDs[nodeIdx][1][i] = esDs[leftChildIdx][1][i] * esDs[rightChildIdx][1][i] * birthRatesAtRightRes[i]; // D's
+                } else {
+                    esDs[nodeIdx][0][j] = esDs[leftChildIdx][0][j]; // E's
+                    esDs[nodeIdx][1][j] = esDs[leftChildIdx][1][j] * esDs[rightChildIdx][1][j] * birthRatesAtRightRes[i]; // D's
+                }
+            }
+            // beyond useful continuous trait bins
+            else {
+                if (jtransforms) {
+                    esDs[nodeIdx][0][i] = 0.0; // rest is 0's
+                    esDs[nodeIdx][1][i] = 0.0;
+                } else {
+                    esDs[nodeIdx][0][j] = 0.0; // rest is 0's
+                    esDs[nodeIdx][1][j] = 0.0;
+                }
             }
         }
     }
@@ -587,7 +606,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public double getLogPFromRelevantObjects(double[][] esDsAtRoot, double sumOfLogNormalizationFactors, double[] birthRates, double dXAtRightRes) {
+    public double getLogPFromRelevantObjects(double[][] esDsAtRoot, double sumOfLogNormalizationFactors, double[] birthRates, double dXAtRightRes, boolean jtransforms) {
         double[] esAtRoot = esDsAtRoot[0];
         double[] dsAtRoot = esDsAtRoot[1];
 
@@ -604,14 +623,20 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // conditioning on survival of lineages
         double denomSumForConditioning = 0.0;
 
-        // priorProbsAtRoot.length should be = nUsefulXBins at the right resolution
-        // TODO: add j=0 and j += 2 for JavaFftService
-        for (int i=0; i<priorProbsAtRoot.length; ++i)
-            denomSumForConditioning += (priorProbsAtRoot[i] * birthRates[i] * Math.pow(1 - esAtRoot[i], 2));
+        /*
+         * priorProbsAtRoot.length should be = nUsefulXBins at the right resolution
+         * unlike the esDs array, we do not interdigitate values, which is why we
+         * index priorProbsAtRoot with 'i', but index 'esAtRoot' and 'dsAtRoot'
+         * below with 'j'
+         */
+        for (int i=0, j=0; i<priorProbsAtRoot.length; ++i, j+=2) {
+            if (jtransforms) denomSumForConditioning += (priorProbsAtRoot[i] * birthRates[i] * Math.pow(1 - esAtRoot[i], 2));
+            else denomSumForConditioning += (priorProbsAtRoot[i] * birthRates[i] * Math.pow(1 - esAtRoot[j], 2));
+        }
 
-        // TODO: add j=0 and j += 2 for JavaFftService
-        for (int i=0; i<priorProbsAtRoot.length; ++i) {
-            dsAtRoot[i] = dsAtRoot[i] / denomSumForConditioning * dXAtRightRes;
+        for (int i=0, j=0; i<priorProbsAtRoot.length; ++i, j+=2) {
+            if (jtransforms) dsAtRoot[i] = dsAtRoot[i] / denomSumForConditioning * dXAtRightRes;
+            else dsAtRoot[j] = dsAtRoot[j] / denomSumForConditioning * dXAtRightRes;
         }
 
         // debugging
@@ -620,8 +645,9 @@ public class QuaSSEDistribution extends QuaSSEProcess {
 
         // incorporating prior probabilities at root
         double prodSumPriorDs = 0.0;
-        for (int i=0; i<priorProbsAtRoot.length; ++i) {
-            prodSumPriorDs += (priorProbsAtRoot[i] * dsAtRoot[i]);
+        for (int i=0, j=0; i<priorProbsAtRoot.length; ++i, j+=2) {
+            if (jtransforms) prodSumPriorDs += (priorProbsAtRoot[i] * dsAtRoot[i]);
+            else prodSumPriorDs += (priorProbsAtRoot[i] * dsAtRoot[j]);
         }
 
         double thisLogLik = Math.log(prodSumPriorDs * dXAtRightRes) + sumOfLogNormalizationFactors; // denormalizing by adding sumOfLogNormalizationFactors
@@ -668,7 +694,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // System.out.println("logNormalizationFactors = " + Arrays.toString(logNormalizationFactors));
 
         // apply prior within
-        double myLogP = getLogPFromRelevantObjects(esDsAtRootAtRightRes, sumOfLogNormalizationFactors, birthRatesAtRightRes, dxAtRightRes);
+        double myLogP = getLogPFromRelevantObjects(esDsAtRootAtRightRes, sumOfLogNormalizationFactors, birthRatesAtRightRes, dxAtRightRes, jtransforms);
 
         return myLogP;
     }

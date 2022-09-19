@@ -373,19 +373,13 @@ public class SSEUtils {
         }
 
         // restoring the original first nLeftFlankBins and the last nRightFlankBins, which were stored in the scratch array
-        // TODO: this is atm identical to ModalFftService's analogous chunk, but we need to make it
-        // so scratch-cached flank elements are restored at every other index, so JavaFftService can be used
         for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-            // for (int j=0; j < nLeftFlankBins; ++j) {
             for (int i=0, j=0; i < nLeftFlankBins; ++i, j+=2) {
-                // esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
                 esDsAtNode[ithDim][j] = scratchAtNode[ithDim][i];
             }
         }
         for (int ithDim=0; ithDim < (nDimensionsE + nDimensionsD); ithDim++) {
-            // for (int j=(nXbins - nPad - nRightFlankBins); j < (nXbins - nPad); ++j) {
             for (int i=(nXbins - nPad - nRightFlankBins), j=(nXbins - nPad - nRightFlankBins)*2; i < (nXbins - nPad); ++i, j+=2) {
-                    // esDsAtNode[ithDim][j] = scratchAtNode[ithDim][j];
                     esDsAtNode[ithDim][j] = scratchAtNode[ithDim][i];
             }
         }
@@ -663,10 +657,12 @@ public class SSEUtils {
         }
     }
 
-    public static void hiToLoTransferInPlace(double[] fromArray, double[] toArray, int[] idxs4Transfer) {
+    public static void hiToLoTransferInPlace(double[] fromArray, double[] toArray, int[] idxs4Transfer, boolean jtransforms) {
         int i = 0;
         for (int j: idxs4Transfer) {
             toArray[i] = fromArray[j];
+
+            if (!jtransforms) i++; // add extra 1, so Ds are interdigitated for SST's JavaFftService
             i++;
         }
     }
