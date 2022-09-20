@@ -862,8 +862,10 @@ public class QuaSSEDistributionTest {
          * here we are just grabbing it to verify its values in the asserts
          * below
          */
-        double aDt = 0.001;
-        q32Dt001.populatefY(aDt, true, false, true, true, false);
+        double aDt = 0.01;
+        boolean forceRecalcKernel = true;
+        boolean dtChanged = true;
+        q32Dt001.populatefY(aDt, forceRecalcKernel, dtChanged, true, true, false);
         double[] fftedfY = q32Dt001.getfftFY(true);
 
         // copying fY for assert (leaving original one inside class untouched)
@@ -969,7 +971,9 @@ public class QuaSSEDistributionTest {
          * below
          */
         double aDt = 0.02;
-        q32Dt002.populatefY(aDt, true, false, true, true, false);
+        boolean forceRecalcKernel = true;
+        boolean dtChanged = true;
+        q32Dt002.populatefY(aDt, forceRecalcKernel, dtChanged, true, true, false);
         double[] fftedfY = q32Dt002.getfftFY(true);
 
         // copying fY for assert (leaving original one inside class untouched)
@@ -1059,7 +1063,8 @@ public class QuaSSEDistributionTest {
          * note that inside processBranch, we normalize Es and Ds
          */
         boolean jtransforms = false;
-        q32Dt002.processBranch(sp1Node, jtransforms);
+        boolean forceRecalcKernel = false;
+        q32Dt002.processBranch(sp1Node, forceRecalcKernel, jtransforms);
         esDsHiAtNode = q32Dt002.getEsDsAtNode(nodeIdx, false);
 
         double[] expectedInitialDsFirst10 = new double[] { 0.791000831787404, 0, 0.879671919608544, 0, 0.975840371583655, 0, 1.07981933026376, 0, 1.19189412137632, 0, 1.31231629549353, 0, 1.44129748672436, 0, 1.57900316601788, 0, 1.72554637653023, 0, 1.88098154753774, 0 };
@@ -1321,6 +1326,10 @@ public class QuaSSEDistributionTest {
         Assert.assertEquals( -61.27245, logLik, 1e-5);
     }
 
+    /*
+     * Checks that the number of quantitative character bins is a power of 2.
+     * If it isn't, an exception must be thrown
+     */
     @Test(expected = RuntimeException.class)
     public void testPowerOf2() {
 

@@ -28,7 +28,6 @@ import java.util.Arrays;
  * very tiny values as a result of both dx and nx being large), FFT outputs
  * will differ between machines with different CPU architectures. I tried
  * to avoid this by decreasing dx to 0.0005 in the 1024 and 4096 unit tests.
- *
  */
 public class PropagatesQuaSSETest {
 

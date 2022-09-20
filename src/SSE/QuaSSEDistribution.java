@@ -129,12 +129,12 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void startRecursionAtRootNode(Node rootNode, boolean jtransforms) {
+    public void startRecursionAtRootNode(Node rootNode, boolean forceRecalcKernel, boolean jtransforms) {
         int rootIdx = rootNode.getNr();
         double rootHeight = rootNode.getHeight();
 
         // start recursion
-        processInternalNode(rootNode, jtransforms);
+        processInternalNode(rootNode, forceRecalcKernel, jtransforms);
 
         // we're done pruning, let's deal with the prior probs at root now
         double[][] esDsAtRoot;
@@ -160,7 +160,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     }
 
     @Override
-    public void processInternalNode(Node aNode, boolean jtransforms) {
+    public void processInternalNode(Node aNode, boolean forceRecalcKernel, boolean jtransforms) {
 
         // debugging
         // System.out.println("\nDoing node " + aNode.getID());
@@ -168,7 +168,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         // recur if internal node or sampled ancestor
         if (!aNode.isLeaf()) {
             for (Node childNode: aNode.getChildren()) {
-                processInternalNode(childNode, jtransforms); // recur
+                processInternalNode(childNode, forceRecalcKernel, jtransforms); // recur
             }
 
             // after recursion, prepare initial conditions for integrating this node
@@ -176,11 +176,11 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         }
 
         // unless we're at the root, now we integrate this branch
-        if (!aNode.isRoot()) processBranch(aNode, jtransforms);
+        if (!aNode.isRoot()) processBranch(aNode, forceRecalcKernel, jtransforms);
     }
 
     @Override
-    public void processBranch(Node aNode, boolean jtransforms) {
+    public void processBranch(Node aNode, boolean forceRecalcKernel, boolean jtransforms) {
         int nodeIdx = aNode.getNr();
 
         // dealing with branch lengths
@@ -223,7 +223,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             logNormalizationFactors[nodeIdx] = normalizeDs(nodeIdx, true, jtransforms); // normalize D's and returns factor, which we record
 
             // now integrate whole branch
-            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, true, jtransforms);
+            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, true, forceRecalcKernel, jtransforms);
         }
 
         // option 2: entire branch < tc (all high-res)
@@ -240,7 +240,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             logNormalizationFactors[nodeIdx] = normalizeDs(nodeIdx, false, jtransforms); // normalize D's and returns factor, which we record
 
             // now integrate whole branch (again, normalization and adding to logNormalizationFactors inside)
-            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, false, jtransforms);
+            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, branchLength2Integrate, dynamicallyAdjustDt, dtMax, false, forceRecalcKernel, jtransforms);
         }
 
         // option 3: tc happens inside branch (tip-end part in high-res, root-end part in low-res)
@@ -264,7 +264,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             // debugging
             // System.out.println("high-res part, lenHi = " + lenHi);
             // System.out.println("calling normalize inside integration in high res");
-            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, lenHi, dynamicallyAdjustDt, dtMax, false, jtransforms); // normalization and adding to logNormalizationFactors inside
+            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, lenHi, dynamicallyAdjustDt, dtMax, false, forceRecalcKernel, jtransforms); // normalization and adding to logNormalizationFactors inside
 
             // normalize and record normalization factor before integration at low res
             // logNormalizationFactors[nodeIdx] += normalizeDs(esDsAtNode[1], dXbin/hiLoRatio);
@@ -285,12 +285,21 @@ public class QuaSSEDistribution extends QuaSSEProcess {
             // debugging
             // System.out.println("low-res part, lenLo = " + lenLo);
             // System.out.println("calling normalize after integration in low res");
-            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, lenLo, dynamicallyAdjustDt, dtMax, true, jtransforms);
+            integrateLength(nodeIdx, esDsAtNode, scratchAtNode, lenLo, dynamicallyAdjustDt, dtMax, true, forceRecalcKernel, jtransforms);
         }
     }
 
     @Override
-    public void integrateLength(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes, boolean jtransforms) {
+    public void integrateLength(
+    		int nodeIdx,
+    		double[][] esDsAtNode,
+    		double[][] scratchAtNode,
+    		double aLength,
+    		boolean dynamicallyAdjust,
+    		double maxDt,
+    		boolean lowRes,
+    		boolean forceRecalcKernel,
+    		boolean jtransforms) {
 
         // dealing with dt
         double dt, nIntervals;
@@ -308,7 +317,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         }
 
         // updating fY if necessary
-        populatefY(dt,false, dtChanged, true, lowRes, false);
+        // remove next two later
+        populatefY(dt, forceRecalcKernel, dtChanged, true, lowRes, false);
 
         // integrating!
         for (int i=0; i<nIntervals; i++) {
@@ -430,8 +440,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
      * Math-y methods start below
      */
     @Override
-    public void populatefY(double aDt, boolean forceRecalcKernel, boolean didRefreshNowMustRecalcKernel, boolean doFFT, boolean lowRes, boolean jtransforms) {
-        super.populatefY(aDt, forceRecalcKernel, didRefreshNowMustRecalcKernel, doFFT, lowRes, jtransforms);
+    public void populatefY(double aDt, boolean forceRecalcKernel, boolean dtChanged, boolean doFFT, boolean lowRes, boolean jtransforms) {
+        super.populatefY(aDt, forceRecalcKernel, dtChanged, doFFT, lowRes, jtransforms);
     }
 
     @Override
@@ -665,10 +675,18 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         tree = treeInput.get();
         Node rootNode = tree.getRoot();
         int rootIdx = rootNode.getNr();
+        
+        // refreshing qu trait parameters
+        drift = driftInput.get().getValue();
+        diffusion = diffusionInput.get().getValue();
+        
+        boolean forceRecalcKernel = false;
+        if (driftInput.get().somethingIsDirty() || diffusionInput.get().somethingIsDirty())
+        	forceRecalcKernel = true;
 
         // start recursion for likelihood calculation
         boolean jtransforms = false;
-        startRecursionAtRootNode(rootNode, jtransforms);
+        startRecursionAtRootNode(rootNode, forceRecalcKernel, jtransforms);
 
         // debugging
         // System.out.println("Log-normalization factors = " + Arrays.toString(logNormalizationFactors));

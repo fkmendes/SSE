@@ -13,7 +13,6 @@ import beast.evolution.sitemodel.SiteModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -157,10 +156,10 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     /**
      * set leaf states (not applicable for this class, use setPartials instead)
      */
-    @Override
-    protected void setStates(Node node, int patternCount) {
-        throw new NotImplementedException();
-    }
+//    @Override
+//    protected void setStates(Node node, int patternCount) {
+//        throw new NotImplementedException();
+//    }
 
     protected void initCore() {
         final int nodeCount = treeInput.get().getNodeCount();

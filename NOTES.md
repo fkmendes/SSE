@@ -7,6 +7,8 @@ It will:
 relevant implementation details
 * Go over the unit tests in a logical order
 
+## Configuring IDE to run MoSSE-related C code, and compilation
+
 ## QuaSSE classes
 
 ### QuaSSEProcess

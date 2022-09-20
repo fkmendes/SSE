@@ -484,6 +484,7 @@ public class SSEUtils {
 
             // fft-ing
             ffts.fft(nXbins, esDsAtNode[ithDim], fftEsDsAtNode[ithDim]); // fftEsDsAtNode: real complex real complex...
+            // kylieJNI.fft(nRE, input_array_REdoubles_with_twice_nRE, output_array_REcomplex_with_twice_nRE)
 
             // convolving
             for (int i=0; i < fftFY.length; i += 2) {
@@ -493,6 +494,7 @@ public class SSEUtils {
 
             // ifft-ing
             ffts.ifft(nXbins, fftEsDsAtNode[ithDim], esDsAtNode[ithDim]);
+            // kylieJNI.ifft(nRE, input_array_REcomplex_with_twice_nRE, output_array_REdoubles_with_twice_nRE)
         }
     }
 

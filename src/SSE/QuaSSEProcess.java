@@ -56,6 +56,8 @@ public abstract class QuaSSEProcess extends Distribution {
     protected int[] hiLoIdxs4Transfer;
 
     // quantitative trait evolution
+    protected double drift;
+    protected double diffusion;
     protected double changeInXNormalMean; // (=diversitree's drift)
     protected double changeInXNormalSd; // (=diversitree's diffusion)
     protected double[] fYLo, fYHi, fftFYLo, fftFYHi;
@@ -91,8 +93,10 @@ public abstract class QuaSSEProcess extends Distribution {
 
         xMid = xMidInput.get().getValue();
         flankWidthScaler = flankWidthScalerInput.get().getValue();
-        changeInXNormalMean = driftInput.get().getValue() * -dtMax;
-        changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * dtMax);
+        drift = driftInput.get().getValue();
+        diffusion = diffusionInput.get().getValue();
+        changeInXNormalMean = drift * -dtMax;
+        changeInXNormalSd = Math.sqrt(diffusion * dtMax);
 
         prepareDimensionsInPlace(); // in parent class
         prepareXRulers(); // in parent class
@@ -105,12 +109,11 @@ public abstract class QuaSSEProcess extends Distribution {
         // debugging
         // System.out.println("hiLoIdxs4Transfer = " + Arrays.toString(hiLoIdxs4Transfer));
 
-        // fftForEandDLo = new DoubleFFT_1D(nXbinsLo);
-        // fftForEandDHi = new DoubleFFT_1D(nXbinsHi);
-
         // JTransforms version
-        // fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
-        // fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
+        fftForEandDLo = new DoubleFFT_1D(nXbinsLo);
+        fftForEandDHi = new DoubleFFT_1D(nXbinsHi);
+//        fYLo = new double[2 * nXbinsLo]; // for real and complex part after FFT
+//        fYHi = new double[2 * nXbinsHi]; // for real and complex part after FFT
 
         // SST
         fYLo = new double[nXbinsLo * 2]; // just real
@@ -197,21 +200,22 @@ public abstract class QuaSSEProcess extends Distribution {
      *
      */
     protected void populatefY(double aDt, boolean forceRecalcKernel, boolean dtChanged, boolean doFFT, boolean lowRes, boolean jtransforms) {
-
         // finding out if we need to recalculate fY or not
         boolean didRefreshNowMustRecalcKernel = false;
-        // TODO: move .somethingIsDirty() check outside of populatefY, check it at the very top, at calculateLogP so it's only done once
-        if (dtChanged || driftInput.get().somethingIsDirty()) {
-            changeInXNormalMean = driftInput.get().getValue() * -aDt;
+        if (dtChanged || forceRecalcKernel) {
+            changeInXNormalMean = drift * -aDt;
             didRefreshNowMustRecalcKernel = true;
         }
-        if (dtChanged || diffusionInput.get().somethingIsDirty()) {
-            changeInXNormalSd = Math.sqrt(diffusionInput.get().getValue() * aDt);
+        if (dtChanged || forceRecalcKernel) {
+            changeInXNormalSd = Math.sqrt(diffusion * aDt);
             didRefreshNowMustRecalcKernel = true;
         }
-
 
         if (forceRecalcKernel || didRefreshNowMustRecalcKernel) {
+        	
+        	// System.out.println("changeInXNormalMean = " + changeInXNormalMean);
+        	// System.out.println("changeInXNormalSd = " + changeInXNormalSd);
+        	
             if (lowRes) {
                 if (jtransforms) {
                     SSEUtils.makeNormalKernelInPlace(fYLo, changeInXNormalMean, changeInXNormalSd, nXbinsLo, nLeftNRightFlanksLo[0], nLeftNRightFlanksLo[1], dXbin); // normalizes inside already
@@ -279,12 +283,12 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    public abstract void processBranch(Node aNode, boolean jtransforms);
+    public abstract void processBranch(Node aNode, boolean forceRecalcKernel, boolean jtransforms);
 
     /*
      *
      */
-    protected abstract void integrateLength(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes, boolean jtransforms);
+    protected abstract void integrateLength(int nodeIdx, double[][] esDsAtNode, double[][] scratchAtNode, double aLength, boolean dynamicallyAdjust, double maxDt, boolean lowRes, boolean forceRecalcKernel, boolean jtransforms);
 
     /*
      *
@@ -299,12 +303,12 @@ public abstract class QuaSSEProcess extends Distribution {
     /*
      *
      */
-    protected abstract void processInternalNode(Node aNode, boolean jtransforms);
+    protected abstract void processInternalNode(Node aNode, boolean forceRecalcKernel, boolean jtransforms);
 
     /*
      *
      */
-    protected abstract void startRecursionAtRootNode(Node rootNode, boolean jtransforms);
+    protected abstract void startRecursionAtRootNode(Node rootNode, boolean forceRecalcKernel, boolean jtransforms);
 
     /*
      * Does integration in time and character space in place
