@@ -3,6 +3,11 @@ package mosse;
 import beast.core.Description;
 import beast.evolution.likelihood.BeerLikelihoodCore;
 
+
+/**
+ * @author Kylie Chen
+ */
+
 @Description("Mosse likelihood core calculation class")
 public class MosseLikelihoodCore extends BeerLikelihoodCore {
 

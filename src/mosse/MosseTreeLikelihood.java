@@ -7,16 +7,21 @@ import beast.core.parameter.IntegerParameter;
 import beast.core.parameter.RealParameter;
 import beast.core.util.Log;
 import beast.evolution.alignment.Alignment;
-import beast.evolution.branchratemodel.StrictClockModel;
 import beast.evolution.likelihood.TreeLikelihood;
 import beast.evolution.sitemodel.SiteModel;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
+import java.lang.UnsupportedOperationException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+
+/**
+ * @author Kylie Chen
+ */
 
 @Description("Mosse likelihood class calculates the probability of sequence and trait data on a tree")
 public class MosseTreeLikelihood extends TreeLikelihood {
@@ -33,7 +38,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
 
     protected List<TraitSet> traits;
     protected MosseTipLikelihood tipModel;
-    protected Distribution treeModel;
+    protected MosseDistribution treeModel;
     protected double startSubsRate;
     protected double endSubsRate;
     protected int numRateBins;
@@ -42,7 +47,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     public void initAndValidate() {
         traits = traitListInput.get();
         tipModel = tipModelInput.get();
-        treeModel = treeModelInput.get();
+        treeModel = (MosseDistribution) treeModelInput.get();
 
         startSubsRate = startSubsRateInput.get().getValue();
         endSubsRate = endSubsRateInput.get().getValue();
@@ -59,6 +64,8 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             throw new IllegalArgumentException("numRateBins input must be a positive integer");
         } else if (!(siteModelInput.get() instanceof SiteModel.Base)) {
             throw new IllegalArgumentException("siteModel input should be of type SiteModel.Base");
+        } else if (branchRateModelInput.get() != null) {
+            System.err.println("Ignoring clock model " + branchRateModelInput.get().getID());
         }
 
         beagle = null;
@@ -68,11 +75,9 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         m_siteModel.setDataType(dataInput.get().getDataType());
         substitutionModel = m_siteModel.substModelInput.get();
 
-        if (branchRateModelInput.get() != null) {
-            branchRateModel = branchRateModelInput.get();
-        } else {
-            branchRateModel = new StrictClockModel();
-        }
+        // remove requirement for clock model
+        branchRateModelInput.setRule(Input.Validate.OPTIONAL);
+        branchRateModel = null;
         m_branchLengths = new double[nodeCount];
         storedBranchLengths = new double[nodeCount];
 
@@ -156,10 +161,10 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     /**
      * set leaf states (not applicable for this class, use setPartials instead)
      */
-//    @Override
-//    protected void setStates(Node node, int patternCount) {
-//        throw new NotImplementedException();
-//    }
+    @Override
+    protected void setStates(Node node, int patternCount) {
+        throw new UnsupportedOperationException();
+    }
 
     protected void initCore() {
         final int nodeCount = treeInput.get().getNodeCount();
@@ -184,6 +189,17 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     }
 
     public double calculateLogP() {
+        double deltaT = 0.001;
+        double rate = 1.0;
+        Node node = new Node();
+        int numStates = substitutionModel.getStateCount();
+        double[] transitionMatrix = new double[numStates * numStates];
+        substitutionModel.getTransitionProbabilities(node, 0, deltaT, rate, transitionMatrix);
+        double[] vars = new double[1024];
+        double[] lambda = new double[1024];
+        double[] mu = new double[1024];
+        treeModel.calculateBranchLogP(vars, lambda, mu, transitionMatrix);
+
         return 0.0;
     }
 
@@ -192,10 +208,6 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         hasDirt = Tree.IS_CLEAN;
 
         if (m_siteModel.isDirtyCalculation()) {
-            hasDirt = Tree.IS_DIRTY;
-            return true;
-        }
-        if (branchRateModel != null && branchRateModel.isDirtyCalculation()) {
             hasDirt = Tree.IS_DIRTY;
             return true;
         }

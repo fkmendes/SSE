@@ -14,10 +14,21 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * @author Kylie Chen
+ */
+
 public class MosseTreeLikelihoodTest {
 
+    /**
+     * returns an Alignment of nucleotide sequences
+     * @param numLeaves number of taxa (or leaves in tree)
+     * @param sequences nucleotide sequences for each taxa
+     * @return an Alignment of nucleotide sequences
+     */
     public Alignment getAlignment(int numLeaves, String[] sequences) {
-        List<Sequence> seqList = new ArrayList<Sequence>();
+        List<Sequence> seqList = new ArrayList<>();
 
         for (int i = 0; i < numLeaves; i++) {
             String taxonID = "t" + i;
@@ -29,11 +40,15 @@ public class MosseTreeLikelihoodTest {
         return alignment;
     }
 
+    /**
+     * tests initialization of MosseTreeLikelihood does not throw any errors
+     * using a simple two taxa tree (t0: 0.5, t1: 0.5) with tips "A" and "C"
+     */
     @Test
-    public void testMosseLikelihoodInit() throws Exception {
+    public void testMosseLikelihoodInit() {
         int numLeaves = 2;
         String[] sequences = {"A", "C"};
-        Alignment alignment = getAlignment(numLeaves, sequences); // BEASTTestCase.getAlignment();
+        Alignment alignment = getAlignment(numLeaves, sequences);
         String newick = "(t0: 0.5, t1: 0.5);";
         Tree tree = new Tree(newick);
 
@@ -93,5 +108,18 @@ public class MosseTreeLikelihoodTest {
                 "numRateBins", Integer.toString(numBins)
                 );
         likelihood.calculateLogP();
+    }
+
+    public void testMosseExponentiatedMatrix() {
+
+    }
+
+
+    public void testMosseLikelihoodRootNode() {
+
+    }
+
+    public void testMosseLikelihoodOnTree() {
+
     }
 }
