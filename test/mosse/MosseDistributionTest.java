@@ -9,14 +9,26 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
+
+/**
+ * @author Kylie Chen
+ */
+
 public class MosseDistributionTest {
 
+    // todo: update expected R results to more decimal places
     private static double DELTA = 1e-7;
 
+    /**
+     * read in comma separated array from text file
+     * @param filename name of file to read
+     * @return double array of values
+     * @throws IOException
+     */
     private double[] readArray(String filename) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(filename));
         String line = reader.readLine();
-        List<Double> list = new ArrayList<Double>();
+        List<Double> list = new ArrayList<>();
         while (line != null) {
             String[] elements = line.trim().split(", ");
             for (String i: elements) {
@@ -34,8 +46,11 @@ public class MosseDistributionTest {
         return arr;
     }
 
+    /**
+     * compare log probability for a single branch with R testcase in validation/mosse/mosseBranchTest1.R
+     */
     @Test
-    public void testIntegrateBranchOne() throws IOException {
+    public void testMosseBranchCaseOne() throws IOException {
         MosseDistribution d = new MosseDistribution();
 
         int[] nd = {5}; // number of dimensions for each fft plan
@@ -73,9 +88,37 @@ public class MosseDistributionTest {
                 nx, dx, nd, 0,
                 vars, lambda, mu, drift, diffusion, Q, nt, dt_max,
                 pad_left, pad_right);
-        double logP = d.calculateLogP(result, nx, ncol, dx, ans);
+        double logP = d.calculateBranchLogP(result, nx, ncol, dx, ans);
 
         double expected_ans_r = -0.2653163;
+        assertEquals(5120, result.length);
         assertEquals(expected_ans_r, logP, DELTA);
     }
+
+    /**
+     * compare log probability for a single branch with R testcase in validation/mosse/mosseBranchTest2.R
+     */
+    @Test
+    public void testMosseBranchCaseTwo() {
+
+    }
+
+    /**
+     * test calculateBranchLogP default values are set up correctly
+     */
+    @Test
+    public void testMosseBranchDefaultValues() {
+
+    }
+
+    @Test
+    public void testMosseLowResolution() {
+
+    }
+
+    @Test
+    public void testMosseHighResolution() {
+
+    }
+
 }
