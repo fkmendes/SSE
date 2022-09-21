@@ -9,6 +9,7 @@
 #include "rfftw.h"
 #include "quasse-eqs-fftC.h"
 #include "mosse-eqs-fftC.h"
+#include "quasse_wrappers.h"
 
 #define R_D__0 (give_log ? -INFINITY : 0.)
 #define M_LN_SQRT_2PI 0.918938533204672741780329736406
@@ -136,13 +137,13 @@ JNIEXPORT jlong JNICALL makeQuasseConstantsStash_JNIWrapper(
     memcpy(nDnEs_ptr_C, const_int_array_content, sizeof(int) * nDimensions);
     (*env)->ReleaseIntArrayElements(env, nDnEs_ptr, const_int_array_content, 0);
     memcpy(xLo_ptr_C, const_double_array_content1, sizeof(double) * nXbinsLo);
-    (*env)->ReleaseDoubleArrayElements(env, xLo_ptr_C, const_double_array_content1, 0);
+    (*env)->ReleaseDoubleArrayElements(env, xLo_ptr, const_double_array_content1, 0);
     memcpy(xHi_ptr_C, const_double_array_content2, sizeof(double) * nXbinsHi);
-    (*env)->ReleaseDoubleArrayElements(env, xHi_ptr_C, const_double_array_content2, 0);
+    (*env)->ReleaseDoubleArrayElements(env, xHi_ptr, const_double_array_content2, 0);
 
     // populate quasse_constants_stash
     quasse_constants_stash *quasse_cts_stash_ptr =
-        make_quasse_stash(nXbinsLo, nXbinsHi, nUsefulXbinsLo, nUsefulXbinsHi, nLeftFlankBinsLo, nLeftFlankBinsHi, nRightFlankBinsLo, nRightFlankBinsHi, dxBin, double *xLo_ptr, double *xHi_ptr, nDimensions, nDnEs_ptr_C, flags);
+        make_quasse_stash(nXbinsLo, nXbinsHi, nUsefulXbinsLo, nUsefulXbinsHi, nLeftFlankBinsLo, nLeftFlankBinsHi, nRightFlankBinsLo, nRightFlankBinsHi, dxBin, xLo_ptr_C, xHi_ptr_C, nDimensions, nDnEs_ptr_C, flags);
 
   return (jlong)(quasse_cts_stash_ptr);
 };
