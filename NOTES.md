@@ -7,7 +7,37 @@ It will:
 relevant implementation details
 * Go over the unit tests in a logical order
 
-## Configuring IDE to run MoSSE-related C code, and compilation
+## Configuring JNI for MoSSE C libraries
+Building requires fftw3 and Java 8 on your OS (Ubuntu is recommended).
+
+Install fftw3 on ubuntu  
+```
+sudo apt-get install -y libfftw3-dev
+```
+
+Install Java 8
+```
+sudo apt-get install openjdk-8-jdk
+```
+
+To build the JNI methods 
+```
+cd SSE/jni
+make
+```
+
+To configure your IDE to access the C libraries. 
+
+For IntelliJ, go to **Run -> Edit configurations**
+
+Then, add the JNI path to your Java VM option 
+```
+-Djava.library.path=/your_path/SSE/jni
+```
+
+Running mosse unit tests also require the java library path to be added in the JUnit configuration (following same steps as above).
+
+*Note: Instructions for Mac and Windows OS coming soon.*
 
 ## QuaSSE classes
 
