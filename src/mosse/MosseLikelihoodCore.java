@@ -78,11 +78,11 @@ public class MosseLikelihoodCore extends BeerLikelihoodCore {
             // rate heterogeneity categories
             int k = 0;
             for (int i = 0; i < nrOfMatrices; i++) {
-                System.arraycopy(partials, 0, this.partials[0][nodeIndex], k, partials.length); // update to current cache index
+                System.arraycopy(partials, 0, this.partials[currentPartialsIndex[nodeIndex]][nodeIndex], k, partials.length);
                 k += partials.length;
             }
         } else {
-            System.arraycopy(partials, 0, this.partials[0][nodeIndex], 0, partials.length); // update to current cache index
+            System.arraycopy(partials, 0, this.partials[currentPartialsIndex[nodeIndex]][nodeIndex], 0, partials.length);
         }
     }
 
