@@ -7,6 +7,11 @@ import beast.core.parameter.BooleanParameter;
 import beast.core.parameter.RealParameter;
 import org.apache.commons.math3.distribution.NormalDistribution;
 
+
+/**
+ * @author Kylie Chen
+ */
+
 @Description("Mosse tip likelihood using regression model of tip rate given traits and parameters beta and epsilon")
 public class MosseTipLikelihood extends CalculationNode {
 
@@ -29,7 +34,7 @@ public class MosseTipLikelihood extends CalculationNode {
 	 * @param a start value of tip rate interval
 	 * @param b end value of tip rate interval
 	 * @param traits trait values
-	 * @return
+	 * @return tip likelihood between intervals a and b
 	 */
 	public double getTipLikelihood(double a, double b, double[] traits) {
 		double mean = epsilon.getValue();
@@ -54,7 +59,7 @@ public class MosseTipLikelihood extends CalculationNode {
 	 * @param numBins number of bins for substitution rate discretization
 	 * @param startSubsRate substitution rate lower bound
 	 * @param endSubsRate substitution rate upper bound
-	 * @return
+	 * @return array of tip likelihoods
 	 */
 	public double[] getTipLikelihoods(double[] traits, int numBins, double startSubsRate, double endSubsRate) {
 		double subsInterval = (endSubsRate - startSubsRate) / numBins;

@@ -1,5 +1,7 @@
 package mosse;
 
+import SSE.ConstantLinkFn;
+import SSE.LogisticFunction;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Sequence;
@@ -14,10 +16,21 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * @author Kylie Chen
+ */
+
 public class MosseTreeLikelihoodTest {
 
+    /**
+     * returns an Alignment of nucleotide sequences
+     * @param numLeaves number of taxa (or leaves in tree)
+     * @param sequences nucleotide sequences for each taxa
+     * @return an Alignment of nucleotide sequences
+     */
     public Alignment getAlignment(int numLeaves, String[] sequences) {
-        List<Sequence> seqList = new ArrayList<Sequence>();
+        List<Sequence> seqList = new ArrayList<>();
 
         for (int i = 0; i < numLeaves; i++) {
             String taxonID = "t" + i;
@@ -29,11 +42,15 @@ public class MosseTreeLikelihoodTest {
         return alignment;
     }
 
+    /**
+     * tests initialization of MosseTreeLikelihood does not throw any errors
+     * using a simple two taxa tree (t0: 0.5, t1: 0.5) with tips "A" and "C"
+     */
     @Test
-    public void testMosseLikelihoodInit() throws Exception {
+    public void testMosseLikelihoodInit() {
         int numLeaves = 2;
         String[] sequences = {"A", "C"};
-        Alignment alignment = getAlignment(numLeaves, sequences); // BEASTTestCase.getAlignment();
+        Alignment alignment = getAlignment(numLeaves, sequences);
         String newick = "(t0: 0.5, t1: 0.5);";
         Tree tree = new Tree(newick);
 
@@ -76,6 +93,27 @@ public class MosseTreeLikelihoodTest {
         traitsList.add(trait0);
         traitsList.add(trait1);
 
+        // lambda and mu functions
+        // logistic
+        Double[] x0 = new Double[] { 0.0 };
+        Double[] y1 = new Double[] { 0.2 };
+        Double[] y0 = new Double[] { 0.1 };
+        Double[] r = new Double[] { 2.5 };
+        RealParameter y0rp = new RealParameter(y0);
+        RealParameter y1rp = new RealParameter(y1);
+        RealParameter x0rp = new RealParameter(x0);
+        RealParameter rrp = new RealParameter(r);
+        LogisticFunction logFunc = new LogisticFunction();
+        logFunc.initByName( "curveYBaseValue",
+                y0rp, "curveMaxY", y1rp,
+                "sigmoidMidpoint", x0rp,
+                "logisticGrowthRate", rrp);
+        // constant
+        Double[] yValue = new Double[] { 0.03 };
+        RealParameter yValueRP = new RealParameter(yValue);
+        ConstantLinkFn constFunc = new ConstantLinkFn();
+        constFunc.initByName("yV", yValueRP);
+
         double startSubsRate = 1E-10;
         double endSubsRate = 1E-8;
         int numBins = 100;
@@ -90,8 +128,109 @@ public class MosseTreeLikelihoodTest {
                 "traits", traitsList,
                 "startSubsRate", Double.toString(startSubsRate),
                 "endSubsRate", Double.toString(endSubsRate),
-                "numRateBins", Integer.toString(numBins)
+                "numRateBins", Integer.toString(numBins),
+                "lambdaFunc", logFunc,
+                "muFunc", constFunc
                 );
         likelihood.calculateLogP();
+    }
+
+    public void testMosseExponentiatedMatrix() {
+
+    }
+
+
+    public void testMosseLikelihoodRootNode() {
+
+    }
+
+    @Test
+    public void testMosseLikelihoodOnTree() {
+        int numLeaves = 2;
+        String[] sequences = {"A", "C"};
+        Alignment alignment = getAlignment(numLeaves, sequences);
+        String newick = "(t0: 0.5, t1: 0.5);";
+        Tree tree = new Tree(newick);
+
+        JukesCantor JC = new JukesCantor();
+        JC.initAndValidate();
+
+        SiteModel siteModel = new SiteModel();
+        siteModel.initByName(
+                "mutationRate", "1.0",
+                "gammaCategoryCount", 1,
+                "substModel", JC);
+
+        Double[] betasArray = {0.1, 0.2};
+        double epsilon = 0.01;
+
+        MosseTipLikelihood tipModel = new MosseTipLikelihood();
+        tipModel.initByName(
+                "beta", new RealParameter(betasArray),
+                "epsilon", Double.toString(epsilon)
+        );
+        tipModel.initAndValidate();
+
+        TaxonSet taxonSet = new TaxonSet(alignment);
+        int numTraits = 2;
+        // trait 0
+        TraitSet trait0 = new TraitSet();
+        String trait0Values = "t0=1.0, t1=10.0";
+        trait0.initByName(
+                "traitname", "trait0",
+                "taxa", new TaxonSet(alignment),
+                "value", trait0Values);
+        // trait 1
+        TraitSet trait1 = new TraitSet();
+        String trait1Values = "t0=15.0, t1=20.0";
+        trait1.initByName(
+                "traitname", "trait1",
+                "taxa", new TaxonSet(alignment),
+                "value", trait1Values);
+        List<TraitSet> traitsList = new ArrayList<>(numTraits);
+        traitsList.add(trait0);
+        traitsList.add(trait1);
+
+        // lambda and mu functions
+        // logistic
+        Double[] x0 = new Double[] { 0.0 };
+        Double[] y1 = new Double[] { 0.2 };
+        Double[] y0 = new Double[] { 0.1 };
+        Double[] r = new Double[] { 2.5 };
+        RealParameter y0rp = new RealParameter(y0);
+        RealParameter y1rp = new RealParameter(y1);
+        RealParameter x0rp = new RealParameter(x0);
+        RealParameter rrp = new RealParameter(r);
+        LogisticFunction logFunc = new LogisticFunction();
+        logFunc.initByName( "curveYBaseValue",
+                y0rp, "curveMaxY", y1rp,
+                "sigmoidMidpoint", x0rp,
+                "logisticGrowthRate", rrp);
+        // constant
+        Double[] yValue = new Double[] { 0.03 };
+        RealParameter yValueRP = new RealParameter(yValue);
+        ConstantLinkFn constFunc = new ConstantLinkFn();
+        constFunc.initByName("yV", yValueRP);
+
+        double startSubsRate = 1E-10;
+        double endSubsRate = 1E-8;
+        int numBins = 1024;
+
+        MosseTreeLikelihood likelihood = new MosseTreeLikelihood();
+        likelihood.initByName(
+                "data", alignment,
+                "tree", tree,
+                "siteModel", siteModel,
+                "tipModel", tipModel,
+                "treeModel", new MosseDistribution(),
+                "traits", traitsList,
+                "startSubsRate", Double.toString(startSubsRate),
+                "endSubsRate", Double.toString(endSubsRate),
+                "numRateBins", Integer.toString(numBins),
+                "lambdaFunc", logFunc,
+                "muFunc", constFunc
+        );
+        likelihood.initAndValidate();
+        likelihood.calculateLogPFull();
     }
 }

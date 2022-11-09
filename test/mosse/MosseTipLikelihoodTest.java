@@ -3,8 +3,10 @@ package mosse;
 import beast.core.parameter.RealParameter;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
+
+/**
+ * @author Kylie Chen
+ */
 
 import static junit.framework.Assert.assertEquals;
 
@@ -12,6 +14,9 @@ public class MosseTipLikelihoodTest {
 
     private static double DELTA = 1e-10;
 
+    /**
+     * tests the tip likelihood in a large area integrates to 1.0
+     */
     @Test
     public void testMosseTipLikelihoodLargeIntervalIsOne() {
         double beta0 = 0.1;

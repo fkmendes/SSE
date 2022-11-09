@@ -3,14 +3,25 @@ package mosse;
 import beast.core.Description;
 import beast.evolution.likelihood.BeerLikelihoodCore;
 
+
+/**
+ * @author Kylie Chen
+ */
+
 @Description("Mosse likelihood core calculation class")
 public class MosseLikelihoodCore extends BeerLikelihoodCore {
 
     protected int numRateBins;
+    protected int padLeft;
+    protected int padRight;
 
-    public MosseLikelihoodCore(int nrOfStates, int numRateBins) {
+    protected int lambdaSize;
+
+    public MosseLikelihoodCore(int nrOfStates, int numRateBins, int padLeft, int padRight) {
         super(nrOfStates);
         this.numRateBins = numRateBins;
+        this.padLeft = padLeft;
+        this.padRight = padRight;
     }
 
     /**
@@ -30,12 +41,13 @@ public class MosseLikelihoodCore extends BeerLikelihoodCore {
         this.integrateCategories = integrateCategories;
 
         if (integrateCategories) {
-            partialsSize = patternCount * nrOfStates * matrixCount * numRateBins;
+            partialsSize = patternCount * (nrOfStates + 1) * matrixCount * numRateBins;
         } else {
-            partialsSize = patternCount * nrOfStates * numRateBins;
+            partialsSize = patternCount * (nrOfStates + 1) * numRateBins;
         }
 
         partials = new double[2][nodeCount][];
+        lambdaSize = patternCount * numRateBins - padLeft - padRight - 1;
 
         currentMatrixIndex = new int[nodeCount];
         storedMatrixIndex = new int[nodeCount];
@@ -66,11 +78,11 @@ public class MosseLikelihoodCore extends BeerLikelihoodCore {
             // rate heterogeneity categories
             int k = 0;
             for (int i = 0; i < nrOfMatrices; i++) {
-                System.arraycopy(partials, 0, this.partials[0][nodeIndex], k, partials.length);
+                System.arraycopy(partials, 0, this.partials[0][nodeIndex], k, partials.length); // update to current cache index
                 k += partials.length;
             }
         } else {
-            System.arraycopy(partials, 0, this.partials[0][nodeIndex], 0, partials.length);
+            System.arraycopy(partials, 0, this.partials[0][nodeIndex], 0, partials.length); // update to current cache index
         }
     }
 
