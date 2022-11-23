@@ -29,6 +29,38 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     protected double[][][] scratchLo, scratchHi;
     protected double[] logNormalizationFactors;
 
+    static {
+        System.loadLibrary("test");
+    }
+
+// jint nXbinsLo,
+//        jint nXbinsHi,
+//        jint nUsefulXbinsLo,
+//        jint nUsefulXbinsHi,
+//        jint nLeftFlankBinsLo,
+//        jint nLeftFlankBinsHi,
+//        jint nRightFlankBinsLo,
+//        jint nRightFlankBinsHi,
+//        jdouble dxBin,
+//        jdoubleArray xLo_ptr,
+//        jdoubleArray xHi_ptr,
+//        jintArray nDnEs_ptr,
+//        jint flags
+
+    private native long makeQuasseConstantsStashJNIWrapper(int nXbinsLo,
+                                                            int nXbinsHi,
+                                                            int nUsefulXbinsLo,
+                                                            int nUsefulXbinsHi,
+                                                            int nLeftFlankBinsLo,
+                                                            int nLeftFlankBinsHi,
+                                                            int nRightFlankBinsLo,
+                                                            int nRightFlankBinsHi,
+                                                            double dxBin,
+                                                            double[] xLo_ptr,
+                                                            double[] xHi_ptr,
+                                                            int[] nDnEs_ptr,
+                                                            int flags); //makeMosseFFT(int nx, double dx, int[] array_nd, int flags);
+
     @Override
     public void initAndValidate() {
 
@@ -59,6 +91,31 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         initializeEsDs(nNodes, nDimensionsFFT, nXbinsLo, nXbinsHi);
 
         populateTipsEsDs(nDimensionsFFT, nXbinsHi, true, false);
+
+        // jint nXbinsLo,
+//        jint nXbinsHi,
+//        jint nUsefulXbinsLo,
+//        jint nUsefulXbinsHi,
+
+//        jint nLeftFlankBinsLo,
+//        jint nLeftFlankBinsHi,
+
+//        jint nRightFlankBinsLo,
+//        jint nRightFlankBinsHi,
+
+//        jdouble dxBin,
+//        jdoubleArray xLo_ptr,
+//        jdoubleArray xHi_ptr,
+//        jintArray nDnEs_ptr,
+//        jint flags
+
+        // init jni stash
+        int[] nDnEs = {nDimensionsD, nDimensionsE};
+        int flag = 0; // default flag for FFTW (FFTW_MEASURE)
+        // unit tests for stash initialization
+        long ptr = makeQuasseConstantsStashJNIWrapper(nXbinsLo, nXbinsHi, nUsefulXbinsLo, nUsefulXbinsHi,
+                nLeftNRightFlanksLo[0], nLeftNRightFlanksHi[0], nLeftNRightFlanksLo[1], nLeftNRightFlanksHi[1],
+                dXbin, xLo, xHi, nDnEs, flag);
     }
 
     private void checkDimensions() {
@@ -179,6 +236,7 @@ public class QuaSSEDistribution extends QuaSSEProcess {
         if (!aNode.isRoot()) processBranch(aNode, forceRecalcKernel, jtransforms);
     }
 
+    // main branch function
     @Override
     public void processBranch(Node aNode, boolean forceRecalcKernel, boolean jtransforms) {
         int nodeIdx = aNode.getNr();
@@ -300,6 +358,8 @@ public class QuaSSEDistribution extends QuaSSEProcess {
     		boolean lowRes,
     		boolean forceRecalcKernel,
     		boolean jtransforms) {
+
+        // option of jtransforms, and jni
 
         // dealing with dt
         double dt, nIntervals;

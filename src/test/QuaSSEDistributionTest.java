@@ -12,8 +12,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.List;
 
@@ -52,7 +50,7 @@ public class QuaSSEDistributionTest {
     static RealParameter dt01Rp, dt001Rp, dt002Rp, dt0005Rp;
     static RealParameter tc100Rp, tc0005Rp, tcFifteenSpRp;
     static RealParameter diffusionRp0001, diffusionRp001;
-    static IntegerParameter hiLoRatioRp, nXbins1024Ip, nXbins128Ip, nXbins48Ip, nXbins32Ip;
+    static IntegerParameter hiLoRatioIp, nXbins1024Ip, nXbins128Ip, nXbins48Ip, nXbins32Ip;
     static BooleanParameter dynDtbpTrue, dynDtbpFalse;
     static String rootPriorType;
 
@@ -158,7 +156,7 @@ public class QuaSSEDistributionTest {
         RealParameter sdNormaQuTraitValue005Rp = new RealParameter(sdNormaQuTraitValue005);
         RealParameter sdNormaQuTraitValue0005Rp = new RealParameter(sdNormaQuTraitValue0005);
         nfn2Sp = new NormalCenteredAtObservedLinkFn();
-        nfn2Sp.initByName("quTraits", quTrait3SpRp, "sdNormalQuTrValue", sdNormaQuTraitValue005Rp);
+        nfn2Sp.initByName("quTraits", quTrait2SpRp, "sdNormalQuTrValue", sdNormaQuTraitValue005Rp);
         nfn3Sp = new NormalCenteredAtObservedLinkFn();
         nfn3Sp.initByName("quTraits", quTrait3SpRp, "sdNormalQuTrValue", sdNormaQuTraitValue005Rp);
         nfn15Sp = new NormalCenteredAtObservedLinkFn();
@@ -190,7 +188,7 @@ public class QuaSSEDistributionTest {
         flankWidthScaler5Rp = new RealParameter(flankWidthScaler5);
 
         Integer[] hiLoRatio = new Integer[] { 4 };
-        hiLoRatioRp = new IntegerParameter(hiLoRatio);
+        hiLoRatioIp = new IntegerParameter(hiLoRatio);
 
         Integer[] nXbins1024 = new Integer[] { 1024 };
         nXbins1024Ip = new IntegerParameter(nXbins1024);
@@ -217,7 +215,7 @@ public class QuaSSEDistributionTest {
         q1024 = new QuaSSEDistribution();
         q1024.initByName("dtMax", dt001Rp, "dynDt", dynDtbpTrue,
                 "tc", tc100Rp,
-                "nX", nXbins1024Ip, "dX", dxBin00005Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "nX", nXbins1024Ip, "dX", dxBin00005Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioIp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight002,
@@ -227,7 +225,7 @@ public class QuaSSEDistributionTest {
         q32Dt001 = new QuaSSEDistribution();
         q32Dt001.initByName("dtMax", dt001Rp, "dynDt", dynDtbpTrue,
                 "tc", tc100Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioIp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight001,
@@ -237,7 +235,7 @@ public class QuaSSEDistributionTest {
         q32Dt002 = new QuaSSEDistribution();
         q32Dt002.initByName("dtMax", dt002Rp, "dynDt", dynDtbpTrue,
                 "tc", tc100Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioIp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight002,
@@ -247,7 +245,7 @@ public class QuaSSEDistributionTest {
         q32Dt0005 = new QuaSSEDistribution();
         q32Dt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
                 "tc", tc0005Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioIp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight001,
@@ -257,7 +255,7 @@ public class QuaSSEDistributionTest {
         q32BifTree0025HeightDt0005 = new QuaSSEDistribution();
         q32BifTree0025HeightDt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
                 "tc", tc0005Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioIp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight0025,
@@ -267,7 +265,7 @@ public class QuaSSEDistributionTest {
         q32ThreeSpTreeDt0005 = new QuaSSEDistribution();
         q32ThreeSpTreeDt0005.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
                 "tc", tc0005Rp,
-                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "nX", nXbins32Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioIp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", threeSpTreeHeight002,
@@ -277,7 +275,7 @@ public class QuaSSEDistributionTest {
         q32FifteenSp = new QuaSSEDistribution();
         q32FifteenSp.initByName("dtMax", dt0005Rp, "dynDt", dynDtbpTrue,
                 "tc", tcFifteenSpRp,
-                "nX", nXbins1024Ip, "dX", dxBinFifteenSpRp, "xMid", xMidFifteenSpRp, "flankWidthScaler", flankWidthScaler5Rp, "hiLoRatio", hiLoRatioRp,
+                "nX", nXbins1024Ip, "dX", dxBinFifteenSpRp, "xMid", xMidFifteenSpRp, "flankWidthScaler", flankWidthScaler5Rp, "hiLoRatio", hiLoRatioIp,
                 "drift", driftRp, "diffusion", diffusionRp001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", fifteenSpTree,
@@ -1336,7 +1334,7 @@ public class QuaSSEDistributionTest {
         QuaSSEDistribution q48Dt001 = new QuaSSEDistribution();
         q48Dt001.initByName("dtMax", dt001Rp, "dynDt", dynDtbpTrue,
                 "tc", tc100Rp,
-                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioRp,
+                "nX", nXbins48Ip, "dX", dxBin001Rp, "xMid", xMid00Rp, "flankWidthScaler", flankWidthScaler10Rp, "hiLoRatio", hiLoRatioIp,
                 "drift", driftRp, "diffusion", diffusionRp0001,
                 "q2mLambda", lfn, "q2mMu", cfn,
                 "tree", bifTreeHeight001,

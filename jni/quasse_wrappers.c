@@ -80,13 +80,16 @@ quasse_constants_stash* make_quasse_stash(
     quasse_cts_stash_ptr->wrkdHi = (double *)calloc(max_nd * nXbinsHi, sizeof(double));
 
     // making 'nDimensions' fft plans, for both low and high resolution
-    for (i=0; i < nDimensions; i++) {
-        quasse_cts_stash_ptr->fftLo[i] =
-            make_rfftw_plan_real(nDnEs_ptr[i], nXbinsLo, DIR_COLS, quasse_cts_stash_ptr->fft_x_input_lo, quasse_cts_stash_ptr->fft_y_input_lo, flags);
 
-        quasse_cts_stash_ptr->fftHi[i] =
-            make_rfftw_plan_real(nDnEs_ptr[i], nXbinsHi, DIR_COLS, quasse_cts_stash_ptr->fft_x_input_hi, quasse_cts_stash_ptr->fft_y_input_hi, flags);
-    }
+   // comment out for testing
+   // TODO: fix abort error in make_rfftw_plan_real
+//    for (i=0; i < nDimensions; i++) {
+//        quasse_cts_stash_ptr->fftLo[i] =
+//            make_rfftw_plan_real(nDnEs_ptr[i], nXbinsLo, DIR_COLS, quasse_cts_stash_ptr->fft_x_input_lo, quasse_cts_stash_ptr->fft_y_input_lo, flags);
+//
+//        quasse_cts_stash_ptr->fftHi[i] =
+//            make_rfftw_plan_real(nDnEs_ptr[i], nXbinsHi, DIR_COLS, quasse_cts_stash_ptr->fft_x_input_hi, quasse_cts_stash_ptr->fft_y_input_hi, flags);
+//    }
 
   /* Brownian kernel */
   // quasse_stash_ptr->kern_x = fftw_malloc(nxBin * sizeof(double));
@@ -98,8 +101,8 @@ quasse_constants_stash* make_quasse_stash(
 }
 
 
-
-JNIEXPORT jlong JNICALL makeQuasseConstantsStash_JNIWrapper(
+// Convention for method linking: Java_[packageName]_[className]_[methodName]
+JNIEXPORT jlong JNICALL Java_SSE_QuaSSEDistribution_makeQuasseConstantsStashJNIWrapper(
     JNIEnv *env,
     jobject thisObject,
     jint nXbinsLo,
