@@ -1,6 +1,8 @@
 package mosse;
 
+import SSE.ConstantLinkFn;
 import SSE.LinkFn;
+import SSE.LogisticFunction;
 import beast.core.Description;
 import beast.core.Distribution;
 import beast.core.Input;
@@ -54,6 +56,8 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     protected double startSubsRate;
     protected double endSubsRate;
     protected int numRateBins;
+
+    double[] flatTransitionMatrices;
 
     private boolean updateTips = true;
 
@@ -217,7 +221,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
 
         traverseFull(tree.getRoot());
 
-        return 0.0;
+        return 0.0; // update using root partials
     }
 
     private void traverseFull(Node node) {
@@ -240,16 +244,16 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             double[] prevMatrix = transitionMatrices[i - 1];
             transitionMatrices[i] = matrixPow(prevMatrix, 2);
         }
-        double[] flatTransitionMatrices = Arrays.stream(transitionMatrices)
+        flatTransitionMatrices = Arrays.stream(transitionMatrices)
                 .flatMapToDouble(Arrays::stream)
                 .toArray();
 
         // get lambdas and mus
-        double[] x = getSubstitutionRates(); // substitution rates
+        double[] x = getSubstitutionRates(numEntries); // substitution rates
         double[] lambda = new double[numEntries];
         double[] mu = new double[numEntries];
-        lambda = lambdaFunc.getY(x, lambda, false);
-        mu = muFunc.getY(x, mu, false);
+        lambda = lambdaFunc.getY(x, lambda, true);
+        mu = muFunc.getY(x, mu, true);
 
         if (node.isLeaf()) {
             // leaf node
@@ -291,7 +295,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                 for (int i = 0; i < numRateBins; i++) {
                     double lambdaX = lambda[i]; // birth rate at substitution rate x
                     for (int j = 0; j < numPlan; j++) {
-                        int index = i * numPlan + j;
+                        int index = i * numPlan + j; // TODO: add unit test for index
                         if (j == 0) {
                             // E is topology independent
                             partialsCombined[index] = partialsLeft[index]; // for testing
@@ -320,11 +324,18 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         }
     }
 
-    private double[] getSubstitutionRates() {
-        double[] res = new double[numRateBins];
+    public double[] getFlatTransitionMatrices() {
+        return flatTransitionMatrices;
+    }
+
+    private double[] getSubstitutionRates(int numEntries) {
+        double[] res = new double[numEntries];
+        // test case values
+        // startSubsRate = 0.0164
+        // endSubsRate = 0.3932
         res[0] = startSubsRate;
-        double interval = (endSubsRate - startSubsRate) / numRateBins;
-        for(int i = 1; i < numRateBins; i++) {
+        double interval = (endSubsRate - startSubsRate) / numEntries;
+        for(int i = 1; i < numEntries; i++) {
             res[i] = res[i - 1] + interval;
         }
         return res;
@@ -378,7 +389,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     }
 
     /**
-     * traverse tree with caching
+     * traverse tree with optimized caching
      * @param node tree node
      * @return update flag
      */

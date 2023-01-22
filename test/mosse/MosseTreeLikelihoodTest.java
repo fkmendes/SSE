@@ -7,14 +7,22 @@ import beast.evolution.alignment.Alignment;
 import beast.evolution.alignment.Sequence;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.sitemodel.SiteModel;
+import beast.evolution.substitutionmodel.Frequencies;
+import beast.evolution.substitutionmodel.GTR;
+import beast.evolution.substitutionmodel.GeneralSubstitutionModel;
 import beast.evolution.substitutionmodel.JukesCantor;
+import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 
 import org.junit.Test;
+import test.beast.evolution.substmodel.GTRTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.Assert.assertArrayEquals;
 
 
 /**
@@ -22,6 +30,8 @@ import java.util.List;
  */
 
 public class MosseTreeLikelihoodTest {
+
+    private static double DELTA = 1e-7;
 
     /**
      * returns an Alignment of nucleotide sequences
@@ -136,12 +146,22 @@ public class MosseTreeLikelihoodTest {
     }
 
     public void testMosseExponentiatedMatrix() {
-
+        // test case from test-mosse2.R
+        //   Q <- t(matrix(c(-0.5,0.2,0.1,0.1,
+        //                  0.1,-0.8,0.3,0.4,
+        //                  0.2,0.2,-0.6,0.2,
+        //                  0.3,0.4,0.2,-0.7),4,4))
+        // expm(Q)
+        double[] expectedTransitionMatrix = {
+                0.6319373, 0.1273384, 0.0840574, 0.08617252,
+                0.1062949, 0.5146194, 0.1818267, 0.21867370,
+                0.1442823, 0.1381027, 0.5872501, 0.13792546,
+                0.1970986, 0.2273229, 0.1513365, 0.56178771};
     }
 
 
     public void testMosseLikelihoodRootNode() {
-
+        // test root node treatments
     }
 
     @Test
@@ -152,14 +172,56 @@ public class MosseTreeLikelihoodTest {
         String newick = "(t0: 0.5, t1: 0.5);";
         Tree tree = new Tree(newick);
 
-        JukesCantor JC = new JukesCantor();
-        JC.initAndValidate();
+        RealParameter f = new RealParameter(new Double[]{0.25, 0.25, 0.25, 0.25});
+        Frequencies freqs = new Frequencies();
+        freqs.initByName("frequencies", f, "estimate", false);
+
+        Double[] relativeRates = new Double[]{
+                -0.5, 0.2, 0.1, 0.1,
+                0.1, -0.8, 0.3, 0.4,
+                0.2, 0.2, -0.6, 0.2,
+                0.3, 0.4, 0.2, -0.7};
+        RealParameter customRates = new RealParameter(relativeRates);
+        RealParameter rates = new RealParameter(new Double[]{0.2, 0.1, 0.1, 0.1, 0.3, 0.4, 0.2, 0.2, 0.2, 0.3, 0.4, 0.2});
+        CustomSubstitutionModel substModel = new CustomSubstitutionModel();
+        substModel.initByName("frequencies", freqs, "rates", rates, "customRates", customRates);
 
         SiteModel siteModel = new SiteModel();
         siteModel.initByName(
                 "mutationRate", "1.0",
                 "gammaCategoryCount", 1,
-                "substModel", JC);
+                "substModel", substModel);
+
+        double startTime = 1;
+        double endTime = 0;
+        double rate = 1;
+
+        int len = substModel.getStateCount();
+        double[] transitionProbMatrix = new double[len*len];
+        // testing transition probability exp(Q * t)
+        substModel.getTransitionProbabilities(new Node(), startTime, endTime, rate, transitionProbMatrix, false);
+        System.out.println("P = exp(Q * t)");
+        int count = 1;
+        for (double x: transitionProbMatrix) {
+            System.out.print(x + " ");
+            if (count % 4 == 0) {
+                System.out.println();
+            }
+            count++;
+        }
+        // test case from test-mosse2.R
+        //   Q <- t(matrix(c(-0.5,0.2,0.1,0.1,
+        //                  0.1,-0.8,0.3,0.4,
+        //                  0.2,0.2,-0.6,0.2,
+        //                  0.3,0.4,0.2,-0.7),4,4))
+        // expm(Q)
+        double[] expectedTransitionMatrix = {
+                0.6319373, 0.1273384, 0.0840574, 0.08617252,
+                0.1062949, 0.5146194, 0.1818267, 0.21867370,
+                0.1442823, 0.1381027, 0.5872501, 0.13792546,
+                0.1970986, 0.2273229, 0.1513365, 0.56178771};
+
+        assertArrayEquals(transitionProbMatrix, expectedTransitionMatrix, DELTA);
 
         Double[] betasArray = {0.1, 0.2};
         double epsilon = 0.01;
@@ -192,28 +254,29 @@ public class MosseTreeLikelihoodTest {
         traitsList.add(trait1);
 
         // lambda and mu functions
-        // logistic
-        Double[] x0 = new Double[] { 0.0 };
-        Double[] y1 = new Double[] { 0.2 };
-        Double[] y0 = new Double[] { 0.1 };
-        Double[] r = new Double[] { 2.5 };
+        // logistic function
+        Double[] y0 = new Double[] { 0.0 };
+        Double[] y1 = new Double[] { 0.1 };
+        Double[] x0 = new Double[] { 0.1 }; // xmid
+        Double[] r = new Double[] { 0.01 };
+
         RealParameter y0rp = new RealParameter(y0);
         RealParameter y1rp = new RealParameter(y1);
         RealParameter x0rp = new RealParameter(x0);
         RealParameter rrp = new RealParameter(r);
         LogisticFunction logFunc = new LogisticFunction();
-        logFunc.initByName( "curveYBaseValue",
-                y0rp, "curveMaxY", y1rp,
+        logFunc.initByName( "curveYBaseValue", y0rp,
+                "curveMaxY", y1rp,
                 "sigmoidMidpoint", x0rp,
                 "logisticGrowthRate", rrp);
-        // constant
-        Double[] yValue = new Double[] { 0.03 };
+        // constant function
+        Double[] yValue = new Double[] { 0.01 }; // const value
         RealParameter yValueRP = new RealParameter(yValue);
         ConstantLinkFn constFunc = new ConstantLinkFn();
         constFunc.initByName("yV", yValueRP);
 
-        double startSubsRate = 1E-10;
-        double endSubsRate = 1E-8;
+        double startSubsRate = 0.0164; // TODO: double check value from test case test-mosse2.R (log scale?)
+        double endSubsRate = 0.3932;
         int numBins = 1024;
 
         MosseTreeLikelihood likelihood = new MosseTreeLikelihood();

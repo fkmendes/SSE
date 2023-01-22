@@ -16,7 +16,6 @@ import static org.junit.Assert.assertEquals;
 
 public class MosseDistributionTest {
 
-    // todo: update expected R results to more decimal places
     private static double DELTA = 1e-7;
 
     /**
