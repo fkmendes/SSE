@@ -39,10 +39,10 @@ test_that("mosse", {
   diffusion <- 0.001
   sd <- 0.001
   
-  Q <- t(matrix(c(-0.5,0.2,0.1,0.1,
+  Q <- matrix(c(-0.6,0.2,0.1,0.1,
                   0.1,-0.8,0.3,0.4,
                   0.2,0.2,-0.6,0.2,
-                  0.3,0.4,0.2,-0.7),4,4))
+                  0.3,0.4,0.2,-0.7),4,4)
   
   
   ##3. test mosse on a whole tree
@@ -74,15 +74,15 @@ test_that("mosse", {
   
   print(constant.x)
   
-  # lik.C.1 <- make.mosse(phy, types,ntypes=4,states,states.sd,sigmoid.x, constant.x, Q,
-  #                     control.C.1)
+  lik.C.1 <- make.mosse(phy, types,ntypes=4,states,states.sd,sigmoid.x, constant.x, Q,
+                      control.C.1)
   lik.R.1 <- make.mosse(phy, types,ntypes=4,states,states.sd,sigmoid.x, constant.x, Q,
                        control.R.1)
-  # 
-  # 
-  # 
-  # expect_that(round(lik.C.1(pars),4), equals(-307.0883)) 
-  expect_that(round(lik.R.1(pars),4), equals(-307.0883)) 
+
+  # print("R log likelihood")
+  # print(lik.R.1(pars))
+  expect_that(round(lik.C.1(pars),4), equals(-309.0205)) 
+  expect_that(round(lik.R.1(pars),4), equals(-309.0205)) 
   # 
   # ## Now, test root treatment:
   # expect_that(round(lik.C.1(pars, root=ROOT.FLAT),4), equals(-314.0188)) 
