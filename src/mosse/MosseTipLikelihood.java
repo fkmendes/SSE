@@ -16,10 +16,12 @@ import org.apache.commons.math3.distribution.NormalDistribution;
 public class MosseTipLikelihood extends CalculationNode {
 
 	final public Input<RealParameter> betaInput = new Input<>("beta", "beta coefficients for each trait", Input.Validate.REQUIRED);
+	final public Input<RealParameter> meanInput = new Input<>("mean", "mean substitution value", Input.Validate.REQUIRED);
 	final public Input<RealParameter> epsilonInput = new Input<>("epsilon", "error term of regression model", Input.Validate.REQUIRED);
 	final public Input<BooleanParameter> logScaleInput = new Input<>("logscale", "whether to use log scale for substitution rate (defaults to true)", Input.Validate.OPTIONAL);
 
 	private RealParameter beta;
+	private RealParameter mean;
 	private RealParameter epsilon;
 	private boolean logScale;
 
@@ -29,7 +31,7 @@ public class MosseTipLikelihood extends CalculationNode {
 
 	/**
 	 * Returns P(tip rate | beta0, beta1, epsilon, trait0, trait1) ~
-	 * Gaussian(mean = beta0 * trait0 + beta1 * trait1 + ... + epsilon, sd = epsilon)
+	 * Gaussian(mean = beta0 * trait0 + beta1 * trait1 + ... + mean, sd = epsilon)
 	 * within the tip rate interval (a,b)
 	 * @param a start value of tip rate interval
 	 * @param b end value of tip rate interval
@@ -37,7 +39,7 @@ public class MosseTipLikelihood extends CalculationNode {
 	 * @return tip likelihood between intervals a and b
 	 */
 	public double getTipLikelihood(double a, double b, double[] traits) {
-		double mean = epsilon.getValue();
+		double mean = mean.getValue();
 		for (int i = 0; i < traits.length; i++) {
 			int numBetas = beta.getDimension();
 			if (numBetas != traits.length) {
@@ -79,6 +81,7 @@ public class MosseTipLikelihood extends CalculationNode {
 	@Override
 	public void initAndValidate() {
 		beta = betaInput.get();
+		mean = meanInput.get();
 		epsilon = epsilonInput.get();
 		if (logScaleInput.get() == null) {
 			logScale = true;
