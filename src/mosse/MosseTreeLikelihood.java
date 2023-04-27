@@ -40,13 +40,30 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     final public Input<MosseTipLikelihood> tipModelInput = new Input<>("tipModel", "model of tip probabilities", Input.Validate.REQUIRED);
     final public Input<Distribution> treeModelInput = new Input<>("treeModel", "species diversification model", Input.Validate.REQUIRED);
     // substitution rate parameters
+
+    // TODO: remove redundant parameter in substitution rate inputs
     final public Input<RealParameter> startSubsRateInput = new Input<>("startSubsRate", "lower range for substitution rate", Input.Validate.REQUIRED);
     final public Input<RealParameter> endSubsRateInput = new Input<>("endSubsRate", "upper range for substitution rate", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> numRateBinsInput = new Input<>("numRateBins", "number of bins for substitution rate", Input.Validate.REQUIRED);
     final public Input<LinkFn> lambdaFuncInput = new Input<>("lambdaFunc", "function for birth rate lambda", Input.Validate.REQUIRED);
     final public Input<LinkFn> muFuncInput = new Input<>("muFunc", "function for death rate mu", Input.Validate.REQUIRED);
 
+    final public Input<LinkFn> rootFuncInput = new Input<>("rootFunc", "function for root", Input.Validate.OPTIONAL);
+
+    final public Input<IntegerParameter> rootOptionInput = new Input<>("rootOption", "option for root calculation", Input.Validate.OPTIONAL);
+
+
 //    final public int SUBST_NUM_STATES = 4; // for testing
+
+    // root options
+    final public int ROOT_FLAT = 1;
+    final public int ROOT_OBS = 2;
+    final public int ROOT_EQUI = 3;
+    final public int ROOT_GIVEN = 4;
+
+    protected int rootOption;
+
+    protected LinkFn rootFunc;
 
     protected LinkFn lambdaFunc;
     protected LinkFn muFunc;
@@ -75,6 +92,13 @@ public class MosseTreeLikelihood extends TreeLikelihood {
 
         lambdaFunc = lambdaFuncInput.get();
         muFunc = muFuncInput.get();
+
+        if (rootOptionInput.get() != null) {
+            rootOption = rootOptionInput.get().getValue();
+        }
+        if (rootFuncInput.get() != null) {
+            rootFunc = rootFuncInput.get();
+        }
 
         // input checking
         if (dataInput.get().getTaxonCount() != treeInput.get().getLeafNodeCount()) {
@@ -266,6 +290,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             traverseFull(node.getLeft());
             traverseFull(node.getRight());
 
+            // propagate child branches
             double branchTimeLeft = node.getHeight() - node.getLeft().getHeight();
             double branchTimeRight = node.getHeight() - node.getRight().getHeight();
 
@@ -318,10 +343,162 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             traverseFull(node.getRight());
 
             // propagate child branches of root
+            double branchTimeLeft = node.getHeight() - node.getLeft().getHeight();
+            double branchTimeRight = node.getHeight() - node.getRight().getHeight();
 
+            double[] patternPartialsLeft = new double[numPattern * numPlan * numRateBins];
+            double[] patternPartialsRight = new double[numPattern * numPlan * numRateBins];
+            double[] partialsAllPatterns = new double[numPattern * numPlan * numRateBins];
+
+            // get child node partials all patterns
+            mosseLikelihoodCore.getNodePartials(node.getLeft().getNr(), patternPartialsLeft);
+            mosseLikelihoodCore.getNodePartials(node.getRight().getNr(), patternPartialsRight);
+            int k = 0;
+            for (int pattern = 0; pattern < numPattern; pattern++) {
+                // partial for single pattern
+                int partialSize = numPlan * numRateBins;
+                int startPos = pattern * partialSize;
+                double[] partialsLeft =  new double[numPlan * numRateBins];
+                System.arraycopy(patternPartialsLeft, startPos, partialsLeft, 0, partialSize);
+                double[] partialsRight = new double[numPlan * numRateBins];
+                System.arraycopy(patternPartialsRight, startPos, partialsRight, 0, partialSize);
+                double[] partialsCombined = new double[partialsLeft.length];
+
+                // propagate each child branch
+                treeModel.calculateBranchLogP(branchTimeLeft, partialsLeft, lambda, mu, flatTransitionMatrices, partialsLeft);
+                treeModel.calculateBranchLogP(branchTimeRight, partialsRight, lambda, mu, flatTransitionMatrices, partialsRight);
+
+                // assumes t less than tc threshold
+                for (int i = 0; i < numRateBins; i++) {
+                    double lambdaX = lambda[i]; // birth rate at substitution rate x
+                    for (int j = 0; j < numPlan; j++) {
+                        int index = i * numPlan + j;
+                        if (j == 0) {
+                            // E is topology independent
+                            partialsCombined[index] = partialsLeft[index]; // for testing
+                            partialsAllPatterns[k] = partialsLeft[index];
+                        } else {
+                            // D_left * D_right * lambda(x)
+                            partialsCombined[index] = partialsLeft[index] * partialsRight[index] * lambdaX; // for testing
+                            partialsAllPatterns[k] = partialsLeft[index] * partialsRight[index] * lambdaX;
+                        }
+                        k++;
+                    }
+                }
+            }
 
             // do calculation at root
+            double[] rootFrequencies = substitutionModel.getFrequencies(); // equilibrium frequencies
+            if (rootFrequenciesInput.get() != null) {
+                rootFrequencies = rootFrequenciesInput.get().getFreqs(); // user input root frequencies
+            }
         }
+    }
+
+    /**
+     *
+     * @param nx number of bins for substitution rate
+     * @param dx distance between xs
+     * @param r
+     * @param QMatrix Q instantaneous rate matrix
+     * @param conditionSurv whether to condition on survival
+     * @return log probability for root
+     */
+    private double makeRootFuncMosse(int nx, double dx, int r, double[] QMatrix, double[] result, boolean conditionSurv) {
+        double logP = 0.0;
+        int ntypes = 4;
+        double[][] vals = new double[nx][ntypes+1];
+        int count = 0;
+        for (int j = 0; j < ntypes + 1; j++) {
+            for (int i = 0; i < nx; i++) {
+                vals[i][j] = result[count];
+                count++;
+            }
+        }
+        double[] lq = null; // TODO: udpate lq value
+
+        double[] dRoot = getColumn(vals, -1); // get last column
+        double[] eRoot = null;
+        double[] x = null; // TODO: get x from substitution rates
+        double[] QOrig = null; // TODO: get original Q matrix
+        // root options
+        double[] rootP = getRootP(dRoot, x, nx, QOrig, rootOption, rootFunc, ntypes);
+
+        if (conditionSurv) {
+            double lambda = getLambda();
+            eRoot = getColumn(vals, 1);
+            // apply function on dRoot
+            for (int i = 0; i < ntypes; i++) {
+                // dRoot <- mapply(function (i) d.root[,i] / (lambda * (1 - e.root)^2), 1:ntypes)
+                dRoot[i] = dRoot[i] / (lambda * Math.pow((1 - eRoot[i]), 2));
+            }
+            double[] rootProduct = getProduct(rootP, dRoot);
+            logP = Math.log(getSum(rootProduct) * dx) + getSum(lq);
+        }
+
+        return logP;
+    }
+
+    private double[] getRootP(double[] dRoot, double[] x, int nx, double[] QOrig, int rootOption, LinkFn rootFunc, int ntypes) {
+        double dx = x[1] - x[0];
+        int size = ntypes; // check size of p and dRoot
+        double[] p = new double[size];
+
+        if (rootOption == ROOT_FLAT) {
+            for (int i = 0; i < ntypes; i++) {
+                p[i] = 1 / ((nx - 1) * ntypes * dx);
+            }
+        } else if (rootOption == ROOT_OBS)  {
+            for (int i = 0; i < ntypes; i++) {
+                p[i] = dRoot[i] / (getSum(dRoot) * dx);
+            }
+        } else {
+            double[] rootI = null; // TODO: solve for Q orig
+            if (rootOption == ROOT_EQUI) {
+                for (int i = 0; i < ntypes; i++) {
+                    p[i] = rootI[i] * dRoot[i] / (getSum(dRoot) * dx); // mapply
+                }
+            } else if (rootOption == ROOT_GIVEN){
+                for (int i = 0; i < ntypes; i++) {
+                    p[i] = rootI[i] * dRoot[i] / (getSum(dRoot) * dx); // mapply
+                }
+            }
+        }
+
+        return p;
+    }
+
+    private double[] getProduct(double[] array1, double[] array2) {
+        int resLength = Math.max(array1.length, array2.length);
+        double[] res = new double[resLength];
+        for (int i = 0; i < resLength; i++) {
+            res[i] = array1[i] * array2[i];
+        }
+        return res;
+    }
+
+    private double getSum(double[] array) {
+        double res = 0.0;
+        for (double i: array) {
+            res = res + i;
+        }
+        return res;
+    }
+
+    private double getLambda() {
+        return 0.0;
+    }
+
+    private double[] getColumn(double[][] values, int colIndex) {
+        int rows = values.length;
+        double[] column = new double[rows];
+        if (colIndex == -1) {
+            colIndex = values[0].length - 1;
+        }
+        for (int i = 0; i < rows; i++) {
+            column[i] = values[i][colIndex];
+        }
+        return column;
     }
 
     public double[] getFlatTransitionMatrices() {
@@ -330,9 +507,6 @@ public class MosseTreeLikelihood extends TreeLikelihood {
 
     private double[] getSubstitutionRates(int numEntries) {
         double[] res = new double[numEntries];
-        // test case values
-        // startSubsRate = 0.0164
-        // endSubsRate = 0.3932
         res[0] = startSubsRate;
         double interval = (endSubsRate - startSubsRate) / numEntries;
         for(int i = 1; i < numEntries; i++) {

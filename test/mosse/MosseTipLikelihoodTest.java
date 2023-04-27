@@ -21,6 +21,7 @@ public class MosseTipLikelihoodTest {
     public void testMosseTipLikelihoodLargeIntervalIsOne() {
         double beta0 = 0.1;
         double beta1 = 0.2;
+        double subst = 0.01;
         double epsilon = 0.01;
 
         double[] traits = {1.0, 1.0};
@@ -33,6 +34,7 @@ public class MosseTipLikelihoodTest {
         MosseTipLikelihood tipLikelihood = new MosseTipLikelihood();
         tipLikelihood.initByName(
                 "beta", betas,
+                "subst", Double.toString(subst),
                 "epsilon", Double.toString(epsilon)
         );
         tipLikelihood.initAndValidate();

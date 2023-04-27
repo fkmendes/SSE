@@ -37,14 +37,16 @@ public class MosseLikelihoodCore extends BeerLikelihoodCore {
     public void initialize(int nodeCount, int patternCount, int matrixCount, boolean integrateCategories, boolean useAmbiguities) {
         this.nrOfNodes = nodeCount;
         this.nrOfPatterns = patternCount;
-        this.nrOfMatrices = matrixCount;
+        this.nrOfMatrices = matrixCount; // matrix count should be 1
         this.integrateCategories = integrateCategories;
 
-        if (integrateCategories) {
-            partialsSize = patternCount * (nrOfStates + 1) * matrixCount * numRateBins;
-        } else {
-            partialsSize = patternCount * (nrOfStates + 1) * numRateBins;
+        if (matrixCount > 1) {
+            throw new IllegalArgumentException("Gamma rate categories greater than 1 not supported");
         }
+
+        // do use need gamma rate categories
+        partialsSize = patternCount * (nrOfStates + 1) * numRateBins;
+
 
         partials = new double[2][nodeCount][];
         lambdaSize = patternCount * numRateBins - padLeft - padRight - 1;
@@ -74,16 +76,9 @@ public class MosseLikelihoodCore extends BeerLikelihoodCore {
             this.partials[0][nodeIndex] = new double[partialsSize];
             this.partials[1][nodeIndex] = new double[partialsSize];
         }
-        if (partials.length < partialsSize) {
-            // rate heterogeneity categories
-            int k = 0;
-            for (int i = 0; i < nrOfMatrices; i++) {
-                System.arraycopy(partials, 0, this.partials[currentPartialsIndex[nodeIndex]][nodeIndex], k, partials.length);
-                k += partials.length;
-            }
-        } else {
-            System.arraycopy(partials, 0, this.partials[currentPartialsIndex[nodeIndex]][nodeIndex], 0, partials.length);
-        }
+
+        System.arraycopy(partials, 0, this.partials[currentPartialsIndex[nodeIndex]][nodeIndex], 0, partials.length);
+
     }
 
 }

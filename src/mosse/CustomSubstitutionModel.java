@@ -4,22 +4,36 @@ import beast.core.Function;
 import beast.core.Input;
 import beast.evolution.substitutionmodel.GeneralSubstitutionModel;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * @author Kylie Chen
  * setup custom Q matrix for testing Mosse Tree Likelihood only
  */
 public class CustomSubstitutionModel extends GeneralSubstitutionModel {
 
-
     final public Input<Function> customRatesInput =
-            new Input<>("customRates", "Rate parameter which defines the transition rate matrix exactly. ", Input.Validate.REQUIRED);
+            new Input<>("customRates", "rate parameter which defines the transition rate matrix Q exactly", Input.Validate.REQUIRED);
 
+    public CustomSubstitutionModel() {
+        ratesInput.setRule(Input.Validate.OPTIONAL);
+    }
 
     @Override
     public void initAndValidate() {
-        ratesInput.setRule(Input.Validate.OPTIONAL);
-        super.initAndValidate();
+        frequencies = frequenciesInput.get();
+        updateMatrix = true;
+        nrOfStates = frequencies.getFreqs().length;
+
+        try {
+            eigenSystem = createEigenSystem();
+        } catch (SecurityException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
+                 | InvocationTargetException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+        rateMatrix = new double[nrOfStates][nrOfStates];
     }
+
     @Override
     protected void setupRateMatrixUnnormalized() {
         double[] customRatesValues = new double[nrOfStates * nrOfStates];
@@ -34,6 +48,10 @@ public class CustomSubstitutionModel extends GeneralSubstitutionModel {
                 count++;
             }
         }
-        System.out.println();
+    }
+
+    @Override
+    protected void setupRelativeRates() {
+        // use unnormalized matrix method instead
     }
 }

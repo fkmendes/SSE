@@ -74,11 +74,13 @@ public class MosseTreeLikelihoodTest {
                 "substModel", JC);
 
         Double[] betasArray = {0.1, 0.2};
+        double meanSubst = 0.01; // mean substitution rate
         double epsilon = 0.01;
 
         MosseTipLikelihood tipModel = new MosseTipLikelihood();
         tipModel.initByName(
                 "beta", new RealParameter(betasArray),
+                "subst", Double.toString(meanSubst),
                 "epsilon", Double.toString(epsilon)
         );
         tipModel.initAndValidate();
@@ -145,82 +147,38 @@ public class MosseTreeLikelihoodTest {
         likelihood.calculateLogP();
     }
 
-    public void testMosseExponentiatedMatrix() {
-        // test case from test-mosse2.R
-        //   Q <- t(matrix(c(-0.5,0.2,0.1,0.1,
-        //                  0.1,-0.8,0.3,0.4,
-        //                  0.2,0.2,-0.6,0.2,
-        //                  0.3,0.4,0.2,-0.7),4,4))
-        // expm(Q)
-        double[] expectedTransitionMatrix = {
-                0.6319373, 0.1273384, 0.0840574, 0.08617252,
-                0.1062949, 0.5146194, 0.1818267, 0.21867370,
-                0.1442823, 0.1381027, 0.5872501, 0.13792546,
-                0.1970986, 0.2273229, 0.1513365, 0.56178771};
-    }
-
-
-    public void testMosseLikelihoodRootNode() {
-        // test root node treatments
-    }
-
+    // test matrix exponentiation from test-mosse2.R
+    //   Q <- matrix(c(-0.6,0.2,0.1,0.1,
+    //                  0.1,-0.8,0.3,0.4,
+    //                  0.2,0.2,-0.6,0.2,
+    //                  0.3,0.4,0.2,-0.7),4,4)
+    // expm(Q)
     @Test
-    public void testMosseLikelihoodOnTree() {
-        // nucleotides
-        // types <- c(1, 1, 1, 3, 4, 1, 2, 1, 2, 3, 1, 3, 3, 4, 1)
-        // names(types)
-        // [1] "sp1"  "sp2"  "sp5"  "sp6"  "sp7"  "sp8"  "sp9"  "sp10" "sp11" "sp12" "sp13" "sp14"
-        //[13] "sp15" "sp16" "sp17"
-        Alignment alignment = null;
-        //int numLeaves = 2;
-        //String[] sequences = {"A", "C"};
-        //Alignment alignment = getAlignment(numLeaves, sequences);
-        String newick = "(sp2:13.77320255,(sp1:12.76688384,((((sp12:1.170387028,sp13:1.170387028)nd16:0.9837720325,sp9:2.154159061)nd11:5.451401092,((sp5:4.311645343,(sp14:0.8910055279,sp15:0.8910055279)nd14:3.420639815)nd9:2.536663776,((sp16:0.3011866125,sp17:0.3011866125)nd12:4.264383667,(sp6:3.95083843,sp7:3.95083843)nd13:0.6147318498)nd10:2.282738839)nd8:0.7572510339)nd5:2.554739141,((sp10:2.059478202,sp11:2.059478202)nd15:0.4198789018,sp8:2.479357104)nd6:7.68094219)nd4:2.60658455)nd3:1.006318707)nd1;";
-        Tree tree = new Tree(newick);
-
+    public void testMosseExponentiatedMatrix() {
         RealParameter f = new RealParameter(new Double[]{0.25, 0.25, 0.25, 0.25});
         Frequencies freqs = new Frequencies();
         freqs.initByName("frequencies", f, "estimate", false);
 
-        Double[] relativeRates = new Double[]{
+        Double[] qMatrix = new Double[]{
                 -0.6, 0.1, 0.2, 0.3,
                 0.2, -0.8, 0.2, 0.4,
                 0.1, 0.3, -0.6, 0.2,
                 0.1, 0.4, 0.2, -0.7};
-        RealParameter customRates = new RealParameter(relativeRates);
-        RealParameter rates = new RealParameter(new Double[]{0.1, 0.2, 0.3, 0.2, 0.2, 0.4, 0.1, 0.3, 0.2, 0.1, 0.4, 0.2});
-        CustomSubstitutionModel substModel = new CustomSubstitutionModel();
-        substModel.initByName("frequencies", freqs, "rates", rates, "customRates", customRates);
 
-        SiteModel siteModel = new SiteModel();
-        siteModel.initByName(
-                "mutationRate", "1.0",
-                "gammaCategoryCount", 1,
-                "substModel", substModel);
+        RealParameter customRates = new RealParameter(qMatrix);
+        CustomSubstitutionModel substModel = new CustomSubstitutionModel();
+        substModel.initByName("frequencies", freqs, "customRates", customRates);
 
         double startTime = 1;
         double endTime = 0;
         double rate = 1;
 
         int len = substModel.getStateCount();
-        double[] transitionProbMatrix = new double[len*len];
+        double[] transitionProbMatrix = new double[len * len];
+
         // testing transition probability exp(Q * t)
         substModel.getTransitionProbabilities(new Node(), startTime, endTime, rate, transitionProbMatrix, false);
-        System.out.println("P = exp(Q * t)");
-        int count = 1;
-        for (double x: transitionProbMatrix) {
-            System.out.print(x + " ");
-            if (count % 4 == 0) {
-                System.out.println();
-            }
-            count++;
-        }
-        // test case from test-mosse2.R
-        //   Q <- matrix(c(-0.6,0.2,0.1,0.1,
-        //                  0.1,-0.8,0.3,0.4,
-        //                  0.2,0.2,-0.6,0.2,
-        //                  0.3,0.4,0.2,-0.7),4,4)
-        // expm(Q)
+
         double[] expectedTransitionMatrix = {
                 0.57265280, 0.1018599, 0.1376678, 0.1878195,
                 0.12128431, 0.5143445, 0.1376678, 0.2267034,
@@ -228,17 +186,61 @@ public class MosseTreeLikelihoodTest {
                 0.08240038, 0.2185117, 0.1376678, 0.5614202};
 
         assertArrayEquals(transitionProbMatrix, expectedTransitionMatrix, DELTA);
+    }
 
-        Double[] betasArray = {0.1, 0.2}; // TODO: values for GLM beta and epsilon
+
+    public void testMosseLikelihoodRootNode() {
+        // test root node treatments
+    }
+
+    private Alignment getAlignmentLarge() {
+        return null;
+    }
+
+    public void testMosseLikelihoodOnTree() {
+        String newick = "(sp2:13.77320255,(sp1:12.76688384,((((sp12:1.170387028,sp13:1.170387028)nd16:0.9837720325,sp9:2.154159061)nd11:5.451401092,((sp5:4.311645343,(sp14:0.8910055279,sp15:0.8910055279)nd14:3.420639815)nd9:2.536663776,((sp16:0.3011866125,sp17:0.3011866125)nd12:4.264383667,(sp6:3.95083843,sp7:3.95083843)nd13:0.6147318498)nd10:2.282738839)nd8:0.7572510339)nd5:2.554739141,((sp10:2.059478202,sp11:2.059478202)nd15:0.4198789018,sp8:2.479357104)nd6:7.68094219)nd4:2.60658455)nd3:1.006318707)nd1;";
+        Tree tree = new Tree(newick);
+
+        RealParameter f = new RealParameter(new Double[]{0.25, 0.25, 0.25, 0.25}); // update pis
+        Frequencies freqs = new Frequencies();
+        freqs.initByName("frequencies", f, "estimate", false);
+
+        Double[] qMatrix = new Double[]{
+                -0.6, 0.1, 0.2, 0.3,
+                0.2, -0.8, 0.2, 0.4,
+                0.1, 0.3, -0.6, 0.2,
+                0.1, 0.4, 0.2, -0.7};
+        RealParameter customRates = new RealParameter(qMatrix);
+        CustomSubstitutionModel substModel = new CustomSubstitutionModel();
+        substModel.initByName("frequencies", freqs, "customRates", customRates);
+
+        SiteModel siteModel = new SiteModel();
+        siteModel.initByName(
+                "mutationRate", "1.0",
+                "gammaCategoryCount", 1,
+                "substModel", substModel);
+
+        Double[] betasArray = {0.1, 0.2}; // dummy GLM variables
+        double meanSubst = 0.01;
         double epsilon = 0.01;
 
         MosseTipLikelihood tipModel = new MosseTipLikelihood();
         tipModel.initByName(
                 "beta", new RealParameter(betasArray),
+                "subst", Double.toString(meanSubst),
                 "epsilon", Double.toString(epsilon)
         );
         tipModel.initAndValidate();
 
+        // nucleotides
+        // types <- c(1, 1, 1, 3, 4, 1, 2, 1, 2, 3, 1, 3, 3, 4, 1)
+        // names(types)
+        // [1] "sp1"  "sp2"  "sp5"  "sp6"  "sp7"  "sp8"  "sp9"  "sp10" "sp11" "sp12" "sp13" "sp14"
+        //[13] "sp15" "sp16" "sp17"
+        Alignment alignment = getAlignmentLarge();
+        //int numLeaves = 2;
+        //String[] sequences = {"A", "C"};
+        //Alignment alignment = getAlignment(numLeaves, sequences);
         TaxonSet taxonSet = new TaxonSet(alignment);
         int numTraits = 1;
         // traits
