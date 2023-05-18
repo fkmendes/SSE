@@ -52,7 +52,11 @@ public class MosseTipLikelihood extends CalculationNode {
 		NormalDistribution normalDist = new NormalDistribution(mean, sd);
 		double startProb = normalDist.cumulativeProbability(a);
 		double endProb = normalDist.cumulativeProbability(b);
-		return endProb - startProb;
+		if (logScale) {
+			return Math.log(endProb - startProb);
+		} else {
+			return endProb - startProb;
+		}
 	}
 
 	/**
@@ -69,10 +73,6 @@ public class MosseTipLikelihood extends CalculationNode {
 		for (int i = 0; i < numBins; i++) {
 			double a = startSubsRate + i * subsInterval;
 			double b = startSubsRate + (i + 1) * subsInterval;
-			if (logScale) {
-				a = Math.log(a);
-				b = Math.log(b);
-			}
 			tipLikelihoods[i] = getTipLikelihood(a, b, traits);
 		}
 		return tipLikelihoods;

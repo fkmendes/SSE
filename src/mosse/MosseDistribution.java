@@ -23,7 +23,7 @@ public class MosseDistribution extends TreeDistribution {
 
     final public Input<IntegerParameter> nxInput = new Input<>("nx", "number of bins for substitution rate", new IntegerParameter("1024"));
     final public Input<RealParameter> dxInput = new Input<>("dx", "distance between xs", new RealParameter("0.0001"));
-    final public Input<List<IntegerParameter>> ndInput = new Input<>("nd", "plan dimensions for fftw3", Arrays.asList(new IntegerParameter("5")));
+//    final public Input<List<IntegerParameter>> ndInput = new Input<>("nd", "plan dimensions for fftw3", Arrays.asList(new IntegerParameter("5")));
     final public Input<RealParameter> driftInput = new Input<>("drift", "drift parameter", new RealParameter("0.0"));
     final public Input<RealParameter> diffusionInput = new Input<>("diffusion", "diffusion parameter", new RealParameter("0.001"));
     final public Input<RealParameter> dtInput = new Input<>("dt", "time interval dt", new RealParameter("0.01"));
@@ -59,13 +59,60 @@ public class MosseDistribution extends TreeDistribution {
 
     }
 
+    private double[][] transpose(double[][] array) {
+        int rows = array.length;
+        int columns = array[0].length;
+
+        // Create a new transposed array with swapped dimensions
+        double[][] transposedArray = new double[columns][rows];
+
+        // Transpose the array
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                transposedArray[j][i] = array[i][j];
+            }
+        }
+        return transposedArray;
+    }
+
+    private double[][] toMatrix(double[] array, int rows, int cols) {
+        double[][] matrix = new double[rows][cols];
+        int count = 0;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                matrix[i][j] = array[count];
+                count++;
+            }
+        }
+        return matrix;
+    }
+
+    private double[] flatten(double[][] array) {
+        int rows = array.length;
+        int columns = array[0].length;
+
+        // Calculate the total number of elements
+        int totalElements = rows * columns;
+
+        // Create a new 1D array to store the flattened elements
+            double[] flattenedArray = new double[totalElements];
+
+        // Flatten the array
+        int index = 0;
+            for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < columns; j++) {
+                flattenedArray[index++] = array[i][j];
+            }
+        }
+       return flattenedArray;
+    }
+
     public double calculateBranchLogP(double branchTime, double[] vars, double[] lambda, double[] mu, double[] Q, double[] result) {
         double logP = 0.0;
         // getting parameter values
         int nx = nxInput.get().getValue();
         double dx = dxInput.get().getValue();
-        int[] nd = new int[ndInput.get().size()];
-        ndInput.get().toArray();
+        int[] nd = {5};
         double drift = driftInput.get().getValue();
         double diffusion = diffusionInput.get().getValue();
         double dt = dtInput.get().getValue();
@@ -78,7 +125,7 @@ public class MosseDistribution extends TreeDistribution {
             drift, diffusion,
             Q, nt, dt,
             padLeft, padRight);
-        int ncol = vars.length / nx;
+        int ncol = vars.length / nx; // 5 dimensions
         double[][] ans = new double[nx][ncol];
         logP = calculateBranchLogP(result, nx, ncol, dx, ans);
         return logP;
