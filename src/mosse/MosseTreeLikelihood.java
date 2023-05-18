@@ -246,7 +246,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     }
 
     /**
-     * calculate log P without caching
+     * calculate log P without caching (for testing)
      * @return log P
      */
     public double calculateLogPFull() {
@@ -409,7 +409,8 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                 // root calc for a single pattern
                 boolean conditionSurv = false;
                 double[] QMatrix = substitutionModel.getRateMatrix(null);
-                logP += makeRootFuncMosse(numRateBins, rate, resolution, QMatrix, partials, conditionSurv);
+                double patternLogLikelihood = makeRootFuncMosse(numRateBins, rate, resolution, QMatrix, partials, conditionSurv);
+                logP += patternLogLikelihood + dataInput.get().getPatternWeight(pattern);
             }
         }
     }
