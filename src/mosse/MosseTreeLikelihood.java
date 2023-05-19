@@ -37,15 +37,16 @@ public class MosseTreeLikelihood extends TreeLikelihood {
     // tip model, species diversification model and trait model
     final public Input<MosseTipLikelihood> tipModelInput = new Input<>("tipModel", "model of tip probabilities", Input.Validate.REQUIRED);
     final public Input<Distribution> treeModelInput = new Input<>("treeModel", "species diversification model", Input.Validate.REQUIRED);
-    // substitution rate parameters
 
-    // TODO: remove redundant parameter in substitution rate inputs
+    // substitution rate parameters
     final public Input<RealParameter> startSubsRateInput = new Input<>("startSubsRate", "lower range for substitution rate", Input.Validate.REQUIRED);
-    final public Input<RealParameter> endSubsRateInput = new Input<>("endSubsRate", "upper range for substitution rate", Input.Validate.REQUIRED);
     final public Input<IntegerParameter> numRateBinsInput = new Input<>("numRateBins", "number of bins for substitution rate", Input.Validate.REQUIRED);
+
+    // lambda and mu functions
     final public Input<LinkFn> lambdaFuncInput = new Input<>("lambdaFunc", "function for birth rate lambda", Input.Validate.REQUIRED);
     final public Input<LinkFn> muFuncInput = new Input<>("muFunc", "function for death rate mu", Input.Validate.REQUIRED);
 
+    // root options
     final public Input<LinkFn> rootFuncInput = new Input<>("rootFunc", "function for root", Input.Validate.OPTIONAL);
 
     final public Input<IntegerParameter> rootOptionInput = new Input<>("rootOption", "option for root calculation", Input.Validate.OPTIONAL);
@@ -63,18 +64,17 @@ public class MosseTreeLikelihood extends TreeLikelihood {
 
     protected int resolution;
 
-    protected int rootOption = 2; // default to obs
+    protected int rootOption = 2; // default to ROOT_OBS
 
     protected LinkFn rootFunc;
-
     protected LinkFn lambdaFunc;
     protected LinkFn muFunc;
     protected List<TraitSet> traits;
     protected MosseTipLikelihood tipModel;
     protected MosseDistribution treeModel;
     protected double startSubsRate;
-    protected double endSubsRate;
     protected int numRateBins;
+    protected int numEntries; // number of non-zero elements in lambdas
 
     protected double[] lambdas;
 
@@ -93,7 +93,6 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         treeModel = (MosseDistribution) treeModelInput.get();
 
         startSubsRate = startSubsRateInput.get().getValue();
-        endSubsRate = endSubsRateInput.get().getValue();
         numRateBins = numRateBinsInput.get().getValue();
 
         lambdaFunc = lambdaFuncInput.get();
@@ -145,6 +144,9 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         int padRight = treeModel.padRightInput.get().getValue();
         mosseLikelihoodCore = new MosseLikelihoodCore(stateCount, numRateBins, padLeft, padRight);
 
+        // num non-zero entries (length of lambda and mu)
+        this.numEntries = numRateBins - padLeft - padRight - 1;
+
         String className = getClass().getSimpleName();
         Alignment alignment = dataInput.get();
 
@@ -185,7 +187,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             int k = 0;
             int taxonIndex = data.getTaxonIndex(node.getID());
             for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
-                double[] tipLikelihoods = tipModel.getTipLikelihoods(traitValues, numRateBins, startSubsRate, endSubsRate);
+                double[] tipLikelihoods = tipModel.getTipLikelihoods(traitValues, numRateBins, startSubsRate);
                 int stateCount = data.getPattern(taxonIndex, patternIndex);
                     boolean[] stateSet = data.getStateSet(stateCount);
                     // E initial values are zero
@@ -259,9 +261,6 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         int numPlan = 5; // dimensions
         double deltaT = 0.001; // dt
         double rate = 1.0; // dx
-        int padLeft = treeModel.padLeftInput.get().getValue();
-        int padRight = treeModel.padRightInput.get().getValue();
-        int numEntries = numRateBins - padLeft - padRight - 1; // num non-zero entries (length of lambda and mu)
         int numStates = dataInput.get().getDataType().getStateCount();
         int numPattern = dataInput.get().getPatternCount();
 
@@ -295,8 +294,8 @@ public class MosseTreeLikelihood extends TreeLikelihood {
 
         } else if (!node.isRoot()) {
             // internal node
-            traverseFull(node.getLeft());
-            traverseFull(node.getRight());
+            traverseFull(node.getChild(0)); // left child
+            traverseFull(node.getChild(1)); // right child
 
             // propagate child branches
             double branchTimeLeft = node.getHeight() - node.getLeft().getHeight();
@@ -324,22 +323,27 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                 double leftP = treeModel.calculateBranchLogP(branchTimeLeft, partialsLeft, lambdas, mus, flatTransitionMatrices, partialsLeft);
                 double rightP = treeModel.calculateBranchLogP(branchTimeRight, partialsRight, lambdas, mus, flatTransitionMatrices, partialsRight);
 
-                System.out.println("leftP " + leftP);
-                System.out.println("rightP " + rightP);
+//                System.out.println("leftP " + leftP);
+//                System.out.println("rightP " + rightP);
 
                 // assumes t less than tc threshold
                 for (int i = 0; i < numRateBins; i++) {
-                    double lambdaX = 1.0; // TODO lambda[i]; // birth rate at substitution rate x
                     for (int j = 0; j < numPlan; j++) {
                         int index = i * numPlan + j;
-                        if (j == 0) {
-                            // E is topology independent
-                            partialsCombined[index] = partialsLeft[index]; // for testing
-                            partialsAllPatterns[k] = partialsLeft[index];
+                        if (i < numEntries) {
+                            if (j == 0) {
+                                // E is topology independent
+                                partialsCombined[index] = partialsLeft[index]; // for testing
+                                partialsAllPatterns[k] = partialsLeft[index];
+                            } else {
+                                // D_left * D_right * lambda(x)
+                                double lambdaX = lambdas[i]; // birth rate at substitution rate x
+                                partialsCombined[index] = partialsLeft[index] * partialsRight[index] * lambdaX; // for testing
+                                partialsAllPatterns[k] = partialsLeft[index] * partialsRight[index] * lambdaX;
+                            }
                         } else {
-                            // D_left * D_right * lambda(x)
-                            partialsCombined[index] = partialsLeft[index] * partialsRight[index] * lambdaX; // for testing
-                            partialsAllPatterns[k] = partialsLeft[index] * partialsRight[index] * lambdaX;
+                            partialsCombined[index] = 0.0; // set to zero
+                            partialsAllPatterns[k] = 0.0;
                         }
                         k++;
                     }
@@ -369,7 +373,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                 // partial for single pattern
                 int partialSize = numPlan * numRateBins;
                 int startPos = pattern * partialSize;
-                double[] partialsLeft =  new double[numPlan * numRateBins];
+                double[] partialsLeft = new double[numPlan * numRateBins];
                 System.arraycopy(patternPartialsLeft, startPos, partialsLeft, 0, partialSize);
                 double[] partialsRight = new double[numPlan * numRateBins];
                 System.arraycopy(patternPartialsRight, startPos, partialsRight, 0, partialSize);
@@ -381,17 +385,22 @@ public class MosseTreeLikelihood extends TreeLikelihood {
 
                 // assumes t less than tc threshold
                 for (int i = 0; i < numRateBins; i++) {
-                    double lambdaX = 1.0; // TODO lambda[i]; // birth rate at substitution rate x
                     for (int j = 0; j < numPlan; j++) {
                         int index = i * numPlan + j;
-                        if (j == 0) {
-                            // E is topology independent
-                            partialsCombined[index] = partialsLeft[index]; // for testing
-                            partialsAllPatterns[k] = partialsLeft[index];
+                        if (i < numEntries) {
+                            if (j == 0) {
+                                // E is topology independent
+                                partialsCombined[index] = partialsLeft[index]; // for testing
+                                partialsAllPatterns[k] = partialsLeft[index];
+                            } else {
+                                // D_left * D_right * lambda(x)
+                                double lambdaX = lambdas[i]; // birth rate at substitution rate x
+                                partialsCombined[index] = partialsLeft[index] * partialsRight[index] * lambdaX; // for testing
+                                partialsAllPatterns[k] = partialsLeft[index] * partialsRight[index] * lambdaX;
+                            }
                         } else {
-                            // D_left * D_right * lambda(x)
-                            partialsCombined[index] = partialsLeft[index] * partialsRight[index] * lambdaX; // for testing
-                            partialsAllPatterns[k] = partialsLeft[index] * partialsRight[index] * lambdaX;
+                            partialsCombined[index] = 0.0; // set to zero
+                            partialsAllPatterns[k] = 0.0;
                         }
                         k++;
                     }
@@ -575,11 +584,11 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         return flatTransitionMatrices;
     }
 
-    private double[] getSubstitutionRates(int numEntries) {
-        double[] res = new double[numEntries];
+    private double[] getSubstitutionRates(int numElements) {
+        double[] res = new double[numElements];
         res[0] = startSubsRate;
-        double interval = (endSubsRate - startSubsRate) / numEntries;
-        for(int i = 1; i < numEntries; i++) {
+        double interval = startSubsRate; // use start rate as interval
+        for(int i = 1; i < numElements; i++) {
             res[i] = res[i - 1] + interval;
         }
         return res;

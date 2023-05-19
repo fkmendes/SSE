@@ -52,11 +52,25 @@ public class MosseTipLikelihood extends CalculationNode {
 		NormalDistribution normalDist = new NormalDistribution(mean, sd);
 		double startProb = normalDist.cumulativeProbability(a);
 		double endProb = normalDist.cumulativeProbability(b);
-		if (logScale) {
-			return Math.log(endProb - startProb);
-		} else {
-			return endProb - startProb;
+		return endProb - startProb;
+	}
+
+	/**
+	 *
+	 * @param traits array of trait values
+	 * @param numBins number of bins for substitution rate discretization
+	 * @param startSubsRate substitution rate lower bound and interval for rate bins
+	 * @return array of tip likelihoods
+	 */
+	public double[] getTipLikelihoods(double[] traits, int numBins, double startSubsRate) {
+		double subsInterval = startSubsRate;
+		double[] tipLikelihoods = new double[numBins];
+		for (int i = 0; i < numBins; i++) {
+			double a = startSubsRate + i * subsInterval;
+			double b = startSubsRate + (i + 1) * subsInterval;
+			tipLikelihoods[i] = getTipLikelihood(a, b, traits);
 		}
+		return tipLikelihoods;
 	}
 
 	/**
@@ -86,7 +100,7 @@ public class MosseTipLikelihood extends CalculationNode {
 		if (logScaleInput.get() == null) {
 			logScale = true;
 		} else {
-			logScale = logScaleInput.get().getValue();
+			logScale = logScaleInput.get().getValue(); // TODO make logscale consistent with TreeLikelihood
 		}
 	}
 }

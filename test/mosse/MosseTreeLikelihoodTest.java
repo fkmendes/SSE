@@ -128,8 +128,7 @@ public class MosseTreeLikelihoodTest {
         ConstantLinkFn constFunc = new ConstantLinkFn();
         constFunc.initByName("yV", yValueRP);
 
-        double startSubsRate = 1E-10;
-        double endSubsRate = 1E-8;
+        double startSubsRate = 0.01;
         int numBins = 1024;
 
         MosseTreeLikelihood likelihood = new MosseTreeLikelihood();
@@ -141,7 +140,6 @@ public class MosseTreeLikelihoodTest {
                 "treeModel", new MosseDistribution(),
                 "traits", traitsList,
                 "startSubsRate", Double.toString(startSubsRate),
-                "endSubsRate", Double.toString(endSubsRate),
                 "numRateBins", Integer.toString(numBins),
                 "lambdaFunc", logFunc,
                 "muFunc", constFunc

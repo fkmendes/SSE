@@ -35,7 +35,8 @@ public class MosseTipLikelihoodTest {
         tipLikelihood.initByName(
                 "beta", betas,
                 "subst", Double.toString(subst),
-                "epsilon", Double.toString(epsilon)
+                "epsilon", Double.toString(epsilon),
+                "logscale", "false"
         );
         tipLikelihood.initAndValidate();
 
