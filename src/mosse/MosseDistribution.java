@@ -4,6 +4,7 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.State;
 import beast.core.parameter.IntegerParameter;
+import beast.core.parameter.Parameter;
 import beast.core.parameter.RealParameter;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.TreeDistribution;
@@ -23,14 +24,15 @@ public class MosseDistribution extends TreeDistribution {
 
     final public Input<IntegerParameter> nxInput = new Input<>("nx", "number of bins for substitution rate", new IntegerParameter("1024"));
     final public Input<RealParameter> dxInput = new Input<>("dx", "distance between xs", new RealParameter("0.0001"));
-//    final public Input<List<IntegerParameter>> ndInput = new Input<>("nd", "plan dimensions for fftw3", Arrays.asList(new IntegerParameter("5")));
     final public Input<RealParameter> driftInput = new Input<>("drift", "drift parameter", new RealParameter("0.0"));
     final public Input<RealParameter> diffusionInput = new Input<>("diffusion", "diffusion parameter", new RealParameter("0.001"));
     final public Input<RealParameter> dtInput = new Input<>("dt", "time interval dt", new RealParameter("0.01"));
-    final public Input<IntegerParameter> padLeftInput = new Input<>("padleft", "number of elements to pad left of kernel", new IntegerParameter("40"));
-    final public Input<IntegerParameter> padRightInput = new Input<>("padright", "number of elements to pad right of kernel", new IntegerParameter("40"));
+    final public Input<IntegerParameter> widthInput = new Input<>("width", "width of the kernel for convolution", new IntegerParameter("10"));
+    final public Input<IntegerParameter> resolutionInput = new Input<>("resolution", "scale factor for resolution of bins", new IntegerParameter("1"));
+
 
     final public int FLAG_FFTW3_DEFAULT = 0;
+
 
     static {
         System.loadLibrary("test");
@@ -59,6 +61,36 @@ public class MosseDistribution extends TreeDistribution {
 
     }
 
+    public int getPadLeft(boolean lowResolution) {
+        double mean = driftInput.get().getValue() * dtInput.get().getValue();
+        double sd = Math.sqrt(diffusionInput.get().getValue() * dtInput.get().getValue());
+        double dx = dxInput.get().getValue();
+        int width = widthInput.get().getValue();
+        int resolution = resolutionInput.get().getValue();
+        int padLeft = 0;
+        if (lowResolution) {
+            padLeft = (int) Math.ceil(-(mean - width * sd) / dx);
+        } else {
+            padLeft = (int) Math.ceil(-(mean - width * sd) / dx / resolution);
+        }
+        return Math.abs(padLeft);
+    }
+
+    public int getPadRight(boolean lowResolution) {
+        double mean = driftInput.get().getValue() * dtInput.get().getValue();
+        double sd = Math.sqrt(diffusionInput.get().getValue() * dtInput.get().getValue());
+        double dx = dxInput.get().getValue();
+        int width = widthInput.get().getValue();
+        int resolution = resolutionInput.get().getValue();
+        int padRight = 0;
+        if (lowResolution) {
+            padRight = (int) Math.ceil((mean + width * sd) / dx);
+        } else {
+            padRight = (int) Math.ceil((mean + width * sd) / dx / resolution);
+        }
+        return Math.abs(padRight);
+    }
+
     public double calculateBranchLogP(double branchTime, double[] vars, double[] lambda, double[] mu, double[] Q, double[] result) {
         double logP = 0.0;
         // getting parameter values
@@ -68,9 +100,10 @@ public class MosseDistribution extends TreeDistribution {
         double drift = driftInput.get().getValue();
         double diffusion = diffusionInput.get().getValue();
         double dt = dtInput.get().getValue();
-        int padLeft = padLeftInput.get().getValue();
-        int padRight = padRightInput.get().getValue();
         int nt = (int) Math.ceil(branchTime / dt);
+
+        int padLeft = getPadLeft(true); // using low resolution
+        int padRight = getPadRight(true);
 
         result = doIntegration(nx, dx, nd, FLAG_FFTW3_DEFAULT,
             vars, lambda, mu,

@@ -49,7 +49,6 @@ public class MosseLikelihoodCore extends BeerLikelihoodCore {
 
 
         partials = new double[2][nodeCount][];
-        lambdaSize = patternCount * numRateBins - padLeft - padRight - 1;
 
         currentMatrixIndex = new int[nodeCount];
         storedMatrixIndex = new int[nodeCount];

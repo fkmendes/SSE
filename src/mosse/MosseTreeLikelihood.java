@@ -102,6 +102,8 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         }
         if (resolutionOptionInput.get() != null) {
             resolution = resolutionOptionInput.get().getValue();
+        } else {
+            resolution = resolutionOptionInput.defaultValue.getValue();
         }
 
         // input checking
@@ -136,8 +138,8 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         int patterns = dataInput.get().getPatternCount();
 
         // set likelihood core number of states and number of rate bins
-        int padLeft = treeModel.padLeftInput.get().getValue();
-        int padRight = treeModel.padRightInput.get().getValue();
+        int padLeft = treeModel.getPadLeft(true); // using low resolution
+        int padRight = treeModel.getPadRight(true);
         mosseLikelihoodCore = new MosseLikelihoodCore(stateCount, numRateBins, padLeft, padRight);
 
         // num non-zero entries (length of lambda and mu)
@@ -183,7 +185,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             int k = 0;
             int taxonIndex = data.getTaxonIndex(node.getID());
             for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
-                double[] tipLikelihoods = tipModel.getTipLikelihoods(traitValues, numRateBins, startSubsRate);
+                double[] tipLikelihoods = tipModel.getTipLikelihoods(traitValues, numEntries, startSubsRate);
                 int stateCount = data.getPattern(taxonIndex, patternIndex);
                     boolean[] stateSet = data.getStateSet(stateCount);
                     // E initial values are zero
@@ -195,7 +197,11 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                         if (stateSet[state]) {
                             // set likelihoods for nucleotide in data
                             for (int i = 0; i < numRateBins; i++) {
-                                partials[k++] = tipLikelihoods[i];
+                                if (i < numEntries) {
+                                    partials[k++] = tipLikelihoods[i];
+                                } else {
+                                    partials[k++] = 0.0; // within padding
+                                }
                             }
                         } else {
                             // otherwise set likelihoods to zero
@@ -268,7 +274,11 @@ public class MosseTreeLikelihood extends TreeLikelihood {
         // update transitionMatrices
         for (int i = 1; i < numEntries; i++) {
             double[] prevMatrix = transitionMatrices[i - 1];
-            transitionMatrices[i] = matrixPow(prevMatrix, 2);
+            // multiplication of matrix
+            DoubleMatrix matrixOne = new DoubleMatrix(numStates, numStates, transitionMatrices[0]);
+            DoubleMatrix matrixTwo = new DoubleMatrix(numStates, numStates, prevMatrix);
+            DoubleMatrix result = matrixOne.mmul(matrixTwo);
+            transitionMatrices[i] = result.toArray();
         }
         flatTransitionMatrices = Arrays.stream(transitionMatrices)
                 .flatMapToDouble(Arrays::stream)
@@ -328,11 +338,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                         int index = i * numPlan + j;
                         int leftBound = mosseLikelihoodCore.padLeft + 1;
                         int rightBound = numEntries + leftBound;
-                        if (i <= leftBound || i > rightBound) {
-                            // padded elements
-                            partialsCombined[index] = 0.0; // set to zero
-                            partialsAllPatterns[k] = 0.0;
-                        } else {
+                        if (i < numEntries) {
                             // non padded elements
                             if (j == 0) {
                                 // E is topology independent
@@ -340,11 +346,16 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                                 partialsAllPatterns[k] = partialsLeft[index];
                             } else {
                                 // D_left * D_right * lambda(x)
-                                int lambdaIndex = i - leftBound;
-                                double lambdaX = lambdas[lambdaIndex]; // birth rate at substitution rate x
+                                double lambdaX = lambdas[i]; // birth rate at substitution rate x
                                 partialsCombined[index] = partialsLeft[index] * partialsRight[index] * lambdaX; // for testing
                                 partialsAllPatterns[k] = partialsLeft[index] * partialsRight[index] * lambdaX;
                             }
+
+                        } else {
+                            // padded elements
+                            partialsCombined[index] = 0.0; // set to zero
+                            partialsAllPatterns[k] = 0.0;
+
                         }
                         k++;
                     }
@@ -390,21 +401,23 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                         int index = i * numPlan + j;
                         int leftBound = mosseLikelihoodCore.padLeft + 1;
                         int rightBound = numEntries + leftBound;
-                        if (i <= leftBound || i > rightBound) {
-                            partialsCombined[index] = 0.0; // set to zero
-                            partialsAllPatterns[k] = 0.0;
-                        } else {
+                        if (i < numEntries) {
+                            // non padded elements
                             if (j == 0) {
                                 // E is topology independent
                                 partialsCombined[index] = partialsLeft[index]; // for testing
                                 partialsAllPatterns[k] = partialsLeft[index];
                             } else {
                                 // D_left * D_right * lambda(x)
-                                int lambdaIndex = i - leftBound;
-                                double lambdaX = lambdas[lambdaIndex]; // birth rate at substitution rate x
+                                double lambdaX = lambdas[i]; // birth rate at substitution rate x
                                 partialsCombined[index] = partialsLeft[index] * partialsRight[index] * lambdaX; // for testing
                                 partialsAllPatterns[k] = partialsLeft[index] * partialsRight[index] * lambdaX;
                             }
+
+                        } else {
+                            // padded elements
+                            partialsCombined[index] = 0.0; // set to zero
+                            partialsAllPatterns[k] = 0.0;
 
                         }
                         k++;
@@ -462,7 +475,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             eRoot = getColumn(vals, 1); // get root E values as a column
             // apply function on dRoot
             for (int i = 0; i < ntypes; i++) {
-                for (int j = 0; i < nx; j++) {
+                for (int j = 0; j < numEntries; j++) {
                     double lambdaX = lambdas[j];
                     // element-wise division of d column
                     dRoot[i][j] = dRoot[i][j] / (lambdaX * Math.pow((1 - eRoot[j]), 2));
@@ -607,12 +620,6 @@ public class MosseTreeLikelihood extends TreeLikelihood {
             traitValues[i] = traitValue;
         }
         return traitValues;
-    }
-
-    private double[] matrixPow(double[] matrixData, double scale) {
-        DoubleMatrix matrix = new DoubleMatrix(matrixData);
-        DoubleMatrix result = MatrixFunctions.pow(scale, matrix);
-        return result.toArray();
     }
 
     @Override
