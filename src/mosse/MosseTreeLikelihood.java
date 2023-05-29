@@ -478,7 +478,7 @@ public class MosseTreeLikelihood extends TreeLikelihood {
                 for (int j = 0; j < numEntries; j++) {
                     double lambdaX = lambdas[j];
                     // element-wise division of d column
-                    dRoot[i][j] = dRoot[i][j] / (lambdaX * Math.pow((1 - eRoot[j]), 2));
+                    dRoot[i][j] = dRoot[i][j] / (lambdaX * (1 - eRoot[j]) * (1 - eRoot[j]));
                 }
             }
         }
